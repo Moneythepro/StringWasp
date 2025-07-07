@@ -1,6 +1,10 @@
-// Initialize Firebase
+// firebase.js
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
 const firebaseConfig = {
-  apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
+  apiKey: "YOUR_API_KEY",
   authDomain: "stringwasp.firebaseapp.com",
   projectId: "stringwasp",
   storageBucket: "stringwasp.appspot.com",
@@ -8,8 +12,10 @@ const firebaseConfig = {
   appId: "1:974718019508:web:79e30ee86f15bf36b374e1"
 };
 
-firebase.initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-// Export Firebase modules
-const auth = firebase.auth();
-const db = firebase.firestore();
+// Expose globally for app.js
+window.auth = auth;
+window.db = db;
