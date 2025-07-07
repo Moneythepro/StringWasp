@@ -1,19 +1,24 @@
+/* --- Reset & Layout ----------------------------------------------- */
+* {
+  box-sizing: border-box;
+}
+
 body {
   font-family: 'Segoe UI', sans-serif;
   margin: 0;
-  background: #f4f6f8;
+  background: #eef3f7;
   color: #333;
-  padding: 10px;
+  padding: 14px;
 }
 
+/* --- Inputs & Buttons --------------------------------------------- */
 input, select, button {
-  padding: 8px;
+  padding: 9px;
   margin: 5px 0;
   border: 1px solid #ccc;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 15px;
   width: 100%;
-  box-sizing: border-box;
 }
 
 button {
@@ -21,76 +26,99 @@ button {
   color: white;
   border: none;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: background 0.25s;
 }
 
 button:hover {
-  background: #0077b6;
+  background: #0074a8;
 }
 
+/* --- Headings ----------------------------------------------------- */
 h2, h3, h4 {
   color: #005d91;
   margin-bottom: 10px;
 }
 
+/* --- Navigation Tabs ---------------------------------------------- */
 #navTabs {
   display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
+  gap: 8px;
+  margin-bottom: 14px;
 }
 
 #navTabs button {
   flex: 1;
-  border-radius: 12px;
-  background: #e3f2fd;
+  background: #d0ecff;
   color: #005d91;
+  border-radius: 10px;
 }
 
+/* --- Page Tabs ---------------------------------------------------- */
 .tab {
   display: none;
+  margin-top: 16px;
 }
 
+/* --- Room List ---------------------------------------------------- */
+#roomBar ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+#roomBar li {
+  padding: 6px;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+}
+
+#roomBar li:hover {
+  background: #e6f4ff;
+}
+
+/* --- Message Area ------------------------------------------------- */
 #messages {
-  background: white;
   height: 300px;
   overflow-y: auto;
-  padding: 10px;
+  background: #fff;
+  border: 1px solid #ccd;
   border-radius: 8px;
-  border: 1px solid #ccc;
-  margin-bottom: 10px;
+  padding: 10px;
+  margin-bottom: 8px;
 }
 
 .message {
-  padding: 6px;
-  margin: 6px 0;
-  border-bottom: 1px solid #eee;
+  background: #e7f5ff;
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 6px;
 }
 
 .message b {
-  color: #0088cc;
+  color: #006fbb;
 }
 
+.message .action-btn {
+  background: #b0cfe5;
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+/* --- Typing Indicator --------------------------------------------- */
 #typingIndicator {
   font-style: italic;
   margin-top: 5px;
   color: gray;
 }
 
-#roomBar ul {
-  list-style: none;
-  padding-left: 0;
+/* --- Admin Panel -------------------------------------------------- */
+#adminPanel {
+  background: #e1f5fe;
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 10px;
 }
 
-#roomBar ul li {
-  padding: 5px;
-  border-bottom: 1px solid #ddd;
-  cursor: pointer;
-}
-
-#roomBar ul li:hover {
-  background: #e0f7fa;
-}
-
+/* --- Search Items ------------------------------------------------- */
 .search-item {
   padding: 10px;
   border: 1px solid #ccc;
@@ -99,6 +127,37 @@ h2, h3, h4 {
   background: white;
 }
 
+/* --- Inbox Layout ------------------------------------------------- */
+.inbox-card {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.inbox-card h4 {
+  margin: 0 0 4px;
+}
+
+.inbox-card button {
+  margin: 4px 4px 0 0;
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
+.inbox-controls {
+  text-align: right;
+  margin-bottom: 10px;
+}
+
+/* --- Profile ------------------------------------------------------ */
+#avatarPreview {
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+/* --- Username Dialog ---------------------------------------------- */
 #usernameDialog {
   background: #fff9c4;
   border: 1px solid #fbc02d;
@@ -108,14 +167,12 @@ h2, h3, h4 {
   margin: 20px auto;
 }
 
-#adminPanel {
-  background: #e1f5fe;
-  padding: 10px;
-  border-radius: 8px;
-  margin-top: 10px;
-}
-
-#profileTab img {
-  border-radius: 50%;
-  margin-bottom: 10px;
+/* --- Responsive --------------------------------------------------- */
+@media(max-width: 600px) {
+  #messages {
+    height: 200px;
+  }
+  #navTabs button {
+    font-size: 14px;
+  }
 }
