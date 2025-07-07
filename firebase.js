@@ -1,21 +1,20 @@
-// firebase.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+<!-- firebase.js -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script>
+  // Your Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
+    authDomain: "stringwasp.firebaseapp.com",
+    projectId: "stringwasp",
+    storageBucket: "stringwasp.appspot.com",
+    messagingSenderId: "974718019508",
+    appId: "1:974718019508:web:79e30ee86f15bf36b374e1"
+  };
 
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "stringwasp.firebaseapp.com",
-  projectId: "stringwasp",
-  storageBucket: "stringwasp.appspot.com",
-  messagingSenderId: "974718019508",
-  appId: "1:974718019508:web:79e30ee86f15bf36b374e1"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-// Expose globally for app.js
-window.auth = auth;
-window.db = db;
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
