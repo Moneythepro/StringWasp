@@ -154,3 +154,22 @@ button:hover {
     flex-direction: column;
   }
 }
+.search-item {
+  background: #f9f9f9;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.navTabs button {
+  padding: 8px 12px;
+  margin: 0 5px;
+  background-color: #eee;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.navTabs button:hover {
+  background-color: #ddd;
+}
