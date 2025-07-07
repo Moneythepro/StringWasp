@@ -1,118 +1,156 @@
-/* === Global === */
-body {
-  font-family: Arial, sans-serif;
-  margin: 20px;
-  background: #f4f4f4;
-  color: #333;
-}
-
-h2, h3 {
-  margin-top: 0.5em;
-}
-
-/* === Form inputs === */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="file"],
-select {
-  padding: 10px;
-  margin: 5px 0;
-  width: 100%;
-  max-width: 400px;
+/* RESET & BASE */
+* {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
-  border: 1px solid #aaa;
-  border-radius: 6px;
 }
 
-/* === Buttons === */
-button {
-  padding: 8px 14px;
-  margin: 5px 5px 5px 0;
-  border: none;
-  background-color: #2e89ff;
-  color: white;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-button:hover {
-  background-color: #166de0;
-}
-
-button.action-btn {
-  background-color: #aaa;
-  margin-left: 8px;
-}
-
-button.action-btn:hover {
-  background-color: #888;
-}
-
-/* === Sections === */
-#login,
-#chat,
-#profile {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  max-width: 600px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* === Messages === */
-#messages {
-  background: #ffffff;
-  border: 1px solid #ddd;
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #f4f4f4;
+  color: #222;
   padding: 10px;
+}
+
+/* PAGE LAYOUTS */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 800px;
+  margin: auto;
+}
+
+/* NAVIGATION TABS */
+.navTabs {
+  display: flex;
+  justify-content: space-around;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.navTabs button {
+  flex: 1;
+  padding: 10px;
+  background: #fff;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.navTabs button:hover {
+  background: #f0f0f0;
+}
+
+/* SECTIONS (TABS) */
+.tab {
+  background: #fff;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+#messages {
   height: 300px;
-  overflow-y: scroll;
-  margin: 10px 0;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: #fafafa;
   border-radius: 8px;
 }
 
 .message {
-  margin-bottom: 12px;
   padding: 8px;
-  background: #e9f0ff;
-  border-radius: 6px;
+  margin-bottom: 6px;
+  border-radius: 8px;
+  background: #e1f5fe;
 }
 
-/* === Avatar preview === */
+.message button {
+  margin-left: 5px;
+  padding: 3px 6px;
+  border: none;
+  background: #cfd8dc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#typingIndicator {
+  font-style: italic;
+  font-size: 14px;
+  margin-top: -10px;
+  margin-bottom: 10px;
+  color: #777;
+}
+
+/* FORMS & INPUTS */
+input, select, button {
+  font-size: 16px;
+  padding: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+button {
+  background-color: #0088cc;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #007bb5;
+}
+
 #avatarPreview {
   border-radius: 50%;
-  object-fit: cover;
-  margin: 10px 0;
-}
-
-/* === Typing indicator === */
-#typingIndicator {
-  margin-top: -8px;
   margin-bottom: 10px;
-  font-style: italic;
-  color: #555;
+  object-fit: cover;
 }
 
-/* === Responsive === */
-@media (max-width: 600px) {
-  body {
-    margin: 10px;
-  }
-
-  #messages {
-    height: 250px;
-  }
+/* ADMIN PANEL */
+#adminPanel {
+  margin-top: 20px;
+  padding: 10px;
+  background: #fffbeb;
+  border: 1px solid #ffd54f;
+  border-radius: 8px;
 }
+
+#adminInfo {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+/* LOGIN PAGE */
+#loginPage input, #loginPage button {
+  width: 100%;
+  margin-top: 10px;
+}
+
 .popup {
   position: fixed;
   top: 30%;
   left: 50%;
-  transform: translate(-50%, -30%);
-  background: white;
+  transform: translateX(-50%);
+  background: #fff;
   padding: 20px;
-  border: 2px solid #000;
-  box-shadow: 0 0 10px gray;
-  z-index: 999;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  z-index: 10;
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+  .navTabs {
+    flex-direction: column;
+  }
 }
