@@ -4,62 +4,53 @@
   <meta charset="UTF-8">
   <title>StringWasp Chat</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    .tab { display: none; }
-    .tab.active { display: block; }
-    .nav-btn { margin: 5px; padding: 5px 10px; }
-  </style>
 </head>
 <body>
 
-<!-- Login Page -->
-<div id="loginPage" class="tab active">
+<!-- ========== LOGIN PAGE ========== -->
+<div id="loginPage" class="tab" style="display: block;">
   <h2>Login / Register</h2>
   <input type="email" id="email" placeholder="Email">
-  <input type="password" id="password" placeholder="Password"><br>
+  <input type="password" id="password" placeholder="Password">
   <button onclick="login()">Login</button>
   <button onclick="register()">Register</button>
 </div>
 
-<!-- Username Prompt -->
-<div id="usernameDialog" class="tab" style="display:none;">
-  <h3>Choose a Username</h3>
-  <input type="text" id="newUsername" placeholder="Username">
+<!-- ========== USERNAME PROMPT ========== -->
+<div id="usernameDialog" style="display:none">
+  <h3>Choose a username</h3>
+  <input type="text" id="newUsername" placeholder="Unique username">
   <button onclick="saveUsername()">Save</button>
 </div>
 
-<!-- Main App Page -->
+<!-- ========== APP MAIN ========== -->
 <div id="appPage" class="tab" style="display:none;">
   <h2>Welcome <span id="usernameDisplay"></span></h2>
 
-  <!-- NAVIGATION -->
-  <div>
-    <button class="nav-btn" onclick="switchTab('chatsTab')">Chats</button>
-    <button class="nav-btn" onclick="switchTab('searchTab')">Search</button>
-    <button class="nav-btn" onclick="switchTab('profileTab')">Profile</button>
-    <button class="nav-btn" onclick="switchTab('settingsTab')">Settings</button>
+  <!-- NAVIGATION TABS -->
+  <div id="tabs">
+    <button onclick="switchTab('chatsTab')">Chats</button>
+    <button onclick="switchTab('searchTab')">Search</button>
+    <button onclick="switchTab('inboxTab')">Inbox</button>
+    <button onclick="switchTab('profileTab')">Profile</button>
   </div>
 
-  <!-- CHATS TAB -->
-  <div id="chatsTab" class="tab active">
-    <!-- Sidebar Room List -->
-    <div id="roomBar">
-      <h3>Available rooms</h3>
-      <ul id="roomList"></ul>
-    </div>
+  <!-- ========== CHATS TAB ========== -->
+  <div id="chatsTab" class="tab" style="display:none;">
+    <h3>Available rooms</h3>
+    <ul id="roomList"></ul>
 
-    <!-- Room Controls -->
     <div id="roomControls">
       <label>Current room:</label>
-      <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
+      <select id="roomDropdown" onchange="switchRoom()"></select>
       <input type="text" id="customRoom" placeholder="Create / join room">
       <button onclick="createOrJoinRoom()">Go</button>
       <button onclick="leaveRoom()">Leave</button>
       <input type="password" id="roomPassword" placeholder="Room password 🔐">
     </div>
 
-    <!-- Admin Tools -->
-    <div id="adminPanel" style="display:none;">
+    <!-- Admin panel -->
+    <div id="adminPanel" style="display:none">
       <h3>Admin tools</h3>
       <p id="adminInfo"></p>
       <input type="email" id="memberEmail" placeholder="User email">
@@ -68,74 +59,68 @@
       <button onclick="promoteMember()">Promote</button>
     </div>
 
-    <!-- Messages -->
+    <!-- Chat window -->
     <div id="messages"></div>
     <div id="typingIndicator"></div>
-    <input id="messageInput" placeholder="Type message…">
+    <input id="messageInput" placeholder="Type a message…">
     <button onclick="sendMessage()">Send</button>
 
-    <!-- P2P File -->
-    <h3>P2P file</h3>
+    <!-- File sharing -->
+    <h3>P2P File</h3>
     <input type="file" id="fileInput">
     <button onclick="sendFile()">Send file</button>
   </div>
 
-  <!-- SEARCH TAB -->
-  <div id="searchTab" class="tab">
+  <!-- ========== SEARCH TAB ========== -->
+  <div id="searchTab" class="tab" style="display:none;">
     <h3>Search</h3>
-    <input id="searchInput" placeholder="Search users or groups" oninput="runSearch()">
-    <div>
-      <button onclick="switchSearchView('user')">Users</button>
-      <button onclick="switchSearchView('group')">Groups</button>
-    </div>
+    <input id="searchInput" placeholder="Search usernames or groups" oninput="runSearch()">
+    <button onclick="switchSearchView('user')">Users</button>
+    <button onclick="switchSearchView('group')">Groups</button>
+
     <div id="searchResultsUser"></div>
     <div id="searchResultsGroup" style="display:none;"></div>
   </div>
 
-  <!-- PROFILE TAB -->
-  <div id="profileTab" class="tab">
-    <h3>Your Profile</h3>
-    <img id="avatarPreview" width="100" height="100" style="display:none;">
-    <input type="text" id="displayName" placeholder="Name">
-    <input type="text" id="bio" placeholder="Bio / status">
-    <input type="file" id="avatarInput">
-    <button onclick="saveProfile()">Save Profile</button>
+  <!-- ========== INBOX TAB ========== -->
+  <div id="inboxTab" class="tab" style="display:none;">
+    <h3>Inbox</h3>
+
+    <div class="inbox-section">
+      <h4>Friend Requests</h4>
+      <div id="inboxFriendRequests">No requests</div>
+    </div>
+
+    <div class="inbox-section">
+      <h4>Group Invites</h4>
+      <div id="inboxGroupInvites">No invites</div>
+    </div>
+
+    <div class="inbox-section">
+      <h4>Alerts & Updates</h4>
+      <div id="inboxAlerts">No alerts</div>
+    </div>
   </div>
 
-  <!-- SETTINGS TAB -->
-  <div id="settingsTab" class="tab">
-    <h3>Settings (Coming Soon)</h3>
+  <!-- ========== PROFILE TAB ========== -->
+  <div id="profileTab" class="tab" style="display:none;">
+    <h3>Your profile</h3>
+    <img id="avatarPreview" width="100" height="100" style="display:none;">
+    <input type="text" id="displayName" placeholder="Display name">
+    <input type="text" id="bio" placeholder="Bio / status">
+    <input type="file" id="avatarInput">
+    <button onclick="saveProfile()">Save profile</button>
   </div>
 </div>
 
-<!-- Notification Sound -->
-<audio id="notifSound"
-  src="https://notificationsounds.com/storage/sounds/file-sounds-1161-pristine.mp3"
-  preload="auto"></audio>
-
-<!-- Firebase SDK v8 (required) -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
-<!-- Firebase Config -->
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
-    authDomain: "stringwasp.firebaseapp.com",
-    projectId: "stringwasp",
-    storageBucket: "stringwasp.appspot.com",
-    messagingSenderId: "974718019508",
-    appId: "1:974718019508:web:79e30ee86f15bf36b374e1"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-</script>
-
-<!-- App Scripts -->
+<!-- Scripts -->
+<script src="firebase.js"></script>
 <script src="p2p.js"></script>
 <script src="crypto.js"></script>
 <script src="app.js"></script>
+
+<audio id="notifSound"
+       src="https://notificationsounds.com/storage/sounds/file-sounds-1161-pristine.mp3"
+       preload="auto"></audio>
 </body>
 </html>
