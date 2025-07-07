@@ -1,13 +1,14 @@
-// Initialize Firebase
+// firebase.js
 const firebaseConfig = {
   apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
   authDomain: "stringwasp.firebaseapp.com",
   projectId: "stringwasp",
-  storageBucket: "stringwasp.appspot.com",  // fixed typo: .app → .app**spot**
+  storageBucket: "stringwasp.appspot.com",
   messagingSenderId: "974718019508",
   appId: "1:974718019508:web:79e30ee86f15bf36b374e1"
 };
 
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db   = firebase.firestore();
