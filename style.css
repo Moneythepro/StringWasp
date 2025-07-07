@@ -105,3 +105,14 @@ button.action-btn:hover {
     height: 250px;
   }
 }
+.popup {
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -30%);
+  background: white;
+  padding: 20px;
+  border: 2px solid #000;
+  box-shadow: 0 0 10px gray;
+  z-index: 999;
+}
