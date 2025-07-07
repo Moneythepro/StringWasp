@@ -10,29 +10,25 @@ let typingTO = null;
 const getRoomPassword = () =>
   document.getElementById("roomPassword").value || "";
 
+// ---------------- TABS ----------------
 function switchTab(tabId) {
-  document.querySelectorAll(".tab").forEach(tab =>
-    tab.style.display = "none"
-  );
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(tab => tab.style.display = "none");
   document.getElementById(tabId).style.display = "block";
 }
 
 // ---------------- AUTH STATE ----------------
 auth.onAuthStateChanged(async user => {
   if (!user) {
-    document.getElementById("loginPage").style.display = "block";
-    document.getElementById("appPage").style.display = "none";
+    switchTab("loginPage");
     return;
   }
 
-  document.getElementById("loginPage").style.display = "none";
-  document.getElementById("appPage").style.display = "block";
   document.getElementById("usernameDisplay").textContent = user.email;
-
   const userRef = db.collection("users").doc(user.uid);
-  const snap = await userRef.get();
+  const userSnap = await userRef.get();
 
-  if (!snap.exists || !snap.data().username) {
+  if (!userSnap.exists || !userSnap.data().username) {
     document.getElementById("usernameDialog").style.display = "block";
   } else {
     startApp(user);
@@ -41,9 +37,9 @@ auth.onAuthStateChanged(async user => {
 
 async function saveUsername() {
   const username = document.getElementById("newUsername").value.trim();
-  if (!username) return alert("Enter a valid username.");
-  const user = auth.currentUser;
+  if (!username) return alert("Pick a username");
 
+  const user = auth.currentUser;
   await db.collection("users").doc(user.uid).set({
     email: user.email,
     username,
@@ -88,6 +84,7 @@ function startRoomListeners() {
         const data = doc.data();
         const li = document.createElement("li");
         li.textContent = `${doc.id} (${data.members.length})`;
+        li.style.cursor = "pointer";
         li.onclick = () => joinRoom(doc.id);
         listEl.appendChild(li);
       });
@@ -121,9 +118,10 @@ async function joinRoom(roomName) {
   currentRoom = roomName;
   document.getElementById("roomDropdown").value = roomName;
 
-  db.collection("rooms").doc(roomName).update({
-    members: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.email)
-  });
+  db.collection("rooms").doc(roomName)
+    .update({
+      members: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.email)
+    });
 
   if (unsubscribeRoomDoc) unsubscribeRoomDoc();
   unsubscribeRoomDoc = db.collection("rooms").doc(roomName)
@@ -137,10 +135,12 @@ function leaveRoom() {
   if (currentRoom === "general") return alert("You can’t leave #general.");
   if (!confirm(`Leave #${currentRoom}?`)) return;
 
-  db.collection("rooms").doc(currentRoom).update({
-    members: firebase.firestore.FieldValue.arrayRemove(auth.currentUser.email),
-    admins: firebase.firestore.FieldValue.arrayRemove(auth.currentUser.email)
-  });
+  db.collection("rooms").doc(currentRoom)
+    .update({
+      members: firebase.firestore.FieldValue.arrayRemove(auth.currentUser.email),
+      admins: firebase.firestore.FieldValue.arrayRemove(auth.currentUser.email)
+    });
+
   joinRoom("general");
 }
 
@@ -159,14 +159,14 @@ function updateAdminPanel(doc) {
   panel.style.display = "block";
   document.getElementById("adminInfo").textContent =
     `Creator: ${data.creator}\nAdmins: ${data.admins.join(", ")}`;
+
+  panel.dataset.creator = data.creator;
+  panel.dataset.admins = JSON.stringify(data.admins);
+  panel.dataset.members = JSON.stringify(data.members);
 }
 
-function getAdminRoomRef() {
-  return db.collection("rooms").doc(currentRoom);
-}
-function getAdminInput() {
-  return document.getElementById("memberEmail").value.trim();
-}
+function getAdminRoomRef() { return db.collection("rooms").doc(currentRoom); }
+function getAdminInput() { return document.getElementById("memberEmail").value.trim(); }
 
 async function addMember() {
   const email = getAdminInput(); if (!email) return;
@@ -187,14 +187,14 @@ async function promoteMember() {
   const email = getAdminInput(); if (!email) return;
   const snap = await getAdminRoomRef().get();
   const data = snap.data();
-  if (!data.members.includes(email)) return alert("User not in group.");
   if (data.admins.length >= 3) return alert("Max 3 admins.");
+  if (!data.members.includes(email)) return alert("User must be a member.");
   await getAdminRoomRef().update({
     admins: firebase.firestore.FieldValue.arrayUnion(email)
   });
 }
 
-// ---------------- CHAT + TYPING ----------------
+// ---------------- CHAT ----------------
 function listenForChat(roomName) {
   if (unsubscribeChat) unsubscribeChat();
   unsubscribeChat = db.collection("messages").doc(roomName)
@@ -211,14 +211,13 @@ function listenForChat(roomName) {
 
         let body = "[Cannot decrypt]";
         try { body = await decryptMessage(m.encryptedText, m.iv, getRoomPassword()); } catch {}
-
         div.innerHTML = `<b>${m.sender}:</b> ${body} ${m.edited ? "<i>(edited)</i>" : ""}`;
 
         if (m.sender === auth.currentUser.email) {
           const e = document.createElement("button");
           const r = document.createElement("button");
-          e.textContent = "Edit";
-          r.textContent = "Delete";
+          e.textContent = "Edit"; r.textContent = "Delete";
+          e.className = "action-btn"; r.className = "action-btn";
           e.onclick = () => editMessage(d.id, body, m.iv);
           r.onclick = () => deleteMessage(d.id);
           div.append(e, r);
@@ -277,43 +276,54 @@ document.getElementById("messageInput").addEventListener("input", () => {
     ref.set({ [auth.currentUser.email]: false }, { merge: true }), 3000);
 });
 
-// ---------------- PROFILE ----------------
-function saveProfile() {
-  const user = auth.currentUser;
-  const name = document.getElementById("displayName").value;
-  const bio = document.getElementById("bio").value;
+// ---------------- SEARCH ----------------
+let currentSearchTab = "user";
 
-  const file = document.getElementById("avatarInput").files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataURL = reader.result;
-      db.collection("users").doc(user.uid).update({
-        displayName: name,
-        bio,
-        avatar: dataURL
-      });
-    };
-    reader.readAsDataURL(file);
-  } else {
-    db.collection("users").doc(user.uid).update({
-      displayName: name,
-      bio
-    });
-  }
+function switchSearchView(type) {
+  currentSearchTab = type;
+  document.getElementById("searchResultsUser").style.display = type === "user" ? "block" : "none";
+  document.getElementById("searchResultsGroup").style.display = type === "group" ? "block" : "none";
 }
 
-function loadProfile(uid) {
-  db.collection("users").doc(uid).onSnapshot(doc => {
-    const d = doc.data() || {};
-    document.getElementById("displayName").value = d.displayName || "";
-    document.getElementById("bio").value = d.bio || "";
-    if (d.avatar) {
-      const img = document.getElementById("avatarPreview");
-      img.src = d.avatar;
-      img.style.display = "block";
+async function runSearch() {
+  const query = document.getElementById("searchInput").value.trim().toLowerCase();
+  if (!query) return;
+
+  const userSnap = await db.collection("users").get();
+  const groupSnap = await db.collection("rooms").get();
+
+  document.getElementById("searchResultsUser").innerHTML = "";
+  document.getElementById("searchResultsGroup").innerHTML = "";
+
+  userSnap.forEach(doc => {
+    const d = doc.data();
+    if (d.username && d.username.toLowerCase().includes(query)) {
+      document.getElementById("searchResultsUser").innerHTML += `
+        <div class="search-item">
+          <b>@${d.username}</b><br>${d.bio || ""}<br>
+          <button onclick="sendFriendRequest('${doc.id}')">Send Friend Request</button>
+        </div><hr>`;
     }
   });
+
+  groupSnap.forEach(doc => {
+    if (doc.id.toLowerCase().includes(query)) {
+      const d = doc.data();
+      document.getElementById("searchResultsGroup").innerHTML += `
+        <div class="search-item">
+          <b>#${doc.id}</b><br>Members: ${d.members.length}<br>
+          <button onclick="requestJoinGroup('${doc.id}')">Request to Join</button>
+        </div><hr>`;
+    }
+  });
+}
+
+function sendFriendRequest(uid) {
+  alert(`Friend request sent to ${uid}`);
+}
+
+function requestJoinGroup(groupId) {
+  alert(`Requested to join #${groupId}`);
 }
 
 // ---------------- NOTIFICATIONS ----------------
@@ -325,19 +335,35 @@ function triggerNotification(sender, msg) {
 if ("Notification" in window && Notification.permission !== "granted")
   Notification.requestPermission();
 
-// ---------------- AUTH / FILES ----------------
-function login() {
-  const email = document.getElementById("email").value;
-  const pass = document.getElementById("password").value;
-  auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
-}
+// ---------------- PROFILE ----------------
+function saveProfile() { /* Add your code */ }
+function loadProfile(uid) { /* Add your code */ }
 
-function register() {
-  const email = document.getElementById("email").value;
-  const pass = document.getElementById("password").value;
-  auth.createUserWithEmailAndPassword(email, pass).catch(e => alert(e.message));
-}
+// ---------------- AUTH / FILE ----------------
+function login() { /* Add your login code */ }
+function register() { /* Add your register code */ }
+function listenForOffers() { /* P2P file stub */ }
+auth.onAuthStateChanged(async user => {
+  console.log("🔁 Auth state changed:", user);
 
-function listenForOffers() {
-  // Stub for WebRTC/WebTorrent
-}
+  if (!user) {
+    document.getElementById("loginPage").style.display = "block";
+    document.getElementById("appPage").style.display = "none";
+    return;
+  }
+
+  document.getElementById("loginPage").style.display = "none";
+  document.getElementById("appPage").style.display = "block";
+  document.getElementById("usernameDisplay").textContent = user.email;
+
+  const userRef = db.collection("users").doc(user.uid);
+  const userSnap = await userRef.get();
+
+  if (!userSnap.exists || !userSnap.data().username) {
+    console.log("🟡 Prompting for username...");
+    document.getElementById("usernameDialog").style.display = "block";
+  } else {
+    console.log("🟢 Username exists, starting app...");
+    startApp(user);
+  }
+});
