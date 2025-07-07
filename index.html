@@ -16,6 +16,13 @@
   <button onclick="register()">Register</button>
 </div>
 
+<!-- Choose username popup (shown only once) -->
+<div id="usernameDialog" class="popup" style="display:none;">
+  <h2>Create your username</h2>
+  <input type="text" id="newUsername" placeholder="Choose a username">
+  <button onclick="saveUsername()">Save</button>
+</div>
+
 <!-- Chat panel -->
 <div id="chat" style="display:none">
   <h2>Welcome <span id="usernameDisplay"></span></h2>
@@ -36,11 +43,11 @@
     <input  type="password" id="roomPassword" placeholder="Room password 🔐">
   </div>
 
-  <!-- ADMIN panel (shown only to creator/admins) -->
+  <!-- ADMIN panel -->
   <div id="adminPanel" style="display:none">
     <h3>Admin tools</h3>
     <p id="adminInfo"></p>
-    <input type="email" id="memberEmail" placeholder="User email">
+    <input type="email" id="memberEmail" placeholder="User email or username">
     <button onclick="addMember()">Add member</button>
     <button onclick="removeMember()">Remove member</button>
     <button onclick="promoteMember()">Promote to admin</button>
@@ -69,12 +76,12 @@
   <button onclick="sendFile()">Send file</button>
 </div>
 
-<!-- Firebase CDN (must come first) -->
+<!-- Firebase CDN -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-<!-- Your local scripts -->
+<!-- Your scripts -->
 <script src="firebase.js"></script>
 <script src="p2p.js"></script>
 <script src="crypto.js"></script>
@@ -84,6 +91,5 @@
 <audio id="notifSound"
        src="https://notificationsounds.com/storage/sounds/file-sounds-1161-pristine.mp3"
        preload="auto"></audio>
-
 </body>
 </html>
