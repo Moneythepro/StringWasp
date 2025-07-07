@@ -1,207 +1,185 @@
+/* === Base === */
 body {
   font-family: 'Segoe UI', sans-serif;
-  background: #eaeef3;
   margin: 0;
-  padding: 0;
-  color: #333;
+  padding: 20px;
+  background: #f5f8fa;
+  color: #2c3e50;
 }
 
-h2, h3 {
-  margin-top: 0;
-}
-
-input, button, select {
-  padding: 8px;
-  margin: 6px 0;
+input, button, select, textarea {
+  padding: 10px;
+  margin: 5px 0;
   border: 1px solid #ccc;
   border-radius: 8px;
-  font-size: 14px;
-  outline: none;
-  width: 100%;
+  font-size: 1rem;
   box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
 }
 
 button {
   background-color: #0088cc;
   color: white;
-  cursor: pointer;
-  transition: background 0.3s ease;
   border: none;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
 button:hover {
-  background-color: #0077b3;
+  background-color: #0073aa;
 }
 
-.tab-buttons {
-  display: flex;
-  justify-content: space-around;
-  background: #ffffff;
-  border-bottom: 1px solid #ccc;
-  padding: 10px 0;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.tab-buttons button {
-  flex: 1;
-  padding: 12px;
-  font-weight: bold;
-  border-radius: 0;
-  border: none;
-  background: none;
-  color: #0088cc;
-}
-
-.tab-buttons button:hover {
-  background: #f5f5f5;
-}
-
+/* === Layout === */
 .tab {
   display: none;
-  padding: 16px;
 }
 
-/* Chat Messages */
+.tabContent {
+  background: #fff;
+  padding: 20px;
+  margin-top: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.topbar {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  background-color: #0088cc;
+  color: white;
+  border-radius: 10px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+/* === Messages === */
 #messages {
-  max-height: 400px;
+  height: 300px;
   overflow-y: auto;
   padding: 10px;
-  background: #ffffff;
-  border: 1px solid #ccc;
-  margin-bottom: 10px;
+  background: #eaf5fd;
   border-radius: 8px;
+  margin-top: 10px;
+  border: 1px solid #cbe6f5;
 }
 
 .message {
-  padding: 8px 12px;
-  border-bottom: 1px solid #eee;
+  background: #d4f0ff;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  position: relative;
 }
 
 .message b {
-  color: #0088cc;
+  color: #0073aa;
 }
 
 .message button {
-  margin-left: 10px;
+  margin-left: 5px;
   padding: 4px 6px;
-  font-size: 12px;
-}
-
-/* Typing indicator */
-#typingIndicator {
-  font-style: italic;
-  color: #666;
-  padding: 4px;
-}
-
-/* Admin Panel */
-#adminPanel {
-  background: #f0f8ff;
-  padding: 10px;
-  border-radius: 8px;
-  margin-top: 10px;
-  border: 1px solid #cce5ff;
-}
-
-/* Search Styles */
-.search-item {
-  background: white;
-  padding: 10px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  border: 1px solid #ddd;
-}
-
-.search-item button {
-  margin-top: 6px;
-}
-
-/* Tabs for search type */
-#searchTabs {
-  display: flex;
-  margin-top: 10px;
-}
-
-#searchTabs button {
-  flex: 1;
-  border: 1px solid #ccc;
+  font-size: 0.8rem;
   background: #f0f0f0;
   color: #333;
+  border: none;
+  border-radius: 6px;
 }
 
-#searchTabs button.active {
-  background: #0088cc;
-  color: white;
+#typingIndicator {
+  font-style: italic;
+  color: #888;
+  margin-top: 5px;
 }
 
-/* Room List */
-#roomList {
-  list-style: none;
+/* === Room List === */
+ul {
+  list-style-type: none;
   padding-left: 0;
 }
 
-#roomList li {
-  padding: 6px;
+li {
+  background: #f0f0f0;
+  margin: 4px 0;
+  padding: 8px;
+  border-radius: 6px;
   cursor: pointer;
-  border-bottom: 1px solid #ddd;
 }
 
-#roomList li:hover {
-  background: #f5f5f5;
+li:hover {
+  background: #dceeff;
 }
 
-/* Profile Avatar */
-#avatarPreview {
+/* === Admin Panel === */
+#adminPanel {
+  margin-top: 15px;
+  padding: 10px;
+  background: #fdf6e3;
+  border: 1px solid #f1e6c5;
+  border-radius: 8px;
+}
+
+#adminPanel button {
+  margin: 3px 3px 3px 0;
+}
+
+/* === Search === */
+.searchResults {
+  margin-top: 15px;
+}
+
+.search-item {
+  background: #f9f9f9;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.search-item b {
+  color: #0088cc;
+}
+
+/* === Profile === */
+#profileTab img {
   border-radius: 50%;
-  object-fit: cover;
   margin-bottom: 10px;
 }
 
-/* Inbox Notifications */
-.inbox-section {
-  margin-bottom: 16px;
+#avatarPreview {
+  display: block;
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
 }
 
-.inbox-section h4 {
-  margin: 8px 0;
-  border-bottom: 1px solid #ccc;
-  padding-bottom: 4px;
+/* === Inbox Placeholder === */
+#inboxTab {
+  text-align: center;
+  font-style: italic;
+  color: #777;
 }
 
-.inbox-item {
-  background: #fff;
-  border-radius: 8px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  margin-bottom: 8px;
+/* === Dialog === */
+.dialog {
+  background: white;
+  padding: 25px;
+  max-width: 400px;
+  margin: 50px auto;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  text-align: center;
 }
 
-.inbox-item button {
-  margin-top: 6px;
-}
-
-.inbox-controls {
-  text-align: right;
-  margin-top: 10px;
-}
-
-.inbox-controls button {
-  margin-left: 8px;
-}
-
-/* Responsive */
+/* === Responsive === */
 @media (max-width: 600px) {
-  input, button, select {
-    font-size: 16px;
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
   }
-
-  .tab-buttons button {
-    font-size: 14px;
-  }
-
-  .message {
-    font-size: 15px;
+  #messages {
+    height: 200px;
   }
 }
