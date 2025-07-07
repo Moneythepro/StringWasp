@@ -20,79 +20,64 @@
 <div id="chat" style="display:none">
   <h2>Welcome <span id="usernameDisplay"></span></h2>
 
-  <!-- Navigation (TEMP) -->
-  <div class="navTabs">
-    <button onclick="switchTab('chatsTab')">Chats</button>
-    <button onclick="switchTab('searchTab')">🔍 Search</button>
-  </div>
-
-  <!-- CHAT TAB -->
-  <div id="chatsTab" class="tab">
+  <!-- SIDE-BAR: list of rooms -->
+  <div id="roomBar">
     <h3>Available rooms</h3>
     <ul id="roomList"></ul>
-
-    <!-- ROOM CONTROLS -->
-    <div id="roomControls">
-      <label>Current room:</label>
-      <select id="roomDropdown" onchange="switchRoom()"></select>
-      <input type="text"  id="customRoom"  placeholder="Create / join room">
-      <button onclick="createOrJoinRoom()">Go</button>
-      <button onclick="leaveRoom()">Leave</button>
-      <input  type="password" id="roomPassword" placeholder="Room password 🔐">
-    </div>
-
-    <!-- ADMIN panel (shown only to creator/admins) -->
-    <div id="adminPanel" style="display:none">
-      <h3>Admin tools</h3>
-      <p id="adminInfo"></p>
-      <input type="email" id="memberEmail" placeholder="User email">
-      <button onclick="addMember()">Add member</button>
-      <button onclick="removeMember()">Remove member</button>
-      <button onclick="promoteMember()">Promote to admin</button>
-    </div>
-
-    <!-- PROFILE -->
-    <div id="profile">
-      <h3>Your profile</h3>
-      <img id="avatarPreview" width="100" height="100" style="display:none;">
-      <input type="text"  id="displayName" placeholder="Name">
-      <input type="text"  id="bio"         placeholder="Bio / status">
-      <input type="file" id="avatarInput">
-      <button onclick="saveProfile()">Save profile</button>
-    </div>
-
-    <!-- CHAT window -->
-    <div id="messages"></div>
-    <div id="typingIndicator"></div>
-
-    <input  id="messageInput" placeholder="Type message…">
-    <button onclick="sendMessage()">Send</button>
-
-    <!-- FILE share -->
-    <h3>P2P file</h3>
-    <input type="file" id="fileInput">
-    <button onclick="sendFile()">Send file</button>
   </div>
 
-  <!-- SEARCH TAB -->
-  <div class="tab" id="searchTab" style="display:none">
-    <h2>Search</h2>
-    <input type="text" id="searchInput" placeholder="Search username or group..." oninput="runSearch()">
-
-    <!-- TAB SWITCHER -->
-    <div class="navTabs" style="margin-top:10px">
-      <button onclick="switchSearchView('user')">Users</button>
-      <button onclick="switchSearchView('group')">Groups</button>
-    </div>
-
-    <!-- RESULTS -->
-    <div id="searchResultsUser" class="tab" style="margin-top:15px"></div>
-    <div id="searchResultsGroup" class="tab" style="margin-top:15px; display:none"></div>
+  <!-- ROOM CONTROLS -->
+  <div id="roomControls">
+    <label>Current room:</label>
+    <select id="roomDropdown" onchange="switchRoom()"></select>
+    <input type="text"  id="customRoom"  placeholder="Create / join room">
+    <button onclick="createOrJoinRoom()">Go</button>
+    <button onclick="leaveRoom()">Leave</button>
+    <input  type="password" id="roomPassword" placeholder="Room password 🔐">
   </div>
+
+  <!-- ADMIN panel (shown only to creator/admins) -->
+  <div id="adminPanel" style="display:none">
+    <h3>Admin tools</h3>
+    <p id="adminInfo"></p>
+    <input type="email" id="memberEmail" placeholder="User email">
+    <button onclick="addMember()">Add member</button>
+    <button onclick="removeMember()">Remove member</button>
+    <button onclick="promoteMember()">Promote to admin</button>
+  </div>
+
+  <!-- PROFILE -->
+  <div id="profile">
+    <h3>Your profile</h3>
+    <img id="avatarPreview" width="100" height="100" style="display:none;">
+    <input type="text"  id="displayName" placeholder="Name">
+    <input type="text"  id="bio"         placeholder="Bio / status">
+    <input type="file" id="avatarInput">
+    <button onclick="saveProfile()">Save profile</button>
+  </div>
+
+  <!-- CHAT window -->
+  <div id="messages"></div>
+  <div id="typingIndicator"></div>
+
+  <input  id="messageInput" placeholder="Type message…">
+  <button onclick="sendMessage()">Send</button>
+
+  <!-- FILE share -->
+  <h3>P2P file</h3>
+  <input type="file" id="fileInput">
+  <button onclick="sendFile()">Send file</button>
 </div>
 
-<!-- scripts -->
+<!-- Firebase SDKs (must come first) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<!-- Your Firebase config -->
 <script src="firebase.js"></script>
+
+<!-- Other logic -->
 <script src="p2p.js"></script>
 <script src="crypto.js"></script>
 <script src="app.js"></script>
@@ -101,6 +86,5 @@
 <audio id="notifSound"
        src="https://notificationsounds.com/storage/sounds/file-sounds-1161-pristine.mp3"
        preload="auto"></audio>
-
 </body>
 </html>
