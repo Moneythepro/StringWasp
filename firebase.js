@@ -3,7 +3,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script>
-  // Your Firebase config
+  // Your Firebase configuration
   const firebaseConfig = {
     apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
     authDomain: "stringwasp.firebaseapp.com",
@@ -15,6 +15,8 @@
 
   // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+
+  // Global auth & db
+  window.auth = firebase.auth();
+  window.db = firebase.firestore();
 </script>
