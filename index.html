@@ -1,110 +1,107 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>StringWasp</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- Login Page -->
+  <div id="loginPage" class="tab">
+    <h2>Login / Register</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <button onclick="register()">Register</button>
+  </div>  <!-- Ask for Username First Time -->  <div id="usernameDialog" style="display:none" class="modal">
+    <h3>Pick a username</h3>
+    <input type="text" id="newUsername" placeholder="Your username">
+    <button onclick="saveUsername()">Save</button>
+  </div>  <!-- Main App Page -->  <div id="appPage" class="tab" style="display:none">
+    <nav>
+      <button onclick="switchTab('chatsTab')">Chats</button>
+      <button onclick="switchTab('searchTab')">Search</button>
+      <button onclick="switchTab('inboxTab')">Inbox</button>
+      <button onclick="switchTab('profileTab')">Profile</button>
+    </nav><!-- Chats Tab -->
+<div id="chatsTab" class="tab">
+  <h2>Welcome <span id="usernameDisplay"></span></h2>
 
-<!-- LOGIN PAGE -->
-<div id="loginPage" class="tab">
-  <h2>Login / Register</h2>
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="password" placeholder="Password">
-  <button onclick="login()">Login</button>
-  <button onclick="register()">Register</button>
+  <div id="roomBar">
+    <h3>Available rooms</h3>
+    <ul id="roomList"></ul>
+  </div>
+
+  <div id="roomControls">
+    <label>Current room:</label>
+    <select id="roomDropdown" onchange="switchRoom()"></select>
+    <input type="text" id="customRoom" placeholder="Create / join room">
+    <button onclick="createOrJoinRoom()">Go</button>
+    <button onclick="leaveRoom()">Leave</button>
+    <input type="password" id="roomPassword" placeholder="Room password 🔐">
+  </div>
+
+  <div id="adminPanel" style="display:none">
+    <h3>Admin tools</h3>
+    <p id="adminInfo"></p>
+    <input type="email" id="memberEmail" placeholder="User email">
+    <button onclick="addMember()">Add member</button>
+    <button onclick="removeMember()">Remove member</button>
+    <button onclick="promoteMember()">Promote to admin</button>
+  </div>
+
+  <div id="messages"></div>
+  <div id="typingIndicator"></div>
+  <input id="messageInput" placeholder="Type message…">
+  <button onclick="sendMessage()">Send</button>
+
+  <h3>P2P File</h3>
+  <input type="file" id="fileInput">
+  <button onclick="sendFile()">Send file</button>
 </div>
 
-<!-- USERNAME DIALOG -->
-<div id="usernameDialog" style="display:none">
-  <h2>Create Username</h2>
-  <input type="text" id="newUsername" placeholder="Username">
-  <button onclick="saveUsername()">Save</button>
+<!-- Search Tab -->
+<div id="searchTab" class="tab" style="display:none">
+  <h2>Search Users / Groups</h2>
+  <input id="searchInput" oninput="runSearch()" placeholder="Search username or group name">
+  <div>
+    <button onclick="switchSearchView('user')">Users</button>
+    <button onclick="switchSearchView('group')">Groups</button>
+  </div>
+  <div id="searchResultsUser"></div>
+  <div id="searchResultsGroup" style="display:none"></div>
 </div>
 
-<!-- MAIN APP TABS -->
-<div id="appPage" style="display:none">
-  <!-- NAVIGATION BAR -->
-  <nav>
-    <button onclick="switchTab('chatsTab')">Chats</button>
-    <button onclick="switchTab('searchTab')">Search</button>
-    <button onclick="switchTab('inboxTab')">Inbox</button>
-    <button onclick="switchTab('profileTab')">Profile</button>
-  </nav>
-
-  <!-- CHAT TAB -->
-  <div id="chatsTab" class="tab">
-    <h2>Welcome <span id="usernameDisplay"></span></h2>
-
-    <div id="roomControls">
-      <label>Current room:</label>
-      <select id="roomDropdown" onchange="switchRoom()"></select>
-      <input type="text"  id="customRoom"  placeholder="Create / join room">
-      <button onclick="createOrJoinRoom()">Go</button>
-      <button onclick="leaveRoom()">Leave</button>
-      <input  type="password" id="roomPassword" placeholder="Room password 🔐">
-    </div>
-
-    <div id="adminPanel" style="display:none">
-      <h3>Admin tools</h3>
-      <p id="adminInfo"></p>
-      <input type="email" id="memberEmail" placeholder="User email">
-      <button onclick="addMember()">Add member</button>
-      <button onclick="removeMember()">Remove member</button>
-      <button onclick="promoteMember()">Promote to admin</button>
-    </div>
-
-    <div id="messages"></div>
-    <div id="typingIndicator"></div>
-    <input id="messageInput" placeholder="Type message…">
-    <button onclick="sendMessage()">Send</button>
-
-    <h3>P2P File</h3>
-    <input type="file" id="fileInput">
-    <button onclick="sendFile()">Send File</button>
+<!-- Inbox Tab -->
+<div id="inboxTab" class="tab" style="display:none">
+  <h2>Inbox</h2>
+  <div class="inbox-section">
+    <h3>Friend Requests</h3>
+    <div id="inboxFriends"></div>
   </div>
-
-  <!-- SEARCH TAB -->
-  <div id="searchTab" class="tab" style="display:none">
-    <h2>Search</h2>
-    <input type="text" id="searchInput" placeholder="Search usernames or groups…">
-    <button onclick="runSearch()">Search</button>
-    <div>
-      <button onclick="switchSearchView('user')">Users</button>
-      <button onclick="switchSearchView('group')">Groups</button>
-    </div>
-    <div id="searchResultsUser"></div>
-    <div id="searchResultsGroup" style="display:none"></div>
+  <div class="inbox-section">
+    <h3>Group Invites</h3>
+    <div id="inboxGroups"></div>
   </div>
-
-  <!-- INBOX TAB -->
-  <div id="inboxTab" class="tab" style="display:none">
-    <h2>Inbox</h2>
-    <ul id="inboxList"></ul>
-    <button onclick="clearAllInbox()">Clear All</button>
-  </div>
-
-  <!-- PROFILE TAB -->
-  <div id="profileTab" class="tab" style="display:none">
-    <h2>Your Profile</h2>
-    <img id="avatarPreview" width="100" height="100" style="display:none;">
-    <input type="text"  id="displayName" placeholder="Name">
-    <input type="text"  id="bio"         placeholder="Bio / status">
-    <input type="file" id="avatarInput">
-    <button onclick="saveProfile()">Save Profile</button>
+  <div class="inbox-section">
+    <h3>Alerts</h3>
+    <div id="inboxAlerts"></div>
   </div>
 </div>
 
-<!-- Firebase SDK & App scripts -->
-<script src="firebase.js"></script>
-<script src="p2p.js"></script>
-<script src="crypto.js"></script>
-<script src="app.js"></script>
+<!-- Profile Tab -->
+<div id="profileTab" class="tab" style="display:none">
+  <h2>Your Profile</h2>
+  <img id="avatarPreview" width="100" height="100" style="display:none;">
+  <input type="text" id="displayName" placeholder="Name">
+  <input type="text" id="bio" placeholder="Bio / status">
+  <input type="file" id="avatarInput">
+  <button onclick="saveProfile()">Save profile</button>
+</div>
 
-<!-- Notification Sound -->
-<audio id="notifSound"
-       src="https://notificationsounds.com/storage/sounds/file-sounds-1161-pristine.mp3"
-       preload="auto"></audio>
-</body>
+  </div><audio id="notifSound"
+src="https://notificationsounds.com/storage/sounds/file-sounds-1161-pristine.mp3"
+preload="auto"></audio>
+
+  <script src="firebase.js"></script>  <script src="p2p.js"></script>  <script src="crypto.js"></script>  <script src="app.js"></script></body>
 </html>
