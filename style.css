@@ -1,96 +1,83 @@
-/* --- Reset & Layout ----------------------------------------------- */
+/* --- Reset & Base -------------------------------------------------- */
 * {
   box-sizing: border-box;
 }
 
 body {
-  font-family: 'Segoe UI', sans-serif;
   margin: 0;
-  background: #eef3f7;
-  color: #333;
   padding: 14px;
+  font-family: 'Segoe UI', sans-serif;
+  background: #f4f6f8;
+  color: #333;
 }
 
-/* --- Inputs & Buttons --------------------------------------------- */
-input, select, button {
+/* --- Inputs & Buttons ---------------------------------------------- */
+input, select, button, textarea {
   padding: 9px;
   margin: 5px 0;
   border: 1px solid #ccc;
   border-radius: 8px;
   font-size: 15px;
   width: 100%;
+  box-sizing: border-box;
 }
 
 button {
   background: #0088cc;
-  color: white;
+  color: #fff;
   border: none;
   cursor: pointer;
-  transition: background 0.25s;
+  transition: background 0.3s ease;
 }
 
 button:hover {
   background: #0074a8;
 }
 
-/* --- Headings ----------------------------------------------------- */
+/* --- Headings ------------------------------------------------------ */
 h2, h3, h4 {
   color: #005d91;
   margin-bottom: 10px;
 }
 
-/* --- Navigation Tabs ---------------------------------------------- */
+/* --- Tabs Navigation ----------------------------------------------- */
 #navTabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
+  gap: 10px;
+  margin-bottom: 15px;
 }
 
 #navTabs button {
   flex: 1;
-  background: #d0ecff;
+  border-radius: 12px;
+  background: #e3f2fd;
   color: #005d91;
-  border-radius: 10px;
+  font-weight: bold;
 }
 
-/* --- Page Tabs ---------------------------------------------------- */
+/* --- Tab Containers ------------------------------------------------ */
 .tab {
   display: none;
   margin-top: 16px;
 }
 
-/* --- Room List ---------------------------------------------------- */
-#roomBar ul {
-  list-style: none;
-  padding-left: 0;
-}
-
-#roomBar li {
-  padding: 6px;
-  border-bottom: 1px solid #ddd;
-  cursor: pointer;
-}
-
-#roomBar li:hover {
-  background: #e6f4ff;
-}
-
-/* --- Message Area ------------------------------------------------- */
+/* --- Messages ------------------------------------------------------ */
 #messages {
+  background: white;
   height: 300px;
   overflow-y: auto;
-  background: #fff;
-  border: 1px solid #ccd;
-  border-radius: 8px;
   padding: 10px;
-  margin-bottom: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
 }
 
 .message {
-  background: #e7f5ff;
   padding: 8px;
-  border-radius: 6px;
   margin-bottom: 6px;
+  background: #e7f5ff;
+  border-radius: 6px;
+  position: relative;
 }
 
 .message b {
@@ -103,14 +90,30 @@ h2, h3, h4 {
   margin-left: 6px;
 }
 
-/* --- Typing Indicator --------------------------------------------- */
+/* --- Typing Indicator ---------------------------------------------- */
 #typingIndicator {
   font-style: italic;
   margin-top: 5px;
   color: gray;
 }
 
-/* --- Admin Panel -------------------------------------------------- */
+/* --- Room Sidebar -------------------------------------------------- */
+#roomBar ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+#roomBar li {
+  padding: 6px;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+}
+
+#roomBar li:hover {
+  background: #e0f7fa;
+}
+
+/* --- Admin Panel --------------------------------------------------- */
 #adminPanel {
   background: #e1f5fe;
   padding: 10px;
@@ -118,7 +121,19 @@ h2, h3, h4 {
   margin-top: 10px;
 }
 
-/* --- Search Items ------------------------------------------------- */
+/* --- Search Results ------------------------------------------------ */
+#searchTabs {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+#searchTabs button {
+  flex: 1;
+  background: #d0ecff;
+  color: #005d91;
+}
+
 .search-item {
   padding: 10px;
   border: 1px solid #ccc;
@@ -127,7 +142,7 @@ h2, h3, h4 {
   background: white;
 }
 
-/* --- Inbox Layout ------------------------------------------------- */
+/* --- Inbox --------------------------------------------------------- */
 .inbox-card {
   background: #fff;
   border: 1px solid #ccc;
@@ -151,13 +166,15 @@ h2, h3, h4 {
   margin-bottom: 10px;
 }
 
-/* --- Profile ------------------------------------------------------ */
+/* --- Profile ------------------------------------------------------- */
 #avatarPreview {
   border-radius: 50%;
   margin-bottom: 10px;
+  max-width: 100px;
+  height: auto;
 }
 
-/* --- Username Dialog ---------------------------------------------- */
+/* --- Username Dialog ----------------------------------------------- */
 #usernameDialog {
   background: #fff9c4;
   border: 1px solid #fbc02d;
@@ -165,14 +182,24 @@ h2, h3, h4 {
   border-radius: 10px;
   max-width: 400px;
   margin: 20px auto;
+  text-align: center;
 }
 
-/* --- Responsive --------------------------------------------------- */
-@media(max-width: 600px) {
+/* --- Responsive ---------------------------------------------------- */
+@media (max-width: 600px) {
   #messages {
     height: 200px;
   }
+
   #navTabs button {
+    font-size: 14px;
+  }
+
+  .message {
+    font-size: 14px;
+  }
+
+  input, button {
     font-size: 14px;
   }
 }
