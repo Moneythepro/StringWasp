@@ -69,7 +69,12 @@
   <button onclick="sendFile()">Send file</button>
 </div>
 
-<!-- scripts -->
+<!-- Firebase CDN (must come first) -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<!-- Your local scripts -->
 <script src="firebase.js"></script>
 <script src="p2p.js"></script>
 <script src="crypto.js"></script>
@@ -79,5 +84,6 @@
 <audio id="notifSound"
        src="https://notificationsounds.com/storage/sounds/file-sounds-1161-pristine.mp3"
        preload="auto"></audio>
+
 </body>
 </html>
