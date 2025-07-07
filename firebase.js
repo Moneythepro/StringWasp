@@ -1,5 +1,5 @@
-// firebase.js (Firebase 8)
-var firebaseConfig = {
+// Initialize Firebase
+const firebaseConfig = {
   apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
   authDomain: "stringwasp.firebaseapp.com",
   projectId: "stringwasp",
@@ -10,5 +10,6 @@ var firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
+// Export Firebase modules
 const auth = firebase.auth();
 const db = firebase.firestore();
