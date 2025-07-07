@@ -300,3 +300,71 @@ if ("Notification" in window && Notification.permission !== "granted")
 function login() {/* existing code */}
 function register() {/* existing code */}
 function listenForOffers() {/* existing code */}
+// Switch app tabs
+function switchTab(tabId) {
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(tab => tab.style.display = "none");
+  document.getElementById(tabId).style.display = "block";
+}
+
+let currentSearchTab = "user";
+
+function switchSearchView(type) {
+  currentSearchTab = type;
+  document.getElementById("searchResultsUser").style.display = type === "user" ? "block" : "none";
+  document.getElementById("searchResultsGroup").style.display = type === "group" ? "block" : "none";
+}
+
+async function runSearch() {
+  const query = document.getElementById("searchInput").value.trim().toLowerCase();
+  if (!query) {
+    document.getElementById("searchResultsUser").innerHTML = "";
+    document.getElementById("searchResultsGroup").innerHTML = "";
+    return;
+  }
+
+  // Search Users
+  const userRes = document.getElementById("searchResultsUser");
+  const userSnap = await db.collection("users").get();
+  let htmlUser = "";
+  userSnap.forEach(doc => {
+    const d = doc.data();
+    if (d.username && d.username.toLowerCase().includes(query)) {
+      htmlUser += `
+        <div class="search-item">
+          <b>@${d.username}</b><br>
+          ${d.bio || "No bio"}<br>
+          <button onclick="sendFriendRequest('${doc.id}')">Send Friend Request</button>
+        </div><hr>
+      `;
+    }
+  });
+  userRes.innerHTML = htmlUser || "<i>No users found.</i>";
+
+  // Search Groups
+  const groupRes = document.getElementById("searchResultsGroup");
+  const groupSnap = await db.collection("rooms").get();
+  let htmlGroup = "";
+  groupSnap.forEach(doc => {
+    if (doc.id.toLowerCase().includes(query)) {
+      htmlGroup += `
+        <div class="search-item">
+          <b>#${doc.id}</b><br>
+          Members: ${doc.data().members.length}<br>
+          <button onclick="requestJoinGroup('${doc.id}')">Request to Join</button>
+        </div><hr>
+      `;
+    }
+  });
+  groupRes.innerHTML = htmlGroup || "<i>No groups found.</i>";
+}
+
+function sendFriendRequest(uid) {
+  alert(`Friend request sent to ${uid} (inbox system coming next)`);
+  // TODO: Add to that user’s "inbox" collection in Firestore
+}
+
+function requestJoinGroup(groupId) {
+  alert(`Request to join group #${groupId} sent.`);
+  // TODO: Add request to group join queue (for approval)
+}
