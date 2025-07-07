@@ -7,17 +7,29 @@ let unsubscribeRoomList = null;
 let lastMessageTS = 0;
 let typingTO = null;
 
-const getRoomPassword = () =>
-  document.getElementById("roomPassword").value || "";
+const getRoomPassword = () => document.getElementById("roomPassword")?.value || "";
+
+// ---------------- INIT FIREBASE ----------------
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "SENDER_ID",
+  appId: "APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
 // ---------------- TABS ----------------
 function switchTab(tabId) {
-  const tabs = document.querySelectorAll(".tab");
-  tabs.forEach(tab => tab.style.display = "none");
+  document.querySelectorAll(".tab").forEach(tab => tab.style.display = "none");
   document.getElementById(tabId).style.display = "block";
 }
 
-// ---------------- AUTH STATE ----------------
+// ---------------- AUTH ----------------
 auth.onAuthStateChanged(async user => {
   if (!user) {
     switchTab("loginPage");
@@ -35,14 +47,26 @@ auth.onAuthStateChanged(async user => {
   }
 });
 
+function login() {
+  const email = document.getElementById("email").value;
+  const pass = document.getElementById("password").value;
+  auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+}
+
+function register() {
+  const email = document.getElementById("email").value;
+  const pass = document.getElementById("password").value;
+  auth.createUserWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+}
+
 async function saveUsername() {
   const username = document.getElementById("newUsername").value.trim();
-  if (!username) return alert("Pick a username");
+  if (!username) return alert("Pick a valid username");
 
   const user = auth.currentUser;
   await db.collection("users").doc(user.uid).set({
     email: user.email,
-    username,
+    username: username,
     joined: Date.now()
   });
 
@@ -60,7 +84,7 @@ async function startApp(user) {
   switchTab("chatsTab");
 }
 
-// ---------------- ROOM SYSTEM ----------------
+// ---------------- ROOMS ----------------
 async function createRoomIfMissing(name) {
   const ref = db.collection("rooms").doc(name);
   const snap = await ref.get();
@@ -84,7 +108,6 @@ function startRoomListeners() {
         const data = doc.data();
         const li = document.createElement("li");
         li.textContent = `${doc.id} (${data.members.length})`;
-        li.style.cursor = "pointer";
         li.onclick = () => joinRoom(doc.id);
         listEl.appendChild(li);
       });
@@ -118,7 +141,7 @@ async function joinRoom(roomName) {
   currentRoom = roomName;
   document.getElementById("roomDropdown").value = roomName;
 
-  db.collection("rooms").doc(roomName)
+  await db.collection("rooms").doc(roomName)
     .update({
       members: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.email)
     });
@@ -144,7 +167,7 @@ function leaveRoom() {
   joinRoom("general");
 }
 
-// ---------------- ADMIN PANEL ----------------
+// ---------------- ADMIN ----------------
 function updateAdminPanel(doc) {
   const panel = document.getElementById("adminPanel");
   if (!doc.exists) return panel.style.display = "none";
@@ -330,40 +353,14 @@ function requestJoinGroup(groupId) {
 function triggerNotification(sender, msg) {
   if (Notification.permission === "granted")
     new Notification(`Msg from ${sender}`, { body: msg });
-  document.getElementById("notifSound").play().catch(() => {});
+  document.getElementById("notifSound")?.play().catch(() => {});
 }
 if ("Notification" in window && Notification.permission !== "granted")
   Notification.requestPermission();
 
 // ---------------- PROFILE ----------------
-function saveProfile() { /* Add your code */ }
-function loadProfile(uid) { /* Add your code */ }
+function saveProfile() { /* To Do */ }
+function loadProfile(uid) { /* To Do */ }
 
-// ---------------- AUTH / FILE ----------------
-function login() { /* Add your login code */ }
-function register() { /* Add your register code */ }
-function listenForOffers() { /* P2P file stub */ }
-auth.onAuthStateChanged(async user => {
-  console.log("🔁 Auth state changed:", user);
-
-  if (!user) {
-    document.getElementById("loginPage").style.display = "block";
-    document.getElementById("appPage").style.display = "none";
-    return;
-  }
-
-  document.getElementById("loginPage").style.display = "none";
-  document.getElementById("appPage").style.display = "block";
-  document.getElementById("usernameDisplay").textContent = user.email;
-
-  const userRef = db.collection("users").doc(user.uid);
-  const userSnap = await userRef.get();
-
-  if (!userSnap.exists || !userSnap.data().username) {
-    console.log("🟡 Prompting for username...");
-    document.getElementById("usernameDialog").style.display = "block";
-  } else {
-    console.log("🟢 Username exists, starting app...");
-    startApp(user);
-  }
-});
+// ---------------- FILE SHARING ----------------
+function listenForOffers() { /* To Do: P2P file share */ }
