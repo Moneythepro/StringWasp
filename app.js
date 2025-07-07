@@ -61,7 +61,7 @@ async function saveUsername() {
 async function startApp(user) {
   loadProfile(user.uid);
   startRoomListeners();
-  await createRoomIfMissing("general");
+  if (auth.currentUser) await createRoomIfMissing("general");
   populateDropdown();
   joinRoom("general");
   listenForOffers();
@@ -297,16 +297,23 @@ if ("Notification" in window && Notification.permission !== "granted")
   Notification.requestPermission();
 
 // ---------------- AUTH + FILES ----------------
-function login() {/* existing code */}
-function register() {/* existing code */}
-function listenForOffers() {/* existing code */}
-// Switch app tabs
-function switchTab(tabId) {
-  const tabs = document.querySelectorAll('.tab');
-  tabs.forEach(tab => tab.style.display = "none");
-  document.getElementById(tabId).style.display = "block";
+function login() {
+  const email = document.getElementById("email").value;
+  const pass  = document.getElementById("password").value;
+  auth.signInWithEmailAndPassword(email, pass)
+    .catch(err => alert("Login failed: " + err.message));
 }
 
+function register() {
+  const email = document.getElementById("email").value;
+  const pass  = document.getElementById("password").value;
+  auth.createUserWithEmailAndPassword(email, pass)
+    .catch(err => alert("Registration failed: " + err.message));
+}
+
+function listenForOffers() {/* existing code */}
+
+// ---------------- SEARCH ----------------
 let currentSearchTab = "user";
 
 function switchSearchView(type) {
