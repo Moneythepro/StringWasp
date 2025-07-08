@@ -55,6 +55,7 @@ async function startApp(user) {
   await createRoomIfMissing("general");
   populateDropdown();
   joinRoom("general");
+ loadInbox(user.uid); 
   switchTab("appPage");
 }
 
@@ -361,4 +362,55 @@ async function promoteMember() {
   await getAdminRoomRef().update({
     admins: firebase.firestore.FieldValue.arrayUnion(email)
   });
+function loadInbox(uid) {
+  const list = document.getElementById("inboxList");
+  const inboxRef = db.collection("users").doc(uid).collection("inbox").orderBy("timestamp", "desc");
+
+  inboxRef.onSnapshot(snapshot => {
+    list.innerHTML = "";
+    if (snapshot.empty) {
+      list.innerHTML = "No notifications yet.";
+      return;
+    }
+
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      const card = document.createElement("div");
+      card.className = "inbox-card";
+
+      if (d.type === "friend_request") {
+        card.innerHTML = `
+          <h4>Friend request from ${d.from}</h4>
+          <button onclick="acceptFriend('${doc.id}', '${uid}')">Accept</button>
+          <button onclick="declineInbox('${doc.id}', '${uid}')">Decline</button>
+        `;
+      } else if (d.type === "group_invite") {
+        card.innerHTML = `
+          <h4>Group invite to #${d.groupId} from ${d.from}</h4>
+          <button onclick="acceptGroup('${doc.id}', '${uid}', '${d.groupId}')">Accept</button>
+          <button onclick="declineInbox('${doc.id}', '${uid}')">Decline</button>
+        `;
+      }
+
+      list.appendChild(card);
+    });
+  });
+}
+
+function acceptFriend(docId, uid) {
+  db.collection("users").doc(uid).collection("inbox").doc(docId).delete();
+  alert("Friend accepted (not yet added to list)");
+}
+
+function acceptGroup(docId, uid, groupId) {
+  db.collection("rooms").doc(groupId).update({
+    members: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.email)
+  });
+  db.collection("users").doc(uid).collection("inbox").doc(docId).delete();
+  alert(`You joined #${groupId}`);
+}
+
+function declineInbox(docId, uid) {
+  db.collection("users").doc(uid).collection("inbox").doc(docId).delete();
+}
 }
