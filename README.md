@@ -52,7 +52,7 @@ StringWasp is a modern, Telegram/Instagram-style chat application built with **F
 3. Under “Source”, select `main` branch, `/root` folder  
 4. GitHub will give you a public link like:
 
-https://Moneythepro.github.io/stringwasp/
+https://moneythepro.github.io/stringwasp/
 
 5. ✅ Done! Fully working P2P encrypted chat site
 
