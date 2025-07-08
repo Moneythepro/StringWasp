@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>StringWasp Chat</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,7 +20,6 @@
   <div id="appPage" class="tab" style="display:none;">
     <h2>Welcome <span id="usernameDisplay"></span></h2>
 
-    <!-- Navigation Tabs -->
     <div id="navTabs">
       <button onclick="switchTab('chatsTab')">Chats</button>
       <button onclick="switchTab('inboxTab')">Inbox</button>
@@ -92,18 +90,33 @@
     <button onclick="saveUsername()">Save</button>
   </div>
 
-  <!-- 🔔 Notification Sound -->
+  <!-- 🔔 Notification sound -->
   <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
-  <!-- ✅ Firebase SDK (legacy style) -->
+  <!-- 🔥 Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-  <!-- 🔥 Firebase config and export setup -->
-  <script type="module" src="firebase.js"></script>
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
+      authDomain: "stringwasp.firebaseapp.com",
+      projectId: "stringwasp",
+      storageBucket: "stringwasp.appspot.com",
+      messagingSenderId: "974718019508",
+      appId: "1:974718019508:web:59fabe6306517d10b374e1"
+    };
 
-  <!-- 🚀 Main App Logic (must come after firebase.js) -->
-  <script type="module" src="app.js"></script>
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    window.auth = auth;
+    window.db = db;
+  </script>
+
+  <!-- ✅ Load App Logic AFTER Firebase is ready -->
+  <script src="app.js"></script>
 </body>
 </html>
