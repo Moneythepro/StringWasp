@@ -1,210 +1,212 @@
+/* General Reset */
 body {
-  font-family: Arial, sans-serif;
   margin: 0;
-  background: #f0f0f0;
+  font-family: 'Segoe UI', sans-serif;
+  background: #f5f5f5;
+  color: #222;
+  overflow-x: hidden;
 }
 
-h2, h3, h4 {
-  margin-top: 0;
-}
-
-.tab, .tabContent, .modal {
-  display: none;
-}
-
-#loginPage, #appPage {
-  padding: 20px;
-}
-
-input, textarea, select, button {
-  display: block;
-  margin: 10px 0;
+input, button, textarea, select {
+  font-family: inherit;
+  font-size: 16px;
+  margin: 5px 0;
   padding: 10px;
-  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
   width: 100%;
-  max-width: 400px;
   box-sizing: border-box;
+}
+
+button {
+  background: #0a84ff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+button:hover {
+  background: #006edc;
 }
 
 textarea {
   resize: vertical;
+  min-height: 60px;
 }
 
-button {
-  background: #25D366;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+/* Tabs */
+.tab, .tabContent {
+  display: none;
+  padding: 15px;
 }
 
-button:hover {
-  background: #20b358;
+.tab.active, .tabContent.active {
+  display: block;
 }
 
-.tabs {
+/* Header & Controls */
+.header {
   display: flex;
-  gap: 5px;
-  margin-top: 10px;
+  align-items: center;
+  padding: 10px;
+  background: #ffffff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  gap: 10px;
   flex-wrap: wrap;
 }
-
-.tabs button {
+.header input, .header select {
   flex: 1;
-  border-radius: 5px;
-  background: #e0e0e0;
-  color: #000;
 }
 
-.tabs button:hover {
-  background: #ccc;
-}
-
+/* Messages */
 .messages {
-  background: #fff;
-  padding: 10px;
-  border-radius: 10px;
-  height: 300px;
+  max-height: 300px;
   overflow-y: auto;
-  box-shadow: 0 0 5px rgba(0,0,0,0.1);
-}
-
-.message {
-  background: #e1ffc7;
+  padding: 10px;
+  background: #fff;
   margin-bottom: 10px;
-  padding: 8px 10px;
   border-radius: 10px;
-  max-width: 80%;
-  word-wrap: break-word;
-  position: relative;
+  border: 1px solid #ddd;
 }
-
+.message {
+  background: #f0f0f0;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+}
 .message b {
-  color: #075e54;
+  color: #007aff;
 }
-
 .typing {
-  font-style: italic;
-  font-size: 0.9rem;
-  margin: 5px 0;
+  font-size: 0.9em;
+  color: #666;
 }
 
-.search-buttons {
+/* Inbox & Search */
+.inbox-card, .search-item {
+  background: #ffffff;
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.inbox-card button, .search-item button {
+  margin-top: 8px;
+  width: auto;
+}
+
+/* Tabs Buttons */
+.tabs {
   display: flex;
-  gap: 5px;
+  justify-content: space-around;
+  background: #ffffff;
+  border-top: 1px solid #ddd;
+  padding: 10px 0;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.tabs button {
+  background: none;
+  border: none;
+  color: #0a84ff;
+  font-weight: bold;
 }
 
-.search-results {
+/* Profile */
+#profileTab input, #profileTab textarea {
+  margin-top: 10px;
+}
+#profileTab button {
   margin-top: 10px;
 }
 
-.search-item {
-  background: #fff;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-left: 4px solid #25D366;
-  border-radius: 8px;
-}
-
-.inbox-card {
-  background: #fff;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-
-.fab {
+/* Modal */
+.modal {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 50px;
-  height: 50px;
-  font-size: 24px;
-  background: #25D366;
-  color: #fff;
-  border-radius: 50%;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-  cursor: pointer;
-  border: none;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -30%);
+  background: white;
+  border: 2px solid #0a84ff;
+  padding: 20px;
+  z-index: 999;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
 }
 
+/* Loader */
+#loadingOverlay {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  background: rgba(0,0,0,0.3);
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+}
 .loader {
   border: 6px solid #f3f3f3;
-  border-top: 6px solid #25D366;
+  border-top: 6px solid #0a84ff;
   border-radius: 50%;
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   animation: spin 1s linear infinite;
 }
-
-#loadingOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255,255,255,0.9);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
-.modal {
+/* Floating Action Button */
+.fab {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  z-index: 1000;
-  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  bottom: 20px;
+  right: 20px;
+  background: #0a84ff;
+  color: white;
+  font-size: 24px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  cursor: pointer;
+  z-index: 10;
 }
 
+/* Admin Panel */
 .admin-panel {
-  background: #fff;
-  padding: 10px;
-  margin: 15px 0;
-  border-radius: 8px;
   display: none;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  background: #fff9f9;
+  border: 1px dashed #ff4d4d;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 10px;
 }
 
-.action-btn {
+/* Search Results */
+.search-results {
+  margin-top: 10px;
+}
+.search-buttons button {
+  width: auto;
   margin-right: 5px;
-  background: #007bff;
-  color: #fff;
-  padding: 4px 8px;
-  border-radius: 5px;
-  font-size: 0.8rem;
 }
 
-.action-btn:hover {
-  background: #0056b3;
+/* Thread View */
+#threadView {
+  display: none;
 }
-
-@media (max-width: 600px) {
-  input, textarea, button, select {
-    width: 100%;
-  }
-
-  .tabs {
-    flex-direction: column;
-  }
-
-  .message {
-    max-width: 100%;
-  }
-
-  .fab {
-    bottom: 10px;
-    right: 10px;
-  }
+#threadMessages {
+  max-height: 300px;
+  overflow-y: auto;
+  background: #fefefe;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 10px;
 }
