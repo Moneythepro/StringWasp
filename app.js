@@ -7,7 +7,8 @@ let unsubscribeRoomList = null;
 let lastMessageTS = 0;
 let typingTO = null;
 
-const getRoomPassword = () => document.getElementById("roomPassword").value || "";
+const getRoomPassword = () =>
+  document.getElementById("roomPassword").value || "";
 
 // ---------------- TABS ----------------
 function switchTab(tabId) {
@@ -40,7 +41,7 @@ async function saveUsername() {
   const user = auth.currentUser;
   await db.collection("users").doc(user.uid).set({
     email: user.email,
-    username,
+    username: username,
     joined: Date.now()
   });
 
@@ -55,7 +56,6 @@ async function startApp(user) {
   populateDropdown();
   joinRoom("general");
   switchTab("appPage");
-  switchTab("chatsTab");
 }
 
 // ---------------- AUTH ----------------
@@ -63,14 +63,16 @@ function login() {
   const email = document.getElementById("email").value.trim();
   const pass = document.getElementById("password").value.trim();
   if (!email || !pass) return alert("Missing credentials");
-  auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+  auth.signInWithEmailAndPassword(email, pass)
+    .catch(e => alert(e.message));
 }
 
 function register() {
   const email = document.getElementById("email").value.trim();
   const pass = document.getElementById("password").value.trim();
   if (!email || !pass) return alert("Missing credentials");
-  auth.createUserWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+  auth.createUserWithEmailAndPassword(email, pass)
+    .catch(e => alert(e.message));
 }
 
 // ---------------- ROOM SYSTEM ----------------
@@ -284,7 +286,7 @@ function requestJoinGroup(groupId) {
 
 // ---------------- PROFILE ----------------
 function loadProfile(uid) {
-  // Placeholder for future profile loading
+  // Future: load profile data if needed
 }
 
 function saveProfile() {
@@ -300,16 +302,15 @@ function saveProfile() {
 
 // ---------------- NOTIFICATIONS ----------------
 function triggerNotification(sender, msg) {
-  if (Notification.permission === "granted") {
+  if (Notification.permission === "granted")
     new Notification(`Message from ${sender}`, { body: msg });
-  }
+
   const audio = document.getElementById("notifSound");
   if (audio) audio.play().catch(() => {});
 }
 
-if ("Notification" in window && Notification.permission !== "granted") {
+if ("Notification" in window && Notification.permission !== "granted")
   Notification.requestPermission();
-}
 
 // ---------------- ADMIN ----------------
 function updateAdminPanel(doc) {
@@ -337,16 +338,14 @@ function getAdminRoomRef() {
 }
 
 async function addMember() {
-  const email = getAdminInput();
-  if (!email) return;
+  const email = getAdminInput(); if (!email) return;
   await getAdminRoomRef().update({
     members: firebase.firestore.FieldValue.arrayUnion(email)
   });
 }
 
 async function removeMember() {
-  const email = getAdminInput();
-  if (!email) return;
+  const email = getAdminInput(); if (!email) return;
   await getAdminRoomRef().update({
     members: firebase.firestore.FieldValue.arrayRemove(email),
     admins: firebase.firestore.FieldValue.arrayRemove(email)
@@ -354,8 +353,7 @@ async function removeMember() {
 }
 
 async function promoteMember() {
-  const email = getAdminInput();
-  if (!email) return;
+  const email = getAdminInput(); if (!email) return;
   const snap = await getAdminRoomRef().get();
   const data = snap.data();
   if (data.admins.length >= 3) return alert("Max 3 admins.");
