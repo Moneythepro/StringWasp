@@ -1,46 +1,42 @@
-const CACHE_NAME = 'stringwasp-cache-v1';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/app.js',
-  '/firebase.js',
-  '/notif.mp3',
-  '/favicon.png',
-  '/manifest.json'
+const CACHE_NAME = "stringwasp-cache-v1";
+const ASSETS = [
+  "/",
+  "/index.html",
+  "/style.css",
+  "/app.js",
+  "/firebase.js",
+  "/manifest.json",
+  "/notif.mp3",
+  "/favicon.png"
 ];
 
-// Install Service Worker
-self.addEventListener('install', event => {
+// Install event
+self.addEventListener("install", event => {
+  console.log("[SW] Installed");
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log('[SW] Caching app shell...');
-      return cache.addAll(urlsToCache);
+      return cache.addAll(ASSETS);
     })
   );
 });
 
-// Activate Service Worker
-self.addEventListener('activate', event => {
+// Activate event
+self.addEventListener("activate", event => {
+  console.log("[SW] Activated");
   event.waitUntil(
-    caches.keys().then(keyList =>
-      Promise.all(
-        keyList.map(key => {
-          if (key !== CACHE_NAME) {
-            console.log('[SW] Removing old cache:', key);
-            return caches.delete(key);
-          }
-        })
-      )
+    caches.keys().then(keys =>
+      Promise.all(keys.map(k => {
+        if (k !== CACHE_NAME) return caches.delete(k);
+      }))
     )
   );
 });
 
-// Fetch Cached Resources
-self.addEventListener('fetch', event => {
+// Fetch event
+self.addEventListener("fetch", event => {
   event.respondWith(
-    caches.match(event.request).then(response =>
-      response || fetch(event.request)
-    )
+    caches.match(event.request).then(res => {
+      return res || fetch(event.request);
+    })
   );
 });
