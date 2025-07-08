@@ -1,240 +1,239 @@
-// Firebase Init (if not done in firebase.js)
-const db = firebase.firestore();
+// Firebase setup (v8)
+const firebaseConfig = {
+  apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
+  authDomain: "stringwasp.firebaseapp.com",
+  projectId: "stringwasp",
+  storageBucket: "stringwasp.appspot.com",
+  messagingSenderId: "974718019508",
+  appId: "1:974718019508:web:59fabe6306517d10b374e1"
+};
+
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 const auth = firebase.auth();
+const db = firebase.firestore();
 
-let currentUser = null;
-let currentRoom = 'general';
-let isAdmin = false;
-let typingTimeout;
-let threadFriendUID = null;
-
-// Switch between visible tabs
+// Tabs
 function switchTab(tabId) {
-  document.querySelectorAll('.tab').forEach(t => t.style.display = 'none');
-  const target = document.getElementById(tabId);
-  if (target) target.style.display = 'block';
+  document.querySelectorAll(".tab").forEach(tab => tab.style.display = "none");
+  document.querySelectorAll(".tabContent").forEach(tab => tab.style.display = "none");
+  document.getElementById(tabId).style.display = "block";
 }
 
-// Loading overlay control
-function showLoading(show = true) {
-  document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+// Loading overlay
+function showLoading(show) {
+  document.getElementById("loadingOverlay").style.display = show ? "flex" : "none";
 }
 
-// Auth state
-auth.onAuthStateChanged(async user => {
+// Auth
+auth.onAuthStateChanged(user => {
   if (user) {
-    currentUser = user;
-    showLoading(true);
-    const userDoc = await db.collection("users").doc(user.uid).get();
-    const data = userDoc.data();
-    if (!data || !data.username) {
-      switchTab("usernameDialog");
-    } else {
-      document.getElementById("usernameDisplay").textContent = `@${data.username}`;
-      initApp();
-    }
-    showLoading(false);
+    checkUsername();
   } else {
-    currentUser = null;
     switchTab("loginPage");
   }
 });
 
-// Register
-function register() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  auth.createUserWithEmailAndPassword(email, password).catch(alert);
-}
-
-// Login
 function login() {
   const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  auth.signInWithEmailAndPassword(email, password).catch(alert);
+  const pass = document.getElementById("password").value;
+  auth.signInWithEmailAndPassword(email, pass).catch(alert);
 }
 
-// Username save
-async function saveUsername() {
-  const username = document.getElementById("newUsername").value.trim();
-  if (!username) return alert("Enter a username");
-  const taken = await db.collection("users").where("username", "==", username).get();
-  if (!taken.empty) return alert("Username taken");
+function register() {
+  const email = document.getElementById("email").value;
+  const pass = document.getElementById("password").value;
+  auth.createUserWithEmailAndPassword(email, pass).catch(alert);
+}
 
-  await db.collection("users").doc(currentUser.uid).set({
-    email: currentUser.email,
-    username,
-    created: Date.now()
+// Username
+function checkUsername() {
+  db.collection("users").doc(auth.currentUser.uid).get().then(doc => {
+    if (doc.exists && doc.data().username) {
+      document.getElementById("usernameDisplay").textContent = doc.data().username;
+      initApp();
+    } else {
+      switchTab("usernameDialog");
+    }
   });
-  document.getElementById("usernameDisplay").textContent = `@${username}`;
-  initApp();
 }
 
-// Initialize app after login
-async function initApp() {
+function saveUsername() {
+  const uname = document.getElementById("newUsername").value.trim();
+  if (!uname) return alert("Enter a username");
+  db.collection("users").where("username", "==", uname).get().then(snapshot => {
+    if (!snapshot.empty) return alert("Username taken");
+    db.collection("users").doc(auth.currentUser.uid).set({ username: uname }, { merge: true }).then(() => {
+      document.getElementById("usernameDisplay").textContent = uname;
+      switchTab("chatTab");
+      initApp();
+    });
+  });
+}
+
+// Init
+function initApp() {
   switchTab("chatTab");
-  document.getElementById("appPage").style.display = "block";
   loadRooms();
-  joinRoom(currentRoom);
+  listenForMessages();
   loadProfile();
   loadInbox();
   loadFriends();
+  loadSearchResults();
 }
 
-// Load dropdown rooms
-async function loadRooms() {
-  const roomDropdown = document.getElementById("roomDropdown");
-  roomDropdown.innerHTML = "";
-  const snapshot = await db.collection("rooms").get();
-  snapshot.forEach(doc => {
-    const opt = document.createElement("option");
-    opt.value = doc.id;
-    opt.textContent = doc.id;
-    roomDropdown.appendChild(opt);
+// Chat
+function sendMessage() {
+  const msg = document.getElementById("messageInput").value.trim();
+  if (!msg) return;
+  const room = document.getElementById("roomDropdown").value;
+  db.collection("rooms").doc(room).collection("messages").add({
+    text: msg,
+    from: auth.currentUser.uid,
+    time: Date.now()
   });
+  document.getElementById("messageInput").value = "";
 }
 
-// Create or join room
-async function createOrJoinRoom() {
-  const name = document.getElementById("customRoom").value.trim();
-  if (!name) return;
-  const ref = db.collection("rooms").doc(name);
-  const doc = await ref.get();
-  if (!doc.exists) await ref.set({ created: Date.now(), admin: currentUser.uid });
-  joinRoom(name);
-}
-
-// Join chat room
-function joinRoom(room) {
-  currentRoom = room;
-  document.getElementById("roomDropdown").value = room;
-  document.getElementById("messages").innerHTML = "";
-  db.collection("messages")
-    .where("room", "==", room)
-    .orderBy("timestamp")
+function listenForMessages() {
+  const room = document.getElementById("roomDropdown").value;
+  if (!room) return;
+  db.collection("rooms").doc(room).collection("messages")
+    .orderBy("time").limit(50)
     .onSnapshot(snapshot => {
-      document.getElementById("messages").innerHTML = "";
+      const messagesDiv = document.getElementById("messages");
+      messagesDiv.innerHTML = "";
       snapshot.forEach(doc => {
-        const data = doc.data();
-        appendMessage(data.username, data.text);
+        const msg = doc.data();
+        const el = document.createElement("div");
+        el.textContent = `[${msg.from}] ${msg.text}`;
+        messagesDiv.appendChild(el);
       });
     });
-
-  // Check if admin
-  db.collection("rooms").doc(room).get().then(doc => {
-    isAdmin = doc.exists && doc.data().admin === currentUser.uid;
-    document.getElementById("adminPanel").style.display = isAdmin ? "block" : "none";
-  });
 }
 
-// Send message
-function sendMessage() {
-  const text = document.getElementById("messageInput").value.trim();
-  if (!text) return;
-  document.getElementById("messageInput").value = "";
-
-  db.collection("users").doc(currentUser.uid).get().then(userDoc => {
-    const username = userDoc.data().username || "Anonymous";
-    db.collection("messages").add({
-      room: currentRoom,
-      uid: currentUser.uid,
-      text,
-      username,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
-  });
+function createOrJoinRoom() {
+  const newRoom = document.getElementById("customRoom").value.trim();
+  if (!newRoom) return;
+  joinRoom(newRoom);
 }
 
-// Append message
-function appendMessage(user, text) {
-  const msg = document.createElement("div");
-  msg.className = "message";
-  msg.innerHTML = `<strong>${user}:</strong> ${text}`;
-  document.getElementById("messages").appendChild(msg);
+function joinRoom(roomName) {
+  document.getElementById("roomDropdown").value = roomName;
+  listenForMessages();
 }
 
-// Admin tools
+// Admin Tools
 function addMember() {
-  // Placeholder (future: add user to room ACL)
-  alert("AddMember feature coming soon.");
+  const room = document.getElementById("roomDropdown").value;
+  const email = document.getElementById("memberEmail").value;
+  db.collection("rooms").doc(room).collection("members").add({ email });
 }
+
 function removeMember() {
-  alert("RemoveMember feature coming soon.");
+  // Basic implementation
+  alert("Remove logic not implemented");
 }
+
 function promoteMember() {
-  alert("PromoteMember feature coming soon.");
+  alert("Promote logic not implemented");
 }
 
-// Search
-function switchSearchView(view) {
-  document.getElementById("searchResultsUser").style.display = view === "user" ? "block" : "none";
-  document.getElementById("searchResultsGroup").style.display = view === "group" ? "block" : "none";
-}
-async function runSearch() {
-  const q = document.getElementById("searchInput").value.trim();
-  if (!q) return;
-
-  // User search
-  const users = await db.collection("users")
-    .where("username", ">=", q).where("username", "<=", q + "\uf8ff").get();
-
-  const userRes = document.getElementById("searchResultsUser");
-  userRes.innerHTML = "";
-  users.forEach(doc => {
-    const div = document.createElement("div");
-    div.className = "card";
-    div.textContent = "@" + doc.data().username;
-    userRes.appendChild(div);
-  });
-
-  // Group search
-  const rooms = await db.collection("rooms")
-    .where(firebase.firestore.FieldPath.documentId(), ">=", q)
-    .where(firebase.firestore.FieldPath.documentId(), "<=", q + "\uf8ff").get();
-
-  const groupRes = document.getElementById("searchResultsGroup");
-  groupRes.innerHTML = "";
-  rooms.forEach(doc => {
-    const div = document.createElement("div");
-    div.className = "card";
-    div.textContent = "#" + doc.id;
-    groupRes.appendChild(div);
-  });
-}
-
-// Inbox (basic friend request mock)
+// Inbox
 function loadInbox() {
-  const inboxList = document.getElementById("inboxList");
-  inboxList.innerHTML = "<div class='card'>No new notifications</div>"; // Replace with real Firestore notifications
+  const inboxDiv = document.getElementById("inboxList");
+  db.collection("inbox").where("to", "==", auth.currentUser.uid)
+    .onSnapshot(snapshot => {
+      inboxDiv.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const div = document.createElement("div");
+        div.className = "inbox-card";
+        div.textContent = `${data.type} from ${data.fromName || data.from}`;
+        inboxDiv.appendChild(div);
+      });
+    });
 }
 
 // Profile
-function loadProfile() {
-  db.collection("users").doc(currentUser.uid).get().then(doc => {
-    const data = doc.data();
-    document.getElementById("profileName").value = data.name || "";
-    document.getElementById("profileBio").value = data.bio || "";
-  });
-}
 function saveProfile() {
-  const name = document.getElementById("profileName").value.trim();
-  const bio = document.getElementById("profileBio").value.trim();
-  db.collection("users").doc(currentUser.uid).update({ name, bio });
+  const name = document.getElementById("profileName").value;
+  const bio = document.getElementById("profileBio").value;
+  db.collection("users").doc(auth.currentUser.uid).set({ name, bio }, { merge: true });
 }
 
-// Threads
-function openThread(uid, username) {
-  threadFriendUID = uid;
-  document.getElementById("threadWithName").textContent = username;
-  document.getElementById("threadMessages").innerHTML = "";
+function loadProfile() {
+  db.collection("users").doc(auth.currentUser.uid).get().then(doc => {
+    if (doc.exists) {
+      const d = doc.data();
+      document.getElementById("profileName").value = d.name || "";
+      document.getElementById("profileBio").value = d.bio || "";
+    }
+  });
+}
+
+// Search
+function runSearch() {
+  const q = document.getElementById("searchInput").value.toLowerCase();
+  db.collection("users").where("username", ">=", q).where("username", "<=", q + "\uf8ff")
+    .get().then(snapshot => {
+      const res = document.getElementById("searchResultsUser");
+      res.innerHTML = "";
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        const div = document.createElement("div");
+        div.textContent = d.username + (d.username === "moneythepro" ? " 🛠️ Developer" : "");
+        res.appendChild(div);
+      });
+    });
+}
+
+function switchSearchView(type) {
+  document.getElementById("searchResultsUser").style.display = type === "user" ? "block" : "none";
+  document.getElementById("searchResultsGroup").style.display = type === "group" ? "block" : "none";
+}
+
+// Friends
+function loadFriends() {
+  const friendsDiv = document.getElementById("friendsList");
+  friendsDiv.innerHTML = `<p>Coming soon...</p>`; // You can fill from Firestore
+}
+
+// Thread Chat (one-on-one)
+function openThread(username) {
   switchTab("threadView");
+  document.getElementById("threadWithName").textContent = username;
+  // Load thread messages
+  const uid = auth.currentUser.uid;
+  const threadId = [uid, username].sort().join("_");
+  db.collection("threads").doc(threadId).collection("messages").orderBy("time")
+    .onSnapshot(snapshot => {
+      const box = document.getElementById("threadMessages");
+      box.innerHTML = "";
+      snapshot.forEach(doc => {
+        const m = doc.data();
+        const el = document.createElement("div");
+        el.textContent = `${m.from}: ${m.text}`;
+        box.appendChild(el);
+      });
+    });
 }
-function closeThread() {
-  switchTab("friendsTab");
-}
+
 function sendThreadMessage() {
   const text = document.getElementById("threadInput").value.trim();
-  if (!text || !threadFriendUID) return;
+  if (!text) return;
+  const to = document.getElementById("threadWithName").textContent;
+  const uid = auth.currentUser.uid;
+  const threadId = [uid, to].sort().join("_");
+  db.collection("threads").doc(threadId).collection("messages").add({
+    from: uid,
+    text,
+    time: Date.now()
+  });
   document.getElementById("threadInput").value = "";
-  // Firestore implementation of direct messages goes here (not yet enabled)
+}
+
+function closeThread() {
+  switchTab("friendsTab");
 }
