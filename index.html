@@ -11,6 +11,7 @@
 <body>
   <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
+  <!-- Loading Overlay -->
   <div id="loadingOverlay">
     <div class="loader"></div>
   </div>
@@ -52,7 +53,7 @@
       <button onclick="promoteMember()">Promote</button>
     </div>
 
-    <!-- Tabs -->
+    <!-- Tab Navigation -->
     <div class="tabs">
       <button onclick="switchTab('chatTab')">Chat</button>
       <button onclick="switchTab('friendsTab')">Friends</button>
@@ -104,7 +105,7 @@
 
     <!-- Thread View -->
     <div id="threadView" class="tab">
-      <button onclick="closeThread()">← Back</button>
+      <button onclick="closeThread()">← Back to Friends</button>
       <h3 id="threadWithName"></h3>
       <div id="threadMessages" class="messages"></div>
       <div id="threadTyping" class="typing"></div>
@@ -116,26 +117,26 @@
     <button class="fab" onclick="switchTab('chatTab')">+</button>
   </div>
 
-  <!-- Firebase SDKs (non-module) -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-  <!-- WebTorrent -->
-  <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
-
-  <!-- App Scripts -->
+  <!-- Firebase Config -->
   <script src="firebase.js"></script>
-  <script src="crypto.js"></script>
-  <script src="p2p.js"></script>
+
+  <!-- WebTorrent -->
+  <script src="https://cdn.jsdelivr.net/npm/webtorrent/webtorrent.min.js"></script>
+
+  <!-- Main Script -->
   <script src="app.js"></script>
 
   <!-- Register Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
-        .then(() => console.log('✔ Service Worker Registered'))
-        .catch(e => console.error('Service Worker Failed', e));
+        .then(() => console.log("✔ Service Worker Registered"))
+        .catch(err => console.error("Service Worker error:", err));
     }
   </script>
 </body>
