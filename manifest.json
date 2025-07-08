@@ -1,20 +1,20 @@
 {
   "name": "StringWasp",
-  "short_name": "StringWasp",
-  "description": "Secure P2P Chat App with E2E Encryption",
-  "start_url": ".",
+  "short_name": "Wasp",
+  "description": "A private, secure, modern chat app",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#121212",
-  "theme_color": "#1abc9c",
-  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#0A84FF",
+  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "favicon.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icon-512.png",
+      "src": "favicon.png",
       "sizes": "512x512",
       "type": "image/png"
     }
