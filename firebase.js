@@ -1,7 +1,7 @@
-// firebase.js (v8 - non-module)
+// firebase.js - Classic Firebase v8 SDK
 
-// Your Firebase config
-const firebaseConfig = {
+// Initialize Firebase
+var firebaseConfig = {
   apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
   authDomain: "stringwasp.firebaseapp.com",
   projectId: "stringwasp",
@@ -10,9 +10,9 @@ const firebaseConfig = {
   appId: "1:974718019508:web:59fabe6306517d10b374e1"
 };
 
-// Initialize Firebase
+// Initialize Firebase App
 firebase.initializeApp(firebaseConfig);
 
-// Export auth and firestore
+// Firebase Services
 const auth = firebase.auth();
 const db = firebase.firestore();
