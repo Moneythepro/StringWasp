@@ -106,6 +106,16 @@ h2, h3, h4 {
   margin-bottom: 10px;
 }
 
+.inbox-card h4 {
+  margin: 0 0 4px;
+}
+
+.inbox-card button {
+  margin: 4px 4px 0 0;
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
 #usernameDialog {
   background: #fff9c4;
   border: 1px solid #fbc02d;
