@@ -249,6 +249,14 @@ window.onload = () => {
   if (toggle) toggle.addEventListener("change", toggleTheme);
 };
 function switchSearchView(view) {
-  document.getElementById("searchResultsUser").style.display = view === "user" ? "block" : "none";
-  document.getElementById("searchResultsGroup").style.display = view === "group" ? "block" : "none";
+  const userResults = document.getElementById("searchResultsUser");
+  const groupResults = document.getElementById("searchResultsGroup");
+
+  if (view === "user") {
+    userResults.style.display = "block";
+    groupResults.style.display = "none";
+  } else if (view === "group") {
+    userResults.style.display = "none";
+    groupResults.style.display = "block";
+  }
 }
