@@ -11,11 +11,12 @@
 <body>
   <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
+  <!-- Loading -->
   <div id="loadingOverlay">
     <div class="loader"></div>
   </div>
 
-  <!-- Login/Register Page -->
+  <!-- Login Page -->
   <div id="loginPage" class="tab">
     <h2>Login</h2>
     <input type="email" id="email" placeholder="Email" />
@@ -24,16 +25,17 @@
     <button onclick="register()">Register</button>
   </div>
 
-  <!-- Username Setup Dialog -->
+  <!-- Username Dialog -->
   <div id="usernameDialog" class="modal">
     <h3>Pick a username</h3>
     <input id="newUsername" placeholder="Username" />
     <button onclick="saveUsername()">Save</button>
   </div>
 
-  <!-- Main App Interface -->
+  <!-- Main App -->
   <div id="appPage" class="tabContent">
 
+    <!-- Header -->
     <div class="header">
       <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
       <input id="customRoom" placeholder="New Room Name" />
@@ -41,6 +43,7 @@
       <span id="usernameDisplay"></span>
     </div>
 
+    <!-- Admin Panel -->
     <div id="adminPanel" class="admin-panel">
       <h4>Room Admin Tools</h4>
       <pre id="adminInfo"></pre>
@@ -50,6 +53,7 @@
       <button onclick="promoteMember()">Promote</button>
     </div>
 
+    <!-- Navigation Tabs -->
     <div class="tabs">
       <button onclick="switchTab('chatTab')">Chat</button>
       <button onclick="switchTab('friendsTab')">Friends</button>
@@ -58,23 +62,29 @@
       <button onclick="switchTab('profileTab')">Profile</button>
     </div>
 
+    <!-- Chat -->
     <div id="chatTab" class="tab">
       <div id="messages" class="messages"></div>
       <div id="typingIndicator" class="typing"></div>
       <input id="messageInput" placeholder="Type message..." />
+      <input type="file" id="fileInput" />
       <button onclick="sendMessage()">Send</button>
+      <button onclick="sendFile()">📎 File</button>
     </div>
 
+    <!-- Friends -->
     <div id="friendsTab" class="tab">
       <h3>Your Friends</h3>
       <div id="friendsList"></div>
     </div>
 
+    <!-- Inbox -->
     <div id="inboxTab" class="tab">
       <h3>Inbox</h3>
       <div id="inboxList"></div>
     </div>
 
+    <!-- Search -->
     <div id="searchTab" class="tab">
       <h3>Search</h3>
       <input id="searchInput" placeholder="Search users or groups..." />
@@ -87,6 +97,7 @@
       <div id="searchResultsGroup" class="search-results"></div>
     </div>
 
+    <!-- Profile -->
     <div id="profileTab" class="tab">
       <h3>Your Profile</h3>
       <input id="profileName" placeholder="Your Name" />
@@ -94,6 +105,7 @@
       <button onclick="saveProfile()">Save</button>
     </div>
 
+    <!-- Thread View -->
     <div id="threadView" class="tab">
       <button onclick="closeThread()">← Back to Friends</button>
       <h3 id="threadWithName"></h3>
@@ -103,31 +115,30 @@
       <button onclick="sendThreadMessage()">Send</button>
     </div>
 
+    <!-- Floating Action Button -->
     <button class="fab" onclick="switchTab('chatTab')">+</button>
   </div>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase SDK v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
+  <!-- WebTorrent -->
+  <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
+
   <!-- Firebase Config -->
   <script src="firebase.js"></script>
 
-  <!-- Crypto Tools -->
-  <script src="crypto.js"></script>
-
-  <!-- P2P -->
-  <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
-  <script src="p2p.js"></script>
-
-  <!-- App Script -->
+  <!-- Main Logic -->
   <script src="app.js"></script>
 
   <!-- Register Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js');
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log("✅ Service Worker Registered"))
+        .catch(err => console.error("SW Error:", err));
     }
   </script>
 </body>
