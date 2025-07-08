@@ -1,10 +1,10 @@
 {
   "name": "StringWasp",
   "short_name": "StringWasp",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#25d366",
+  "theme_color": "#007bff",
   "icons": [
     {
       "src": "favicon.png",
