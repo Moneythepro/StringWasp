@@ -19,8 +19,6 @@
   <!-- 🌐 Main App Page -->
   <div id="appPage" class="tab" style="display:none;">
     <h2>Welcome <span id="usernameDisplay"></span></h2>
-
-    <!-- Navigation Tabs -->
     <div id="navTabs">
       <button onclick="switchTab('chatsTab')">Chats</button>
       <button onclick="switchTab('inboxTab')">Inbox</button>
@@ -29,11 +27,8 @@
       <button onclick="switchTab('settingsTab')">Settings</button>
     </div>
 
-    <!-- Chats Tab -->
     <div id="chatsTab" class="tab">
-      <h3>Room: 
-        <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
-      </h3>
+      <h3>Room: <select id="roomDropdown" onchange="joinRoom(this.value)"></select></h3>
       <input id="customRoom" placeholder="Create or Join Room">
       <button onclick="createOrJoinRoom()">Go</button>
       <div id="messages"></div>
@@ -41,41 +36,35 @@
       <div id="typingIndicator"></div>
     </div>
 
-    <!-- Inbox Tab -->
     <div id="inboxTab" class="tab">
       <h3>Inbox</h3>
       <div id="inboxList" class="inbox-card">No notifications yet.</div>
     </div>
 
-    <!-- Search Tab -->
     <div id="searchTab" class="tab">
       <h3>Search</h3>
       <input id="searchInput" placeholder="Search users or groups..." oninput="runSearch()">
-      <div id="searchTabs">
+      <div>
         <button onclick="switchSearchView('user')">Users</button>
         <button onclick="switchSearchView('group')">Groups</button>
       </div>
-      <div id="searchResultsUser" style="margin-top:10px;"></div>
-      <div id="searchResultsGroup" style="margin-top:10px; display:none;"></div>
+      <div id="searchResultsUser"></div>
+      <div id="searchResultsGroup" style="display:none;"></div>
     </div>
 
-    <!-- Profile Tab -->
     <div id="profileTab" class="tab">
       <h3>Your Profile</h3>
-      <div id="avatarPreview"></div>
       <input id="profileName" placeholder="Your Name">
       <textarea id="profileBio" placeholder="Your Bio"></textarea>
       <button onclick="saveProfile()">Save</button>
     </div>
 
-    <!-- Settings Tab -->
     <div id="settingsTab" class="tab">
       <h3>Settings</h3>
-      <input id="roomPassword" placeholder="Room password for encryption (optional)">
+      <input id="roomPassword" placeholder="Room password (optional)">
       <button onclick="leaveRoom()">Leave Room</button>
     </div>
 
-    <!-- Admin Panel -->
     <div id="adminPanel" style="display:none;">
       <h4>Admin Tools</h4>
       <div id="adminInfo"></div>
@@ -93,16 +82,15 @@
     <button onclick="saveUsername()">Save</button>
   </div>
 
-  <!-- 🔔 Notification sound -->
+  <!-- 🔔 Notification Sound -->
   <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
-  <!-- 🔥 Firebase SDKs -->
+  <!-- Firebase (Classic SDK v8) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
   <script>
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
       authDomain: "stringwasp.firebaseapp.com",
@@ -114,8 +102,6 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-    window.auth = auth;
-    window.db = db;
   </script>
 
   <!-- Main App Logic -->
