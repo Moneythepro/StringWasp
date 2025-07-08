@@ -31,10 +31,12 @@
 
   <!-- App Page -->
   <div id="appPage" class="tabContent">
+    <!-- Dark Mode Toggle -->
     <label class="theme-switch">
-  <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()" />
-  <span class="slider"></span>
+      <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()" />
+      <span class="slider"></span>
     </label>
+
     <div class="header">
       <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
       <input id="customRoom" placeholder="New Room Name" />
@@ -135,12 +137,5 @@
         .catch(console.error);
     }
   </script>
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js').then(() => {
-      console.log("✔ Service Worker Registered");
-    });
-  }
-</script>
 </body>
 </html>
