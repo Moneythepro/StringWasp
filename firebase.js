@@ -1,8 +1,9 @@
 // firebase.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import firebase from "https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js";
+import "https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js";
+import "https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js";
 
+// ✅ Your Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
   authDomain: "stringwasp.firebaseapp.com",
@@ -12,8 +13,13 @@ const firebaseConfig = {
   appId: "1:974718019508:web:59fabe6306517d10b374e1"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+// ✅ Initialize Firebase once
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
-export { app, auth, db };
+// ✅ Export services
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+export { firebase, auth, db };
