@@ -1,12 +1,12 @@
 self.addEventListener('install', e => {
+  console.log('[ServiceWorker] Installed');
   self.skipWaiting();
-  console.log('Service Worker installed');
 });
 
 self.addEventListener('activate', e => {
-  console.log('Service Worker activated');
+  console.log('[ServiceWorker] Activated');
 });
 
 self.addEventListener('fetch', e => {
-  // Optional: offline support here
+  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
 });
