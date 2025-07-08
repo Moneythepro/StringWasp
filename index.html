@@ -2,27 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>StringWasp</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="favicon.png" />
-
-  <!-- WebTorrent P2P -->
-  <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
-  
-  <!-- Firebase SDK v8 -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
-  <!-- Firebase Config -->
-  <script src="firebase.js"></script>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="icon" href="favicon.png"/>
 </head>
 <body>
   <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
+
   <div id="loadingOverlay"><div class="loader"></div></div>
 
+  <!-- Login/Register -->
   <div id="loginPage" class="tab">
     <h2>Login</h2>
     <input type="email" id="email" placeholder="Email" />
@@ -31,12 +22,14 @@
     <button onclick="register()">Register</button>
   </div>
 
-  <div id="usernameDialog" class="modal tab">
-    <h3>Pick a username</h3>
+  <!-- Username Picker -->
+  <div id="usernameDialog" class="tab">
+    <h3>Pick a Username</h3>
     <input id="newUsername" placeholder="Username" />
     <button onclick="saveUsername()">Save</button>
   </div>
 
+  <!-- App Page -->
   <div id="appPage" class="tabContent">
     <div class="header">
       <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
@@ -45,6 +38,7 @@
       <span id="usernameDisplay"></span>
     </div>
 
+    <!-- Admin Panel -->
     <div id="adminPanel" class="admin-panel">
       <h4>Room Admin Tools</h4>
       <pre id="adminInfo"></pre>
@@ -54,6 +48,7 @@
       <button onclick="promoteMember()">Promote</button>
     </div>
 
+    <!-- Tabs -->
     <div class="tabs">
       <button onclick="switchTab('chatTab')">Chat</button>
       <button onclick="switchTab('friendsTab')">Friends</button>
@@ -62,24 +57,28 @@
       <button onclick="switchTab('profileTab')">Profile</button>
     </div>
 
-    <div id="chatTab" class="tab tabContent">
+    <!-- Chat Tab -->
+    <div id="chatTab" class="tab">
       <div id="messages" class="messages"></div>
       <div id="typingIndicator" class="typing"></div>
       <input id="messageInput" placeholder="Type message..." />
       <button onclick="sendMessage()">Send</button>
     </div>
 
-    <div id="friendsTab" class="tab tabContent">
+    <!-- Friends Tab -->
+    <div id="friendsTab" class="tab">
       <h3>Your Friends</h3>
       <div id="friendsList"></div>
     </div>
 
-    <div id="inboxTab" class="tab tabContent">
+    <!-- Inbox Tab -->
+    <div id="inboxTab" class="tab">
       <h3>Inbox</h3>
       <div id="inboxList"></div>
     </div>
 
-    <div id="searchTab" class="tab tabContent">
+    <!-- Search Tab -->
+    <div id="searchTab" class="tab">
       <h3>Search</h3>
       <input id="searchInput" placeholder="Search users or groups..." />
       <div class="search-buttons">
@@ -91,14 +90,16 @@
       <div id="searchResultsGroup" class="search-results"></div>
     </div>
 
-    <div id="profileTab" class="tab tabContent">
+    <!-- Profile Tab -->
+    <div id="profileTab" class="tab">
       <h3>Your Profile</h3>
       <input id="profileName" placeholder="Your Name" />
       <textarea id="profileBio" placeholder="Your Bio"></textarea>
       <button onclick="saveProfile()">Save</button>
     </div>
 
-    <div id="threadView" class="tab tabContent">
+    <!-- Thread View -->
+    <div id="threadView" class="tab">
       <button onclick="closeThread()">← Back to Friends</button>
       <h3 id="threadWithName"></h3>
       <div id="threadMessages" class="messages"></div>
@@ -107,14 +108,26 @@
       <button onclick="sendThreadMessage()">Send</button>
     </div>
 
+    <!-- Floating Button -->
     <button class="fab" onclick="switchTab('chatTab')">+</button>
   </div>
 
+  <!-- Firebase SDK (v8) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <!-- Firebase Config -->
+  <script src="firebase.js"></script>
+
+  <!-- Main App Script -->
   <script src="app.js"></script>
+
+  <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
-        .then(() => console.log('✔ Service Worker Registered'))
+        .then(() => console.log("✔ Service Worker Registered"))
         .catch(console.error);
     }
   </script>
