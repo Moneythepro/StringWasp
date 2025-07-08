@@ -2,16 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>StringWasp</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="favicon.png" />
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="icon" href="favicon.png"/>
 </head>
 <body>
   <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
-  <!-- Loading -->
   <div id="loadingOverlay"><div class="loader"></div></div>
 
   <!-- Login/Register -->
@@ -23,14 +22,14 @@
     <button onclick="register()">Register</button>
   </div>
 
-  <!-- Username Setup -->
+  <!-- Username Picker -->
   <div id="usernameDialog" class="tab">
     <h3>Pick a Username</h3>
     <input id="newUsername" placeholder="Username" />
     <button onclick="saveUsername()">Save</button>
   </div>
 
-  <!-- Main Interface -->
+  <!-- App Page -->
   <div id="appPage" class="tabContent">
     <div class="header">
       <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
@@ -113,7 +112,7 @@
     <button class="fab" onclick="switchTab('chatTab')">+</button>
   </div>
 
-  <!-- Firebase v8 SDK -->
+  <!-- Firebase SDK (v8) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -121,7 +120,7 @@
   <!-- Firebase Config -->
   <script src="firebase.js"></script>
 
-  <!-- App Logic -->
+  <!-- Main App Script -->
   <script src="app.js"></script>
 
   <!-- Service Worker -->
