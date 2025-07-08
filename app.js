@@ -248,3 +248,7 @@ window.onload = () => {
   const toggle = document.getElementById("darkModeToggle");
   if (toggle) toggle.addEventListener("change", toggleTheme);
 };
+function switchSearchView(view) {
+  document.getElementById("searchResultsUser").style.display = view === "user" ? "block" : "none";
+  document.getElementById("searchResultsGroup").style.display = view === "group" ? "block" : "none";
+}
