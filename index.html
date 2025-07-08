@@ -1,23 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>StringWasp Chat</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
+  <style>
+    #loadingSpinner {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 10px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+  </style>
 </head>
 <body>
-  <!-- 🔐 Login Page -->
-  <div id="loginPage">
+  <!-- Loading Spinner -->
+  <div id="loadingSpinner">Loading...</div>  <!-- 🔐 Login Page -->  <div id="loginPage">
     <h2>Login or Register</h2>
     <input id="email" placeholder="Email" />
     <input id="password" type="password" placeholder="Password" />
-    <button onclick="login()">Login</button>
-    <button onclick="register()">Register</button>
-  </div>
-
-  <!-- 🌐 Main App Page -->
-  <div id="appPage" style="display:none;">
+    <button onclick="withLoading(login)">Login</button>
+    <button onclick="withLoading(register)">Register</button>
+  </div>  <!-- 🌐 Main App Page -->  <div id="appPage" style="display:none;">
     <h2>Welcome <span id="usernameDisplay"></span></h2>
     <div id="navTabs">
       <button onclick="switchTab('chatsTab')">Chats</button>
@@ -25,57 +35,77 @@
       <button onclick="switchTab('searchTab')">Search</button>
       <button onclick="switchTab('profileTab')">Profile</button>
       <button onclick="switchTab('settingsTab')">Settings</button>
-    </div>
+    </div><!-- Tabs -->
+<div id="chatsTab" class="tab">
+  <h3>Chats</h3>
+  <div id="messages"></div>
+  <input id="messageInput" placeholder="Type a message...">
+  <button onclick="withLoading(sendMessage)">Send</button>
+  <div id="typingIndicator"></div>
+</div>
 
-    <!-- Chats Tab -->
-    <div id="chatsTab" class="tab">
-      <!-- chats content -->
-    </div>
+<div id="inboxTab" class="tab" style="display:none;">
+  <h3>Inbox</h3>
+  <div id="inboxList">Loading inbox...</div>
+</div>
 
-    <!-- Inbox Tab -->
-    <div id="inboxTab" class="tab" style="display:none;">
-      <!-- inbox content -->
-    </div>
+<div id="searchTab" class="tab" style="display:none;">
+  <h3>Search</h3>
+  <input id="searchInput" oninput="runSearch()" placeholder="Search users or groups...">
+  <div id="searchResultsUser"></div>
+  <div id="searchResultsGroup" style="display:none;"></div>
+</div>
 
-    <!-- Search Tab -->
-    <div id="searchTab" class="tab" style="display:none;">
-      <!-- search content -->
-    </div>
+<div id="profileTab" class="tab" style="display:none;">
+  <h3>Profile</h3>
+  <input id="profileName" placeholder="Your Name">
+  <textarea id="profileBio" placeholder="Your Bio"></textarea>
+  <button onclick="withLoading(saveProfile)">Save</button>
+</div>
 
-    <!-- Profile Tab -->
-    <div id="profileTab" class="tab" style="display:none;">
-      <!-- profile content -->
-    </div>
+<div id="settingsTab" class="tab" style="display:none;">
+  <h3>Settings</h3>
+  <input id="roomPassword" placeholder="Room password (optional)" />
+  <button onclick="withLoading(leaveRoom)">Leave Room</button>
+</div>
 
-    <!-- Settings Tab -->
-    <div id="settingsTab" class="tab" style="display:none;">
-      <!-- settings content -->
-    </div>
+<!-- Admin Panel -->
+<div id="adminPanel" style="display:none;">
+  <h4>Admin Tools</h4>
+  <pre id="adminInfo"></pre>
+  <input id="memberEmail" placeholder="Member Email" />
+  <button onclick="addMember()">Add</button>
+  <button onclick="removeMember()">Remove</button>
+  <button onclick="promoteMember()">Promote to Admin</button>
+</div>
 
-    <!-- Admin Panel (always inside appPage) -->
-    <div id="adminPanel" style="display:none;">
-      <!-- admin controls -->
-    </div>
-  </div>
+  </div>  <!-- Username Dialog -->  <div id="usernameDialog" style="display:none;">
+    <h3>Pick a Username</h3>
+    <input id="newUsername" placeholder="Username" />
+    <button onclick="withLoading(saveUsername)">Save</button>
+  </div>  <!-- 🔔 Notification Sound --><audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
-  <!-- ⚙️ Username dialog -->
-  <div id="usernameDialog" style="display:none;">
-    <!-- choose username -->
-  </div>
-
-  <!-- 🔔 Notify sound -->
-  <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
-
-  <!-- Firebase SDK v8 -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script>
-    const firebaseConfig = { /* your config */ };
+  <!-- Firebase SDK v8 -->  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
+      authDomain: "stringwasp.firebaseapp.com",
+      projectId: "stringwasp",
+      storageBucket: "stringwasp.appspot.com",
+      messagingSenderId: "974718019508",
+      appId: "1:974718019508:web:59fabe6306517d10b374e1"
+    };
     firebase.initializeApp(firebaseConfig);
-    window.auth = firebase.auth();
-    window.db = firebase.firestore();
-  </script>
-  <script src="app.js"></script>
-</body>
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+  </script>  <!-- Add spinner wrapper -->  <script>
+    function withLoading(fn) {
+      const spinner = document.getElementById("loadingSpinner");
+      spinner.style.display = "block";
+      setTimeout(() => {
+        Promise.resolve(fn()).finally(() => {
+          spinner.style.display = "none";
+        });
+      }, 100);
+    }
+  </script>  <!-- Main JS -->  <script src="app.js"></script></body>
 </html>
