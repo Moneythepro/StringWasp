@@ -1,3 +1,25 @@
+# 🐝 StringWasp – v1.0
+
+A fast, Firebase-powered chat web app with WhatsApp-style UI and real-time threaded messaging.  
+**Live Demo**: [https://moneythepro.github.io/StringWasp/](https://moneythepro.github.io/StringWasp/)
+
+## 🚀 Features
+- 🔐 Firebase Auth
+- 🧑‍🤝‍🧑 Friends, Groups, Inbox
+- 💬 Real-time chat + Threads
+- 🔎 Search users/groups
+- 📱 PWA & responsive
+- 🧑‍💻 Admin tools for room owners
+
+## 🔧 Tech
+- HTML, CSS, JS (Vanilla)
+- Firebase 8 SDK (Auth + Firestore)
+- Service Worker + Manifest.json
+
+---
+
+Made with ❤️ by [moneythepro](mailto:moneythepro7@gmail.com)
+
 📝 📦 StringWasp v1.0 – Release Notes
 
 > Live Link: https://moneythepro.github.io/StringWasp/
@@ -94,29 +116,3 @@ StringWasp/
 ├── service-worker.js
 ├── notif.mp3
 ├── favicon.png
-
-
----
-
-
-# 🐝 StringWasp – v1.0
-
-A fast, Firebase-powered chat web app with WhatsApp-style UI and real-time threaded messaging.  
-**Live Demo**: [https://moneythepro.github.io/StringWasp/](https://moneythepro.github.io/StringWasp/)
-
-## 🚀 Features
-- 🔐 Firebase Auth
-- 🧑‍🤝‍🧑 Friends, Groups, Inbox
-- 💬 Real-time chat + Threads
-- 🔎 Search users/groups
-- 📱 PWA & responsive
-- 🧑‍💻 Admin tools for room owners
-
-## 🔧 Tech
-- HTML, CSS, JS (Vanilla)
-- Firebase 8 SDK (Auth + Firestore)
-- Service Worker + Manifest.json
-
----
-
-Made with ❤️ by [moneythepro](mailto:moneythepro7@gmail.com)
