@@ -5,43 +5,42 @@ const urlsToCache = [
   '/style.css',
   '/app.js',
   '/firebase.js',
-  '/manifest.json',
-  '/favicon.png',
   '/notif.mp3',
-  'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js',
-  'https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js',
-  'https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js'
+  '/favicon.png',
+  '/manifest.json'
 ];
 
-// Install Service Worker and cache files
+// Install Service Worker
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
+      console.log('[SW] Caching app shell...');
       return cache.addAll(urlsToCache);
     })
   );
 });
 
-// Activate and clean old caches
+// Activate Service Worker
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys =>
+    caches.keys().then(keyList =>
       Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) return caches.delete(key);
+        keyList.map(key => {
+          if (key !== CACHE_NAME) {
+            console.log('[SW] Removing old cache:', key);
+            return caches.delete(key);
+          }
         })
       )
     )
   );
 });
 
-// Fetch requests
+// Fetch Cached Resources
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
-    }).catch(() => {
-      // Optionally serve fallback
-    })
+    caches.match(event.request).then(response =>
+      response || fetch(event.request)
+    )
   );
 });
