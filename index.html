@@ -7,27 +7,16 @@
   <meta name="description" content="StringWasp: Fast, encrypted P2P messaging" />
   <meta name="keywords" content="Chat, Messaging, P2P, Encrypted, Firebase, WebRTC, WebTorrent" />
   <meta name="author" content="StringWasp Team" />
-
   <link rel="icon" href="favicon.png" />
   <link rel="manifest" href="manifest.json" />
   <title>StringWasp - Fast, Encrypted Chat</title>
-
-  <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
-  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-
-  <!-- Styles -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div id="loadingOverlay"><div class="loader"></div><p>Loading StringWasp...</p></div>
 
-  <!-- 🔄 Loading Overlay -->
-  <div id="loadingOverlay">
-    <div class="loader"></div>
-    <p>Loading StringWasp...</p>
-  </div>
-
-  <!-- 🔐 Login Page -->
+  <!-- Login -->
   <div id="loginPage" class="tab">
     <h2>Login / Register</h2>
     <input id="email" type="email" placeholder="Email" />
@@ -36,19 +25,9 @@
     <button onclick="register()">Register</button>
   </div>
 
-  <!-- 🔡 Username Dialog -->
-  <div id="usernameDialog" class="tab" style="display:none;">
-    <h3>Pick a Username</h3>
-    <input id="newUsername" placeholder="Username" />
-    <button onclick="saveUsername()">Save</button>
-  </div>
-
-  <!-- 🌐 Main App Page -->
+  <!-- App -->
   <div id="appPage" class="tab" style="display: none;">
-    <header>
-      <h2>Welcome <span id="usernameDisplay">User</span></h2>
-    </header>
-
+    <header><h2>Welcome <span id="usernameDisplay">User</span></h2></header>
     <nav id="navTabs">
       <button onclick="switchTab('chatsTab')">Chats</button>
       <button onclick="switchTab('inboxTab')">Inbox</button>
@@ -57,11 +36,8 @@
       <button onclick="switchTab('settingsTab')">Settings</button>
     </nav>
 
-    <!-- ✅ Chat Tab -->
-    <div id="chatsTab" class="tabContent" style="display: none;">
-      <h3>Room:
-        <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
-      </h3>
+    <div id="chatsTab" class="tabContent"><h3>Room:
+      <select id="roomDropdown" onchange="joinRoom(this.value)"></select></h3>
       <input id="customRoom" placeholder="Create or Join Room" />
       <button onclick="createOrJoinRoom()">Go</button>
       <div id="messages"></div>
@@ -69,41 +45,29 @@
       <div id="typingIndicator"></div>
     </div>
 
-    <!-- 📨 Inbox Tab -->
-    <div id="inboxTab" class="tabContent" style="display: none;">
-      <h3>Inbox</h3>
-      <div id="inboxList">Loading...</div>
-    </div>
-
-    <!-- 🔍 Search Tab -->
-    <div id="searchTab" class="tabContent" style="display: none;">
-      <h3>Search</h3>
+    <div id="inboxTab" class="tabContent"><h3>Inbox</h3><div id="inboxList">Loading...</div></div>
+    <div id="searchTab" class="tabContent"><h3>Search</h3>
       <input id="searchInput" placeholder="Search users or groups..." oninput="runSearch()" />
       <div id="searchTabs">
         <button onclick="switchSearchView('user')">Users</button>
         <button onclick="switchSearchView('group')">Groups</button>
       </div>
       <div id="searchResultsUser"></div>
-      <div id="searchResultsGroup" style="display: none;"></div>
+      <div id="searchResultsGroup" style="display:none;"></div>
     </div>
 
-    <!-- 👤 Profile Tab -->
-    <div id="profileTab" class="tabContent" style="display: none;">
-      <h3>Profile</h3>
+    <div id="profileTab" class="tabContent"><h3>Profile</h3>
       <input id="profileName" placeholder="Your Name" />
       <textarea id="profileBio" placeholder="Your Bio"></textarea>
       <button onclick="saveProfile()">Save</button>
     </div>
 
-    <!-- ⚙️ Settings Tab -->
-    <div id="settingsTab" class="tabContent" style="display: none;">
-      <h3>Settings</h3>
+    <div id="settingsTab" class="tabContent"><h3>Settings</h3>
       <input id="roomPassword" placeholder="Room Password (optional)" />
       <button onclick="leaveRoom()">Leave Room</button>
     </div>
 
-    <!-- 👑 Admin Panel -->
-    <div id="adminPanel" style="display: none;">
+    <div id="adminPanel" style="display:none;">
       <h4>Admin Tools</h4>
       <pre id="adminInfo"></pre>
       <input id="memberEmail" placeholder="Member Email" />
@@ -113,15 +77,20 @@
     </div>
   </div>
 
-  <!-- 🔔 Notification Sound -->
+  <!-- Username -->
+  <div id="usernameDialog" class="tab" style="display:none;">
+    <h3>Pick a Username</h3>
+    <input id="newUsername" placeholder="Username" />
+    <button onclick="saveUsername()">Save</button>
+  </div>
+
+  <!-- Notification -->
   <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
-  <!-- 🔥 Firebase SDK v8 -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
-  <!-- 🔧 Firebase Config + App Logic -->
   <script src="firebase.js"></script>
   <script src="app.js"></script>
 </body>
