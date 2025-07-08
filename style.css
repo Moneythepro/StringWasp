@@ -1,14 +1,14 @@
 body {
+  font-family: sans-serif;
   margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background: #f0f2f5;
-  color: #333;
-  transition: background 0.3s, color 0.3s;
+  padding: 0;
+  background: #f2f2f2;
+  color: #000;
 }
 
 body.dark {
-  background: #121212;
-  color: #eee;
+  background: #1c1c1c;
+  color: #fff;
 }
 
 .tab, .tabContent {
@@ -22,19 +22,20 @@ body.dark {
 
 input, textarea, select, button {
   display: block;
-  margin: 10px 0;
+  margin: 8px 0;
   padding: 10px;
   width: 100%;
   max-width: 500px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
   font-size: 16px;
-  background: white;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #fff;
+  box-sizing: border-box;
 }
 
 body.dark input, body.dark textarea, body.dark select {
-  background: #1e1e1e;
-  color: white;
+  background: #2a2a2a;
+  color: #fff;
   border: 1px solid #444;
 }
 
@@ -42,7 +43,7 @@ button {
   background-color: #4CAF50;
   color: white;
   cursor: pointer;
-  transition: background 0.3s;
+  border: none;
 }
 
 button:hover {
@@ -53,83 +54,70 @@ button:hover {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .tabs {
   display: flex;
-  justify-content: space-around;
-  background: #ffffff;
-  padding: 10px;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-
-body.dark .tabs {
-  background: #1e1e1e;
+  gap: 6px;
+  margin: 12px 0;
 }
 
 .tabs button {
   flex: 1;
   padding: 10px;
-  font-weight: bold;
-  background: #f1f1f1;
-  border-radius: 10px;
-  margin: 0 5px;
+  background: #e0e0e0;
   border: none;
+  border-radius: 4px;
 }
 
 body.dark .tabs button {
-  background: #2a2a2a;
+  background: #333;
   color: #fff;
 }
 
 .messages {
   height: 300px;
   overflow-y: auto;
-  background: #ffffff;
-  border-radius: 12px;
   padding: 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 6px;
   margin-bottom: 10px;
-  box-shadow: inset 0 1px 4px rgba(0,0,0,0.1);
 }
 
 body.dark .messages {
-  background: #1e1e1e;
+  background: #222;
+  border-color: #444;
 }
 
 .card {
   background: #fff;
-  border-radius: 12px;
   padding: 10px;
-  margin: 8px 0;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border: 1px solid #ccc;
 }
 
 body.dark .card {
   background: #2a2a2a;
-  color: white;
+  border-color: #444;
+  color: #fff;
 }
 
 .fab {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
-  background-color: #25d366;
+  bottom: 20px;
+  right: 20px;
+  background-color: #4CAF50;
   color: white;
-  font-size: 24px;
+  font-size: 20px;
   padding: 16px;
   border-radius: 50%;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-  cursor: pointer;
   border: none;
-  z-index: 1000;
-  transition: transform 0.3s;
-}
-
-.fab:hover {
-  transform: scale(1.1);
+  cursor: pointer;
+  z-index: 999;
 }
 
 .theme-switch {
@@ -171,15 +159,15 @@ body.dark .card {
   position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
-  background: rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.8);
   display: none;
   justify-content: center;
   align-items: center;
-  z-index: 10000;
+  z-index: 9999;
 }
 
 body.dark #loadingOverlay {
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.8);
 }
 
 .loader {
