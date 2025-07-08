@@ -1,10 +1,12 @@
 {
   "name": "StringWasp",
   "short_name": "StringWasp",
-  "start_url": "./",
+  "description": "A secure, fast, and modern chat app with rooms, profiles, search, friends, and inbox.",
+  "start_url": "/StringWasp/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#007bff",
+  "theme_color": "#075e54",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "favicon.png",
