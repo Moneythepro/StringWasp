@@ -1,6 +1,4 @@
 // Firebase Auth & Firestore
-const auth = firebase.auth();
-const db = firebase.firestore();
 
 let currentUser = null;
 let currentRoom = 'global';
