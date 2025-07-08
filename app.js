@@ -7,9 +7,6 @@ let unsubscribeRoomList = null;
 let lastMessageTS = 0;
 let typingTO = null;
 
-const getRoomPassword = () =>
-  document.getElementById("roomPassword").value || "";
-
 // ---------------- TABS ----------------
 function switchTab(tabId) {
   document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
@@ -55,7 +52,7 @@ async function startApp(user) {
   await createRoomIfMissing("general");
   populateDropdown();
   joinRoom("general");
- loadInbox(user.uid); 
+  loadInbox(user.uid);
   switchTab("appPage");
 }
 
@@ -236,6 +233,88 @@ function listenForTyping(roomName) {
     });
 }
 
+// ---------------- INBOX ----------------
+function loadInbox(uid) {
+  const list = document.getElementById("inboxList");
+  const inboxRef = db.collection("users").doc(uid).collection("inbox").orderBy("timestamp", "desc");
+
+  inboxRef.onSnapshot(async snapshot => {
+    list.innerHTML = "";
+    if (snapshot.empty) {
+      list.innerHTML = "No notifications yet.";
+      return;
+    }
+
+    for (const doc of snapshot.docs) {
+      const d = doc.data();
+      const card = document.createElement("div");
+      card.className = "inbox-card";
+
+      let fromDisplay = d.from;
+      if (typeof d.from === "string") {
+        try {
+          const fromDoc = await db.collection("users").doc(d.from).get();
+          if (fromDoc.exists) {
+            const fromData = fromDoc.data();
+            fromDisplay = fromData.username || fromData.email || d.from;
+          }
+        } catch (err) {
+          console.warn("Failed to fetch sender info", err);
+        }
+      }
+
+      if (d.type === "friend_request") {
+        card.innerHTML = `
+          <h4>Friend request from ${fromDisplay}</h4>
+          <button onclick="acceptFriend('${doc.id}', '${uid}')">Accept</button>
+          <button onclick="declineInbox('${doc.id}', '${uid}')">Decline</button>
+        `;
+      } else if (d.type === "group_invite") {
+        card.innerHTML = `
+          <h4>Group invite to #${d.groupId} from ${fromDisplay}</h4>
+          <button onclick="acceptGroup('${doc.id}', '${uid}', '${d.groupId}')">Accept</button>
+          <button onclick="declineInbox('${doc.id}', '${uid}')">Decline</button>
+        `;
+      }
+
+      list.appendChild(card);
+    }
+  });
+}
+
+function acceptFriend(docId, uid) {
+  db.collection("users").doc(uid).collection("inbox").doc(docId).delete();
+  alert("Friend accepted (not yet added to list)");
+}
+
+function acceptGroup(docId, uid, groupId) {
+  db.collection("rooms").doc(groupId).update({
+    members: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.email)
+  });
+  db.collection("users").doc(uid).collection("inbox").doc(docId).delete();
+  alert(`You joined #${groupId}`);
+}
+
+function declineInbox(docId, uid) {
+  db.collection("users").doc(uid).collection("inbox").doc(docId).delete();
+}
+
+// ---------------- PROFILE ----------------
+function loadProfile(uid) {
+  // Future: Load user profile info
+}
+
+function saveProfile() {
+  const bio = document.getElementById("profileBio").value;
+  const name = document.getElementById("profileName").value;
+  const user = auth.currentUser;
+
+  db.collection("users").doc(user.uid).update({
+    bio: bio || "",
+    name: name || ""
+  }).then(() => alert("Profile updated"));
+}
+
 // ---------------- SEARCH ----------------
 function switchSearchView(type) {
   document.getElementById("searchResultsUser").style.display = type === "user" ? "block" : "none";
@@ -283,22 +362,6 @@ function sendFriendRequest(uid) {
 
 function requestJoinGroup(groupId) {
   alert(`Requested to join #${groupId}`);
-}
-
-// ---------------- PROFILE ----------------
-function loadProfile(uid) {
-  // Future: load profile data if needed
-}
-
-function saveProfile() {
-  const bio = document.getElementById("profileBio").value;
-  const name = document.getElementById("profileName").value;
-  const user = auth.currentUser;
-
-  db.collection("users").doc(user.uid).update({
-    bio: bio || "",
-    name: name || ""
-  }).then(() => alert("Profile updated"));
 }
 
 // ---------------- NOTIFICATIONS ----------------
@@ -362,55 +425,4 @@ async function promoteMember() {
   await getAdminRoomRef().update({
     admins: firebase.firestore.FieldValue.arrayUnion(email)
   });
-function loadInbox(uid) {
-  const list = document.getElementById("inboxList");
-  const inboxRef = db.collection("users").doc(uid).collection("inbox").orderBy("timestamp", "desc");
-
-  inboxRef.onSnapshot(snapshot => {
-    list.innerHTML = "";
-    if (snapshot.empty) {
-      list.innerHTML = "No notifications yet.";
-      return;
-    }
-
-    snapshot.forEach(doc => {
-      const d = doc.data();
-      const card = document.createElement("div");
-      card.className = "inbox-card";
-
-      if (d.type === "friend_request") {
-        card.innerHTML = `
-          <h4>Friend request from ${d.from}</h4>
-          <button onclick="acceptFriend('${doc.id}', '${uid}')">Accept</button>
-          <button onclick="declineInbox('${doc.id}', '${uid}')">Decline</button>
-        `;
-      } else if (d.type === "group_invite") {
-        card.innerHTML = `
-          <h4>Group invite to #${d.groupId} from ${d.from}</h4>
-          <button onclick="acceptGroup('${doc.id}', '${uid}', '${d.groupId}')">Accept</button>
-          <button onclick="declineInbox('${doc.id}', '${uid}')">Decline</button>
-        `;
-      }
-
-      list.appendChild(card);
-    });
-  });
-}
-
-function acceptFriend(docId, uid) {
-  db.collection("users").doc(uid).collection("inbox").doc(docId).delete();
-  alert("Friend accepted (not yet added to list)");
-}
-
-function acceptGroup(docId, uid, groupId) {
-  db.collection("rooms").doc(groupId).update({
-    members: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.email)
-  });
-  db.collection("users").doc(uid).collection("inbox").doc(docId).delete();
-  alert(`You joined #${groupId}`);
-}
-
-function declineInbox(docId, uid) {
-  db.collection("users").doc(uid).collection("inbox").doc(docId).delete();
-}
 }
