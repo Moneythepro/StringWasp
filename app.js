@@ -226,3 +226,17 @@ function saveProfile() {
   const bio = document.getElementById("profileBio").value;
   db.collection("users").doc(currentUser.uid).set({ name, bio }, { merge: true });
 }
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark');
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  document.getElementById('darkModeToggle').checked = isDark;
+}
+
+function applySavedTheme() {
+  const theme = localStorage.getItem('theme');
+  const isDark = theme === 'dark';
+  if (isDark) document.body.classList.add('dark');
+  document.getElementById('darkModeToggle').checked = isDark;
+}
+
+window.addEventListener('load', applySavedTheme);
