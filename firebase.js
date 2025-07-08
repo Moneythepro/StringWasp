@@ -1,4 +1,4 @@
-// Firebase v8 config (do not re-declare firebase if already loaded)
+// Prevent redeclaration if already initialized
 if (!firebase.apps.length) {
   firebase.initializeApp({
     apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
@@ -10,5 +10,5 @@ if (!firebase.apps.length) {
   });
 }
 
-const db = firebase.firestore();
 const auth = firebase.auth();
+const db = firebase.firestore();
