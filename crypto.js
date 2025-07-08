@@ -1,47 +1,41 @@
-const iv = crypto.getRandomValues(new Uint8Array(12)); // Initialization Vector
-
-async function generateKey(password) {
-  const enc = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]
-  );
-  return crypto.subtle.deriveKey(
+async function generateKeyPair() {
+  const keyPair = await window.crypto.subtle.generateKey(
     {
-      name: "PBKDF2",
-      salt: enc.encode("stringwasp-salt"),
-      iterations: 100000,
+      name: "RSA-OAEP",
+      modulusLength: 2048,
+      publicExponent: new Uint8Array([1, 0, 1]),
       hash: "SHA-256"
     },
-    keyMaterial,
-    { name: "AES-GCM", length: 256 },
-    false,
+    true,
     ["encrypt", "decrypt"]
   );
+  const publicKeyJwk = await crypto.subtle.exportKey("jwk", keyPair.publicKey);
+  const privateKeyJwk = await crypto.subtle.exportKey("jwk", keyPair.privateKey);
+  localStorage.setItem("publicKey", JSON.stringify(publicKeyJwk));
+  localStorage.setItem("privateKey", JSON.stringify(privateKeyJwk));
+  return { publicKeyJwk, privateKeyJwk };
 }
 
-async function encryptMessage(text, password) {
-  const enc = new TextEncoder();
-  const key = await generateKey(password);
-  const encrypted = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv: iv },
-    key,
-    enc.encode(text)
+async function importKey(jwk, type) {
+  return await crypto.subtle.importKey(
+    "jwk",
+    jwk,
+    { name: "RSA-OAEP", hash: "SHA-256" },
+    true,
+    type === "public" ? ["encrypt"] : ["decrypt"]
   );
-  return {
-    ciphertext: btoa(String.fromCharCode(...new Uint8Array(encrypted))),
-    iv: Array.from(iv)
-  };
 }
 
-async function decryptMessage(ciphertext, ivArr, password) {
-  const dec = new TextDecoder();
-  const key = await generateKey(password);
-  const encryptedData = Uint8Array.from(atob(ciphertext), c => c.charCodeAt(0));
-  const iv = Uint8Array.from(ivArr);
-  const decrypted = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv },
-    key,
-    encryptedData
-  );
-  return dec.decode(decrypted);
+async function encryptMessage(message, publicKeyJwk) {
+  const key = await importKey(publicKeyJwk, "public");
+  const enc = new TextEncoder().encode(message);
+  const encrypted = await crypto.subtle.encrypt({ name: "RSA-OAEP" }, key, enc);
+  return btoa(String.fromCharCode(...new Uint8Array(encrypted)));
+}
+
+async function decryptMessage(encryptedBase64, privateKeyJwk) {
+  const key = await importKey(privateKeyJwk, "private");
+  const encrypted = Uint8Array.from(atob(encryptedBase64), c => c.charCodeAt(0));
+  const decrypted = await crypto.subtle.decrypt({ name: "RSA-OAEP" }, key, encrypted);
+  return new TextDecoder().decode(decrypted);
 }
