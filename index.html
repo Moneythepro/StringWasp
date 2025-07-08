@@ -1,91 +1,106 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>StringWasp Chat</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
-  <style>
-    #loadingSpinner {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      padding: 10px;
-      border: 2px solid #ccc;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Loading Spinner -->
-  <div id="loadingSpinner">Loading...</div>  <!-- 🔐 Login Page -->  <div id="loginPage">
+  <!-- 🔐 Login Page -->
+  <div id="loginPage" class="tab">
     <h2>Login or Register</h2>
-    <input id="email" placeholder="Email" />
-    <input id="password" type="password" placeholder="Password" />
-    <button onclick="withLoading(login)">Login</button>
-    <button onclick="withLoading(register)">Register</button>
-  </div>  <!-- 🌐 Main App Page -->  <div id="appPage" style="display:none;">
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <button onclick="register()">Register</button>
+  </div>
+
+  <!-- 🌐 Main App Page -->
+  <div id="appPage" class="tab" style="display:none;">
     <h2>Welcome <span id="usernameDisplay"></span></h2>
+
+    <!-- 🔀 Navigation Tabs -->
     <div id="navTabs">
       <button onclick="switchTab('chatsTab')">Chats</button>
       <button onclick="switchTab('inboxTab')">Inbox</button>
       <button onclick="switchTab('searchTab')">Search</button>
       <button onclick="switchTab('profileTab')">Profile</button>
       <button onclick="switchTab('settingsTab')">Settings</button>
-    </div><!-- Tabs -->
-<div id="chatsTab" class="tab">
-  <h3>Chats</h3>
-  <div id="messages"></div>
-  <input id="messageInput" placeholder="Type a message...">
-  <button onclick="withLoading(sendMessage)">Send</button>
-  <div id="typingIndicator"></div>
-</div>
+    </div>
 
-<div id="inboxTab" class="tab" style="display:none;">
-  <h3>Inbox</h3>
-  <div id="inboxList">Loading inbox...</div>
-</div>
+    <!-- 💬 Chats Tab -->
+    <div id="chatsTab" class="tab">
+      <h3>Room: 
+        <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
+      </h3>
+      <input id="customRoom" placeholder="Create or Join Room">
+      <button onclick="createOrJoinRoom()">Go</button>
 
-<div id="searchTab" class="tab" style="display:none;">
-  <h3>Search</h3>
-  <input id="searchInput" oninput="runSearch()" placeholder="Search users or groups...">
-  <div id="searchResultsUser"></div>
-  <div id="searchResultsGroup" style="display:none;"></div>
-</div>
+      <div id="messages"></div>
+      <input id="messageInput" placeholder="Type a message...">
+      <div id="typingIndicator"></div>
+    </div>
 
-<div id="profileTab" class="tab" style="display:none;">
-  <h3>Profile</h3>
-  <input id="profileName" placeholder="Your Name">
-  <textarea id="profileBio" placeholder="Your Bio"></textarea>
-  <button onclick="withLoading(saveProfile)">Save</button>
-</div>
+    <!-- 📬 Inbox Tab -->
+    <div id="inboxTab" class="tab">
+      <h3>Inbox</h3>
+      <div id="inboxList">Loading inbox...</div>
+    </div>
 
-<div id="settingsTab" class="tab" style="display:none;">
-  <h3>Settings</h3>
-  <input id="roomPassword" placeholder="Room password (optional)" />
-  <button onclick="withLoading(leaveRoom)">Leave Room</button>
-</div>
+    <!-- 🔍 Search Tab -->
+    <div id="searchTab" class="tab">
+      <h3>Search</h3>
+      <input id="searchInput" placeholder="Search users or groups..." oninput="runSearch()">
+      <div id="searchTabs">
+        <button onclick="switchSearchView('user')">Users</button>
+        <button onclick="switchSearchView('group')">Groups</button>
+      </div>
+      <div id="searchResultsUser"></div>
+      <div id="searchResultsGroup" style="display:none;"></div>
+    </div>
 
-<!-- Admin Panel -->
-<div id="adminPanel" style="display:none;">
-  <h4>Admin Tools</h4>
-  <pre id="adminInfo"></pre>
-  <input id="memberEmail" placeholder="Member Email" />
-  <button onclick="addMember()">Add</button>
-  <button onclick="removeMember()">Remove</button>
-  <button onclick="promoteMember()">Promote to Admin</button>
-</div>
+    <!-- 👤 Profile Tab -->
+    <div id="profileTab" class="tab">
+      <h3>Your Profile</h3>
+      <input id="profileName" placeholder="Your Name">
+      <textarea id="profileBio" placeholder="Your Bio"></textarea>
+      <button onclick="saveProfile()">Save</button>
+    </div>
 
-  </div>  <!-- Username Dialog -->  <div id="usernameDialog" style="display:none;">
+    <!-- ⚙️ Settings Tab -->
+    <div id="settingsTab" class="tab">
+      <h3>Settings</h3>
+      <input id="roomPassword" placeholder="Room password (optional)">
+      <button onclick="leaveRoom()">Leave Room</button>
+    </div>
+
+    <!-- 🛠️ Admin Panel -->
+    <div id="adminPanel" style="display: none;">
+      <h4>Admin Tools</h4>
+      <pre id="adminInfo"></pre>
+      <input id="memberEmail" placeholder="Member Email">
+      <button onclick="addMember()">Add</button>
+      <button onclick="removeMember()">Remove</button>
+      <button onclick="promoteMember()">Promote to Admin</button>
+    </div>
+  </div>
+
+  <!-- 🔑 Username Dialog -->
+  <div id="usernameDialog" class="tab" style="display:none;">
     <h3>Pick a Username</h3>
-    <input id="newUsername" placeholder="Username" />
-    <button onclick="withLoading(saveUsername)">Save</button>
-  </div>  <!-- 🔔 Notification Sound --><audio id="notifSound" src="notif.mp3" preload="auto"></audio>
+    <input id="newUsername" placeholder="Username">
+    <button onclick="saveUsername()">Save</button>
+  </div>
 
-  <!-- Firebase SDK v8 -->  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>  <script>
+  <!-- 🔔 Notification Sound -->
+  <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
+
+  <!-- 🔥 Firebase v8 SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
       authDomain: "stringwasp.firebaseapp.com",
@@ -97,15 +112,9 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-  </script>  <!-- Add spinner wrapper -->  <script>
-    function withLoading(fn) {
-      const spinner = document.getElementById("loadingSpinner");
-      spinner.style.display = "block";
-      setTimeout(() => {
-        Promise.resolve(fn()).finally(() => {
-          spinner.style.display = "none";
-        });
-      }, 100);
-    }
-  </script>  <!-- Main JS -->  <script src="app.js"></script></body>
+  </script>
+
+  <!-- 💡 Main Logic -->
+  <script src="app.js"></script>
+</body>
 </html>
