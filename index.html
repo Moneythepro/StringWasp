@@ -33,6 +33,8 @@
 
   <!-- Main App Interface -->
   <div id="appPage" class="tabContent">
+
+    <!-- Header -->
     <div class="header">
       <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
       <input id="customRoom" placeholder="New Room Name" />
@@ -40,7 +42,7 @@
       <span id="usernameDisplay"></span>
     </div>
 
-    <!-- Admin Controls -->
+    <!-- Admin Panel -->
     <div id="adminPanel" class="admin-panel">
       <h4>Room Admin Tools</h4>
       <pre id="adminInfo"></pre>
@@ -100,9 +102,9 @@
       <button onclick="saveProfile()">Save</button>
     </div>
 
-    <!-- Thread Chat View -->
+    <!-- Thread View -->
     <div id="threadView" class="tab">
-      <button onclick="closeThread()">← Back to Friends</button>
+      <button onclick="closeThread()">← Back</button>
       <h3 id="threadWithName"></h3>
       <div id="threadMessages" class="messages"></div>
       <div id="threadTyping" class="typing"></div>
@@ -114,23 +116,26 @@
     <button class="fab" onclick="switchTab('chatTab')">+</button>
   </div>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase SDKs (non-module) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-  <!-- Firebase Config -->
-  <script src="firebase.js"></script>
+  <!-- WebTorrent -->
+  <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
 
-  <!-- App Logic -->
+  <!-- App Scripts -->
+  <script src="firebase.js"></script>
+  <script src="crypto.js"></script>
+  <script src="p2p.js"></script>
   <script src="app.js"></script>
 
   <!-- Register Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
-        .then(() => console.log("✔ Service Worker Registered"))
-        .catch(err => console.error("Service Worker Error:", err));
+        .then(() => console.log('✔ Service Worker Registered'))
+        .catch(e => console.error('Service Worker Failed', e));
     }
   </script>
 </body>
