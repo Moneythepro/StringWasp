@@ -226,17 +226,25 @@ function saveProfile() {
   const bio = document.getElementById("profileBio").value;
   db.collection("users").doc(currentUser.uid).set({ name, bio }, { merge: true });
 }
+
+// Dark Mode Toggle
 function toggleTheme() {
-  const isDark = document.body.classList.toggle('dark');
-  localStorage.setItem('theme', isDark ? 'dark' : 'light');
-  document.getElementById('darkModeToggle').checked = isDark;
+  const isDark = document.body.classList.toggle("dark");
+  localStorage.setItem("theme", isDark ? "dark" : "light");
+  const toggle = document.getElementById("darkModeToggle");
+  if (toggle) toggle.checked = isDark;
 }
 
 function applySavedTheme() {
-  const theme = localStorage.getItem('theme');
-  const isDark = theme === 'dark';
-  if (isDark) document.body.classList.add('dark');
-  document.getElementById('darkModeToggle').checked = isDark;
+  const theme = localStorage.getItem("theme");
+  const isDark = theme === "dark";
+  if (isDark) document.body.classList.add("dark");
+  const toggle = document.getElementById("darkModeToggle");
+  if (toggle) toggle.checked = isDark;
 }
 
-window.addEventListener('load', applySavedTheme);
+window.onload = () => {
+  applySavedTheme();
+  const toggle = document.getElementById("darkModeToggle");
+  if (toggle) toggle.addEventListener("change", toggleTheme);
+};
