@@ -7,16 +7,13 @@ let unsubscribeRoomList = null;
 let lastMessageTS = 0;
 let typingTO = null;
 
-const getRoomPassword = () =>
-  document.getElementById("roomPassword").value || "";
-
-// ---------------- TABS ----------------
+// ---------------- TAB NAVIGATION ----------------
 function switchTab(tabId) {
   document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
   document.getElementById(tabId).style.display = "block";
 }
 
-// ---------------- AUTH STATE ----------------
+// ---------------- AUTH ----------------
 auth.onAuthStateChanged(async user => {
   if (!user) {
     switchTab("loginPage");
@@ -25,14 +22,28 @@ auth.onAuthStateChanged(async user => {
 
   document.getElementById("usernameDisplay").textContent = user.email;
   const userRef = db.collection("users").doc(user.uid);
-  const userSnap = await userRef.get();
+  const snap = await userRef.get();
 
-  if (!userSnap.exists || !userSnap.data().username) {
+  if (!snap.exists || !snap.data().username) {
     document.getElementById("usernameDialog").style.display = "block";
   } else {
     startApp(user);
   }
 });
+
+function login() {
+  const email = document.getElementById("email").value.trim();
+  const pass = document.getElementById("password").value.trim();
+  if (!email || !pass) return alert("Missing credentials");
+  auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+}
+
+function register() {
+  const email = document.getElementById("email").value.trim();
+  const pass = document.getElementById("password").value.trim();
+  if (!email || !pass) return alert("Missing credentials");
+  auth.createUserWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+}
 
 async function saveUsername() {
   const username = document.getElementById("newUsername").value.trim();
@@ -41,7 +52,7 @@ async function saveUsername() {
   const user = auth.currentUser;
   await db.collection("users").doc(user.uid).set({
     email: user.email,
-    username: username,
+    username,
     joined: Date.now()
   });
 
@@ -51,32 +62,102 @@ async function saveUsername() {
 
 async function startApp(user) {
   loadProfile(user.uid);
-  startRoomListeners();
   await createRoomIfMissing("general");
   populateDropdown();
   joinRoom("general");
-  loadInbox(user.uid); 
+  startRoomListeners();
+  loadInbox(user.uid);
   switchTab("appPage");
 }
 
-// ---------------- AUTH ----------------
-function login() {
-  const email = document.getElementById("email").value.trim();
-  const pass = document.getElementById("password").value.trim();
-  if (!email || !pass) return alert("Missing credentials");
-  auth.signInWithEmailAndPassword(email, pass)
-    .catch(e => alert(e.message));
+// ---------------- CHAT ----------------
+function listenForChat(room) {
+  if (unsubscribeChat) unsubscribeChat();
+  unsubscribeChat = db.collection("messages").doc(room)
+    .collection("chat").orderBy("time")
+    .onSnapshot(snapshot => {
+      const box = document.getElementById("messages");
+      box.innerHTML = "";
+      let latest = 0;
+
+      snapshot.forEach(doc => {
+        const msg = doc.data();
+        const div = document.createElement("div");
+        div.className = "message";
+
+        let content = msg.text || "[Encrypted]";
+        if (msg.sender === auth.currentUser.email) {
+          const editBtn = document.createElement("button");
+          const delBtn = document.createElement("button");
+          editBtn.textContent = "Edit";
+          delBtn.textContent = "Delete";
+          editBtn.className = delBtn.className = "action-btn";
+          editBtn.onclick = () => editMessage(doc.id, content);
+          delBtn.onclick = () => deleteMessage(doc.id);
+          div.appendChild(editBtn);
+          div.appendChild(delBtn);
+        }
+
+        div.innerHTML += `<b>${msg.sender}:</b> ${content}`;
+        box.appendChild(div);
+
+        if (msg.time > lastMessageTS) {
+          latest = msg.time;
+          triggerNotification(msg.sender, content);
+        }
+      });
+
+      box.scrollTop = box.scrollHeight;
+      if (latest) lastMessageTS = latest;
+    });
 }
 
-function register() {
-  const email = document.getElementById("email").value.trim();
-  const pass = document.getElementById("password").value.trim();
-  if (!email || !pass) return alert("Missing credentials");
-  auth.createUserWithEmailAndPassword(email, pass)
-    .catch(e => alert(e.message));
+async function sendMessage() {
+  const val = document.getElementById("messageInput").value.trim();
+  if (!val) return;
+
+  await db.collection("messages").doc(currentRoom).collection("chat").add({
+    sender: auth.currentUser.email,
+    text: val,
+    time: Date.now()
+  });
+
+  document.getElementById("messageInput").value = "";
+  db.collection("typing").doc(currentRoom).set({ [auth.currentUser.email]: false }, { merge: true });
 }
 
-// ---------------- ROOM SYSTEM ----------------
+function deleteMessage(id) {
+  db.collection("messages").doc(currentRoom).collection("chat").doc(id).delete();
+}
+
+function editMessage(id, oldText) {
+  const newText = prompt("Edit:", oldText);
+  if (!newText || newText === oldText) return;
+  db.collection("messages").doc(currentRoom).collection("chat").doc(id).update({ text: newText, edited: true });
+}
+
+// ---------------- TYPING INDICATOR ----------------
+document.getElementById("messageInput").addEventListener("input", () => {
+  const ref = db.collection("typing").doc(currentRoom);
+  ref.set({ [auth.currentUser.email]: true }, { merge: true });
+  clearTimeout(typingTO);
+  typingTO = setTimeout(() => {
+    ref.set({ [auth.currentUser.email]: false }, { merge: true });
+  }, 3000);
+});
+
+function listenForTyping(room) {
+  if (unsubscribeTyping) unsubscribeTyping();
+  unsubscribeTyping = db.collection("typing").doc(room).onSnapshot(snap => {
+    const data = snap.data() || {};
+    const me = auth.currentUser.email;
+    const others = Object.keys(data).filter(u => u !== me && data[u]);
+    document.getElementById("typingIndicator").textContent =
+      others.length ? `${others.join(", ")} typing...` : "";
+  });
+}
+
+// ---------------- ROOMS ----------------
 async function createRoomIfMissing(name) {
   const ref = db.collection("rooms").doc(name);
   const snap = await ref.get();
@@ -90,28 +171,6 @@ async function createRoomIfMissing(name) {
   }
 }
 
-function startRoomListeners() {
-  unsubscribeRoomList = db.collection("rooms")
-    .orderBy("createdAt")
-    .onSnapshot(() => {
-      populateDropdown();
-    });
-}
-
-function populateDropdown() {
-  const dd = document.getElementById("roomDropdown");
-  db.collection("rooms").get().then(qs => {
-    dd.innerHTML = "";
-    qs.forEach(doc => {
-      const opt = document.createElement("option");
-      opt.value = doc.id;
-      opt.textContent = `#${doc.id}`;
-      dd.appendChild(opt);
-    });
-    dd.value = currentRoom;
-  });
-}
-
 async function createOrJoinRoom() {
   const name = document.getElementById("customRoom").value.trim();
   if (!name) return;
@@ -120,20 +179,19 @@ async function createOrJoinRoom() {
   document.getElementById("customRoom").value = "";
 }
 
-async function joinRoom(roomName) {
-  currentRoom = roomName;
-  document.getElementById("roomDropdown").value = roomName;
+async function joinRoom(name) {
+  currentRoom = name;
+  document.getElementById("roomDropdown").value = name;
 
-  db.collection("rooms").doc(roomName).update({
+  db.collection("rooms").doc(name).update({
     members: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.email)
   });
 
   if (unsubscribeRoomDoc) unsubscribeRoomDoc();
-  unsubscribeRoomDoc = db.collection("rooms").doc(roomName)
-    .onSnapshot(doc => updateAdminPanel(doc));
+  unsubscribeRoomDoc = db.collection("rooms").doc(name).onSnapshot(doc => updateAdminPanel(doc));
 
-  listenForChat(roomName);
-  listenForTyping(roomName);
+  listenForChat(name);
+  listenForTyping(name);
 }
 
 function leaveRoom() {
@@ -148,149 +206,22 @@ function leaveRoom() {
   joinRoom("general");
 }
 
-// ---------------- CHAT ----------------
-function listenForChat(roomName) {
-  if (unsubscribeChat) unsubscribeChat();
-  unsubscribeChat = db.collection("messages").doc(roomName)
-    .collection("chat").orderBy("time")
-    .onSnapshot(snap => {
-      const box = document.getElementById("messages");
-      box.innerHTML = "";
-      let latest = 0;
+function startRoomListeners() {
+  unsubscribeRoomList = db.collection("rooms").orderBy("createdAt").onSnapshot(() => populateDropdown());
+}
 
-      snap.forEach(d => {
-        const m = d.data();
-        const div = document.createElement("div");
-        div.className = "message";
-
-        let body = m.text || "[Encrypted]";
-        if (m.sender === auth.currentUser.email) {
-          const e = document.createElement("button");
-          const r = document.createElement("button");
-          e.textContent = "Edit"; r.textContent = "Delete";
-          e.className = "action-btn"; r.className = "action-btn";
-          e.onclick = () => editMessage(d.id, body);
-          r.onclick = () => deleteMessage(d.id);
-          div.appendChild(e); div.appendChild(r);
-        }
-
-        div.innerHTML += `<b>${m.sender}:</b> ${body}`;
-        box.appendChild(div);
-
-        if (m.time > lastMessageTS) {
-          latest = m.time;
-          triggerNotification(m.sender, body);
-        }
-      });
-
-      box.scrollTop = box.scrollHeight;
-      if (latest) lastMessageTS = latest;
+function populateDropdown() {
+  const dd = document.getElementById("roomDropdown");
+  db.collection("rooms").get().then(snap => {
+    dd.innerHTML = "";
+    snap.forEach(doc => {
+      const opt = document.createElement("option");
+      opt.value = doc.id;
+      opt.textContent = `#${doc.id}`;
+      dd.appendChild(opt);
     });
-}
-
-async function sendMessage() {
-  const val = document.getElementById("messageInput").value.trim();
-  if (!val) return;
-
-  db.collection("messages").doc(currentRoom).collection("chat").add({
-    sender: auth.currentUser.email,
-    text: val,
-    time: Date.now()
+    dd.value = currentRoom;
   });
-
-  document.getElementById("messageInput").value = "";
-  db.collection("typing").doc(currentRoom)
-    .set({ [auth.currentUser.email]: false }, { merge: true });
-}
-
-function deleteMessage(id) {
-  db.collection("messages").doc(currentRoom).collection("chat").doc(id).delete();
-}
-
-function editMessage(id, oldText) {
-  const newText = prompt("Edit:", oldText);
-  if (!newText || newText === oldText) return;
-  db.collection("messages").doc(currentRoom).collection("chat").doc(id)
-    .update({ text: newText, edited: true });
-}
-
-// ---------------- TYPING INDICATOR ----------------
-document.getElementById("messageInput").addEventListener("input", () => {
-  const ref = db.collection("typing").doc(currentRoom);
-  ref.set({ [auth.currentUser.email]: true }, { merge: true });
-  clearTimeout(typingTO);
-  typingTO = setTimeout(() => {
-    ref.set({ [auth.currentUser.email]: false }, { merge: true });
-  }, 3000);
-});
-
-function listenForTyping(roomName) {
-  if (unsubscribeTyping) unsubscribeTyping();
-  unsubscribeTyping = db.collection("typing").doc(roomName)
-    .onSnapshot(snap => {
-      const d = snap.data() || {};
-      const me = auth.currentUser.email;
-      const others = Object.keys(d).filter(u => u !== me && d[u]);
-      document.getElementById("typingIndicator").textContent =
-        others.length ? `${others.join(", ")} typing...` : "";
-    });
-}
-
-// ---------------- INBOX SYSTEM ----------------
-function loadInbox(uid) {
-  const list = document.getElementById("inboxList");
-  const inboxRef = db.collection("users").doc(uid).collection("inbox").orderBy("timestamp", "desc");
-
-  inboxRef.onSnapshot(snapshot => {
-    list.innerHTML = "";
-    if (snapshot.empty) {
-      list.innerHTML = "No notifications yet.";
-      return;
-    }
-
-    snapshot.forEach(doc => {
-      const d = doc.data();
-      const card = document.createElement("div");
-      card.className = "inbox-card";
-
-      const from = typeof d.from === "object"
-        ? (d.from.username || d.from.email || "Unknown")
-        : d.from;
-
-      if (d.type === "friend_request") {
-        card.innerHTML = `
-          <h4>Friend request from ${from}</h4>
-          <button onclick="acceptFriend('${doc.id}', '${uid}')">Accept</button>
-          <button onclick="declineInbox('${doc.id}', '${uid}')">Decline</button>
-        `;
-      } else if (d.type === "group_invite") {
-        card.innerHTML = `
-          <h4>Group invite to #${d.groupId} from ${from}</h4>
-          <button onclick="acceptGroup('${doc.id}', '${uid}', '${d.groupId}')">Accept</button>
-          <button onclick="declineInbox('${doc.id}', '${uid}')">Decline</button>
-        `;
-      }
-
-      list.appendChild(card);
-    });
-  });
-}
-
-function acceptFriend(docId, uid) {
-  db.collection("users").doc(uid).collection("inbox").doc(docId).delete();
-  alert("Friend accepted (not yet added to list)");
-}
-
-function acceptGroup(docId, uid, groupId) {
-  db.collection("rooms").doc(groupId).update({
-    members: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.email)
-  });
-  db.collection("users").doc(uid).collection("inbox").doc(docId).delete();
-  alert(`You joined #${groupId}`);
-}
-
-function declineInbox(docId, uid) {
-  db.collection("users").doc(uid).collection("inbox").doc(docId).delete();
 }
 
 // ---------------- SEARCH ----------------
@@ -305,7 +236,6 @@ async function runSearch() {
 
   const userSnap = await db.collection("users").get();
   const groupSnap = await db.collection("rooms").get();
-
   const uBox = document.getElementById("searchResultsUser");
   const gBox = document.getElementById("searchResultsGroup");
 
@@ -317,7 +247,7 @@ async function runSearch() {
       uBox.innerHTML += `
         <div class="search-item">
           <b>@${d.username}</b><br>${d.bio || ""}<br>
-          <button onclick="sendFriendRequest('${doc.id}')">Send Friend Request</button>
+          <button onclick="sendFriendRequest('${doc.id}', '${d.username}')">Send Friend Request</button>
         </div>`;
     }
   });
@@ -334,17 +264,32 @@ async function runSearch() {
   });
 }
 
-function sendFriendRequest(uid) {
-  alert(`Friend request sent to ${uid}`);
+function sendFriendRequest(uid, username) {
+  const me = auth.currentUser;
+  db.collection("users").doc(uid).collection("inbox").add({
+    type: "friend_request",
+    from: me.email,
+    timestamp: Date.now()
+  });
+  alert(`Friend request sent to @${username}`);
 }
 
 function requestJoinGroup(groupId) {
+  const me = auth.currentUser;
+  db.collection("rooms").doc(groupId).collection("requests").add({
+    from: me.email,
+    timestamp: Date.now()
+  });
   alert(`Requested to join #${groupId}`);
 }
 
 // ---------------- PROFILE ----------------
 function loadProfile(uid) {
-  // Placeholder
+  db.collection("users").doc(uid).get().then(doc => {
+    const d = doc.data();
+    document.getElementById("profileName").value = d.name || "";
+    document.getElementById("profileBio").value = d.bio || "";
+  });
 }
 
 function saveProfile() {
@@ -358,6 +303,59 @@ function saveProfile() {
   }).then(() => alert("Profile updated"));
 }
 
+// ---------------- INBOX ----------------
+function loadInbox(uid) {
+  const list = document.getElementById("inboxList");
+  const ref = db.collection("users").doc(uid).collection("inbox").orderBy("timestamp", "desc");
+
+  ref.onSnapshot(snap => {
+    list.innerHTML = "";
+    if (snap.empty) {
+      list.innerHTML = "No notifications yet.";
+      return;
+    }
+
+    snap.forEach(doc => {
+      const d = doc.data();
+      const card = document.createElement("div");
+      card.className = "inbox-card";
+
+      if (d.type === "friend_request") {
+        card.innerHTML = `
+          <h4>Friend request from ${d.from}</h4>
+          <button onclick="acceptFriend('${doc.id}', '${uid}')">Accept</button>
+          <button onclick="declineInbox('${doc.id}', '${uid}')">Decline</button>
+        `;
+      } else if (d.type === "group_invite") {
+        card.innerHTML = `
+          <h4>Group invite to #${d.groupId} from ${d.from}</h4>
+          <button onclick="acceptGroup('${doc.id}', '${uid}', '${d.groupId}')">Accept</button>
+          <button onclick="declineInbox('${doc.id}', '${uid}')">Decline</button>
+        `;
+      }
+
+      list.appendChild(card);
+    });
+  });
+}
+
+function acceptFriend(docId, uid) {
+  db.collection("users").doc(uid).collection("inbox").doc(docId).delete();
+  alert("Friend accepted (not implemented yet)");
+}
+
+function acceptGroup(docId, uid, groupId) {
+  db.collection("rooms").doc(groupId).update({
+    members: firebase.firestore.FieldValue.arrayUnion(auth.currentUser.email)
+  });
+  db.collection("users").doc(uid).collection("inbox").doc(docId).delete();
+  alert(`You joined #${groupId}`);
+}
+
+function declineInbox(docId, uid) {
+  db.collection("users").doc(uid).collection("inbox").doc(docId).delete();
+}
+
 // ---------------- NOTIFICATIONS ----------------
 function triggerNotification(sender, msg) {
   if (Notification.permission === "granted")
@@ -366,19 +364,18 @@ function triggerNotification(sender, msg) {
   const audio = document.getElementById("notifSound");
   if (audio) audio.play().catch(() => {});
 }
-
 if ("Notification" in window && Notification.permission !== "granted")
   Notification.requestPermission();
 
-// ---------------- ADMIN ----------------
+// ---------------- ADMIN PANEL ----------------
 function updateAdminPanel(doc) {
   const panel = document.getElementById("adminPanel");
   if (!doc.exists) return panel.style.display = "none";
 
   const data = doc.data();
-  const you = auth.currentUser.email;
-  const isAdmin = data.admins.includes(you);
-  const isCreator = data.creator === you;
+  const me = auth.currentUser.email;
+  const isAdmin = data.admins.includes(me);
+  const isCreator = data.creator === me;
 
   if (!(isAdmin || isCreator)) return panel.style.display = "none";
 
