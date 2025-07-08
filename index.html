@@ -119,20 +119,23 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-  <!-- Firebase Config -->
-  <script src="firebase.js"></script>
+  <!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-  <!-- Core Scripts -->
-  <script src="crypto.js"></script>
-  <script src="p2p.js"></script>
-  <script src="app.js"></script>
+<!-- Firebase Config -->
+<script src="firebase.js"></script>
 
-  <!-- Register Service Worker -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js')
-        .catch(err => console.error("SW Error:", err));
-    }
-  </script>
-</body>
-</html>
+<!-- WebTorrent Library -->
+<script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
+
+<!-- Main Script -->
+<script src="app.js"></script>
+
+<!-- Register Service Worker -->
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js');
+  }
+</script>
