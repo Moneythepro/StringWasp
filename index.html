@@ -4,13 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>StringWasp</title>
-  <link rel="stylesheet" href="style.css"/>
-  <link rel="manifest" href="manifest.json"/>
-  <link rel="icon" href="favicon.png"/>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="favicon.png" />
 </head>
 <body>
   <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
+  <!-- Loading Overlay -->
   <div id="loadingOverlay"><div class="loader"></div></div>
 
   <!-- Login/Register -->
@@ -31,12 +32,13 @@
 
   <!-- App Page -->
   <div id="appPage" class="tabContent">
-    <!-- Dark Mode Toggle -->
+    <!-- Theme Toggle -->
     <label class="theme-switch">
       <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()" />
       <span class="slider"></span>
     </label>
 
+    <!-- Header -->
     <div class="header">
       <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
       <input id="customRoom" placeholder="New Room Name" />
@@ -54,7 +56,7 @@
       <button onclick="promoteMember()">Promote</button>
     </div>
 
-    <!-- Tabs -->
+    <!-- Tab Navigation -->
     <div class="tabs">
       <button onclick="switchTab('chatTab')">Chat</button>
       <button onclick="switchTab('friendsTab')">Friends</button>
@@ -114,11 +116,11 @@
       <button onclick="sendThreadMessage()">Send</button>
     </div>
 
-    <!-- Floating Button -->
+    <!-- Floating Action Button -->
     <button class="fab" onclick="switchTab('chatTab')">+</button>
   </div>
 
-  <!-- Firebase SDK (v8) -->
+  <!-- Firebase SDK (v8 Classic) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -129,7 +131,7 @@
   <!-- Main App Script -->
   <script src="app.js"></script>
 
-  <!-- Service Worker -->
+  <!-- Register Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
