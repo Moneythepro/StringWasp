@@ -1,195 +1,180 @@
-/* Global Styles */
-body {
-  font-family: 'Segoe UI', sans-serif;
+/* General Reset */
+* {
   margin: 0;
   padding: 0;
-  background: #f0f2f5;
-  color: #333;
-}
-
-input, textarea, button, select {
-  font-family: inherit;
-  padding: 10px;
-  margin: 5px 0;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  width: 100%;
   box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
 }
 
-button {
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  cursor: pointer;
+/* App Background */
+body {
+  background-color: #111;
+  color: #eee;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-button:hover {
-  background-color: #45a049;
-}
-
-.tab, .tabContent {
-  display: none;
-  padding: 16px;
-}
-
+/* Hidden by default */
+.tab,
 .tabContent {
-  padding-bottom: 80px;
+  display: none;
+}
+
+.tab.active,
+.tabContent.active {
+  display: block;
+}
+
+/* Loader */
+#loadingOverlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.loader {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #0f0;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* Header */
 .header {
-  background: #075e54;
-  color: white;
-  padding: 12px;
+  padding: 10px;
+  background: #222;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
 }
-
 .header input, .header select {
-  width: auto;
-  flex: 1;
+  background: #333;
+  color: #eee;
+  border: none;
+  padding: 5px;
+}
+.header button {
+  background: #0f0;
+  border: none;
+  color: #000;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.header span {
+  margin-left: auto;
+  font-weight: bold;
 }
 
-/* Tabs Navigation */
+/* Tabs */
 .tabs {
   display: flex;
-  background: #128C7E;
-  overflow-x: auto;
+  background: #222;
 }
-
 .tabs button {
   flex: 1;
-  padding: 12px;
-  font-weight: bold;
+  background: #333;
+  color: #eee;
   border: none;
-  background: #128C7E;
-  color: white;
+  padding: 10px;
+  cursor: pointer;
 }
-
 .tabs button:hover {
-  background: #0d7a6c;
+  background: #444;
 }
 
 /* Messages */
 .messages {
-  background: #e5ddd5;
+  padding: 10px;
   height: 300px;
   overflow-y: auto;
-  padding: 10px;
-  border-radius: 8px;
-  margin-bottom: 10px;
+  background: #1a1a1a;
 }
-
 .message {
-  background: #dcf8c6;
+  margin-bottom: 10px;
+  background: #2a2a2a;
   padding: 8px;
   border-radius: 6px;
-  margin-bottom: 5px;
-  position: relative;
+}
+.message b {
+  color: #0f0;
 }
 
+/* Typing Indicator */
 .typing {
   font-style: italic;
-  color: gray;
-  margin-bottom: 8px;
+  color: #888;
+  padding: 5px 10px;
 }
 
-/* Inbox */
-.inbox-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 12px;
-  margin: 10px 0;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-
-.inbox-card button {
-  margin-right: 8px;
-}
-
-/* Search */
-.search-buttons {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-  margin-bottom: 12px;
-}
-
-.search-results .search-item {
-  background: white;
+/* Inputs */
+input, textarea {
+  width: 100%;
   padding: 10px;
+  margin-top: 5px;
   margin-bottom: 10px;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  border: none;
+  border-radius: 4px;
+  background: #222;
+  color: #eee;
+}
+button {
+  background: #0f0;
+  color: #000;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+button:hover {
+  background: #0d0;
 }
 
-/* Profile */
-textarea {
-  min-height: 80px;
-  resize: vertical;
+/* Modal */
+.modal {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #222;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px #0f0;
+  z-index: 1001;
+}
+
+/* Inbox Cards */
+.inbox-card {
+  background: #2c2c2c;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 4px solid #0f0;
+  border-radius: 6px;
+}
+.inbox-card h4 {
+  margin-bottom: 6px;
 }
 
 /* Admin Panel */
 .admin-panel {
-  background: #fff3cd;
-  padding: 12px;
-  border-left: 5px solid #ffeb3b;
-  margin-bottom: 12px;
-  border-radius: 6px;
-}
-
-/* Modal (Username Dialog) */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 10;
-  left: 0; top: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.7);
-  justify-content: center;
-  align-items: center;
-}
-
-.modal input, .modal button {
-  margin-top: 10px;
-  width: 100%;
-}
-
-.modal h3 {
-  margin-top: 0;
-}
-
-.modal:has(input:focus) {
-  outline: none;
-}
-
-.modal > div, .modal form {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  width: 300px;
-}
-
-/* Thread View */
-#threadView {
-  display: none;
-}
-
-#threadMessages {
-  background: #fff;
-  height: 300px;
-  overflow-y: auto;
+  background: #191919;
   padding: 10px;
-  border-radius: 8px;
-  margin-bottom: 10px;
+  margin-top: 5px;
+  display: none;
 }
-
-#threadInput {
-  margin-top: 10px;
+.admin-panel button {
+  margin-right: 5px;
 }
 
 /* Floating Action Button */
@@ -197,45 +182,64 @@ textarea {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background: #25d366;
-  border-radius: 50%;
-  padding: 15px 20px;
+  background: #0f0;
+  color: #000;
   font-size: 24px;
-  color: white;
-  border: none;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-}
-
-/* Loading Overlay */
-#loadingOverlay {
-  display: none;
-  position: fixed;
-  z-index: 99;
-  top: 0; left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255,255,255,0.8);
-  justify-content: center;
-  align-items: center;
-}
-
-.loader {
-  border: 6px solid #f3f3f3;
-  border-top: 6px solid #4CAF50;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
+  border: none;
+  cursor: pointer;
+  z-index: 1002;
+}
+.fab:hover {
+  background: #0c0;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+/* Search Results */
+.search-results {
+  padding: 10px;
+}
+.search-item {
+  background: #292929;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 6px;
+}
+.search-item button {
+  margin-top: 5px;
+}
+
+/* Friends List */
+#friendsList {
+  padding: 10px;
+}
+.friend-entry {
+  background: #282828;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Thread View */
+#threadView {
+  background: #111;
+  padding: 10px;
+}
+#threadView h3 {
+  margin-bottom: 10px;
 }
 
 /* Responsive */
 @media (max-width: 600px) {
+  .tabs button {
+    font-size: 12px;
+    padding: 6px;
+  }
   .header {
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
   }
 }
