@@ -1,245 +1,189 @@
-/* General Reset */
-* {
+body {
+  font-family: 'Segoe UI', sans-serif;
   margin: 0;
   padding: 0;
+  background: #f0f2f5;
+}
+
+.tab, .tabContent {
+  display: none;
+  padding: 16px;
+}
+
+button {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 6px;
+  background: #25d366;
+  color: white;
+  cursor: pointer;
+  margin: 4px 2px;
+  transition: background 0.2s;
+}
+button:hover {
+  background: #1ebd5a;
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 16px;
   box-sizing: border-box;
-  font-family: 'Segoe UI', sans-serif;
 }
 
-/* App Background */
-body {
-  background-color: #111;
-  color: #eee;
-  min-height: 100vh;
+.header {
+  background: #075e54;
+  padding: 10px;
+  color: white;
   display: flex;
-  flex-direction: column;
-}
-
-/* Hidden by default */
-.tab,
-.tabContent {
-  display: none;
-}
-
-.tab.active,
-.tabContent.active {
-  display: block;
-}
-
-/* Loader */
-#loadingOverlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0,0,0,0.7);
-  display: none;
+  gap: 10px;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  z-index: 1000;
+  justify-content: space-between;
 }
+
+.tabs {
+  display: flex;
+  justify-content: space-around;
+  background: #128c7e;
+}
+.tabs button {
+  flex: 1;
+  padding: 14px 0;
+  background: #128c7e;
+  color: white;
+  font-weight: bold;
+  border-radius: 0;
+}
+.tabs button:hover {
+  background: #0e776b;
+}
+
+.messages {
+  height: 300px;
+  overflow-y: auto;
+  background: white;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.typing {
+  font-style: italic;
+  font-size: 14px;
+  color: gray;
+  margin-bottom: 8px;
+}
+
+.message {
+  margin-bottom: 10px;
+  padding: 8px;
+  background: #dcf8c6;
+  border-radius: 10px;
+  word-wrap: break-word;
+}
+
+.admin-panel {
+  display: none;
+  background: #fff;
+  padding: 10px;
+  margin: 10px 0;
+  border-left: 4px solid #25d366;
+  border-radius: 6px;
+}
+
+.inbox-card {
+  background: white;
+  padding: 12px;
+  border-radius: 8px;
+  margin: 8px 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.friend-card {
+  background: white;
+  padding: 10px;
+  margin: 6px 0;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.search-item {
+  background: #fff;
+  margin: 10px 0;
+  padding: 12px;
+  border-left: 4px solid #128c7e;
+  border-radius: 6px;
+}
+
+.search-buttons {
+  margin-top: 8px;
+}
+
+.fab {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 48px;
+  height: 48px;
+  font-size: 24px;
+  border-radius: 50%;
+  background: #25d366;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  transition: background 0.3s;
+}
+.fab:hover {
+  background: #1da851;
+}
+
 .loader {
   border: 6px solid #f3f3f3;
-  border-top: 6px solid #0f0;
+  border-top: 6px solid #25d366;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
+  width: 50px;
+  height: 50px;
+  animation: spin 0.9s linear infinite;
 }
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
-/* Header */
-.header {
-  padding: 10px;
-  background: #222;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.header input, .header select {
-  background: #333;
-  color: #eee;
-  border: none;
-  padding: 5px;
-}
-.header button {
-  background: #0f0;
-  border: none;
-  color: #000;
-  padding: 6px 10px;
-  cursor: pointer;
-}
-.header span {
-  margin-left: auto;
-  font-weight: bold;
-}
-
-/* Tabs */
-.tabs {
-  display: flex;
-  background: #222;
-}
-.tabs button {
-  flex: 1;
-  background: #333;
-  color: #eee;
-  border: none;
-  padding: 10px;
-  cursor: pointer;
-}
-.tabs button:hover {
-  background: #444;
-}
-
-/* Messages */
-.messages {
-  padding: 10px;
-  height: 300px;
-  overflow-y: auto;
-  background: #1a1a1a;
-}
-.message {
-  margin-bottom: 10px;
-  background: #2a2a2a;
-  padding: 8px;
-  border-radius: 6px;
-}
-.message b {
-  color: #0f0;
-}
-
-/* Typing Indicator */
-.typing {
-  font-style: italic;
-  color: #888;
-  padding: 5px 10px;
-}
-
-/* Inputs */
-input, textarea {
+#loadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
-  padding: 10px;
-  margin-top: 5px;
-  margin-bottom: 10px;
-  border: none;
-  border-radius: 4px;
-  background: #222;
-  color: #eee;
-}
-button {
-  background: #0f0;
-  color: #000;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-button:hover {
-  background: #0d0;
+  height: 100%;
+  background: rgba(250,250,250,0.8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
 }
 
-/* Modal */
 .modal {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
   position: fixed;
   top: 20%;
   left: 50%;
   transform: translateX(-50%);
-  background: #222;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px #0f0;
-  z-index: 1001;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
-/* Inbox Cards */
-.inbox-card {
-  background: #2c2c2c;
-  padding: 12px;
-  margin-bottom: 10px;
-  border-left: 4px solid #0f0;
-  border-radius: 6px;
-}
-.inbox-card h4 {
-  margin-bottom: 6px;
+pre {
+  white-space: pre-wrap;
+  font-family: monospace;
 }
 
-/* Admin Panel */
-.admin-panel {
-  background: #191919;
-  padding: 10px;
-  margin-top: 5px;
-  display: none;
-}
-.admin-panel button {
-  margin-right: 5px;
-}
-
-/* Floating Action Button */
-.fab {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #0f0;
-  color: #000;
-  font-size: 24px;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  z-index: 1002;
-}
-.fab:hover {
-  background: #0c0;
-}
-
-/* Search Results */
-.search-results {
-  padding: 10px;
-}
-.search-item {
-  background: #292929;
-  margin-bottom: 10px;
-  padding: 10px;
-  border-radius: 6px;
-}
-.search-item button {
-  margin-top: 5px;
-}
-
-/* Friends List */
-#friendsList {
-  padding: 10px;
-}
-.friend-entry {
-  background: #282828;
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: space-between;
-}
-
-/* Thread View */
-#threadView {
-  background: #111;
-  padding: 10px;
-}
-#threadView h3 {
-  margin-bottom: 10px;
-}
-
-/* Responsive */
 @media (max-width: 600px) {
-  .tabs button {
-    font-size: 12px;
-    padding: 6px;
-  }
-  .header {
+  .tabs {
     flex-direction: column;
-    align-items: flex-start;
   }
 }
