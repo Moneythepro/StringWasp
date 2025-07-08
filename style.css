@@ -1,198 +1,121 @@
-/* GLOBAL STYLES */
 body {
   font-family: 'Roboto', sans-serif;
   margin: 0;
-  background: #f0f2f5;
-  color: #111;
+  padding: 0;
+  background: #e5ddd5;
+  color: #222;
 }
 
-h2, h3, h4 {
-  margin-top: 0;
-}
-
-input, textarea, select, button {
-  font-family: inherit;
-  font-size: 1rem;
-  padding: 10px;
-  margin: 6px 0;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-button {
-  background: #128C7E;
+header {
+  background: #075E54;
   color: #fff;
-  border: none;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-button:hover {
-  background: #075E54;
-}
-
-/* NAVIGATION TABS */
-#navTabs {
-  display: flex;
-  justify-content: space-around;
-  background: #075E54;
   padding: 10px;
-}
-
-#navTabs button {
-  flex: 1;
-  margin: 0 4px;
-  padding: 12px 8px;
-  border-radius: 8px;
-  background: #128C7E;
-  font-weight: bold;
-}
-
-#navTabs button:hover {
-  background: #0b645d;
-}
-
-/* TABS & LAYOUT */
-.tab, .tabContent {
-  padding: 20px;
-  display: none;
-}
-
-#loginPage {
-  max-width: 400px;
-  margin: 40px auto;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  padding: 30px;
   text-align: center;
 }
 
-#usernameDialog {
-  max-width: 400px;
-  margin: 60px auto;
-  background: white;
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+#navTabs {
+  display: flex;
+  justify-content: space-around;
+  background: #128C7E;
+  padding: 8px 0;
 }
 
-#appPage {
-  padding-bottom: 60px;
+#navTabs button {
+  background: transparent;
+  border: none;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 10px 14px;
 }
 
-/* CHAT AREA */
-#messages {
-  height: 300px;
-  overflow-y: auto;
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 12px;
+#navTabs button:hover {
+  background: #0b7d6c;
+}
+
+.tabContent {
+  padding: 15px;
+}
+
+input, textarea, select {
+  width: 100%;
+  margin: 6px 0;
   padding: 10px;
-  margin-bottom: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+button {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background-color: #25D366;
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin: 4px 2px;
+}
+
+button:hover {
+  background-color: #128C7E;
 }
 
 .message {
-  margin-bottom: 10px;
-  padding: 8px;
-  border-radius: 10px;
-  background: #e1ffc7;
+  background: #DCF8C6;
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 8px;
   position: relative;
 }
 
-.message b {
-  color: #075E54;
-}
-
-.action-btn {
+.message .action-btn {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  margin-left: 5px;
+  top: 4px;
+  right: 6px;
   background: transparent;
+  color: #666;
+  font-size: 12px;
   border: none;
-  color: #888;
-  font-size: 0.85rem;
+  cursor: pointer;
 }
 
-#messageInput {
-  width: 100%;
-  margin-top: 5px;
-}
-
-/* TYPING INDICATOR */
-#typingIndicator {
-  font-style: italic;
-  color: #888;
-  margin-top: 4px;
-}
-
-/* INBOX CARDS */
-.inbox-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 15px;
-  margin: 10px 0;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-}
-
-.inbox-card h4 {
-  margin: 0 0 10px;
-}
-
-/* SEARCH RESULTS */
-.search-item {
-  background: #fff;
-  padding: 12px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
-
-/* ADMIN PANEL */
-#adminPanel {
-  margin-top: 30px;
-  padding: 15px;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
-
-/* LOADING OVERLAY */
 #loadingOverlay {
   position: fixed;
   top: 0; left: 0;
-  width: 100%; height: 100%;
+  width: 100vw;
+  height: 100vh;
   background: rgba(255, 255, 255, 0.9);
-  z-index: 9999;
-  display: none;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex-direction: column;
+  z-index: 999;
+  display: none;
 }
 
 .loader {
-  width: 50px;
-  height: 50px;
-  border: 6px solid #eee;
-  border-top: 6px solid #128C7E;
+  border: 6px solid #ccc;
+  border-top: 6px solid #25D366;
   border-radius: 50%;
+  width: 40px;
+  height: 40px;
   animation: spin 1s linear infinite;
-  margin-bottom: 20px;
 }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
-/* RESPONSIVE */
-@media (max-width: 600px) {
-  #navTabs {
-    flex-direction: column;
-  }
-  #navTabs button {
-    margin: 5px 0;
-  }
+.inbox-card {
+  background: white;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 10px 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.search-item {
+  background: white;
+  margin: 8px 0;
+  padding: 10px;
+  border-radius: 6px;
 }
