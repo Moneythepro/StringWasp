@@ -7,16 +7,22 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="favicon.png" />
+
+  <!-- WebTorrent P2P -->
+  <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
+  
+  <!-- Firebase SDK v8 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <!-- Firebase Config -->
+  <script src="firebase.js"></script>
 </head>
 <body>
   <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
+  <div id="loadingOverlay"><div class="loader"></div></div>
 
-  <!-- Loading Overlay -->
-  <div id="loadingOverlay">
-    <div class="loader"></div>
-  </div>
-
-  <!-- Login/Register Page -->
   <div id="loginPage" class="tab">
     <h2>Login</h2>
     <input type="email" id="email" placeholder="Email" />
@@ -25,17 +31,13 @@
     <button onclick="register()">Register</button>
   </div>
 
-  <!-- Username Setup Dialog -->
-  <div id="usernameDialog" class="modal">
+  <div id="usernameDialog" class="modal tab">
     <h3>Pick a username</h3>
     <input id="newUsername" placeholder="Username" />
     <button onclick="saveUsername()">Save</button>
   </div>
 
-  <!-- Main App Interface -->
   <div id="appPage" class="tabContent">
-
-    <!-- Header -->
     <div class="header">
       <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
       <input id="customRoom" placeholder="New Room Name" />
@@ -43,7 +45,6 @@
       <span id="usernameDisplay"></span>
     </div>
 
-    <!-- Admin Panel -->
     <div id="adminPanel" class="admin-panel">
       <h4>Room Admin Tools</h4>
       <pre id="adminInfo"></pre>
@@ -53,7 +54,6 @@
       <button onclick="promoteMember()">Promote</button>
     </div>
 
-    <!-- Tab Navigation -->
     <div class="tabs">
       <button onclick="switchTab('chatTab')">Chat</button>
       <button onclick="switchTab('friendsTab')">Friends</button>
@@ -62,28 +62,24 @@
       <button onclick="switchTab('profileTab')">Profile</button>
     </div>
 
-    <!-- Chat Tab -->
-    <div id="chatTab" class="tab">
+    <div id="chatTab" class="tab tabContent">
       <div id="messages" class="messages"></div>
       <div id="typingIndicator" class="typing"></div>
       <input id="messageInput" placeholder="Type message..." />
       <button onclick="sendMessage()">Send</button>
     </div>
 
-    <!-- Friends Tab -->
-    <div id="friendsTab" class="tab">
+    <div id="friendsTab" class="tab tabContent">
       <h3>Your Friends</h3>
       <div id="friendsList"></div>
     </div>
 
-    <!-- Inbox Tab -->
-    <div id="inboxTab" class="tab">
+    <div id="inboxTab" class="tab tabContent">
       <h3>Inbox</h3>
       <div id="inboxList"></div>
     </div>
 
-    <!-- Search Tab -->
-    <div id="searchTab" class="tab">
+    <div id="searchTab" class="tab tabContent">
       <h3>Search</h3>
       <input id="searchInput" placeholder="Search users or groups..." />
       <div class="search-buttons">
@@ -95,16 +91,14 @@
       <div id="searchResultsGroup" class="search-results"></div>
     </div>
 
-    <!-- Profile Tab -->
-    <div id="profileTab" class="tab">
+    <div id="profileTab" class="tab tabContent">
       <h3>Your Profile</h3>
       <input id="profileName" placeholder="Your Name" />
       <textarea id="profileBio" placeholder="Your Bio"></textarea>
       <button onclick="saveProfile()">Save</button>
     </div>
 
-    <!-- Thread View -->
-    <div id="threadView" class="tab">
+    <div id="threadView" class="tab tabContent">
       <button onclick="closeThread()">← Back to Friends</button>
       <h3 id="threadWithName"></h3>
       <div id="threadMessages" class="messages"></div>
@@ -113,30 +107,15 @@
       <button onclick="sendThreadMessage()">Send</button>
     </div>
 
-    <!-- Floating Action Button -->
     <button class="fab" onclick="switchTab('chatTab')">+</button>
   </div>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
-  <!-- Firebase Config -->
-  <script src="firebase.js"></script>
-
-  <!-- WebTorrent -->
-  <script src="https://cdn.jsdelivr.net/npm/webtorrent/webtorrent.min.js"></script>
-
-  <!-- Main Script -->
   <script src="app.js"></script>
-
-  <!-- Register Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
-        .then(() => console.log("✔ Service Worker Registered"))
-        .catch(err => console.error("Service Worker error:", err));
+        .then(() => console.log('✔ Service Worker Registered'))
+        .catch(console.error);
     }
   </script>
 </body>
