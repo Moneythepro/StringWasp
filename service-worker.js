@@ -1,37 +1,51 @@
-const CACHE_NAME = 'stringwasp-cache-v1';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/app.js',
-  '/firebase.js',
-  '/manifest.json',
-  '/notif.mp3',
-  '/favicon.png'
+const CACHE_NAME = "stringwasp-v1";
+const FILES_TO_CACHE = [
+  "/",
+  "/index.html",
+  "/style.css",
+  "/app.js",
+  "/firebase.js",
+  "/manifest.json",
+  "/favicon.png",
+  "/notif.mp3"
 ];
 
-// Install event – cache app shell
-self.addEventListener('install', event => {
+// Install Service Worker
+self.addEventListener("install", (event) => {
+  console.log("[ServiceWorker] Install");
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log("[ServiceWorker] Caching app shell");
+      return cache.addAll(FILES_TO_CACHE);
+    })
   );
 });
 
-// Activate event – cleanup old caches
-self.addEventListener('activate', event => {
+// Activate Service Worker
+self.addEventListener("activate", (event) => {
+  console.log("[ServiceWorker] Activate");
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-      )
-    )
+    caches.keys().then((keyList) => {
+      return Promise.all(
+        keyList.map((key) => {
+          if (key !== CACHE_NAME) {
+            console.log("[ServiceWorker] Removing old cache", key);
+            return caches.delete(key);
+          }
+        })
+      );
+    })
   );
+  self.clients.claim();
 });
 
-// Fetch event – serve cached content if offline
-self.addEventListener('fetch', event => {
+// Fetch from Cache or Network
+self.addEventListener("fetch", (event) => {
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    caches.match(event.request).then((res) => {
+      return res || fetch(event.request);
+    }).catch(() => {
+      return new Response("Offline");
+    })
   );
 });
