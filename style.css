@@ -1,216 +1,350 @@
-body {
-  font-family: 'Segoe UI', sans-serif;
-  margin: 0;
-  padding: 0;
-  background: #f0f2f5;
+:root {
+  --primary: #25d366;
+  --primary-dark: #128c7e;
+  --danger: #e74c3c;
+  --bg: #f0f2f5;
+  --card: #fff;
+  --text: #333;
+  --text-light: #777;
+  --border: #ddd;
 }
 
-.tab {
-  display: none;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
   padding: 20px;
 }
 
-#loginPage {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 100px;
+.auth-card {
+  background: var(--card);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
 }
 
-#loginPage input,
-#loginPage button {
-  margin: 8px;
-  padding: 10px;
-  width: 250px;
+.auth-card h1 {
+  margin-bottom: 20px;
+  color: var(--primary);
+}
+
+.auth-card input {
+  width: 100%;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
   font-size: 16px;
 }
 
-#navTabs {
+.auth-actions {
   display: flex;
-  justify-content: space-around;
-  background: #fff;
-  padding: 10px 0;
-  border-bottom: 1px solid #ddd;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  gap: 10px;
 }
 
-#navTabs button {
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+}
+
+.btn-secondary {
+  background: #fff;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.btn-secondary:hover {
+  background: var(--bg);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: #c0392b;
+}
+
+.btn-small {
+  padding: 5px 10px;
+  font-size: 14px;
+}
+
+.btn-icon {
   background: none;
   border: none;
-  padding: 10px 15px;
-  font-size: 16px;
+  font-size: 18px;
+  color: var(--text);
   cursor: pointer;
 }
 
-#navTabs button:hover {
-  background-color: #e2e2e2;
-  border-radius: 8px;
+.app-header {
+  background: var(--card);
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-#roomDropdown,
-input,
-textarea,
-button {
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 8px;
-  font-size: 14px;
-  margin: 4px 0;
+.app-main {
+  display: flex;
+  height: calc(100vh - 60px);
 }
 
-#roomDropdown {
-  padding: 6px;
-}
-
-#messages {
-  height: 300px;
+.app-sidebar {
+  width: 250px;
+  background: var(--card);
+  padding: 20px;
+  border-right: 1px solid var(--border);
   overflow-y: auto;
-  background: #fff;
-  padding: 10px;
-  border: 1px solid #ccc;
-  margin-bottom: 10px;
-  border-radius: 10px;
+}
+
+.sidebar-section {
+  margin-bottom: 25px;
+}
+
+.sidebar-section h3 {
+  margin-bottom: 15px;
+  font-size: 16px;
+  color: var(--text-light);
+}
+
+.chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-header {
+  padding: 15px 20px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.messages-container {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background: #f9f9f9;
 }
 
 .message {
-  background: #e0f7fa;
-  margin: 6px 0;
-  padding: 8px;
+  margin-bottom: 15px;
+  padding: 10px 15px;
+  background: #fff;
   border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  max-width: 70%;
 }
 
-.message b {
-  color: #00796b;
+.message.sent {
+  margin-left: auto;
+  background: var(--primary);
+  color: #fff;
 }
 
-.action-btn {
-  background-color: #ccc;
-  color: #333;
-  border: none;
-  border-radius: 6px;
-  padding: 3px 6px;
-  margin-right: 4px;
-  cursor: pointer;
+.message.received {
+  margin-right: auto;
+}
+
+.message-info {
+  display: flex;
+  justify-content: space-between;
   font-size: 12px;
+  margin-bottom: 5px;
 }
 
-#messageInput {
-  width: 100%;
-  box-sizing: border-box;
+.message-time {
+  color: var(--text-light);
+}
+
+.message.sent .message-time {
+  color: hsla(0, 0%, 100%, 0.8);
+}
+
+.message-input-area {
+  padding: 15px;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+}
+
+.input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.input-group input {
+  flex: 1;
+  padding: 12px 15px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 16px;
 }
 
 #typingIndicator {
-  font-size: 13px;
-  color: #999;
-  margin-top: 5px;
-}
-
-.inbox-card {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  margin: 10px 0;
-  padding: 10px;
-  box-shadow: 1px 1px 4px rgba(0,0,0,0.1);
-}
-
-.search-item {
-  background: #fff;
-  padding: 10px;
-  margin: 6px 0;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-}
-
-button {
-  cursor: pointer;
-  background-color: #25d366;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-weight: bold;
-}
-
-button:hover {
-  background-color: #128c7e;
-}
-
-textarea {
-  width: 100%;
-  resize: vertical;
-}
-
-#adminPanel {
-  background: #fff9c4;
-  border: 1px solid #fbc02d;
-  padding: 10px;
-  border-radius: 8px;
-  margin: 15px 0;
-}
-
-#adminInfo {
-  font-family: monospace;
+  height: 20px;
   font-size: 14px;
-  white-space: pre-wrap;
+  color: var(--text-light);
+  font-style: italic;
 }
 
-#usernameDialog {
+#roomDropdown {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.room-controls {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 30px;
-}
-
-#usernameDialog input {
-  margin: 10px;
-  padding: 10px;
-  width: 200px;
-}
-
-#searchTabs {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
+  gap: 5px;
   margin-bottom: 10px;
 }
 
-#searchTabs button {
-  background: #e0e0e0;
-  color: #000;
+.room-controls input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
 }
 
-#searchTabs button:hover {
-  background: #c8e6c9;
-}
-
-#loadingIndicator {
-  display: none;
-  text-align: center;
-  padding: 15px;
-  font-style: italic;
-  color: #888;
-}
-
-.floating-chat-btn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #25d366;
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  font-size: 30px;
-  color: white;
-  border: none;
-  box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+#onlineUsers {
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.online-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.online-user:hover {
+  background: #f0f0f0;
+}
+
+.user-status {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
   justify-content: center;
   align-items: center;
 }
 
-.floating-chat-btn:hover {
-  background-color: #128c7e;
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+}
+
+.close-modal {
+  float: right;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .app-main {
+    flex-direction: column;
+  }
+  
+  .app-sidebar {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .message {
+    max-width: 85%;
+  }
+  
+  button, input, select {
+    min-height: 44px;
+  }
+}
+
+[data-loading] {
+  opacity: 0.7;
+  pointer-events: none;
 }
