@@ -1,151 +1,126 @@
 body {
-  font-family: Arial, sans-serif;
-  background: #f5f5f5;
+  font-family: sans-serif;
   margin: 0;
-  padding: 0;
+  background: #f1f1f1;
 }
 
-.tabContent {
-  display: none;
-}
-
-.tab {
+.tab, .tabContent {
   display: none;
   padding: 20px;
 }
 
-.tab.active {
+.tabContent {
   display: block;
 }
 
-.header {
-  background: #075e54;
-  color: white;
+input, textarea, button, select {
+  display: block;
+  margin: 10px 0;
   padding: 10px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.header input, .header select {
-  padding: 5px;
-}
-
-.tabs {
-  display: flex;
-  justify-content: space-around;
-  background: #25d366;
-  padding: 10px 0;
-}
-
-.tabs button {
-  background: none;
-  border: none;
-  font-size: 16px;
-  color: white;
-  cursor: pointer;
-}
-
-.messages {
-  padding: 10px;
-  height: 300px;
-  overflow-y: auto;
-  background: #fff;
-  border: 1px solid #ccc;
-  margin-bottom: 10px;
-}
-
-.message {
-  margin-bottom: 8px;
-  border-bottom: 1px dashed #ddd;
-  padding-bottom: 4px;
-}
-
-.typing {
-  font-style: italic;
-  color: gray;
-}
-
-input, textarea {
   width: 100%;
-  padding: 8px;
-  margin-top: 5px;
-  box-sizing: border-box;
-  font-size: 14px;
+  max-width: 400px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1em;
 }
 
 button {
-  margin-top: 10px;
-  padding: 10px;
-  background-color: #128c7e;
+  background: #007bff;
   color: white;
   border: none;
   cursor: pointer;
-  font-size: 14px;
-  border-radius: 5px;
 }
 
 button:hover {
-  background-color: #075e54;
+  background: #0056b3;
 }
 
-.card {
+.messages {
   background: white;
+  height: 300px;
+  overflow-y: scroll;
   padding: 10px;
-  margin: 10px 0;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.search-buttons button {
-  margin-right: 5px;
+  margin-bottom: 10px;
+  border-radius: 10px;
 }
 
 .fab {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background: #25d366;
-  border: none;
+  background: #28a745;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
   color: white;
   font-size: 24px;
-  padding: 15px;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  line-height: 50px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.tabs {
+  display: flex;
+  justify-content: space-around;
+  background: #fff;
+  padding: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.header {
+  background: #fff;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.admin-panel {
+  background: #f8f9fa;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.inbox-card {
+  background: white;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 8px 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.typing {
+  font-style: italic;
+  color: gray;
+  margin-top: 5px;
+}
+
+.search-buttons button {
+  width: 30%;
+  display: inline-block;
+}
+
+#loadingOverlay {
+  position: fixed;
+  top: 0; left: 0;
+  right: 0; bottom: 0;
+  background: rgba(255,255,255,0.8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
 }
 
 .loader {
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #25d366;
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #007bff;
   border-radius: 50%;
   width: 40px;
   height: 40px;
   animation: spin 1s linear infinite;
 }
 
-#loadingOverlay {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(255,255,255,0.8);
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
 @keyframes spin {
-  0% { transform: rotate(0deg); }
+  0% { transform: rotate(0); }
   100% { transform: rotate(360deg); }
-}
-
-.admin-panel {
-  display: none;
-  padding: 10px;
-  background: #e7f5f3;
-  border: 1px solid #ccc;
-  margin: 10px;
-  border-radius: 6px;
 }
