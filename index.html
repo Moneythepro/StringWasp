@@ -9,31 +9,29 @@
   <link rel="icon" href="favicon.png" />
 </head>
 <body>
-  <!-- Notification Sound -->
   <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
-  <!-- Loading Overlay -->
   <div id="loadingOverlay">
     <div class="loader"></div>
   </div>
 
-  <!-- Login Page -->
+  <!-- Login/Register Page -->
   <div id="loginPage" class="tab">
     <h2>Login</h2>
-    <input type="email" id="emailInput" placeholder="Email" />
-    <input type="password" id="passwordInput" placeholder="Password" />
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
     <button onclick="login()">Login</button>
     <button onclick="register()">Register</button>
   </div>
 
-  <!-- Username Setup Modal -->
+  <!-- Username Setup Dialog -->
   <div id="usernameDialog" class="modal">
     <h3>Pick a username</h3>
     <input id="newUsername" placeholder="Username" />
     <button onclick="saveUsername()">Save</button>
   </div>
 
-  <!-- Main App -->
+  <!-- Main App Interface -->
   <div id="appPage" class="tabContent">
 
     <!-- Header -->
@@ -44,7 +42,7 @@
       <span id="usernameDisplay"></span>
     </div>
 
-    <!-- Admin Panel -->
+    <!-- Admin Controls -->
     <div id="adminPanel" class="admin-panel">
       <h4>Room Admin Tools</h4>
       <pre id="adminInfo"></pre>
@@ -54,7 +52,7 @@
       <button onclick="promoteMember()">Promote</button>
     </div>
 
-    <!-- Tabs Navigation -->
+    <!-- Tabs -->
     <div class="tabs">
       <button onclick="switchTab('chatTab')">Chat</button>
       <button onclick="switchTab('friendsTab')">Friends</button>
@@ -67,7 +65,7 @@
     <div id="chatTab" class="tab">
       <div id="messages" class="messages"></div>
       <div id="typingIndicator" class="typing"></div>
-      <input id="messageInput" placeholder="Type a message..." />
+      <input id="messageInput" placeholder="Type message..." />
       <button onclick="sendMessage()">Send</button>
     </div>
 
@@ -88,6 +86,8 @@
       <h3>Search</h3>
       <input id="searchInput" placeholder="Search users or groups..." />
       <div class="search-buttons">
+        <button onclick="switchSearchView('user')">Users</button>
+        <button onclick="switchSearchView('group')">Groups</button>
         <button onclick="runSearch()">Search</button>
       </div>
       <div id="searchResultsUser" class="search-results"></div>
@@ -102,7 +102,7 @@
       <button onclick="saveProfile()">Save</button>
     </div>
 
-    <!-- Threaded Chat View -->
+    <!-- Thread Chat View -->
     <div id="threadView" class="tab">
       <button onclick="closeThread()">← Back to Friends</button>
       <h3 id="threadWithName"></h3>
@@ -112,7 +112,7 @@
       <button onclick="sendThreadMessage()">Send</button>
     </div>
 
-    <!-- Floating Button -->
+    <!-- Floating Action Button -->
     <button class="fab" onclick="switchTab('chatTab')">+</button>
   </div>
 
@@ -124,16 +124,15 @@
   <!-- Firebase Config -->
   <script src="firebase.js"></script>
 
-  <!-- Main App Logic -->
+  <!-- Main App Script -->
   <script src="app.js"></script>
 
-  <!-- Register Service Worker -->
+  <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js');
-    }
-    if ("Notification" in window && Notification.permission !== "granted") {
-      Notification.requestPermission();
+      navigator.serviceWorker.register('service-worker.js').catch(err => {
+        console.warn('ServiceWorker failed:', err);
+      });
     }
   </script>
 </body>
