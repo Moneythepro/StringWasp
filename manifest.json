@@ -1,20 +1,19 @@
 {
   "name": "StringWasp",
-  "short_name": "Wasp",
-  "description": "A private, secure, modern chat app",
-  "start_url": "/",
+  "short_name": "StringWasp",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0A84FF",
-  "orientation": "portrait-primary",
+  "theme_color": "#075e54",
+  "description": "Secure chats, groups, and files — powered by WebRTC & Firebase.",
   "icons": [
     {
-      "src": "favicon.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "favicon.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
