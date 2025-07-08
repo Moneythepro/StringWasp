@@ -31,6 +31,10 @@
 
   <!-- App Page -->
   <div id="appPage" class="tabContent">
+    <label class="theme-switch">
+  <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()" />
+  <span class="slider"></span>
+    </label>
     <div class="header">
       <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
       <input id="customRoom" placeholder="New Room Name" />
