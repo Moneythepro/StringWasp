@@ -1,4 +1,3 @@
-<!-- FULL index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,9 +11,7 @@
 <body>
   <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
-  <div id="loadingOverlay">
-    <div class="loader"></div>
-  </div>
+  <div id="loadingOverlay"><div class="loader"></div></div>
 
   <!-- Login/Register -->
   <div id="loginPage" class="tab">
@@ -25,15 +22,17 @@
     <button onclick="register()">Register</button>
   </div>
 
-  <!-- Username Dialog -->
+  <!-- Username Setup Dialog -->
   <div id="usernameDialog" class="modal">
     <h3>Pick a username</h3>
     <input id="newUsername" placeholder="Username" />
     <button onclick="saveUsername()">Save</button>
   </div>
 
-  <!-- Main App Interface -->
+  <!-- Main App -->
   <div id="appPage" class="tabContent">
+
+    <!-- Header -->
     <div class="header">
       <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
       <input id="customRoom" placeholder="New Room Name" />
@@ -41,7 +40,7 @@
       <span id="usernameDisplay"></span>
     </div>
 
-    <!-- Admin Controls -->
+    <!-- Admin Panel -->
     <div id="adminPanel" class="admin-panel">
       <h4>Room Admin Tools</h4>
       <pre id="adminInfo"></pre>
@@ -65,7 +64,6 @@
       <div id="messages" class="messages"></div>
       <div id="typingIndicator" class="typing"></div>
       <input id="messageInput" placeholder="Type message..." />
-      <input type="file" id="fileInput" onchange="handleFileSend()" />
       <button onclick="sendMessage()">Send</button>
     </div>
 
@@ -104,19 +102,19 @@
 
     <!-- Threaded Chat -->
     <div id="threadView" class="tab">
-      <button onclick="closeThread()">← Back</button>
+      <button onclick="closeThread()">← Back to Friends</button>
       <h3 id="threadWithName"></h3>
       <div id="threadMessages" class="messages"></div>
+      <div id="threadTyping" class="typing"></div>
       <input id="threadInput" placeholder="Type message..." />
-      <input type="file" id="threadFile" onchange="sendThreadFile()" />
       <button onclick="sendThreadMessage()">Send</button>
     </div>
 
-    <!-- FAB -->
+    <!-- Floating Action -->
     <button class="fab" onclick="switchTab('chatTab')">+</button>
   </div>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -124,16 +122,16 @@
   <!-- Firebase Config -->
   <script src="firebase.js"></script>
 
-  <!-- External Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
-
-  <!-- Main Script -->
+  <!-- Core Scripts -->
+  <script src="crypto.js"></script>
+  <script src="p2p.js"></script>
   <script src="app.js"></script>
 
   <!-- Register Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js');
+      navigator.serviceWorker.register('service-worker.js')
+        .catch(err => console.error("SW Error:", err));
     }
   </script>
 </body>
