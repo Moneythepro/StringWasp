@@ -1,6 +1,6 @@
-// firebase.js - Classic Firebase v8 SDK
+// Firebase v8 CDN-compatible config
 
-// Initialize Firebase
+// Your web app's Firebase configuration
 var firebaseConfig = {
   apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
   authDomain: "stringwasp.firebaseapp.com",
@@ -10,9 +10,9 @@ var firebaseConfig = {
   appId: "1:974718019508:web:59fabe6306517d10b374e1"
 };
 
-// Initialize Firebase App
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Firebase Services
+// Firebase services
 const auth = firebase.auth();
 const db = firebase.firestore();
