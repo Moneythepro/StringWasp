@@ -1,3 +1,4 @@
+// Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
   authDomain: "stringwasp.firebaseapp.com",
@@ -8,12 +9,15 @@ const firebaseConfig = {
   databaseURL: "https://stringwasp-default-rtdb.firebaseio.com"
 };
 
+// Initialize Firebase
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 
-const auth = firebase.auth();
-const db = firebase.firestore();
-const rtdb = firebase.database();
-
-export { firebase, auth, db, rtdb };
+// Create global firebase services
+window.firebaseServices = {
+  auth: firebase.auth(),
+  db: firebase.firestore(),
+  rtdb: firebase.database(),
+  firebase: firebase
+};
