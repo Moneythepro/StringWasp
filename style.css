@@ -1,197 +1,231 @@
-/* RESET + BASE */
-* {
+/* Base Reset */
+body, html {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
   font-family: "Segoe UI", sans-serif;
-}
-body {
-  background: #e9f0f4;
-  color: #222;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-bottom: 100px;
-}
-input, textarea, button, select {
-  padding: 10px;
-  margin: 5px 0;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 1rem;
-  width: 100%;
-  max-width: 400px;
-}
-button {
-  background: #007bff;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-button:hover {
-  background: #0056b3;
+  background: #f0f2f5;
+  color: #111;
 }
 
-/* TABS & NAVIGATION */
+/* Tabs */
+.tab {
+  display: none;
+  padding: 20px;
+}
+
+#appPage {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Navigation Tabs */
 #navTabs {
   display: flex;
   justify-content: space-around;
   background: #ffffff;
-  border-bottom: 1px solid #ccc;
-  width: 100%;
-  max-width: 800px;
-  margin-top: 10px;
-}
-#navTabs button {
-  flex: 1;
-  border-radius: 0;
-  font-weight: bold;
-}
-.tab {
-  width: 100%;
-  max-width: 800px;
-  padding: 20px;
-}
-.tab-section {
-  display: none;
-  width: 100%;
-  max-width: 800px;
-  padding: 20px;
-}
-
-/* LOGIN BOX */
-.login-box {
-  padding: 30px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  max-width: 400px;
-  margin-top: 100px;
-}
-
-/* CHAT MESSAGES */
-#messages {
-  max-height: 300px;
-  overflow-y: auto;
-  background: #f9f9f9;
-  padding: 10px;
-  border-radius: 12px;
-  margin-bottom: 10px;
-}
-.message {
-  background: #d1e7dd;
-  margin-bottom: 8px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  position: relative;
-}
-.message b {
-  display: block;
-  margin-bottom: 4px;
-}
-.action-btn {
-  background: transparent;
-  color: #007bff;
-  border: none;
-  cursor: pointer;
-  margin-right: 5px;
-  font-size: 0.8rem;
-}
-.action-btn:hover {
-  text-decoration: underline;
-}
-
-/* INBOX + SEARCH ITEMS */
-.inbox-card, .search-item {
-  background: white;
-  border-radius: 12px;
-  padding: 15px;
-  margin-bottom: 10px;
-  box-shadow: 0 1px 5px rgba(0,0,0,0.05);
-}
-.inbox-card h4, .search-item b {
-  margin-bottom: 5px;
-}
-#inboxList, #searchResultsUser, #searchResultsGroup {
-  margin-top: 10px;
-}
-
-/* ADMIN PANEL */
-#adminPanel {
-  background: #fff;
-  padding: 15px;
-  border-radius: 10px;
-  margin: 20px auto;
+  padding: 10px 0;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  max-width: 800px;
-}
-#adminPanel pre {
-  white-space: pre-wrap;
-  font-size: 0.9rem;
-  background: #f1f1f1;
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 999;
 }
 
-/* LOADING OVERLAY */
-#loadingOverlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(255,255,255,0.8);
-  z-index: 9999;
+#navTabs button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  padding: 8px 14px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: 0.3s;
+}
+
+#navTabs button:hover,
+#navTabs button.active {
+  border-color: #128c7e;
+  color: #128c7e;
+}
+
+/* Chat UI */
+#chatsTab {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-.loader {
-  width: 40px;
-  height: 40px;
-  border: 5px solid #007bff;
-  border-top: 5px solid transparent;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 10px;
-}
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* CHAT HEADER */
-.chat-header {
-  display: flex;
-  flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 10px;
 }
 
-/* PROFILE SECTION */
-textarea {
-  resize: vertical;
-  min-height: 60px;
-}
-#profileTab input, #profileTab textarea {
+#roomDropdown,
+#customRoom,
+#messageInput {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
-/* TYPING INDICATOR */
-#typingIndicator {
-  font-size: 0.85rem;
-  color: #555;
-  margin-top: 4px;
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* MOBILE RESPONSIVE */
-@media (max-width: 600px) {
-  #navTabs button {
-    font-size: 0.9rem;
-    padding: 8px;
-  }
-  .tab, .tab-section {
-    padding: 10px;
-  }
+.message {
+  background: #dcf8c6;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.message button.action-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: transparent;
+  border: none;
+  color: #777;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#messageInput {
+  margin-top: 10px;
+}
+
+/* Inbox UI */
+#inboxList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inbox-card {
+  background: #ffffff;
+  padding: 12px 14px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transition: 0.2s;
+}
+
+.inbox-card:hover {
+  transform: scale(1.01);
+}
+
+.inbox-card h4 {
+  margin: 0 0 8px;
+}
+
+/* Search UI */
+#searchTabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+#searchTabs button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  background: #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#searchTabs button:hover {
+  background: #d0d0d0;
+}
+
+.search-item {
+  background: #fff;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* Profile */
+#profileTab input,
+#profileTab textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+/* Settings + Admin Panel */
+#settingsTab,
+#adminPanel {
+  padding-top: 10px;
+}
+
+#adminPanel {
+  background: #ffffff;
+  margin-top: 20px;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+/* Floating Chat Button */
+#newChatBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #25d366;
+  color: white;
+  border: none;
+  padding: 16px 18px;
+  font-size: 24px;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  cursor: pointer;
+  z-index: 1000;
+}
+
+#newChatBtn:hover {
+  background: #20bf5c;
+}
+
+/* Loading Overlay */
+#loadingOverlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(255,255,255,0.9);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: bold;
+  color: #128c7e;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; } to { opacity: 1; }
+}
+
+/* Utility */
+button {
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  background: #128c7e;
+  color: white;
+  transition: 0.2s;
+  margin-top: 5px;
+}
+
+button:hover {
+  background: #0e6e63;
 }
