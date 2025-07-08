@@ -1,14 +1,11 @@
 body {
-  font-family: sans-serif;
+  font-family: 'Segoe UI', sans-serif;
   margin: 0;
-  padding: 0;
-  background: #f2f2f2;
-  color: #000;
-}
-
-body.dark {
-  background: #1c1c1c;
-  color: #fff;
+  background: #e5ddd5;
+  color: #222;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
 }
 
 .tab, .tabContent {
@@ -16,38 +13,35 @@ body.dark {
   padding: 16px;
 }
 
-.tabContent {
-  display: block;
+#loginPage, #usernameDialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: #f8f9fa;
 }
 
-input, textarea, select, button {
-  display: block;
+input, textarea, button, select {
   margin: 8px 0;
   padding: 10px;
-  width: 100%;
-  max-width: 500px;
+  width: 90%;
+  max-width: 400px;
   font-size: 16px;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid #ccc;
-  background: #fff;
-  box-sizing: border-box;
-}
-
-body.dark input, body.dark textarea, body.dark select {
-  background: #2a2a2a;
-  color: #fff;
-  border: 1px solid #444;
 }
 
 button {
-  background-color: #4CAF50;
+  background: #25d366;
   color: white;
-  cursor: pointer;
   border: none;
+  cursor: pointer;
+  transition: background 0.3s;
 }
 
 button:hover {
-  background-color: #45a049;
+  background: #1ebc5c;
 }
 
 .header {
@@ -55,71 +49,199 @@ button:hover {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
+  background: #075e54;
+  color: white;
+  padding: 10px;
+  font-weight: bold;
 }
 
 .tabs {
   display: flex;
-  gap: 6px;
-  margin: 12px 0;
+  justify-content: space-around;
+  background: #ededed;
+  padding: 10px 0;
+  border-bottom: 1px solid #ccc;
 }
 
 .tabs button {
-  flex: 1;
-  padding: 10px;
-  background: #e0e0e0;
+  background: none;
   border: none;
+  color: #075e54;
+  font-weight: bold;
+  font-size: 14px;
+  padding: 8px;
   border-radius: 4px;
 }
 
-body.dark .tabs button {
-  background: #333;
-  color: #fff;
+.tabs button:hover {
+  background: #dfe5e8;
 }
 
 .messages {
   height: 300px;
   overflow-y: auto;
   padding: 10px;
-  border: 1px solid #ddd;
-  background: #fff;
-  border-radius: 6px;
+  background: white;
   margin-bottom: 10px;
+  border-radius: 8px;
 }
 
-body.dark .messages {
-  background: #222;
-  border-color: #444;
+.messages div {
+  background: #dcf8c6;
+  padding: 8px 12px;
+  margin: 4px 0;
+  border-radius: 16px;
+  max-width: 80%;
+  word-wrap: break-word;
 }
 
-.card {
-  background: #fff;
+.typing {
+  font-style: italic;
+  color: #666;
+  margin: 5px 0;
+}
+
+.inbox-card, .friend-entry, .search-result {
+  background: white;
+  margin: 6px 0;
   padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 8px;
-  border: 1px solid #ccc;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
-body.dark .card {
-  background: #2a2a2a;
-  border-color: #444;
-  color: #fff;
+.inbox-card:hover,
+.friend-entry:hover,
+.search-result:hover {
+  background: #f1f1f1;
 }
 
+.admin-panel {
+  background: #fff8dc;
+  border-left: 5px solid #f0ad4e;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 8px;
+  display: none;
+}
+
+.search-buttons {
+  margin: 10px 0;
+  display: flex;
+  justify-content: space-around;
+}
+
+.search-results {
+  display: none;
+}
+
+#threadView {
+  background: #ffffff;
+}
+
+#threadMessages {
+  height: 250px;
+  overflow-y: auto;
+  background: #f8f9fa;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 8px;
+}
+
+#threadMessages div {
+  background: #e2ffc7;
+  margin: 5px 0;
+  padding: 8px;
+  border-radius: 12px;
+}
+
+textarea {
+  resize: none;
+  height: 60px;
+}
+
+/* Floating Action Button */
 .fab {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background-color: #4CAF50;
+  background: #25d366;
   color: white;
-  font-size: 20px;
-  padding: 16px;
+  font-size: 24px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   border: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   cursor: pointer;
+}
+
+/* Loading Overlay */
+#loadingOverlay {
+  position: fixed;
+  top: 0; left: 0;
+  right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
   z-index: 999;
 }
 
+.loader {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #25d366;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Dark Mode Support */
+body.dark {
+  background: #121212;
+  color: #eee;
+}
+
+body.dark .header {
+  background: #1f1f1f;
+  color: #fff;
+}
+
+body.dark .messages {
+  background: #222;
+}
+
+body.dark .messages div {
+  background: #1e3d29;
+  color: #eee;
+}
+
+body.dark .admin-panel {
+  background: #333;
+  color: #fff;
+}
+
+body.dark .tab,
+body.dark .tabContent {
+  background: #181818;
+}
+
+body.dark input,
+body.dark textarea,
+body.dark button,
+body.dark select {
+  background: #222;
+  color: #eee;
+  border: 1px solid #444;
+}
+
+/* Theme Toggle UI */
 .theme-switch {
   position: absolute;
   top: 10px;
@@ -131,54 +253,31 @@ body.dark .card {
 }
 
 .theme-switch .slider {
-  width: 50px;
-  height: 24px;
-  background: #ccc;
-  border-radius: 24px;
-  position: relative;
-  cursor: pointer;
-}
-
-.theme-switch .slider::before {
-  content: '';
-  width: 20px;
+  width: 40px;
   height: 20px;
-  background: white;
-  border-radius: 50%;
-  position: absolute;
-  top: 2px;
-  left: 2px;
+  background: #ccc;
+  display: inline-block;
+  border-radius: 20px;
+  position: relative;
   transition: 0.3s;
 }
 
-.theme-switch input:checked + .slider::before {
-  transform: translateX(26px);
-}
-
-#loadingOverlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(255,255,255,0.8);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-body.dark #loadingOverlay {
-  background: rgba(0,0,0,0.8);
-}
-
-.loader {
-  width: 32px;
-  height: 32px;
-  border: 4px solid #ccc;
-  border-top-color: #4CAF50;
+.theme-switch .slider::before {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 1px;
+  top: 1px;
+  background: white;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  transition: 0.3s;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.theme-switch input:checked + .slider {
+  background: #25d366;
+}
+
+.theme-switch input:checked + .slider::before {
+  transform: translateX(20px);
 }
