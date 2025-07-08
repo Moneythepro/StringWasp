@@ -1,3 +1,35 @@
+// Initialize WebTorrent client
+const client = new WebTorrent();
+
+// Function to send a file to a friend (P2P)
+function sendFile(file, recipientId) {
+  client.seed(file, torrent => {
+    const magnet = torrent.magnetURI;
+    db.collection("users").doc(recipientId).collection("inbox").add({
+      type: "file",
+      from: auth.currentUser.email,
+      magnet,
+      fileName: file.name,
+      timestamp: Date.now()
+    });
+    alert(`File shared with ${recipientId}`);
+  });
+}
+
+// Function to receive a file from a magnet link
+function receiveFile(magnetURI) {
+  client.add(magnetURI, torrent => {
+    torrent.files.forEach(file => {
+      file.getBlob((err, blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = file.name;
+        a.click();
+      });
+    });
+  });
+}
 // Firebase globals
 const db = firebase.firestore();
 const auth = firebase.auth();
