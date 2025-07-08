@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>StringWasp</title>
-  <link rel="stylesheet" href="style.css"/>
-  <link rel="manifest" href="manifest.json"/>
-  <link rel="icon" href="favicon.png"/>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="favicon.png" />
 </head>
 <body>
   <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
@@ -23,7 +23,7 @@
   </div>
 
   <!-- Username Picker -->
-  <div id="usernameDialog" class="tab">
+  <div id="usernameDialog" class="modal">
     <h3>Pick a Username</h3>
     <input id="newUsername" placeholder="Username" />
     <button onclick="saveUsername()">Save</button>
@@ -108,11 +108,11 @@
       <button onclick="sendThreadMessage()">Send</button>
     </div>
 
-    <!-- Floating Button -->
+    <!-- Floating Action -->
     <button class="fab" onclick="switchTab('chatTab')">+</button>
   </div>
 
-  <!-- Firebase SDK (v8) -->
+  <!-- Firebase v8 SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -120,10 +120,10 @@
   <!-- Firebase Config -->
   <script src="firebase.js"></script>
 
-  <!-- Main App Script -->
+  <!-- App Logic -->
   <script src="app.js"></script>
 
-  <!-- Service Worker -->
+  <!-- Register Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
