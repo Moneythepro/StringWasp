@@ -1,239 +1,316 @@
-// Firebase setup (v8)
-const firebaseConfig = {
-  apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
-  authDomain: "stringwasp.firebaseapp.com",
-  projectId: "stringwasp",
-  storageBucket: "stringwasp.appspot.com",
-  messagingSenderId: "974718019508",
-  appId: "1:974718019508:web:59fabe6306517d10b374e1"
-};
-
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
+// Firebase Auth & Firestore
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Tabs
-function switchTab(tabId) {
-  document.querySelectorAll(".tab").forEach(tab => tab.style.display = "none");
-  document.querySelectorAll(".tabContent").forEach(tab => tab.style.display = "none");
-  document.getElementById(tabId).style.display = "block";
+let currentUser = null;
+let currentRoom = 'global';
+let currentThreadUser = null;
+let unsubscribeMessages = null;
+let unsubscribeThread = null;
+
+// UI Helpers
+function showTab(id) {
+  document.querySelectorAll('.tab, .tabContent').forEach(el => el.style.display = 'none');
+  document.getElementById(id).style.display = 'block';
 }
 
-// Loading overlay
 function showLoading(show) {
-  document.getElementById("loadingOverlay").style.display = show ? "flex" : "none";
+  document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
 }
 
 // Auth
 auth.onAuthStateChanged(user => {
   if (user) {
+    currentUser = user;
     checkUsername();
   } else {
-    switchTab("loginPage");
+    showTab('loginPage');
   }
 });
 
 function login() {
-  const email = document.getElementById("email").value;
-  const pass = document.getElementById("password").value;
+  const email = document.getElementById('email').value;
+  const pass = document.getElementById('password').value;
   auth.signInWithEmailAndPassword(email, pass).catch(alert);
 }
 
 function register() {
-  const email = document.getElementById("email").value;
-  const pass = document.getElementById("password").value;
+  const email = document.getElementById('email').value;
+  const pass = document.getElementById('password').value;
   auth.createUserWithEmailAndPassword(email, pass).catch(alert);
 }
 
-// Username
 function checkUsername() {
-  db.collection("users").doc(auth.currentUser.uid).get().then(doc => {
+  db.collection('users').doc(currentUser.uid).get().then(doc => {
     if (doc.exists && doc.data().username) {
-      document.getElementById("usernameDisplay").textContent = doc.data().username;
-      initApp();
+      initApp(doc.data().username);
     } else {
-      switchTab("usernameDialog");
+      showTab('usernameDialog');
     }
   });
 }
 
 function saveUsername() {
-  const uname = document.getElementById("newUsername").value.trim();
-  if (!uname) return alert("Enter a username");
-  db.collection("users").where("username", "==", uname).get().then(snapshot => {
-    if (!snapshot.empty) return alert("Username taken");
-    db.collection("users").doc(auth.currentUser.uid).set({ username: uname }, { merge: true }).then(() => {
-      document.getElementById("usernameDisplay").textContent = uname;
-      switchTab("chatTab");
-      initApp();
+  const uname = document.getElementById('newUsername').value.trim();
+  if (!uname) return alert('Enter username');
+  db.collection('users').where('username', '==', uname).get().then(snapshot => {
+    if (!snapshot.empty) return alert('Username taken');
+    db.collection('users').doc(currentUser.uid).set({
+      username: uname,
+      email: currentUser.email,
+      dev: currentUser.email === "moneythepro7@gmail.com"
     });
+    initApp(uname);
   });
 }
 
-// Init
-function initApp() {
-  switchTab("chatTab");
+// App Init
+function initApp(username) {
+  document.getElementById('usernameDisplay').innerText = `@${username}`;
+  showTab('appPage');
   loadRooms();
-  listenForMessages();
-  loadProfile();
+  joinRoom(currentRoom);
   loadInbox();
   loadFriends();
-  loadSearchResults();
+  loadProfile();
 }
 
-// Chat
-function sendMessage() {
-  const msg = document.getElementById("messageInput").value.trim();
-  if (!msg) return;
-  const room = document.getElementById("roomDropdown").value;
-  db.collection("rooms").doc(room).collection("messages").add({
-    text: msg,
-    from: auth.currentUser.uid,
-    time: Date.now()
-  });
-  document.getElementById("messageInput").value = "";
+// Tabs
+function switchTab(tabId) {
+  showTab(tabId);
 }
 
-function listenForMessages() {
-  const room = document.getElementById("roomDropdown").value;
-  if (!room) return;
-  db.collection("rooms").doc(room).collection("messages")
-    .orderBy("time").limit(50)
-    .onSnapshot(snapshot => {
-      const messagesDiv = document.getElementById("messages");
-      messagesDiv.innerHTML = "";
-      snapshot.forEach(doc => {
-        const msg = doc.data();
-        const el = document.createElement("div");
-        el.textContent = `[${msg.from}] ${msg.text}`;
-        messagesDiv.appendChild(el);
-      });
+// Rooms
+function loadRooms() {
+  db.collection('rooms').onSnapshot(snapshot => {
+    const sel = document.getElementById('roomDropdown');
+    sel.innerHTML = '';
+    snapshot.forEach(doc => {
+      const opt = document.createElement('option');
+      opt.value = doc.id;
+      opt.innerText = doc.id;
+      sel.appendChild(opt);
     });
+    sel.value = currentRoom;
+  });
 }
 
 function createOrJoinRoom() {
-  const newRoom = document.getElementById("customRoom").value.trim();
-  if (!newRoom) return;
-  joinRoom(newRoom);
+  const name = document.getElementById('customRoom').value.trim();
+  if (name) joinRoom(name);
 }
 
-function joinRoom(roomName) {
-  document.getElementById("roomDropdown").value = roomName;
-  listenForMessages();
+function joinRoom(name) {
+  currentRoom = name;
+  if (unsubscribeMessages) unsubscribeMessages();
+  document.getElementById('messages').innerHTML = '';
+  unsubscribeMessages = db.collection('rooms').doc(name).collection('messages').orderBy('timestamp')
+    .onSnapshot(snapshot => {
+      const msgBox = document.getElementById('messages');
+      snapshot.docChanges().forEach(change => {
+        if (change.type === 'added') {
+          const msg = change.doc.data();
+          const div = document.createElement('div');
+          div.innerText = `${msg.sender}: ${msg.text}`;
+          msgBox.appendChild(div);
+        }
+      });
+    });
+  showAdminPanel(name);
 }
 
-// Admin Tools
-function addMember() {
-  const room = document.getElementById("roomDropdown").value;
-  const email = document.getElementById("memberEmail").value;
-  db.collection("rooms").doc(room).collection("members").add({ email });
+function sendMessage() {
+  const input = document.getElementById('messageInput');
+  const text = input.value.trim();
+  if (!text) return;
+  db.collection('rooms').doc(currentRoom).collection('messages').add({
+    sender: currentUser.email,
+    text,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  input.value = '';
 }
 
-function removeMember() {
-  // Basic implementation
-  alert("Remove logic not implemented");
+// Threaded Chat
+function openThread(uid, name) {
+  currentThreadUser = uid;
+  showTab('threadView');
+  document.getElementById('threadWithName').innerText = name;
+  const threadRef = db.collection('users').doc(currentUser.uid).collection('threads').doc(uid);
+  unsubscribeThread = threadRef.collection('messages').orderBy('timestamp').onSnapshot(snapshot => {
+    const box = document.getElementById('threadMessages');
+    box.innerHTML = '';
+    snapshot.forEach(doc => {
+      const msg = doc.data();
+      const div = document.createElement('div');
+      div.innerText = `${msg.sender}: ${msg.text}`;
+      box.appendChild(div);
+    });
+  });
 }
 
-function promoteMember() {
-  alert("Promote logic not implemented");
+function closeThread() {
+  if (unsubscribeThread) unsubscribeThread();
+  currentThreadUser = null;
+  showTab('friendsTab');
+}
+
+function sendThreadMessage() {
+  const input = document.getElementById('threadInput');
+  const text = input.value.trim();
+  if (!text || !currentThreadUser) return;
+  const myThread = db.collection('users').doc(currentUser.uid).collection('threads').doc(currentThreadUser);
+  const theirThread = db.collection('users').doc(currentThreadUser).collection('threads').doc(currentUser.uid);
+  const msg = {
+    sender: currentUser.email,
+    text,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  myThread.collection('messages').add(msg);
+  theirThread.collection('messages').add(msg);
+  input.value = '';
 }
 
 // Inbox
 function loadInbox() {
-  const inboxDiv = document.getElementById("inboxList");
-  db.collection("inbox").where("to", "==", auth.currentUser.uid)
-    .onSnapshot(snapshot => {
-      inboxDiv.innerHTML = "";
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const div = document.createElement("div");
-        div.className = "inbox-card";
-        div.textContent = `${data.type} from ${data.fromName || data.from}`;
-        inboxDiv.appendChild(div);
-      });
+  db.collection('users').doc(currentUser.uid).collection('inbox').onSnapshot(snapshot => {
+    const box = document.getElementById('inboxList');
+    box.innerHTML = '';
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const div = document.createElement('div');
+      div.className = 'inbox-card';
+      div.innerText = `${data.type}: ${data.from}`;
+      const btn = document.createElement('button');
+      btn.innerText = "Accept";
+      btn.onclick = () => acceptInbox(doc.id, data);
+      div.appendChild(btn);
+      box.appendChild(div);
     });
-}
-
-// Profile
-function saveProfile() {
-  const name = document.getElementById("profileName").value;
-  const bio = document.getElementById("profileBio").value;
-  db.collection("users").doc(auth.currentUser.uid).set({ name, bio }, { merge: true });
-}
-
-function loadProfile() {
-  db.collection("users").doc(auth.currentUser.uid).get().then(doc => {
-    if (doc.exists) {
-      const d = doc.data();
-      document.getElementById("profileName").value = d.name || "";
-      document.getElementById("profileBio").value = d.bio || "";
-    }
   });
 }
 
-// Search
-function runSearch() {
-  const q = document.getElementById("searchInput").value.toLowerCase();
-  db.collection("users").where("username", ">=", q).where("username", "<=", q + "\uf8ff")
-    .get().then(snapshot => {
-      const res = document.getElementById("searchResultsUser");
-      res.innerHTML = "";
-      snapshot.forEach(doc => {
-        const d = doc.data();
-        const div = document.createElement("div");
-        div.textContent = d.username + (d.username === "moneythepro" ? " 🛠️ Developer" : "");
-        res.appendChild(div);
-      });
-    });
-}
-
-function switchSearchView(type) {
-  document.getElementById("searchResultsUser").style.display = type === "user" ? "block" : "none";
-  document.getElementById("searchResultsGroup").style.display = type === "group" ? "block" : "none";
+function acceptInbox(id, data) {
+  if (data.type === 'friend') {
+    db.collection('users').doc(currentUser.uid).collection('friends').doc(data.fromUid).set({ since: Date.now() });
+    db.collection('users').doc(data.fromUid).collection('friends').doc(currentUser.uid).set({ since: Date.now() });
+  }
+  db.collection('users').doc(currentUser.uid).collection('inbox').doc(id).delete();
 }
 
 // Friends
 function loadFriends() {
-  const friendsDiv = document.getElementById("friendsList");
-  friendsDiv.innerHTML = `<p>Coming soon...</p>`; // You can fill from Firestore
-}
-
-// Thread Chat (one-on-one)
-function openThread(username) {
-  switchTab("threadView");
-  document.getElementById("threadWithName").textContent = username;
-  // Load thread messages
-  const uid = auth.currentUser.uid;
-  const threadId = [uid, username].sort().join("_");
-  db.collection("threads").doc(threadId).collection("messages").orderBy("time")
-    .onSnapshot(snapshot => {
-      const box = document.getElementById("threadMessages");
-      box.innerHTML = "";
-      snapshot.forEach(doc => {
-        const m = doc.data();
-        const el = document.createElement("div");
-        el.textContent = `${m.from}: ${m.text}`;
-        box.appendChild(el);
+  db.collection('users').doc(currentUser.uid).collection('friends').onSnapshot(snapshot => {
+    const box = document.getElementById('friendsList');
+    box.innerHTML = '';
+    snapshot.forEach(doc => {
+      const uid = doc.id;
+      db.collection('users').doc(uid).get().then(userDoc => {
+        const name = userDoc.data().username || uid;
+        const div = document.createElement('div');
+        div.className = 'friend-entry';
+        div.innerText = name;
+        div.onclick = () => openThread(uid, name);
+        box.appendChild(div);
       });
     });
-}
-
-function sendThreadMessage() {
-  const text = document.getElementById("threadInput").value.trim();
-  if (!text) return;
-  const to = document.getElementById("threadWithName").textContent;
-  const uid = auth.currentUser.uid;
-  const threadId = [uid, to].sort().join("_");
-  db.collection("threads").doc(threadId).collection("messages").add({
-    from: uid,
-    text,
-    time: Date.now()
   });
-  document.getElementById("threadInput").value = "";
 }
 
-function closeThread() {
-  switchTab("friendsTab");
+// Search
+function switchSearchView(view) {
+  document.getElementById('searchResultsUser').style.display = view === 'user' ? 'block' : 'none';
+  document.getElementById('searchResultsGroup').style.display = view === 'group' ? 'block' : 'none';
+}
+
+function runSearch() {
+  const query = document.getElementById('searchInput').value.trim().toLowerCase();
+  if (!query) return;
+
+  const userResults = document.getElementById('searchResultsUser');
+  userResults.innerHTML = '';
+  db.collection('users').get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.username?.toLowerCase().includes(query)) {
+        const div = document.createElement('div');
+        div.className = 'search-result';
+        div.innerText = data.username + (data.dev ? ' 🛠️ Developer' : '');
+        div.onclick = () => sendFriendRequest(doc.id);
+        userResults.appendChild(div);
+      }
+    });
+  });
+
+  const groupResults = document.getElementById('searchResultsGroup');
+  groupResults.innerHTML = '';
+  db.collection('rooms').get().then(snapshot => {
+    snapshot.forEach(doc => {
+      if (doc.id.toLowerCase().includes(query)) {
+        const div = document.createElement('div');
+        div.className = 'search-result';
+        div.innerText = doc.id;
+        groupResults.appendChild(div);
+      }
+    });
+  });
+}
+
+function sendFriendRequest(uid) {
+  db.collection('users').doc(uid).collection('inbox').add({
+    type: 'friend',
+    from: currentUser.email,
+    fromUid: currentUser.uid
+  });
+  alert("Friend request sent!");
+}
+
+// Admin Tools
+function showAdminPanel(room) {
+  const adminBox = document.getElementById('adminPanel');
+  db.collection('rooms').doc(room).get().then(doc => {
+    const data = doc.data();
+    if (!data || data.owner !== currentUser.uid) {
+      adminBox.style.display = 'none';
+      return;
+    }
+    document.getElementById('adminInfo').innerText = `Owner: ${data.owner}`;
+    adminBox.style.display = 'block';
+  });
+}
+
+function addMember() {
+  const email = document.getElementById('memberEmail').value.trim();
+  if (!email) return;
+  alert(`Add ${email} to ${currentRoom}`);
+  // Add member logic (stub)
+}
+
+function removeMember() {
+  const email = document.getElementById('memberEmail').value.trim();
+  if (!email) return;
+  alert(`Remove ${email} from ${currentRoom}`);
+  // Remove member logic (stub)
+}
+
+function promoteMember() {
+  const email = document.getElementById('memberEmail').value.trim();
+  if (!email) return;
+  alert(`Promote ${email} in ${currentRoom}`);
+  // Promote logic (stub)
+}
+
+// Profile
+function loadProfile() {
+  db.collection('users').doc(currentUser.uid).get().then(doc => {
+    const data = doc.data();
+    document.getElementById('profileName').value = data.name || '';
+    document.getElementById('profileBio').value = data.bio || '';
+  });
+}
+
+function saveProfile() {
+  const name = document.getElementById('profileName').value.trim();
+  const bio = document.getElementById('profileBio').value.trim();
+  db.collection('users').doc(currentUser.uid).update({ name, bio });
 }
