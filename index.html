@@ -11,12 +11,11 @@
 <body>
   <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
-  <!-- Loading -->
   <div id="loadingOverlay">
     <div class="loader"></div>
   </div>
 
-  <!-- Login Page -->
+  <!-- Login/Register Page -->
   <div id="loginPage" class="tab">
     <h2>Login</h2>
     <input type="email" id="email" placeholder="Email" />
@@ -25,17 +24,15 @@
     <button onclick="register()">Register</button>
   </div>
 
-  <!-- Username Dialog -->
+  <!-- Username Setup Dialog -->
   <div id="usernameDialog" class="modal">
     <h3>Pick a username</h3>
     <input id="newUsername" placeholder="Username" />
     <button onclick="saveUsername()">Save</button>
   </div>
 
-  <!-- Main App -->
+  <!-- Main App Interface -->
   <div id="appPage" class="tabContent">
-
-    <!-- Header -->
     <div class="header">
       <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
       <input id="customRoom" placeholder="New Room Name" />
@@ -43,7 +40,7 @@
       <span id="usernameDisplay"></span>
     </div>
 
-    <!-- Admin Panel -->
+    <!-- Admin Controls -->
     <div id="adminPanel" class="admin-panel">
       <h4>Room Admin Tools</h4>
       <pre id="adminInfo"></pre>
@@ -53,7 +50,7 @@
       <button onclick="promoteMember()">Promote</button>
     </div>
 
-    <!-- Navigation Tabs -->
+    <!-- Tabs -->
     <div class="tabs">
       <button onclick="switchTab('chatTab')">Chat</button>
       <button onclick="switchTab('friendsTab')">Friends</button>
@@ -62,29 +59,27 @@
       <button onclick="switchTab('profileTab')">Profile</button>
     </div>
 
-    <!-- Chat -->
+    <!-- Chat Tab -->
     <div id="chatTab" class="tab">
       <div id="messages" class="messages"></div>
       <div id="typingIndicator" class="typing"></div>
       <input id="messageInput" placeholder="Type message..." />
-      <input type="file" id="fileInput" />
       <button onclick="sendMessage()">Send</button>
-      <button onclick="sendFile()">📎 File</button>
     </div>
 
-    <!-- Friends -->
+    <!-- Friends Tab -->
     <div id="friendsTab" class="tab">
       <h3>Your Friends</h3>
       <div id="friendsList"></div>
     </div>
 
-    <!-- Inbox -->
+    <!-- Inbox Tab -->
     <div id="inboxTab" class="tab">
       <h3>Inbox</h3>
       <div id="inboxList"></div>
     </div>
 
-    <!-- Search -->
+    <!-- Search Tab -->
     <div id="searchTab" class="tab">
       <h3>Search</h3>
       <input id="searchInput" placeholder="Search users or groups..." />
@@ -97,7 +92,7 @@
       <div id="searchResultsGroup" class="search-results"></div>
     </div>
 
-    <!-- Profile -->
+    <!-- Profile Tab -->
     <div id="profileTab" class="tab">
       <h3>Your Profile</h3>
       <input id="profileName" placeholder="Your Name" />
@@ -105,7 +100,7 @@
       <button onclick="saveProfile()">Save</button>
     </div>
 
-    <!-- Thread View -->
+    <!-- Thread Chat View -->
     <div id="threadView" class="tab">
       <button onclick="closeThread()">← Back to Friends</button>
       <h3 id="threadWithName"></h3>
@@ -119,26 +114,23 @@
     <button class="fab" onclick="switchTab('chatTab')">+</button>
   </div>
 
-  <!-- Firebase SDK v8 -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-  <!-- WebTorrent -->
-  <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
-
   <!-- Firebase Config -->
   <script src="firebase.js"></script>
 
-  <!-- Main Logic -->
+  <!-- App Logic -->
   <script src="app.js"></script>
 
   <!-- Register Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
-        .then(() => console.log("✅ Service Worker Registered"))
-        .catch(err => console.error("SW Error:", err));
+        .then(() => console.log("✔ Service Worker Registered"))
+        .catch(err => console.error("Service Worker Error:", err));
     }
   </script>
 </body>
