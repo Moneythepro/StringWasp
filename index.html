@@ -9,34 +9,34 @@
   <link rel="icon" href="favicon.png" />
 </head>
 <body>
-  <!-- 🔊 Notification Sound -->
+  <!-- Notification Sound -->
   <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
-  <!-- 🔄 Loading Overlay -->
+  <!-- Loading Overlay -->
   <div id="loadingOverlay">
     <div class="loader"></div>
   </div>
 
-  <!-- 🔐 Login/Register -->
+  <!-- Login Page -->
   <div id="loginPage" class="tab">
     <h2>Login</h2>
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
+    <input type="email" id="emailInput" placeholder="Email" />
+    <input type="password" id="passwordInput" placeholder="Password" />
     <button onclick="login()">Login</button>
     <button onclick="register()">Register</button>
   </div>
 
-  <!-- 🧑 Set Username -->
+  <!-- Username Setup Modal -->
   <div id="usernameDialog" class="modal">
     <h3>Pick a username</h3>
     <input id="newUsername" placeholder="Username" />
     <button onclick="saveUsername()">Save</button>
   </div>
 
-  <!-- 🌐 Main App -->
+  <!-- Main App -->
   <div id="appPage" class="tabContent">
 
-    <!-- 🔝 Header -->
+    <!-- Header -->
     <div class="header">
       <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
       <input id="customRoom" placeholder="New Room Name" />
@@ -44,7 +44,7 @@
       <span id="usernameDisplay"></span>
     </div>
 
-    <!-- 🛠 Admin Panel -->
+    <!-- Admin Panel -->
     <div id="adminPanel" class="admin-panel">
       <h4>Room Admin Tools</h4>
       <pre id="adminInfo"></pre>
@@ -54,7 +54,7 @@
       <button onclick="promoteMember()">Promote</button>
     </div>
 
-    <!-- 📑 Tab Navigation -->
+    <!-- Tabs Navigation -->
     <div class="tabs">
       <button onclick="switchTab('chatTab')">Chat</button>
       <button onclick="switchTab('friendsTab')">Friends</button>
@@ -63,40 +63,38 @@
       <button onclick="switchTab('profileTab')">Profile</button>
     </div>
 
-    <!-- 💬 Chat Tab -->
+    <!-- Chat Tab -->
     <div id="chatTab" class="tab">
       <div id="messages" class="messages"></div>
       <div id="typingIndicator" class="typing"></div>
-      <input id="messageInput" placeholder="Type message..." />
+      <input id="messageInput" placeholder="Type a message..." />
       <button onclick="sendMessage()">Send</button>
     </div>
 
-    <!-- 👥 Friends Tab -->
+    <!-- Friends Tab -->
     <div id="friendsTab" class="tab">
       <h3>Your Friends</h3>
       <div id="friendsList"></div>
     </div>
 
-    <!-- 📥 Inbox Tab -->
+    <!-- Inbox Tab -->
     <div id="inboxTab" class="tab">
       <h3>Inbox</h3>
       <div id="inboxList"></div>
     </div>
 
-    <!-- 🔍 Search Tab -->
+    <!-- Search Tab -->
     <div id="searchTab" class="tab">
       <h3>Search</h3>
       <input id="searchInput" placeholder="Search users or groups..." />
       <div class="search-buttons">
-        <button onclick="switchSearchView('user')">Users</button>
-        <button onclick="switchSearchView('group')">Groups</button>
         <button onclick="runSearch()">Search</button>
       </div>
       <div id="searchResultsUser" class="search-results"></div>
       <div id="searchResultsGroup" class="search-results"></div>
     </div>
 
-    <!-- 🙋 Profile Tab -->
+    <!-- Profile Tab -->
     <div id="profileTab" class="tab">
       <h3>Your Profile</h3>
       <input id="profileName" placeholder="Your Name" />
@@ -104,7 +102,7 @@
       <button onclick="saveProfile()">Save</button>
     </div>
 
-    <!-- 🧵 Thread Chat -->
+    <!-- Threaded Chat View -->
     <div id="threadView" class="tab">
       <button onclick="closeThread()">← Back to Friends</button>
       <h3 id="threadWithName"></h3>
@@ -114,23 +112,28 @@
       <button onclick="sendThreadMessage()">Send</button>
     </div>
 
-    <!-- ➕ Floating Button -->
+    <!-- Floating Button -->
     <button class="fab" onclick="switchTab('chatTab')">+</button>
   </div>
 
-  <!-- 🔥 Firebase SDKs -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-  <!-- 🔧 Firebase + App Logic -->
+  <!-- Firebase Config -->
   <script src="firebase.js"></script>
+
+  <!-- Main App Logic -->
   <script src="app.js"></script>
 
-  <!-- ⚙️ Service Worker -->
+  <!-- Register Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js');
+    }
+    if ("Notification" in window && Notification.permission !== "granted") {
+      Notification.requestPermission();
     }
   </script>
 </body>
