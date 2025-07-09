@@ -21,6 +21,7 @@
     <input type="password" id="password" placeholder="Password" />
     <button onclick="login()">Login</button>
     <button onclick="register()">Register</button>
+    <button onclick="useAsGuest()">Use as Guest</button>
   </div>
 
   <!-- Username Picker -->
@@ -43,6 +44,7 @@
     <div class="header">
       <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
       <span id="usernameDisplay"></span>
+      <button id="copyRoomLinkBtn" onclick="copyRoomLink()">🔗</button>
     </div>
 
     <!-- Tabs -->
@@ -58,14 +60,14 @@
     <div id="chatTab" class="tab">
       <div id="messages" class="messages"></div>
       <div id="typingIndicator" class="typing"></div>
-      <input id="messageInput" placeholder="Type message..." />
+      <input id="messageInput" placeholder="Type message..." oninput="sendTypingPing()" />
       <button onclick="sendMessage()">Send</button>
     </div>
 
     <!-- Friends Tab -->
     <div id="friendsTab" class="tab">
       <h3>Your Friends</h3>
-      <input id="friendSearchInput" placeholder="Search friends..." />
+      <input id="friendSearchInput" placeholder="Search friends..." oninput="searchFriendsLive()" />
       <div id="friendsList"></div>
     </div>
 
@@ -133,6 +135,7 @@
       <div id="fabMenu" class="fab-menu hidden">
         <button onclick="createOrJoinRoom()">Create/Join Group</button>
         <button onclick="runSearch(); switchTab('searchTab')">Discover Groups</button>
+        <button onclick="exportChatHistory()">Export Chat</button>
       </div>
     </div>
   </div>
