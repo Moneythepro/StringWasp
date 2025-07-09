@@ -4,92 +4,65 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>StringWasp Messenger</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body onload="loadTheme()">
+<body class="theme-light">
 
-  <!-- 🔒 Login/Register UI -->
-  <div id="authSection">
-    <input type="text" id="usernameInput" placeholder="Enter Username" />
-    <input type="password" id="passwordInput" placeholder="Enter Password" />
-    <button onclick="register()">Register</button>
-    <button onclick="login()">Login</button>
-  </div>
-
-  <!-- 🧭 Navigation Tabs -->
-  <div id="tabs" style="display:none;">
-    <button onclick="switchTab('chats')">Chats</button>
-    <button onclick="switchTab('friends')">Friends</button>
-    <button onclick="switchTab('inbox')">Inbox</button>
-    <button onclick="switchTab('search')">Search</button>
-    <button onclick="switchTab('profile')">Profile</button>
-    <select id="themeSwitcher">
-      <option value="light">☀️ Light</option>
-      <option value="dark">🌙 Dark</option>
-      <option value="matrix">🧪 Matrix</option>
-    </select>
-  </div>
+  <!-- 🔒 Top Info -->
+  <header>
+    <h1>StringWasp 🐝</h1>
+    <p id="encryptionBanner">🔒 End-to-End Encryption Enabled</p>
+  </header>
 
   <!-- 📌 Pinned Message -->
-  <div id="pinnedMessage"></div>
+  <div id="pinnedMessage" class="pinned"></div>
 
   <!-- 💬 Chat Area -->
-  <div id="chatArea" class="tabContent"></div>
-
-  <!-- 🧑‍🤝‍🧑 Friends Tab -->
-  <div id="friends" class="tabContent" style="display:none;"></div>
-
-  <!-- 📥 Inbox Tab -->
-  <div id="inbox" class="tabContent" style="display:none;"></div>
-
-  <!-- 🔍 Search Tab -->
-  <div id="search" class="tabContent" style="display:none;">
-    <input type="text" id="searchUserInput" placeholder="Search user or group" />
-    <button onclick="searchUsers()">Search</button>
-    <div id="searchResults"></div>
-  </div>
-
-  <!-- 🧑 Profile Tab -->
-  <div id="profile" class="tabContent" style="display:none;">
-    <h3>Your Profile</h3>
-    <input type="text" id="displayName" placeholder="Display Name" />
-    <input type="text" id="status" placeholder="Status / Bio" />
-    <select id="badgeSelect">
-      <option value="">No Badge</option>
-      <option value="🛡️ Admin">🛡️ Admin</option>
-      <option value="👑 Founder">👑 Founder</option>
-      <option value="⭐ Pro">⭐ Pro</option>
-    </select>
-    <button onclick="updateProfile()">Update</button>
+  <div id="chatContainer">
+    <div id="chatArea"></div>
   </div>
 
   <!-- 📝 Message Input -->
-  <div id="msgInputArea" style="display:none;">
-    <input type="text" id="inputMsg" placeholder="Type a message..." />
-    <label>
-      <input type="checkbox" id="selfDestructToggle" />
-      Self-Destruct (10s)
-    </label>
+  <div id="inputBar">
+    <input type="text" id="inputMsg" placeholder="Type your message..." />
     <button id="btnSend">Send</button>
-    <button id="btnVoice">🎤</button>
-    <button id="btnPin">📌</button>
+    <button id="btnVoice">🎙️</button>
+    <label>
+      <input type="checkbox" id="selfDestruct" />
+      Self-Destruct
+    </label>
   </div>
 
-  <!-- ➕ Floating Action Button -->
-  <div id="fab">
-    <button onclick="exportBackup()">💾 Backup</button>
-    <button onclick="importBackup()">📂 Restore</button>
-    <button onclick="joinHiddenGroup()">🔗 Join Hidden Group</button>
-    <button onclick="showPinnedMessage()">📌 Show Pin</button>
+  <!-- 🛠️ Action Bar -->
+  <div id="actionBar">
+    <button id="btnBackup">📁 Backup</button>
+    <button id="btnRestore">🔄 Restore</button>
+    <button id="btnPin">📌 Pin Last</button>
+    <button id="btnPlugin">🧩 Load Plugin</button>
+    <button id="btnJoinLink">🔗 Join Hidden Group</button>
+    <button id="btnSettings">⚙️ Settings</button>
   </div>
 
-  <!-- 🔋 Plugin Loader -->
-  <div id="pluginLoader" style="display:none;">
-    <input type="file" id="pluginFile" />
-    <button onclick="loadPluginFile()">Load Plugin</button>
+  <!-- 🎨 Theme Switcher -->
+  <select id="themeSwitcher">
+    <option value="theme-light">🌞 Light</option>
+    <option value="theme-dark">🌚 Dark</option>
+    <option value="theme-neon">🟩 Neon</option>
+  </select>
+
+  <!-- 🪪 User Badge -->
+  <div id="userBadge">Badge: 🛡️ Verified Wasp</div>
+
+  <!-- 🔔 Notification Area -->
+  <div id="notificationArea"></div>
+
+  <!-- ⚙️ Settings Modal Placeholder -->
+  <div id="settingsModal" style="display:none;">
+    <h2>Settings (Coming Soon)</h2>
+    <button onclick="this.parentElement.style.display='none'">Close</button>
   </div>
 
-  <!-- 📜 Scripts -->
+  <!-- 📜 Script -->
   <script type="module" src="app.js"></script>
 </body>
 </html>
