@@ -1,4 +1,3 @@
-// app.js
 const auth = firebase.auth();
 const db = firebase.firestore();
 let currentUser = null;
@@ -7,16 +6,21 @@ let unsubscribeMessages = null;
 let unsubscribeThread = null;
 let currentThreadUser = null;
 
+// Show/hide loading spinner
 function showLoading(show) {
   document.getElementById("loadingOverlay").style.display = show ? "flex" : "none";
 }
 
+// Tab switch with active class
 function switchTab(id) {
   document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
   document.getElementById(id).style.display = "block";
+  document.querySelectorAll(".tabs button").forEach(btn => btn.classList.remove("active"));
+  const tabButton = Array.from(document.querySelectorAll(".tabs button")).find(b => b.onclick.toString().includes(id));
+  if (tabButton) tabButton.classList.add("active");
 }
 
-// Auth
+// Auth state listener
 auth.onAuthStateChanged(async user => {
   if (user) {
     currentUser = user;
@@ -53,7 +57,7 @@ function saveUsername() {
   });
 }
 
-// Main App Load
+// App entry
 function loadMainUI() {
   document.getElementById("appPage").style.display = "block";
   switchTab("chatTab");
@@ -64,7 +68,7 @@ function loadMainUI() {
   loadProfile();
 }
 
-// Rooms
+// Room functions
 function createOrJoinRoom() {
   const room = prompt("Enter group name:");
   if (!room) return;
@@ -106,7 +110,7 @@ function loadRooms() {
   });
 }
 
-// Messages
+// Chat messages
 function listenMessages() {
   const messagesDiv = document.getElementById("messages");
   unsubscribeMessages = db.collection("rooms").doc(currentRoom).collection("messages")
@@ -274,7 +278,7 @@ function loadFriends() {
   });
 }
 
-// Thread Chat
+// Threads
 function threadId(a, b) {
   return [a, b].sort().join("_");
 }
@@ -381,7 +385,7 @@ function runSearch() {
   });
 }
 
-// Theme
+// Theme Toggle
 function toggleTheme() {
   const isDark = document.body.classList.toggle("dark");
   localStorage.setItem("theme", isDark ? "dark" : "light");
@@ -392,10 +396,9 @@ function applySavedTheme() {
   if (theme === "dark") document.body.classList.add("dark");
 }
 
+// Onload
 window.onload = () => {
   applySavedTheme();
   const preview = document.getElementById("profilePicPreview");
-  if (preview) {
-    preview.onclick = () => document.getElementById("profilePic").click();
-  }
+  if (preview) preview.onclick = () => document.getElementById("profilePic").click();
 };
