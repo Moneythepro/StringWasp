@@ -1,4 +1,4 @@
-/* Base Reset & Layout */
+/* Global Styles */
 body {
   font-family: 'Segoe UI', sans-serif;
   margin: 0;
@@ -23,7 +23,7 @@ body {
   background: #f8f9fa;
 }
 
-/* Inputs & Buttons */
+/* Input & Button */
 input, textarea, button, select {
   margin: 8px 0;
   padding: 10px;
@@ -57,7 +57,7 @@ button:hover {
   font-weight: bold;
 }
 
-/* Tabs Navigation */
+/* Tabs */
 .tabs {
   display: flex;
   justify-content: space-around;
@@ -80,7 +80,7 @@ button:hover {
   background: #dfe5e8;
 }
 
-/* Messages */
+/* Chat Messages */
 .messages {
   height: 300px;
   overflow-y: auto;
@@ -92,23 +92,25 @@ button:hover {
   flex-direction: column;
 }
 
-.message-bubble {
+.message {
   display: flex;
   align-items: flex-end;
   margin: 6px 0;
+  max-width: 80%;
+  word-wrap: break-word;
 }
 
-.message-bubble.left {
-  flex-direction: row;
-  justify-content: flex-start;
-}
-
-.message-bubble.right {
-  flex-direction: row-reverse;
+.message.mine {
+  align-self: flex-end;
   justify-content: flex-end;
+  flex-direction: row-reverse;
 }
 
-.message-avatar {
+.message.other {
+  align-self: flex-start;
+}
+
+.message .avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -116,26 +118,18 @@ button:hover {
   object-fit: cover;
 }
 
-.message-text {
+.message span {
   background: #dcf8c6;
   padding: 8px 12px;
   border-radius: 16px;
-  max-width: 70%;
-  word-wrap: break-word;
+  background: #dcf8c6;
 }
 
-.message-bubble.right .message-text {
+.message.mine span {
   background: #cfe9ba;
 }
 
-/* Typing Indicator */
-.typing {
-  font-style: italic;
-  color: #666;
-  margin: 5px 0;
-}
-
-/* Inbox, Friends, Search */
+/* Inbox & Friend Cards */
 .inbox-card, .friend-entry, .search-result {
   background: white;
   margin: 6px 0;
@@ -152,6 +146,17 @@ button:hover {
   background: #f1f1f1;
 }
 
+/* Admin Panel */
+.admin-panel {
+  background: #fff8dc;
+  border-left: 5px solid #f0ad4e;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 8px;
+  display: none;
+}
+
+/* Search */
 .search-buttons {
   margin: 10px 0;
   display: flex;
@@ -180,6 +185,18 @@ button:hover {
   padding: 10px;
   margin: 10px 0;
   border-radius: 8px;
+}
+
+textarea {
+  resize: none;
+  height: 60px;
+}
+
+/* Typing Indicator */
+.typing {
+  font-style: italic;
+  color: #666;
+  margin: 5px 0;
 }
 
 /* Floating Action Button */
@@ -267,7 +284,7 @@ input:checked + .slider::before {
   to { transform: rotate(360deg); }
 }
 
-/* Dark Theme */
+/* Dark Mode */
 body.dark {
   background: #1e1e1e;
   color: #f8f8f8;
@@ -285,6 +302,6 @@ body.dark .search-result {
   color: #fff;
 }
 
-body.dark .message-text {
+body.dark .message span {
   background: #444;
 }
