@@ -389,6 +389,18 @@ function runSearch() {
   });
 }
 
+function sendFriendRequest(uid, username) {
+  db.collection("inbox").add({
+    to: uid,
+    from: currentUser.uid,
+    fromName: document.getElementById("usernameDisplay").textContent,
+    type: "Friend Request",
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => {
+    alert("Friend request sent to " + username);
+  });
+}
+
 // Theme
 function toggleTheme() {
   const isDark = document.body.classList.toggle("dark");
@@ -402,7 +414,7 @@ function applySavedTheme() {
 
 // FAB Menu
 function toggleFabMenu() {
-  alert("FAB Menu clicked — implement actions like New Chat, New Group, Join Group.");
+  document.getElementById("fabMenu").classList.toggle("hidden");
 }
 
 // Init
