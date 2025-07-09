@@ -419,7 +419,57 @@ function ToggleFabMenu() {
   const side = document.getElementById("sideMenu");
   if (side) side.classList.toggle("show");
 }
+function handleFabClick() {
+  const choice = prompt(`Choose an option:
+1. Create or Join Group
+2. View My Groups
+3. Leave Current Group`);
 
+  if (!choice) return;
+  switch (choice.trim()) {
+    case "1":
+      createOrJoinRoom();
+      break;
+    case "2":
+      showJoinedGroups();
+      break;
+    case "3":
+      leaveCurrentGroup();
+      break;
+    default:
+      alert("Invalid choice.");
+  }
+}
+
+function showJoinedGroups() {
+  db.collection("groups").get().then(snapshot => {
+    const joined = [];
+    snapshot.forEach(doc => {
+      const members = doc.data().members || {};
+      if (members[currentUser.uid]) joined.push(doc.id);
+    });
+
+    if (joined.length === 0) return alert("You have not joined any groups.");
+    const pick = prompt("Your Groups:\n" + joined.join("\n") + "\n\nEnter group name to join:");
+    if (pick && joined.includes(pick)) joinRoom(pick);
+  });
+}
+
+function leaveCurrentGroup() {
+  if (currentRoom === "global") return alert("You can't leave the global room.");
+  if (!currentRoom) return;
+
+  const confirmLeave = confirm(`Leave "${currentRoom}"?`);
+  if (!confirmLeave) return;
+
+  db.collection("groups").doc(currentRoom).collection("members").doc(currentUser.uid).delete()
+    .then(() => {
+      alert(`You left "${currentRoom}".`);
+      currentRoom = "global";
+      loadRooms();
+      listenMessages();
+    });
+}
 // ===== Private Chat =====
 function promptPrivateChat() {
   const username = prompt("Enter username to chat:");
