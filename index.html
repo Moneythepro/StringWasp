@@ -32,19 +32,16 @@
 
   <!-- Main App -->
   <div id="appPage" class="tabContent">
-    <!-- Theme Toggle -->
     <label class="theme-switch">
       <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()" />
       <span class="slider"></span>
     </label>
 
-    <!-- Header -->
     <div class="header">
       <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
       <span id="usernameDisplay"></span>
     </div>
 
-    <!-- Tabs -->
     <div class="tabs">
       <button onclick="switchTab('chatTab')" id="tab-chat">💬<br><span>Chats</span></button>
       <button onclick="switchTab('friendsTab')" id="tab-friends">👥<br><span>Friends</span></button>
@@ -53,7 +50,6 @@
       <button onclick="switchTab('profileTab')" id="tab-profile">🙍‍♂️<br><span>Profile</span></button>
     </div>
 
-    <!-- Chat Tab -->
     <div id="chatTab" class="tab">
       <div id="messages" class="messages"></div>
       <div id="typingIndicator" class="typing"></div>
@@ -61,21 +57,18 @@
       <button onclick="sendMessage()">Send</button>
     </div>
 
-    <!-- Friends Tab -->
     <div id="friendsTab" class="tab">
       <h3>Your Friends</h3>
       <input id="friendSearchInput" placeholder="Search friends..." />
       <div id="friendsList"></div>
     </div>
 
-    <!-- Inbox Tab -->
     <div id="inboxTab" class="tab">
       <h3>Inbox</h3>
       <button onclick="markAllRead()">Mark All as Read</button>
       <div id="inboxList"></div>
     </div>
 
-    <!-- Search Tab -->
     <div id="searchTab" class="tab">
       <h3>Search</h3>
       <input id="searchInput" placeholder="Search users or groups..." />
@@ -88,7 +81,6 @@
       <div id="searchResultsGroup" class="search-results" style="display:none;"></div>
     </div>
 
-    <!-- Profile Tab -->
     <div id="profileTab" class="tab">
       <div class="profile-header">
         <button onclick="switchTab('chatTab')">← Back</button>
@@ -104,7 +96,6 @@
       <button onclick="saveProfile()">Save</button>
     </div>
 
-    <!-- Thread View -->
     <div id="threadView" class="tab">
       <button onclick="closeThread()">← Back to Friends</button>
       <h3 id="threadWithName"></h3>
@@ -113,7 +104,6 @@
       <button onclick="sendThreadMessage()">Send</button>
     </div>
 
-    <!-- View Profile Modal -->
     <div id="viewProfileModal" class="modal">
       <div class="modal-content">
         <span class="close" onclick="document.getElementById('viewProfileModal').style.display='none'">×</span>
@@ -126,11 +116,10 @@
       </div>
     </div>
 
-    <!-- Floating Action Button (Classic FAB) -->
     <button class="fab" onclick="showUsernameDialog()">+</button>
   </div>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase SDK v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -150,5 +139,24 @@
         .catch(console.error);
     }
   </script>
+
+  <!-- 🔐 Encryption Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+  <!-- 📦 Compression Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+
+  <!-- 🆔 UUID Generator -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/9.0.0/uuidv4.min.js"></script>
+
+  <!-- 🧠 Local IndexedDB Wrapper -->
+  <script src="https://unpkg.com/idb@7/build/umd.js"></script>
+
+  <!-- 🧾 QR Code Generator -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+
+  <!-- 🔌 Socket.IO (Optional for WebSocket backend) -->
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
 </body>
 </html>
