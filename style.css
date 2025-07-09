@@ -184,7 +184,7 @@ button:hover {
   color: #333;
 }
 
-/* Inbox & Search Cards */
+/* Cards */
 .inbox-card, .friend-entry, .search-result {
   background: white;
   margin: 6px 0;
@@ -306,6 +306,51 @@ button:hover {
   to { transform: rotate(360deg); }
 }
 
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1001;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: 10% auto;
+  padding: 20px;
+  width: 90%;
+  max-width: 400px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.modal-content img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.modal-content h3 {
+  margin: 10px 0 5px;
+}
+
+.modal-content p {
+  margin: 4px 0;
+}
+
+.modal .close {
+  float: right;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
 /* Dark Mode */
 body.dark {
   background: #1e1e1e;
@@ -321,7 +366,7 @@ body.dark .inbox-card,
 body.dark .friend-entry,
 body.dark .search-result,
 body.dark #threadMessages,
-body.dark .view-profile {
+body.dark .modal-content {
   background: #2b2b2b;
   color: #fff;
 }
