@@ -1,4 +1,4 @@
-/* General Layout */
+/* Global */
 body {
   font-family: 'Segoe UI', sans-serif;
   margin: 0;
@@ -9,13 +9,11 @@ body {
   height: 100vh;
 }
 
-/* Tabs */
 .tab, .tabContent {
   display: none;
   padding: 16px;
 }
 
-/* Login & Username Pages */
 #loginPage, #usernameDialog {
   display: flex;
   flex-direction: column;
@@ -25,7 +23,7 @@ body {
   background: #f8f9fa;
 }
 
-/* Inputs, Buttons */
+/* Inputs & Buttons */
 input, textarea, button, select {
   margin: 8px 0;
   padding: 10px;
@@ -59,7 +57,7 @@ button:hover {
   font-weight: bold;
 }
 
-/* Tabs Nav */
+/* Tabs Navigation */
 .tabs {
   display: flex;
   justify-content: space-around;
@@ -82,7 +80,7 @@ button:hover {
   background: #dfe5e8;
 }
 
-/* Chat Messages */
+/* Messages */
 .messages {
   height: 300px;
   overflow-y: auto;
@@ -94,40 +92,40 @@ button:hover {
   flex-direction: column;
 }
 
-.messages div {
-  padding: 8px 12px;
-  margin: 4px 0;
-  border-radius: 16px;
-  max-width: 80%;
-  word-wrap: break-word;
-  position: relative;
-}
-
-/* Own Message (right) */
-.messages .me {
-  align-self: flex-end;
-  background: #dcf8c6;
-  text-align: right;
-}
-
-/* Others' Messages (left) */
-.messages .other {
-  align-self: flex-start;
-  background: #ffffff;
-}
-
-/* Avatar + Username */
-.message-header {
+.message-bubble {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
+  align-items: flex-end;
+  margin: 6px 0;
 }
 
-.message-header img {
-  width: 28px;
-  height: 28px;
+.message-bubble.left {
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+.message-bubble.right {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
+
+.message-avatar {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
+  margin: 0 6px;
+  object-fit: cover;
+}
+
+.message-text {
+  background: #dcf8c6;
+  padding: 8px 12px;
+  border-radius: 16px;
+  max-width: 70%;
+  word-wrap: break-word;
+}
+
+.message-bubble.right .message-text {
+  background: #cfe9ba;
 }
 
 /* Typing Indicator */
@@ -137,7 +135,7 @@ button:hover {
   margin: 5px 0;
 }
 
-/* Inbox Cards */
+/* Inbox & Friend Cards */
 .inbox-card, .friend-entry, .search-result {
   background: white;
   margin: 6px 0;
@@ -175,7 +173,13 @@ button:hover {
   display: none;
 }
 
-/* Thread View */
+.search-result-options {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 8px;
+}
+
+/* Thread Chat */
 #threadView {
   background: #ffffff;
 }
@@ -189,14 +193,6 @@ button:hover {
   border-radius: 8px;
 }
 
-#threadMessages div {
-  background: #e2ffc7;
-  margin: 5px 0;
-  padding: 8px;
-  border-radius: 12px;
-}
-
-/* Text Area */
 textarea {
   resize: none;
   height: 60px;
@@ -216,8 +212,50 @@ textarea {
   border: none;
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   cursor: pointer;
-  text-align: center;
-  line-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Theme Switch */
+.theme-switch {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.theme-switch input {
+  display: none;
+}
+
+.slider {
+  width: 40px;
+  height: 20px;
+  background: #ccc;
+  border-radius: 12px;
+  position: relative;
+  display: inline-block;
+  transition: 0.3s;
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  background: white;
+  border-radius: 50%;
+  left: 2px;
+  top: 2px;
+  transition: 0.3s;
+}
+
+input:checked + .slider {
+  background: #25d366;
+}
+
+input:checked + .slider::before {
+  transform: translateX(20px);
 }
 
 /* Loading Overlay */
@@ -245,38 +283,24 @@ textarea {
   to { transform: rotate(360deg); }
 }
 
-/* Profile Picture Preview */
-.profile-pic-preview {
-  width: 96px;
-  height: 96px;
-  object-fit: cover;
-  border-radius: 50%;
-  display: block;
-  margin: 10px auto;
-}
-
 /* Dark Mode */
 body.dark {
-  background: #121212;
-  color: #eee;
+  background: #1e1e1e;
+  color: #f8f8f8;
 }
 
-body.dark .tab, 
-body.dark .tabContent,
-body.dark input,
-body.dark textarea,
-body.dark select,
+body.dark .header {
+  background: #333;
+}
+
 body.dark .messages,
 body.dark .inbox-card,
 body.dark .friend-entry,
 body.dark .search-result {
-  background: #1f1f1f;
-  color: #eee;
-  border-color: #333;
+  background: #2b2b2b;
+  color: #fff;
 }
 
-body.dark .header,
-body.dark .tabs {
-  background: #222;
-  color: white;
+body.dark .message-text {
+  background: #444;
 }
