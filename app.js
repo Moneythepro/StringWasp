@@ -1,218 +1,185 @@
-const auth = firebase.auth();
-const db = firebase.firestore();
+// 📁 app.js – Full Upgraded Version of StringWasp Messenger
 
-let currentUser = null;
-let currentRoom = null;
-let currentThread = null;
-let theme = localStorage.getItem("theme") || "light";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, onSnapshot, query, orderBy,
+  serverTimestamp, doc, setDoc, getDoc, updateDoc, deleteDoc,
+  where, getDocs
+} from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-window.onload = () => {
-  setTheme(theme);
-  auth.onAuthStateChanged(async user => {
-    if (user) {
-      currentUser = user;
-      const userDoc = await db.collection("users").doc(user.uid).get();
-      if (!userDoc.exists || !userDoc.data().username) {
-        showTab("usernameDialog");
-      } else {
-        document.getElementById("usernameDisplay").textContent = `@${userDoc.data().username}`;
-        showTab("chatTab");
-        document.getElementById("appPage").style.display = "block";
-        loadFriends();
-        loadRooms();
-        switchTab("chatTab");
-      }
-    } else {
-      showTab("loginPage");
-    }
-  });
+// Firebase config
+const firebaseConfig = {
+  apiKey: "your-key",
+  authDomain: "your-auth",
+  projectId: "your-project",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
 };
 
-function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  auth.signInWithEmailAndPassword(email, password).catch(console.error);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// 🧠 UI State Variables
+let currentUser = null;
+let currentChat = null;
+let chatThreads = {};
+let encryptionKey = "stringwasp_encryption_key";
+
+// 🔐 Simulated Encryption Utility
+async function encrypt(text) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(encryptionKey));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const algo = { name: "AES-GCM", iv };
+  const cryptoKey = await crypto.subtle.importKey("raw", key, algo, false, ["encrypt"]);
+  const cipherText = await crypto.subtle.encrypt(algo, cryptoKey, enc.encode(text));
+  return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(cipherText)) }));
 }
 
-function register() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  auth.createUserWithEmailAndPassword(email, password).catch(console.error);
+async function decrypt(data) {
+  try {
+    const json = JSON.parse(atob(data));
+    const { iv, data: cipher } = json;
+    const key = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(encryptionKey));
+    const algo = { name: "AES-GCM", iv: new Uint8Array(iv) };
+    const cryptoKey = await crypto.subtle.importKey("raw", key, algo, false, ["decrypt"]);
+    const decrypted = await crypto.subtle.decrypt(algo, cryptoKey, new Uint8Array(cipher));
+    return new TextDecoder().decode(decrypted);
+  } catch (e) {
+    return "[Decryption Error]";
+  }
 }
 
-function saveUsername() {
-  const username = document.getElementById("newUsername").value;
-  db.collection("users").doc(currentUser.uid).set({
-    email: currentUser.email,
-    username,
-    status: "online",
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-  }).then(() => {
-    document.getElementById("usernameDisplay").textContent = `@${username}`;
-    showTab("chatTab");
-    document.getElementById("appPage").style.display = "block";
-    switchTab("chatTab");
-    loadRooms();
+// 💬 Messaging System
+async function sendMessage(text, selfDestruct = false, voiceBlob = null) {
+  if (!currentUser || !currentChat) return;
+
+  const encrypted = await encrypt(text);
+  await addDoc(collection(db, "chats", currentChat, "messages"), {
+    sender: currentUser,
+    message: encrypted,
+    timestamp: serverTimestamp(),
+    seen: false,
+    selfDestruct,
+    voice: voiceBlob || null
   });
 }
 
-function sendMessage() {
-  const input = document.getElementById("messageInput");
-  if (!currentRoom || !input.value) return;
-  db.collection("rooms").doc(currentRoom).collection("messages").add({
-    uid: currentUser.uid,
-    text: input.value,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+function listenToMessages(chatId) {
+  const q = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp"));
+  onSnapshot(q, async (snapshot) => {
+    for (const docChange of snapshot.docChanges()) {
+      const data = docChange.doc.data();
+      const msg = await decrypt(data.message);
+      displayMessage(msg, data.sender, data.timestamp, data.voice);
+
+      if (data.selfDestruct) {
+        setTimeout(() => deleteDoc(docChange.doc.ref), 10000);
+      } else {
+        await updateDoc(docChange.doc.ref, { seen: true });
+      }
+    }
   });
-  input.value = "";
 }
 
-function sendThreadMessage() {
-  const input = document.getElementById("threadInput");
-  if (!currentThread || !input.value) return;
-  db.collection("threads").doc(currentThread).collection("messages").add({
-    uid: currentUser.uid,
-    text: input.value,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+function displayMessage(msg, sender, time, voice = null) {
+  const area = document.getElementById("chatArea");
+  const el = document.createElement("div");
+  el.className = "msg";
+
+  if (voice) {
+    const audio = document.createElement("audio");
+    audio.controls = true;
+    audio.src = voice;
+    el.appendChild(audio);
+  } else {
+    el.textContent = `${sender}: ${msg}`;
+  }
+  area.appendChild(el);
+}
+
+// 🗣️ Voice Message Feature
+function recordVoice(callback) {
+  navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+    const recorder = new MediaRecorder(stream);
+    const chunks = [];
+
+    recorder.ondataavailable = (e) => chunks.push(e.data);
+    recorder.onstop = () => {
+      const blob = new Blob(chunks);
+      const reader = new FileReader();
+      reader.onload = () => callback(reader.result);
+      reader.readAsDataURL(blob);
+    };
+
+    recorder.start();
+    setTimeout(() => recorder.stop(), 5000);
   });
-  input.value = "";
 }
 
-function showTab(tabId) {
-  document.querySelectorAll('.tab').forEach(t => t.style.display = "none");
-  const tab = document.getElementById(tabId);
-  if (tab) tab.style.display = "block";
+// 📌 Pinned Messages
+async function pinMessage(msg) {
+  if (!currentChat) return;
+  await setDoc(doc(db, "chats", currentChat), {
+    pinned: await encrypt(msg)
+  }, { merge: true });
 }
 
-function switchTab(tabId) {
-  showTab(tabId);
+async function showPinnedMessage() {
+  const docSnap = await getDoc(doc(db, "chats", currentChat));
+  if (docSnap.exists() && docSnap.data().pinned) {
+    const pinned = await decrypt(docSnap.data().pinned);
+    document.getElementById("pinnedMessage").textContent = `📌 ${pinned}`;
+  }
 }
 
-function toggleTheme() {
-  theme = (theme === "light") ? "dark" : "light";
-  localStorage.setItem("theme", theme);
-  setTheme(theme);
+// 🧩 Plugin Loader
+function loadPlugin(pluginFn) {
+  pluginFn({ db, currentUser, currentChat });
 }
 
-function setTheme(theme) {
+// 💾 Backup & Restore
+async function exportBackup() {
+  const messages = await getDocs(collection(db, "chats", currentChat, "messages"));
+  const data = [];
+  messages.forEach((doc) => data.push(doc.data()));
+  localStorage.setItem("stringwasp_backup", JSON.stringify(data));
+}
+
+async function importBackup() {
+  const backup = JSON.parse(localStorage.getItem("stringwasp_backup"));
+  for (const msg of backup) {
+    await addDoc(collection(db, "chats", currentChat, "messages"), msg);
+  }
+}
+
+// 🎨 Theme Engine
+function applyTheme(theme) {
   document.body.className = theme;
+  localStorage.setItem("theme", theme);
 }
 
-function loadRooms() {
-  const dropdown = document.getElementById("roomDropdown");
-  dropdown.innerHTML = "";
-  db.collection("rooms").get().then(snapshot => {
-    snapshot.forEach(doc => {
-      const opt = document.createElement("option");
-      opt.value = doc.id;
-      opt.textContent = doc.data().name;
-      dropdown.appendChild(opt);
-    });
-  });
+function loadTheme() {
+  const t = localStorage.getItem("theme");
+  if (t) document.body.className = t;
 }
 
-function joinRoom(roomId) {
-  currentRoom = roomId;
-  const msgBox = document.getElementById("messages");
-  msgBox.innerHTML = "";
-  db.collection("rooms").doc(roomId).collection("messages")
-    .orderBy("createdAt")
-    .onSnapshot(snapshot => {
-      msgBox.innerHTML = "";
-      snapshot.forEach(doc => {
-        const div = document.createElement("div");
-        div.textContent = doc.data().text;
-        msgBox.appendChild(div);
-      });
-    });
-}
+// 🚀 Initialization
+document.addEventListener("DOMContentLoaded", () => {
+  loadTheme();
 
-function createOrJoinRoom() {
-  const name = prompt("Enter room name:");
-  if (!name) return;
-  db.collection("rooms").add({ name }).then(doc => {
-    loadRooms();
-    joinRoom(doc.id);
-  });
-}
+  document.getElementById("btnSend").onclick = () => {
+    const msg = document.getElementById("inputMsg").value;
+    sendMessage(msg);
+  };
 
-function loadFriends() {
-  const friendsBox = document.getElementById("friendsList");
-  friendsBox.innerHTML = "";
-  db.collection("users").get().then(snapshot => {
-    snapshot.forEach(doc => {
-      const user = doc.data();
-      const div = document.createElement("div");
-      div.textContent = `@${user.username}`;
-      div.onclick = () => openThreadWithUser(doc.id, user.username);
-      friendsBox.appendChild(div);
-    });
-  });
-}
+  document.getElementById("btnVoice").onclick = () => {
+    recordVoice((audioData) => sendMessage("[Voice Message]", false, audioData));
+  };
 
-function openThreadWithUser(userId, username) {
-  currentThread = [currentUser.uid, userId].sort().join("-");
-  document.getElementById("threadWithName").textContent = `Chat with @${username}`;
-  showTab("threadView");
-  const threadBox = document.getElementById("threadMessages");
-  db.collection("threads").doc(currentThread).collection("messages")
-    .orderBy("createdAt")
-    .onSnapshot(snapshot => {
-      threadBox.innerHTML = "";
-      snapshot.forEach(doc => {
-        const div = document.createElement("div");
-        div.textContent = doc.data().text;
-        threadBox.appendChild(div);
-      });
-    });
-}
+  document.getElementById("btnBackup").onclick = exportBackup;
+  document.getElementById("btnRestore").onclick = importBackup;
 
-function closeThread() {
-  currentThread = null;
-  switchTab("friendsTab");
-}
-
-function markAllRead() {
-  alert("All inbox messages marked as read!");
-}
-
-function runSearch() {
-  const input = document.getElementById("searchInput").value.toLowerCase();
-  const userResults = document.getElementById("searchResultsUser");
-  const groupResults = document.getElementById("searchResultsGroup");
-  userResults.innerHTML = groupResults.innerHTML = "";
-
-  db.collection("users").where("username", ">=", input).get().then(snapshot => {
-    snapshot.forEach(doc => {
-      const div = document.createElement("div");
-      div.textContent = `@${doc.data().username}`;
-      userResults.appendChild(div);
-    });
-  });
-
-  db.collection("rooms").where("name", ">=", input).get().then(snapshot => {
-    snapshot.forEach(doc => {
-      const div = document.createElement("div");
-      div.textContent = doc.data().name;
-      groupResults.appendChild(div);
-    });
-  });
-}
-
-function switchSearchView(view) {
-  document.getElementById("searchResultsUser").style.display = (view === "user") ? "block" : "none";
-  document.getElementById("searchResultsGroup").style.display = (view === "group") ? "block" : "none";
-}
-
-function saveProfile() {
-  const name = document.getElementById("profileName").value;
-  const bio = document.getElementById("profileBio").value;
-  db.collection("users").doc(currentUser.uid).update({
-    name,
-    bio
-  });
-}
-
-function toggleFabMenu() {
-  alert("FAB Menu clicked – add more actions here!");
-}
+  document.getElementById("themeSwitcher").onchange = (e) => applyTheme(e.target.value);
+});
