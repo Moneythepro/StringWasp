@@ -34,13 +34,13 @@ auth.onAuthStateChanged(async user => {
 });
 
 function login() {
-  const email = document.getElementById("email").value;
+  const email = document.getElementById("email").value.trim();
   const pass = document.getElementById("password").value;
   auth.signInWithEmailAndPassword(email, pass).catch(alert);
 }
 
 function register() {
-  const email = document.getElementById("email").value;
+  const email = document.getElementById("email").value.trim();
   const pass = document.getElementById("password").value;
   auth.createUserWithEmailAndPassword(email, pass).catch(alert);
 }
@@ -118,6 +118,7 @@ function listenMessages() {
 
         const bubble = document.createElement("div");
         bubble.className = "message-bubble " + (isMine ? "right" : "left");
+        bubble.title = msg.timestamp?.toDate?.().toLocaleString() || "";
 
         if (!isMine) {
           const senderInfo = document.createElement("div");
@@ -139,15 +140,13 @@ function listenMessages() {
 
         const text = document.createElement("div");
         text.textContent = msg.text;
-        bubble.appendChild(text);
-
         if (isMine) {
           text.oncontextmenu = e => {
             e.preventDefault();
             showMessageOptions(doc.id, msg);
           };
         }
-
+        bubble.appendChild(text);
         messagesDiv.appendChild(bubble);
       });
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -214,6 +213,13 @@ function declineRequest(id) {
   alert("Request Rejected");
 }
 
+function markAllRead() {
+  db.collection("inbox").where("to", "==", currentUser.uid).get().then(snapshot => {
+    snapshot.forEach(doc => doc.ref.delete());
+  });
+  alert("All inbox notifications marked as read.");
+}
+
 // Profile
 function loadProfile() {
   db.collection("users").doc(currentUser.uid).get().then(doc => {
@@ -226,8 +232,8 @@ function loadProfile() {
 }
 
 function saveProfile() {
-  const name = document.getElementById("profileName").value;
-  const bio = document.getElementById("profileBio").value;
+  const name = document.getElementById("profileName").value.trim();
+  const bio = document.getElementById("profileBio").value.trim();
   const fileInput = document.getElementById("profilePic");
   const file = fileInput.files[0];
   const data = { name, bio };
@@ -256,6 +262,8 @@ function showUserProfile(uid) {
     document.getElementById("viewProfileName").textContent = data.name || "Unnamed";
     document.getElementById("viewProfileBio").textContent = data.bio || "No bio";
     document.getElementById("viewProfileUsername").textContent = "@" + (data.username || "unknown");
+    document.getElementById("viewProfileEmail").textContent = data.email || "";
+    document.getElementById("viewProfileStatus").textContent = data.status || "";
     document.getElementById("viewProfileModal").style.display = "block";
   });
 }
@@ -334,7 +342,8 @@ function runSearch() {
       const user = doc.data();
       const div = document.createElement("div");
       div.className = "search-result";
-      div.textContent = user.username;
+      const badge = user.username === "moneythepro" ? " 🛠️ Developer" : "";
+      div.textContent = user.username + badge;
       div.onclick = () => {
         const choice = confirm("OK = View Profile\nCancel = Send Friend Request");
         if (choice) showUserProfile(doc.id);
@@ -391,6 +400,11 @@ function applySavedTheme() {
   if (theme === "dark") document.body.classList.add("dark");
 }
 
+// FAB Menu
+function toggleFabMenu() {
+  alert("FAB Menu clicked — implement actions like New Chat, New Group, Join Group.");
+}
+
 // Init
 window.onload = () => {
   applySavedTheme();
@@ -399,10 +413,3 @@ window.onload = () => {
     preview.onclick = () => document.getElementById("profilePic").click();
   }
 };
-function toggleFabMenu() {
-  alert("FAB Menu clicked — implement actions like New Chat, New Group, etc.");
-}
-
-function markAllRead() {
-  alert("Marking all inbox notifications as read — not implemented yet.");
-}
