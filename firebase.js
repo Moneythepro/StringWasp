@@ -15,4 +15,4 @@ if (!firebase.apps.length) {
 
 window.auth = firebase.auth();
 window.db = firebase.firestore();
-window.storage = firebase.storage(); // ✅ Add this line if using Storage
+window.storage = firebase.storage(); // ✅ For profile pictures
