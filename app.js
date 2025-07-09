@@ -401,8 +401,15 @@ function applySavedTheme() {
 }
 
 // FAB Menu
-function toggleFabMenu() {
-  alert("FAB Menu clicked — implement actions like New Chat, New Group, Join Group.");
+function promptPrivateChat() {
+  const username = prompt("Enter username to chat:");
+  if (!username) return;
+
+  db.collection("users").where("username", "==", username).limit(1).get().then(snapshot => {
+    if (snapshot.empty) return alert("User not found.");
+    const doc = snapshot.docs[0];
+    openThread(doc.id, username);
+  });
 }
 
 // Init
