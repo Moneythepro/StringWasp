@@ -1,3 +1,4 @@
+// app.js
 const auth = firebase.auth();
 const db = firebase.firestore();
 let currentUser = null;
@@ -6,21 +7,16 @@ let unsubscribeMessages = null;
 let unsubscribeThread = null;
 let currentThreadUser = null;
 
-// Show/hide loading spinner
 function showLoading(show) {
   document.getElementById("loadingOverlay").style.display = show ? "flex" : "none";
 }
 
-// Tab switch with active class
 function switchTab(id) {
   document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
   document.getElementById(id).style.display = "block";
-  document.querySelectorAll(".tabs button").forEach(btn => btn.classList.remove("active"));
-  const tabButton = Array.from(document.querySelectorAll(".tabs button")).find(b => b.onclick.toString().includes(id));
-  if (tabButton) tabButton.classList.add("active");
 }
 
-// Auth state listener
+// Auth
 auth.onAuthStateChanged(async user => {
   if (user) {
     currentUser = user;
@@ -57,7 +53,7 @@ function saveUsername() {
   });
 }
 
-// App entry
+// Main App Load
 function loadMainUI() {
   document.getElementById("appPage").style.display = "block";
   switchTab("chatTab");
@@ -68,7 +64,7 @@ function loadMainUI() {
   loadProfile();
 }
 
-// Room functions
+// Rooms
 function createOrJoinRoom() {
   const room = prompt("Enter group name:");
   if (!room) return;
@@ -110,7 +106,7 @@ function loadRooms() {
   });
 }
 
-// Chat messages
+// Messages
 function listenMessages() {
   const messagesDiv = document.getElementById("messages");
   unsubscribeMessages = db.collection("rooms").doc(currentRoom).collection("messages")
@@ -119,6 +115,7 @@ function listenMessages() {
       snapshot.forEach(doc => {
         const msg = doc.data();
         const isMine = msg.senderId === currentUser.uid;
+
         const bubble = document.createElement("div");
         bubble.className = "message-bubble " + (isMine ? "right" : "left");
 
@@ -132,7 +129,7 @@ function listenMessages() {
 
         const text = document.createElement("div");
         text.className = "message-text";
-        text.textContent = msg.text;
+        text.innerHTML = `<strong>${msg.senderName || "Unknown"}:</strong> ${msg.text}`;
 
         if (isMine) {
           text.oncontextmenu = e => {
@@ -246,9 +243,9 @@ function saveProfile() {
 function showUserProfile(uid) {
   db.collection("users").doc(uid).get().then(doc => {
     const data = doc.data();
-    const confirmed = confirm(`${data.username}\n${data.bio || "No bio"}\n\nOK = Send Request\nCancel = Close`);
+    const confirmed = confirm(`${data.username || data.name || "Unknown"}\n${data.bio || "No bio"}\n\nOK = Send Request\nCancel = Close`);
     if (confirmed) {
-      sendFriendRequest(uid, data.username);
+      sendFriendRequest(uid, data.username || data.name);
     }
   });
 }
@@ -278,7 +275,7 @@ function loadFriends() {
   });
 }
 
-// Threads
+// Thread Chat
 function threadId(a, b) {
   return [a, b].sort().join("_");
 }
@@ -385,7 +382,7 @@ function runSearch() {
   });
 }
 
-// Theme Toggle
+// Theme
 function toggleTheme() {
   const isDark = document.body.classList.toggle("dark");
   localStorage.setItem("theme", isDark ? "dark" : "light");
@@ -396,9 +393,10 @@ function applySavedTheme() {
   if (theme === "dark") document.body.classList.add("dark");
 }
 
-// Onload
 window.onload = () => {
   applySavedTheme();
   const preview = document.getElementById("profilePicPreview");
-  if (preview) preview.onclick = () => document.getElementById("profilePic").click();
+  if (preview) {
+    preview.onclick = () => document.getElementById("profilePic").click();
+  }
 };
