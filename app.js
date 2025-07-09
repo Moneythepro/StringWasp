@@ -9,25 +9,28 @@ let unsubscribeThread = null;
 
 // Loading
 function showLoading(show) {
-  document.getElementById("loadingOverlay").style.display = show ? "flex" : "none";
+  const overlay = document.getElementById("loadingOverlay");
+  if (overlay) overlay.style.display = show ? "flex" : "none";
 }
 
 // Tabs
 function switchTab(id) {
-  document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
-  document.getElementById(id).style.display = "block";
-  document.querySelector(".fab-container").style.display = id === "groupsTab" ? "flex" : "none";
+  document.querySelectorAll(".tab").forEach(tab => tab.style.display = "none");
+  const tab = document.getElementById(id);
+  if (tab) tab.style.display = "block";
+  const fab = document.querySelector(".fab-container");
+  if (fab) fab.style.display = (id === "groupsTab") ? "flex" : "none";
 }
 
 // Auth
 auth.onAuthStateChanged(async user => {
   if (user) {
     currentUser = user;
-    const userDoc = await db.collection("users").doc(user.uid).get();
-    if (!userDoc.exists || !userDoc.data().username) {
+    const doc = await db.collection("users").doc(user.uid).get();
+    if (!doc.exists || !doc.data().username) {
       switchTab("usernameDialog");
     } else {
-      document.getElementById("usernameDisplay").textContent = userDoc.data().username;
+      document.getElementById("usernameDisplay").textContent = doc.data().username;
       loadMainUI();
     }
   } else {
@@ -37,14 +40,14 @@ auth.onAuthStateChanged(async user => {
 
 function login() {
   const email = document.getElementById("email").value.trim();
-  const pass = document.getElementById("password").value;
-  auth.signInWithEmailAndPassword(email, pass).catch(alert);
+  const password = document.getElementById("password").value;
+  auth.signInWithEmailAndPassword(email, password).catch(alert);
 }
 
 function register() {
   const email = document.getElementById("email").value.trim();
-  const pass = document.getElementById("password").value;
-  auth.createUserWithEmailAndPassword(email, pass).catch(alert);
+  const password = document.getElementById("password").value;
+  auth.createUserWithEmailAndPassword(email, password).catch(alert);
 }
 
 function logout() {
@@ -53,7 +56,7 @@ function logout() {
 
 function saveUsername() {
   const username = document.getElementById("newUsername").value.trim();
-  if (!username) return alert("Enter username");
+  if (!username) return alert("Enter a username.");
   db.collection("users").doc(currentUser.uid).set({ username }, { merge: true }).then(() => {
     document.getElementById("usernameDisplay").textContent = username;
     loadMainUI();
@@ -68,7 +71,6 @@ function loadMainUI() {
   loadInbox();
   loadFriends();
   loadProfile();
-  updateFollowers();
 }
 
 // Rooms
@@ -77,11 +79,11 @@ function loadRooms() {
   dropdown.innerHTML = "";
   db.collection("groups").get().then(snapshot => {
     snapshot.forEach(doc => {
-      db.collection("groups").doc(doc.id).collection("members").doc(currentUser.uid).get().then(memberDoc => {
+      doc.ref.collection("members").doc(currentUser.uid).get().then(memberDoc => {
         if (memberDoc.exists) {
           const opt = document.createElement("option");
-          opt.textContent = doc.id;
           opt.value = doc.id;
+          opt.textContent = doc.id;
           dropdown.appendChild(opt);
         }
       });
@@ -90,26 +92,25 @@ function loadRooms() {
 }
 
 function createGroup() {
-  const room = prompt("Enter new group name:");
-  if (!room) return;
-  const ref = db.collection("groups").doc(room);
+  const name = prompt("Enter new group name:");
+  if (!name) return;
+  const ref = db.collection("groups").doc(name);
   ref.set({
-    name: room,
+    name,
     createdBy: currentUser.uid,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    autoJoin: true
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
   ref.collection("members").doc(currentUser.uid).set({ joinedAt: Date.now() });
-  joinRoom(room);
+  joinRoom(name);
 }
 
 function joinGroup() {
-  const room = prompt("Enter group to join:");
-  if (!room) return;
-  db.collection("groups").doc(room).get().then(doc => {
+  const name = prompt("Enter group to join:");
+  if (!name) return;
+  db.collection("groups").doc(name).get().then(doc => {
     if (doc.exists) {
-      db.collection("groups").doc(room).collection("members").doc(currentUser.uid).set({ joinedAt: Date.now() });
-      joinRoom(room);
+      doc.ref.collection("members").doc(currentUser.uid).set({ joinedAt: Date.now() });
+      joinRoom(name);
     } else {
       alert("Group does not exist.");
     }
@@ -123,42 +124,39 @@ function joinRoom(roomName) {
 }
 
 function listenMessages() {
-  const messagesDiv = document.getElementById("messages");
+  const container = document.getElementById("messages");
   unsubscribeMessages = db.collection("rooms").doc(currentRoom).collection("messages")
     .orderBy("timestamp").onSnapshot(snapshot => {
-      messagesDiv.innerHTML = "";
+      container.innerHTML = "";
       snapshot.forEach(doc => {
         const msg = doc.data();
-        const isMine = msg.senderId === currentUser.uid;
-
         const bubble = document.createElement("div");
-        bubble.className = "message-bubble " + (isMine ? "right" : "left");
+        bubble.className = "message-bubble " + (msg.senderId === currentUser.uid ? "right" : "left");
         bubble.title = msg.timestamp?.toDate?.().toLocaleString() || "";
 
-        if (!isMine) {
-          const senderInfo = document.createElement("div");
-          senderInfo.className = "sender-info";
+        if (msg.senderId !== currentUser.uid) {
+          const info = document.createElement("div");
+          info.className = "sender-info";
 
           const img = document.createElement("img");
           img.src = msg.senderPic || "default-avatar.png";
           img.className = "message-avatar";
           img.onclick = () => showUserProfile(msg.senderId);
-          senderInfo.appendChild(img);
+          info.appendChild(img);
 
           const name = document.createElement("div");
           name.className = "sender-name";
           name.textContent = msg.senderName || "User";
-          senderInfo.appendChild(name);
-
-          bubble.appendChild(senderInfo);
+          info.appendChild(name);
+          bubble.appendChild(info);
         }
 
         const text = document.createElement("div");
         text.textContent = msg.text;
         bubble.appendChild(text);
-        messagesDiv.appendChild(bubble);
+        container.appendChild(bubble);
       });
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      container.scrollTop = container.scrollHeight;
     });
 }
 
@@ -170,8 +168,8 @@ function sendMessage() {
     const { username, photoURL } = doc.data();
     db.collection("rooms").doc(currentRoom).collection("messages").add({
       text,
-      senderName: username,
       senderId: currentUser.uid,
+      senderName: username,
       senderPic: photoURL || "default-avatar.png",
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -188,62 +186,55 @@ function loadInbox() {
       const item = doc.data();
       const card = document.createElement("div");
       card.className = "inbox-card";
-
-      const info = document.createElement("div");
-      info.textContent = `${item.type}: ${item.fromName || item.from || "Unknown"}`;
-      card.appendChild(info);
-
-      const buttons = document.createElement("div");
-      buttons.className = "btn-group";
-
+      card.innerHTML = `<div>${item.type}: ${item.fromName || item.from || "Unknown"}</div>`;
+      const group = document.createElement("div");
+      group.className = "btn-group";
       const accept = document.createElement("button");
       accept.textContent = "✓";
       accept.onclick = () => acceptRequest(doc.id);
-
       const decline = document.createElement("button");
       decline.textContent = "✕";
       decline.onclick = () => declineRequest(doc.id);
-
-      buttons.appendChild(accept);
-      buttons.appendChild(decline);
-      card.appendChild(buttons);
+      group.appendChild(accept);
+      group.appendChild(decline);
+      card.appendChild(group);
       list.appendChild(card);
     });
   });
 }
 
 function acceptRequest(id) {
-  db.collection("inbox").doc(id).delete().then(() => alert("Request accepted."));
+  db.collection("inbox").doc(id).delete().then(() => alert("Accepted"));
 }
 
 function declineRequest(id) {
-  db.collection("inbox").doc(id).delete().then(() => alert("Request declined."));
+  db.collection("inbox").doc(id).delete().then(() => alert("Declined"));
 }
 
 function markAllRead() {
   db.collection("inbox").where("to", "==", currentUser.uid).get().then(snapshot => {
     snapshot.forEach(doc => doc.ref.delete());
   });
-  alert("Inbox cleared.");
+  alert("All marked read.");
 }
 
 // Friends
 function loadFriends() {
-  const container = document.getElementById("friendsList");
+  const list = document.getElementById("friendsList");
   db.collection("friends").doc(currentUser.uid).collection("list").onSnapshot(snapshot => {
-    container.innerHTML = "";
+    list.innerHTML = "";
     snapshot.forEach(doc => {
-      const friend = doc.data();
+      const user = doc.data();
       const div = document.createElement("div");
       div.className = "friend-entry";
-      div.textContent = friend.username;
-      div.onclick = () => openThread(friend.uid, friend.username);
-      container.appendChild(div);
+      div.textContent = user.username;
+      div.onclick = () => openThread(user.uid, user.username);
+      list.appendChild(div);
     });
   });
 }
 
-// Threads
+// Thread Chat
 function threadId(a, b) {
   return [a, b].sort().join("_");
 }
@@ -253,10 +244,9 @@ function openThread(uid, username) {
   document.getElementById("threadWithName").textContent = username;
   currentThreadUser = uid;
   if (unsubscribeThread) unsubscribeThread();
-
+  const area = document.getElementById("threadMessages");
   unsubscribeThread = db.collection("threads").doc(threadId(currentUser.uid, uid)).collection("messages")
     .orderBy("timestamp").onSnapshot(snapshot => {
-      const area = document.getElementById("threadMessages");
       area.innerHTML = "";
       snapshot.forEach(doc => {
         const msg = doc.data();
@@ -270,13 +260,12 @@ function openThread(uid, username) {
 
 function sendThreadMessage() {
   const input = document.getElementById("threadInput");
-  const text = input?.value.trim();
+  const text = input.value.trim();
   if (!text || !currentThreadUser) return;
-  const fromName = document.getElementById("usernameDisplay").textContent;
   db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser)).collection("messages").add({
     text,
     from: currentUser.uid,
-    fromName,
+    fromName: document.getElementById("usernameDisplay").textContent,
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   });
   input.value = "";
@@ -302,48 +291,33 @@ function loadProfile() {
 }
 
 function saveProfile() {
-  const name = document.getElementById("profileName").value.trim();
-  const bio = document.getElementById("profileBio").value.trim();
-  const email = document.getElementById("profileEmail").value.trim();
-  const phone = document.getElementById("profilePhone").value.trim();
-  const gender = document.getElementById("profileGender").value;
   const file = document.getElementById("profilePic").files[0];
-  const data = { name, bio, email, phone, gender };
-
+  const data = {
+    name: document.getElementById("profileName").value,
+    bio: document.getElementById("profileBio").value,
+    email: document.getElementById("profileEmail").value,
+    phone: document.getElementById("profilePhone").value,
+    gender: document.getElementById("profileGender").value
+  };
   if (file) {
     const reader = new FileReader();
-    reader.onload = function (e) {
+    reader.onload = e => {
       data.photoURL = e.target.result;
-      db.collection("users").doc(currentUser.uid).set(data, { merge: true }).then(() => {
-        document.getElementById("profilePicPreview").src = e.target.result;
-        alert("Profile updated.");
-      });
+      db.collection("users").doc(currentUser.uid).set(data, { merge: true });
+      document.getElementById("profilePicPreview").src = e.target.result;
     };
     reader.readAsDataURL(file);
   } else {
-    db.collection("users").doc(currentUser.uid).set(data, { merge: true }).then(() => alert("Profile updated."));
+    db.collection("users").doc(currentUser.uid).set(data, { merge: true });
   }
+  alert("Profile updated.");
 }
 
 // Utilities
 function switchSubChat(id) {
   document.querySelectorAll(".chat-subtab").forEach(el => el.style.display = "none");
-  const target = document.getElementById(id);
-  if (target) target.style.display = "block";
-}
-
-function sendGroupMessage() {
-  const input = document.getElementById("groupMessageInput");
-  const text = input?.value.trim();
-  if (!text || !currentRoom) return;
-
-  db.collection("groups").doc(currentRoom).collection("messages").add({
-    text,
-    senderId: currentUser.uid,
-    senderName: document.getElementById("usernameDisplay").textContent,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  });
-  input.value = "";
+  const tab = document.getElementById(id);
+  if (tab) tab.style.display = "block";
 }
 
 function toggleTheme() {
@@ -365,11 +339,11 @@ function showUserProfile(uid) {
     const data = doc.data();
     document.getElementById("viewProfilePic").src = data.photoURL || "default-avatar.png";
     document.getElementById("viewProfileName").textContent = data.name || "Unnamed";
-    document.getElementById("viewProfileBio").textContent = data.bio || "No bio";
     document.getElementById("viewProfileUsername").textContent = "@" + (data.username || "unknown");
+    document.getElementById("viewProfileBio").textContent = data.bio || "";
     document.getElementById("viewProfileEmail").textContent = data.email || "";
     document.getElementById("viewProfileStatus").textContent = data.status || "";
-    document.getElementById("viewProfileModal").style.display = "block";
+    document.getElementById("viewProfileModal").style.display = "flex";
   });
 }
 
@@ -379,52 +353,41 @@ function switchSearchView(type) {
 }
 
 function runSearch() {
-  const query = document.getElementById("searchInput").value.trim().toLowerCase();
-  if (!query) return;
+  const q = document.getElementById("searchInput").value.toLowerCase();
+  const userBox = document.getElementById("searchResultsUser");
+  const groupBox = document.getElementById("searchResultsGroup");
+  userBox.innerHTML = "";
+  groupBox.innerHTML = "";
 
-  const userResults = document.getElementById("searchResultsUser");
-  const groupResults = document.getElementById("searchResultsGroup");
-  userResults.innerHTML = "";
-  groupResults.innerHTML = "";
-
-  db.collection("users").where("username", ">=", query).where("username", "<=", query + "\uf8ff")
-    .get().then(snapshot => {
-      snapshot.forEach(doc => {
-        const user = doc.data();
-        const div = document.createElement("div");
-        div.textContent = `@${user.username} ${user.name || ""}`;
-        if (user.username === "moneythepro") div.textContent += " 🛠️ Developer";
-        div.onclick = () => showUserProfile(doc.id);
-        userResults.appendChild(div);
-      });
+  db.collection("users").where("username", ">=", q).where("username", "<=", q + "\uf8ff").get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const user = doc.data();
+      const div = document.createElement("div");
+      div.textContent = `@${user.username} ${user.name || ""}`;
+      if (user.username === "moneythepro") div.textContent += " 🛠️ Developer";
+      div.onclick = () => showUserProfile(doc.id);
+      userBox.appendChild(div);
     });
+  });
 
-  db.collection("groups").where("name", ">=", query).where("name", "<=", query + "\uf8ff")
-    .get().then(snapshot => {
-      snapshot.forEach(doc => {
-        const group = doc.data();
-        const div = document.createElement("div");
-        div.textContent = group.name;
-        div.onclick = () => joinGroup(group.name);
-        groupResults.appendChild(div);
-      });
+  db.collection("groups").where("name", ">=", q).where("name", "<=", q + "\uf8ff").get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const group = doc.data();
+      const div = document.createElement("div");
+      div.textContent = group.name;
+      div.onclick = () => joinGroup(group.name);
+      groupBox.appendChild(div);
     });
+  });
 }
 
 // DOM Events
 window.onload = () => {
   applySavedTheme();
-
   const msgInput = document.getElementById("messageInput");
-  if (msgInput) msgInput.addEventListener("keypress", e => {
-    if (e.key === "Enter") sendMessage();
-  });
-
+  if (msgInput) msgInput.addEventListener("keypress", e => e.key === "Enter" && sendMessage());
   const threadInput = document.getElementById("threadInput");
-  if (threadInput) threadInput.addEventListener("keypress", e => {
-    if (e.key === "Enter") sendThreadMessage();
-  });
-
-  const preview = document.getElementById("profilePicPreview");
-  if (preview) preview.onclick = () => document.getElementById("profilePic").click();
+  if (threadInput) threadInput.addEventListener("keypress", e => e.key === "Enter" && sendThreadMessage());
+  const pic = document.getElementById("profilePicPreview");
+  if (pic) pic.onclick = () => document.getElementById("profilePic").click();
 };
