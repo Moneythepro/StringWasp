@@ -1,215 +1,160 @@
-/* 🌐 Global */
-* {
-  box-sizing: border-box;
-  font-family: 'Segoe UI', sans-serif;
-  margin: 0;
-  padding: 0;
+/* style.css – Full Upgraded UI for StringWasp */
+
+:root {
+  --bg: #ffffff;
+  --fg: #000000;
+  --accent: #1e88e5;
+  --card: #f0f0f0;
+  --border: #ccc;
 }
 
 body {
-  background: #f5f5f5;
-  color: #222;
-  transition: background 0.3s, color 0.3s;
-  padding: 10px;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: var(--bg);
+  color: var(--fg);
+  transition: all 0.3s ease;
 }
 
-/* 🌙 Dark Theme */
 body.dark {
-  background: #121212;
-  color: #eee;
+  --bg: #121212;
+  --fg: #f5f5f5;
+  --accent: #bb86fc;
+  --card: #1e1e1e;
+  --border: #444;
 }
 
-/* ☀️ Light Theme */
-body.light {
-  background: #fff;
-  color: #222;
+body.matrix {
+  --bg: #000000;
+  --fg: #00ff00;
+  --accent: #00ff00;
+  --card: #001100;
+  --border: #005500;
 }
 
-/* 🔐 Auth Section */
-#authContainer {
-  max-width: 400px;
-  margin: 80px auto;
-  background: #fff;
-  padding: 20px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.1);
-  border-radius: 12px;
-}
-
-#authContainer input, #authContainer button {
-  width: 100%;
-  margin: 8px 0;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
-
-/* 🧭 Navigation Tabs */
-nav {
+.app {
   display: flex;
-  justify-content: space-around;
-  background: #eee;
-  border-radius: 10px;
-  margin-bottom: 10px;
-  overflow: hidden;
+  flex-direction: column;
+  height: 100vh;
 }
 
-body.dark nav {
-  background: #1e1e1e;
+header {
+  padding: 10px;
+  background: var(--accent);
+  color: white;
+  text-align: center;
+  font-size: 1.5rem;
 }
 
-nav button {
+#themeSwitcher {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+}
+
+main {
   flex: 1;
   padding: 10px;
+  background: var(--bg);
+  overflow-y: auto;
+}
+
+footer {
+  background: var(--card);
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  border-top: 1px solid var(--border);
+}
+
+#tabs {
+  display: flex;
+  justify-content: space-around;
+  padding: 10px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+
+#tabs button {
+  background: var(--accent);
+  color: white;
   border: none;
-  background: none;
+  padding: 8px 12px;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: bold;
-  transition: 0.2s;
+  transition: 0.3s;
 }
 
-nav button:hover {
-  background: #ddd;
+#tabs button:hover {
+  background: #1565c0;
 }
 
-body.dark nav button:hover {
-  background: #333;
-}
-
-/* 📌 Tabs */
 .tab {
   display: none;
-  padding: 15px;
+  margin-top: 10px;
 }
 
-.tab.active {
+.tab:not(.hidden) {
   display: block;
 }
 
-/* 💬 Chat */
-#chatArea {
-  border: 1px solid #ccc;
-  height: 300px;
-  overflow-y: auto;
-  padding: 10px;
-  margin-bottom: 10px;
-  background: #fff;
-  border-radius: 8px;
+input[type="text"], textarea, input[type="file"] {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--fg);
 }
 
-body.dark #chatArea {
-  background: #1c1c1c;
-  border-color: #444;
+button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 4px;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background: #0d47a1;
+}
+
+.chat-box {
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 10px;
+  height: 300px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  border-radius: 6px;
 }
 
 .msg {
-  margin: 6px 0;
-  padding: 8px;
-  background: #e6e6e6;
-  border-radius: 10px;
+  padding: 5px 10px;
+  margin-bottom: 5px;
+  background: var(--accent);
+  color: white;
+  border-radius: 5px;
 }
 
-body.dark .msg {
-  background: #2e2e2e;
-}
-
-/* 🖼️ Profile */
-#tab-profile input,
-#tab-profile select,
-#tab-profile button {
-  margin: 8px 0;
-  padding: 10px;
-  width: 100%;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
-
-#profilePreview {
-  border-radius: 50%;
-  margin: 10px 0;
-}
-
-/* 🧩 Plugin / Backup Buttons */
-#fab {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-#fab button {
-  padding: 10px;
-  border: none;
-  border-radius: 50%;
-  background: #222;
-  color: #fff;
-  cursor: pointer;
-  box-shadow: 0 0 8px rgba(0,0,0,0.3);
-  font-size: 18px;
-}
-
-body.light #fab button {
-  background: #333;
-}
-
-/* 📌 Pinned */
 #pinnedMessage {
-  background: #ffd700;
-  padding: 6px 12px;
-  border-radius: 8px;
-  margin-bottom: 8px;
+  background: var(--card);
+  padding: 6px 10px;
+  border-left: 4px solid var(--accent);
   font-weight: bold;
+  margin-bottom: 10px;
 }
 
-/* 📩 Inbox & Friends */
-#inboxArea,
-#friendList,
-#searchResults {
-  max-height: 300px;
-  overflow-y: auto;
-  border: 1px solid #ccc;
-  padding: 10px;
-  background: #fafafa;
-  border-radius: 8px;
-  margin-top: 8px;
+ul {
+  list-style: none;
+  padding-left: 0;
 }
 
-body.dark #inboxArea,
-body.dark #friendList,
-body.dark #searchResults {
-  background: #1b1b1b;
-  border-color: #444;
-}
-
-/* 🖥️ Terminal Tab */
-#terminalLog {
-  width: 100%;
-  background: #000;
-  color: #0f0;
-  padding: 10px;
-  margin-bottom: 8px;
-  height: 150px;
-  border-radius: 8px;
-  font-family: monospace;
-  resize: none;
-}
-
-#terminalInput {
-  width: 100%;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-/* 📱 Responsive */
-@media screen and (max-width: 600px) {
-  nav {
-    flex-direction: column;
-  }
-
-  #fab {
-    right: 10px;
-    bottom: 10px;
-  }
+.hidden {
+  display: none !important;
 }
