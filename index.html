@@ -128,13 +128,12 @@
 
     <!-- Floating Action Button + Menu (Upgraded) -->
     <div class="fab-container">
-      <button class="fab" onclick="toggleFabMenu()">＋</button>
-      <div id="fabMenu" class="fab-menu hidden">
-        <button onclick="startNewChat()">💬 New Chat</button>
-        <button onclick="createGroup()">👥 New Group</button>
-        <button onclick="promptJoinGroup()">🔗 Join Group</button>
-        <button onclick="runSearch(); switchTab('searchTab')">🌐 Discover Groups</button>
-      </div>
+  <button class="fab" onclick="toggleFabMenu()">+</button>
+  <div class="fab-menu hidden" id="fabMenu">
+    <button onclick="createOrJoinRoom()">➕ Group</button>
+    <button onclick="promptPrivateChat()">👤 Chat</button>
+    <button onclick="document.getElementById('profileTabBtn').click()">⚙️ Profile</button>
+  </div>
     </div>
   </div>
 
