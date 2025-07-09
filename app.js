@@ -70,7 +70,18 @@ function loadMainUI() {
 function createOrJoinRoom() {
   const room = document.getElementById("customRoom").value.trim();
   if (!room) return;
-  joinRoom(room);
+
+  const groupRef = db.collection("groups").doc(room);
+  groupRef.get().then(doc => {
+    if (!doc.exists) {
+      groupRef.set({
+        name: room,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdBy: currentUser.uid
+      });
+    }
+    joinRoom(room);
+  });
 }
 
 function joinRoom(roomName) {
@@ -82,10 +93,23 @@ function joinRoom(roomName) {
 function loadRooms() {
   const dropdown = document.getElementById("roomDropdown");
   dropdown.innerHTML = "";
+
   const defaultOption = document.createElement("option");
   defaultOption.textContent = "global";
   defaultOption.value = "global";
   dropdown.appendChild(defaultOption);
+
+  db.collection("groups").orderBy("name").get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const groupName = doc.id;
+      if (groupName !== "global") {
+        const option = document.createElement("option");
+        option.textContent = groupName;
+        option.value = groupName;
+        dropdown.appendChild(option);
+      }
+    });
+  });
 }
 
 // Chat
@@ -127,7 +151,7 @@ function loadInbox() {
       snapshot.forEach(doc => {
         const item = doc.data();
         const card = document.createElement("div");
-        card.className = "card";
+        card.className = "inbox-card";
         card.textContent = `${item.type.toUpperCase()}: ${item.fromName}`;
         list.appendChild(card);
       });
@@ -195,9 +219,24 @@ function closeThread() {
 }
 
 // Search
+function switchSearchView(view) {
+  const userResults = document.getElementById("searchResultsUser");
+  const groupResults = document.getElementById("searchResultsGroup");
+
+  if (view === "user") {
+    userResults.style.display = "block";
+    groupResults.style.display = "none";
+  } else if (view === "group") {
+    userResults.style.display = "none";
+    groupResults.style.display = "block";
+  }
+}
+
 function runSearch() {
   const query = document.getElementById("searchInput").value.trim().toLowerCase();
   if (!query) return;
+
+  // Search Users
   db.collection("users").where("username", ">=", query)
     .where("username", "<=", query + "\uf8ff")
     .get().then(snapshot => {
@@ -206,7 +245,24 @@ function runSearch() {
       snapshot.forEach(doc => {
         const user = doc.data();
         const div = document.createElement("div");
+        div.className = "search-result";
         div.textContent = user.username;
+        results.appendChild(div);
+      });
+    });
+
+  // Search Groups
+  db.collection("groups").where("name", ">=", query)
+    .where("name", "<=", query + "\uf8ff")
+    .get().then(snapshot => {
+      const results = document.getElementById("searchResultsGroup");
+      results.innerHTML = "";
+      snapshot.forEach(doc => {
+        const group = doc.data();
+        const div = document.createElement("div");
+        div.className = "search-result";
+        div.textContent = group.name;
+        div.onclick = () => joinRoom(group.name);
         results.appendChild(div);
       });
     });
@@ -248,15 +304,3 @@ window.onload = () => {
   const toggle = document.getElementById("darkModeToggle");
   if (toggle) toggle.addEventListener("change", toggleTheme);
 };
-function switchSearchView(view) {
-  const userResults = document.getElementById("searchResultsUser");
-  const groupResults = document.getElementById("searchResultsGroup");
-
-  if (view === "user") {
-    userResults.style.display = "block";
-    groupResults.style.display = "none";
-  } else if (view === "group") {
-    userResults.style.display = "none";
-    groupResults.style.display = "block";
-  }
-}
