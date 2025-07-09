@@ -1,300 +1,281 @@
-// app.js — StringWasp Final Production Build
+// app.js
+// StringWasp v1.0 — Final Build
 
-// Firebase Setup
+// Firebase Init
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-// Global State
 let currentUser = null;
-let currentUsername = '';
-let typingTimeout;
-let typingInterval;
-let currentRoomId = '';
-let chatTabMode = 'friends'; // friends | requests
-let selectedProfilePicFile = null;
+let currentRoom = "global";
+let currentChatUser = null;
+let messageListeners = [];
 
-// Utility Functions
-function $(id) {
-  return document.getElementById(id);
+function showLoading(show) {
+  document.getElementById("loadingOverlay").style.display = show ? "flex" : "none";
 }
-function showTab(tabId) {
-  document.querySelectorAll('.tab, .tabContent').forEach(el => el.style.display = 'none');
-  $(tabId).style.display = 'block';
+
+function switchTab(tabId) {
+  document.querySelectorAll(".tab").forEach(tab => tab.style.display = "none");
+  document.getElementById(tabId).style.display = "block";
+  document.querySelectorAll(".tabs button").forEach(btn => btn.classList.remove("active"));
+  const activeBtn = document.querySelector(`#tab-${tabId.replace("Tab", "").toLowerCase()}`);
+  if (activeBtn) activeBtn.classList.add("active");
+  if (tabId === "groupChatsTab") {
+    document.querySelector(".fab-container").style.display = "block";
+  } else {
+    document.querySelector(".fab-container").style.display = "none";
+  }
 }
-function showLoader(show = true) {
-  $('loadingOverlay').style.display = show ? 'flex' : 'none';
-}
-function showAlert(title, body, actions = []) {
-  const modal = $('viewProfileModal');
-  modal.innerHTML = `<div class="modal-content">
-    <h3>${title}</h3><p>${body}</p>
-    ${actions.map(a => `<button onclick="${a.action}">${a.label}</button>`).join('')}
-    <span class="close" onclick="closeModal()">×</span>
-  </div>`;
-  modal.style.display = 'block';
-}
-function closeModal() {
-  $('viewProfileModal').style.display = 'none';
-}
-function compressImage(file, maxSize = 200) {
-  return new Promise(resolve => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const scale = maxSize / Math.max(img.width, img.height);
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.7);
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
+
 function toggleTheme() {
-  document.body.classList.toggle('dark');
-  localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+  document.body.classList.toggle("dark");
+  localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light");
 }
-if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
 
-// Auth Flow
-auth.onAuthStateChanged(async user => {
+function applySavedTheme() {
+  if (localStorage.getItem("theme") === "dark") {
+    document.body.classList.add("dark");
+    document.getElementById("darkModeToggle").checked = true;
+  }
+}
+
+auth.onAuthStateChanged(async (user) => {
   if (user) {
     currentUser = user;
-    const userDoc = await db.collection('users').doc(user.uid).get();
-    if (userDoc.exists && userDoc.data().username) {
-      currentUsername = userDoc.data().username;
-      $('usernameDisplay').innerText = `@${currentUsername}`;
-      showTab('appPage');
-      initApp();
+    const snap = await db.collection("users").doc(user.uid).get();
+    if (!snap.exists || !snap.data().username) {
+      switchTab("usernameDialog");
     } else {
-      showTab('usernameDialog');
-    }
-  } else {
-    showTab('loginPage');
-  }
-});
-
-function login() {
-  const email = $('email').value;
-  const password = $('password').value;
-  auth.signInWithEmailAndPassword(email, password).catch(e => alert(e.message));
-}
-function register() {
-  const email = $('email').value;
-  const password = $('password').value;
-  auth.createUserWithEmailAndPassword(email, password).catch(e => alert(e.message));
-}
-function saveUsername() {
-  const username = $('newUsername').value.trim().toLowerCase();
-  if (!username) return alert("Username can't be empty");
-  db.collection('usernames').doc(username).get().then(doc => {
-    if (doc.exists) return alert("Username taken");
-    const batch = db.batch();
-    const userRef = db.collection('users').doc(currentUser.uid);
-    batch.set(userRef, { username }, { merge: true });
-    batch.set(db.collection('usernames').doc(username), { uid: currentUser.uid });
-    batch.commit().then(() => {
-      currentUsername = username;
-      $('usernameDisplay').innerText = `@${username}`;
-      showTab('appPage');
       initApp();
-    });
-  });
-}
-
-// App Init
-function initApp() {
-  loadRooms();
-  loadInbox();
-  loadFriends();
-  loadProfile();
-  loadGroups();
-}
-
-// Room Functions
-function loadRooms() {
-  const dropdown = $('roomDropdown');
-  dropdown.innerHTML = '';
-  db.collection('rooms').onSnapshot(snapshot => {
-    snapshot.forEach(doc => {
-      const opt = document.createElement('option');
-      opt.value = doc.id;
-      opt.textContent = doc.data().name;
-      dropdown.appendChild(opt);
-    });
-  });
-}
-function joinRoom(roomId) {
-  currentRoomId = roomId;
-  loadRoomMessages(roomId);
-}
-function loadRoomMessages(roomId) {
-  const msgDiv = $('messages');
-  msgDiv.innerHTML = '';
-  db.collection('rooms').doc(roomId).collection('messages').orderBy('timestamp')
-    .onSnapshot(snapshot => {
-      msgDiv.innerHTML = '';
-      snapshot.forEach(doc => renderMessage(doc.data(), msgDiv));
-      msgDiv.scrollTop = msgDiv.scrollHeight;
-    });
-}
-function sendMessage() {
-  const input = $('messageInput');
-  const text = input.value.trim();
-  if (!text || !currentRoomId) return;
-  db.collection('rooms').doc(currentRoomId).collection('messages').add({
-    text,
-    sender: currentUsername,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  });
-  input.value = '';
-}
-$('messageInput').addEventListener('keypress', e => {
-  if (e.key === 'Enter') sendMessage();
-});
-
-// Inbox
-function loadInbox() {
-  const inboxDiv = $('inboxList');
-  db.collection('users').doc(currentUser.uid).collection('inbox')
-    .onSnapshot(snapshot => {
-      inboxDiv.innerHTML = '';
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const card = document.createElement('div');
-        card.className = 'inbox-card';
-        card.textContent = `${data.type}: ${data.from}`;
-        card.onclick = () => showAlert(
-          `${data.type} from ${data.from}`,
-          'What would you like to do?',
-          [
-            { label: 'View Profile', action: `viewUserProfile('${data.from}')` },
-            { label: data.type === 'Friend Request' ? 'Accept' : 'Join', action: `acceptInbox('${doc.id}')` }
-          ]
-        );
-        inboxDiv.appendChild(card);
-      });
-    });
-}
-function acceptInbox(id) {
-  // Handle accept logic...
-  db.collection('users').doc(currentUser.uid).collection('inbox').doc(id).delete();
-  closeModal();
-}
-function markAllRead() {
-  db.collection('users').doc(currentUser.uid).collection('inbox').get().then(snapshot => {
-    snapshot.forEach(doc => doc.ref.delete());
-  });
-}
-
-// Friends
-function loadFriends() {
-  const friendList = $('friendsList');
-  friendList.innerHTML = '';
-  db.collection('users').doc(currentUser.uid).collection('friends')
-    .onSnapshot(snapshot => {
-      friendList.innerHTML = '';
-      snapshot.forEach(doc => {
-        const div = document.createElement('div');
-        div.className = 'friend-entry';
-        div.textContent = doc.id;
-        friendList.appendChild(div);
-      });
-    });
-}
-
-// Search
-function runSearch() {
-  const query = $('searchInput').value.trim().toLowerCase();
-  if (!query) return;
-  const usersDiv = $('searchResultsUser');
-  const groupsDiv = $('searchResultsGroup');
-  usersDiv.innerHTML = '';
-  groupsDiv.innerHTML = '';
-
-  db.collection('usernames').get().then(snapshot => {
-    snapshot.forEach(doc => {
-      if (doc.id.includes(query)) {
-        const div = document.createElement('div');
-        div.className = 'search-result';
-        div.textContent = `@${doc.id}`;
-        usersDiv.appendChild(div);
-      }
-    });
-  });
-
-  db.collection('rooms').get().then(snapshot => {
-    snapshot.forEach(doc => {
-      if (doc.data().name.includes(query)) {
-        const div = document.createElement('div');
-        div.className = 'search-result';
-        div.textContent = doc.data().name;
-        div.onclick = () => joinRoom(doc.id);
-        groupsDiv.appendChild(div);
-      }
-    });
-  });
-}
-function switchSearchView(view) {
-  $('searchResultsUser').style.display = view === 'user' ? 'block' : 'none';
-  $('searchResultsGroup').style.display = view === 'group' ? 'block' : 'none';
-}
-
-// Profile
-function loadProfile() {
-  const userRef = db.collection('users').doc(currentUser.uid);
-  userRef.get().then(doc => {
-    if (doc.exists) {
-      const data = doc.data();
-      $('profileName').value = data.name || '';
-      $('profileBio').value = data.bio || '';
-      $('profilePhone').value = data.phone || '';
-      $('profileEmail').value = data.publicEmail || '';
-      if (data.avatarUrl) $('profilePicPreview').src = data.avatarUrl;
     }
-  });
-}
-$('profilePic').addEventListener('change', e => {
-  selectedProfilePicFile = e.target.files[0];
-});
-function saveProfile() {
-  const name = $('profileName').value;
-  const bio = $('profileBio').value;
-  const phone = $('profilePhone').value;
-  const publicEmail = $('profileEmail').value;
-  const userRef = db.collection('users').doc(currentUser.uid);
-
-  const updateData = { name, bio, phone, publicEmail };
-
-  if (selectedProfilePicFile) {
-    compressImage(selectedProfilePicFile).then(blob => {
-      const ref = storage.ref(`avatars/${currentUser.uid}.jpg`);
-      ref.put(blob).then(() => ref.getDownloadURL()).then(url => {
-        updateData.avatarUrl = url;
-        userRef.update(updateData);
-      });
-    });
   } else {
-    userRef.update(updateData);
+    switchTab("loginPage");
+  }
+});
+
+async function login() {
+  const email = document.getElementById("email").value;
+  const pass = document.getElementById("password").value;
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch (e) {
+    alert(e.message);
   }
 }
 
-// Logout
+async function register() {
+  const email = document.getElementById("email").value;
+  const pass = document.getElementById("password").value;
+  try {
+    await auth.createUserWithEmailAndPassword(email, pass);
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+async function saveUsername() {
+  const username = document.getElementById("newUsername").value.trim();
+  if (!username) return alert("Enter a username!");
+  const taken = await db.collection("users").where("username", "==", username).get();
+  if (!taken.empty) return alert("Username taken!");
+  await db.collection("users").doc(currentUser.uid).set({ username, email: currentUser.email }, { merge: true });
+  initApp();
+}
+
+async function initApp() {
+  document.getElementById("usernameDisplay").innerText = "@" + (await getUserData(currentUser.uid)).username;
+  loadFriends();
+  loadInbox();
+  loadGroups();
+  loadProfile();
+  switchTab("chatTab");
+  applySavedTheme();
+}
+
 function logout() {
   auth.signOut();
 }
 
-// Extra
-function toggleFabMenu() {
-  $('fabMenu').classList.toggle('hidden');
+async function getUserData(uid) {
+  const doc = await db.collection("users").doc(uid).get();
+  return doc.exists ? doc.data() : null;
 }
-function refreshPage() {
-  location.reload();
+
+// Message Sending
+function sendMessage() {
+  const msg = document.getElementById("messageInput").value.trim();
+  if (!msg) return;
+  db.collection("messages").add({
+    text: msg,
+    sender: currentUser.uid,
+    room: currentRoom,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+  });
+  document.getElementById("messageInput").value = "";
 }
+
+function listenToMessages(room) {
+  messageListeners.forEach(unsub => unsub());
+  messageListeners = [];
+  const unsub = db.collection("messages")
+    .where("room", "==", room)
+    .orderBy("timestamp", "asc")
+    .onSnapshot(snapshot => {
+      const container = document.getElementById("messages");
+      container.innerHTML = "";
+      snapshot.forEach(async doc => {
+        const msg = doc.data();
+        const user = await getUserData(msg.sender);
+        const div = document.createElement("div");
+        div.className = "message-bubble " + (msg.sender === currentUser.uid ? "right" : "left");
+        div.setAttribute("data-time", msg.timestamp?.toDate().toLocaleTimeString());
+        div.innerHTML = `<strong>${user.username}</strong><br>${msg.text}`;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+      });
+    });
+  messageListeners.push(unsub);
+}
+
+// Friends
+async function loadFriends() {
+  const snap = await db.collection("follows").where("from", "==", currentUser.uid).get();
+  const list = document.getElementById("friendsList");
+  list.innerHTML = "";
+  for (const doc of snap.docs) {
+    const user = await getUserData(doc.data().to);
+    const div = document.createElement("div");
+    div.className = "friend-entry";
+    div.innerText = user.username;
+    div.onclick = () => openChat(user.uid);
+    list.appendChild(div);
+  }
+}
+
+// Inbox
+async function loadInbox() {
+  const snap = await db.collection("inbox")
+    .where("to", "==", currentUser.uid).orderBy("time", "desc").get();
+  const list = document.getElementById("inboxList");
+  list.innerHTML = "";
+  snap.docs.forEach(async doc => {
+    const data = doc.data();
+    const fromUser = await getUserData(data.from);
+    const div = document.createElement("div");
+    div.className = "inbox-card";
+    div.innerHTML = `<strong>${fromUser.username}</strong><br>${data.type}`;
+    const btnAccept = document.createElement("button");
+    btnAccept.innerText = "Accept";
+    btnAccept.onclick = async () => {
+      if (data.type === "friend_request") {
+        await db.collection("follows").add({ from: currentUser.uid, to: data.from });
+        await db.collection("follows").add({ from: data.from, to: currentUser.uid });
+      }
+      await db.collection("inbox").doc(doc.id).delete();
+      loadInbox();
+    };
+    const btnDecline = document.createElement("button");
+    btnDecline.innerText = "Decline";
+    btnDecline.onclick = () => db.collection("inbox").doc(doc.id).delete().then(loadInbox);
+    div.append(btnAccept, btnDecline);
+    list.appendChild(div);
+  });
+}
+
+function markAllRead() {
+  db.collection("inbox").where("to", "==", currentUser.uid).get().then(snapshot => {
+    snapshot.forEach(doc => doc.ref.delete());
+  }).then(loadInbox);
+}
+
+// Search
+function switchSearchView(view) {
+  document.getElementById("searchResultsUser").style.display = view === "user" ? "block" : "none";
+  document.getElementById("searchResultsGroup").style.display = view === "group" ? "block" : "none";
+}
+
+async function runSearch() {
+  const query = document.getElementById("searchInput").value.toLowerCase();
+  const userSnap = await db.collection("users").where("username", ">=", query).where("username", "<=", query + "\uf8ff").get();
+  const groupSnap = await db.collection("groups").where("name", ">=", query).where("name", "<=", query + "\uf8ff").get();
+
+  const userRes = document.getElementById("searchResultsUser");
+  const groupRes = document.getElementById("searchResultsGroup");
+  userRes.innerHTML = "";
+  groupRes.innerHTML = "";
+
+  userSnap.forEach(doc => {
+    const user = doc.data();
+    const div = document.createElement("div");
+    div.className = "search-result";
+    div.innerHTML = `<strong>@${user.username}</strong>`;
+    const btn = document.createElement("button");
+    btn.innerText = "Follow";
+    btn.onclick = () => db.collection("follows").add({ from: currentUser.uid, to: doc.id });
+    div.appendChild(btn);
+    userRes.appendChild(div);
+  });
+
+  groupSnap.forEach(doc => {
+    const group = doc.data();
+    const div = document.createElement("div");
+    div.className = "search-result";
+    div.innerHTML = `<strong>#${group.name}</strong>`;
+    const btn = document.createElement("button");
+    btn.innerText = "Join";
+    btn.onclick = () => joinRoom(doc.id);
+    div.appendChild(btn);
+    groupRes.appendChild(div);
+  });
+}
+
+// Group logic
+function joinRoom(roomId) {
+  currentRoom = roomId;
+  listenToMessages(roomId);
+  document.getElementById("roomDropdown").value = roomId;
+}
+
+async function createOrJoinRoom() {
+  const room = prompt("Enter group name to create/join:");
+  if (!room) return;
+  const ref = db.collection("groups").doc(room);
+  const doc = await ref.get();
+  if (!doc.exists) await ref.set({ name: room });
+  joinRoom(room);
+}
+
+// Profile
+function loadProfile() {
+  db.collection("users").doc(currentUser.uid).get().then(doc => {
+    const data = doc.data();
+    document.getElementById("profileName").value = data.name || "";
+    document.getElementById("profileBio").value = data.bio || "";
+    document.getElementById("profileEmail").value = data.publicEmail || "";
+    document.getElementById("profilePhone").value = data.phone || "";
+    document.getElementById("profilePicPreview").src = data.photoURL || "default-avatar.png";
+  });
+}
+
+function saveProfile() {
+  const name = document.getElementById("profileName").value;
+  const bio = document.getElementById("profileBio").value;
+  const phone = document.getElementById("profilePhone").value;
+  const email = document.getElementById("profileEmail").value;
+  db.collection("users").doc(currentUser.uid).set({ name, bio, phone, publicEmail: email }, { merge: true });
+}
+
+document.getElementById("profilePic").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  const ref = storage.ref("avatars/" + currentUser.uid);
+  await ref.put(file);
+  const url = await ref.getDownloadURL();
+  await db.collection("users").doc(currentUser.uid).set({ photoURL: url }, { merge: true });
+  document.getElementById("profilePicPreview").src = url;
+});
+
+// Extra UI
+document.getElementById("profilePicPreview").onclick = () => document.getElementById("profilePic").click();
+document.querySelector(".refresh-button").onclick = () => location.reload();
