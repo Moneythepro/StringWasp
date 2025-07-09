@@ -1,4 +1,4 @@
-/* === Global Styles === */
+/* Global Styles */
 body {
   font-family: 'Segoe UI', sans-serif;
   margin: 0;
@@ -10,7 +10,6 @@ body {
   transition: background 0.3s, color 0.3s;
 }
 
-/* === Tab Sections === */
 .tab, .tabContent {
   display: none;
   padding: 16px;
@@ -25,7 +24,7 @@ body {
   background: #f8f9fa;
 }
 
-/* === Inputs & Buttons === */
+/* Inputs & Buttons */
 input, textarea, button, select {
   margin: 8px 0;
   padding: 10px;
@@ -49,15 +48,7 @@ button:hover {
   background: #1ebc5c;
 }
 
-button.danger {
-  background: #ff4b4b;
-}
-
-button.danger:hover {
-  background: #e13a3a;
-}
-
-/* === Header === */
+/* Header */
 .header {
   display: flex;
   align-items: center;
@@ -68,45 +59,31 @@ button.danger:hover {
   font-weight: bold;
 }
 
-/* === Tabs Navigation === */
+/* Tabs */
 .tabs {
   display: flex;
   justify-content: space-around;
   background: #ededed;
+  padding: 10px 0;
   border-bottom: 1px solid #ccc;
 }
 
 .tabs button {
-  flex: 1;
   background: none;
   border: none;
   color: #075e54;
   font-weight: bold;
   font-size: 14px;
-  padding: 10px 5px;
-  border-bottom: 3px solid transparent;
-  transition: background 0.2s, border-bottom 0.3s;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background 0.3s;
 }
 
 .tabs button:hover {
   background: #dfe5e8;
 }
 
-.tabs button.active {
-  border-bottom: 3px solid #25d366;
-}
-
-/* === Badge === */
-.badge {
-  background: red;
-  color: white;
-  font-size: 12px;
-  padding: 2px 6px;
-  border-radius: 12px;
-  margin-left: 4px;
-}
-
-/* === Chat === */
+/* Messages */
 .messages {
   height: calc(100vh - 260px);
   max-height: 60vh;
@@ -127,15 +104,20 @@ button.danger:hover {
   border-radius: 3px;
 }
 
+/* Message Bubble */
 .message-bubble {
-  max-width: 80%;
-  margin: 5px 0;
+  display: flex;
+  align-items: flex-start;
+  margin: 6px 0;
+  max-width: 85%;
+  word-wrap: break-word;
+  border-radius: 18px;
   padding: 8px 12px;
-  border-radius: 16px;
   font-size: 15px;
   line-height: 1.4;
   position: relative;
-  word-wrap: break-word;
+  background: white;
+  flex-direction: column;
 }
 
 .message-bubble.right {
@@ -148,6 +130,13 @@ button.danger:hover {
   background: #fff;
 }
 
+/* Sender Info */
+.sender-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
 .message-avatar {
   width: 32px;
   height: 32px;
@@ -157,7 +146,13 @@ button.danger:hover {
   cursor: pointer;
 }
 
-/* === Inbox / Friends / Search Cards === */
+.sender-name {
+  font-weight: bold;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Inbox & Search Cards */
 .inbox-card, .friend-entry, .search-result {
   background: white;
   margin: 6px 0;
@@ -174,41 +169,86 @@ button.danger:hover {
   background: #f1f1f1;
 }
 
-/* === Thread View === */
-#threadView {
-  background: #fff;
-}
-#threadMessages {
-  height: 250px;
-  overflow-y: auto;
-  background: #f8f9fa;
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 8px;
-}
-#threadMessages::-webkit-scrollbar {
-  width: 6px;
-}
-#threadMessages::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 3px;
+/* Profile Section */
+#profileTab {
+  text-align: center;
 }
 
-/* === Typing Indicator === */
+#profileTab img {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 10px;
+  cursor: pointer;
+  border: 2px solid #ccc;
+  transition: 0.3s;
+}
+
+#profileTab img:hover {
+  transform: scale(1.05);
+  border-color: #25d366;
+}
+
+/* Profile Modal View */
+#viewProfileModal {
+  padding: 20px;
+  text-align: center;
+}
+
+.view-profile {
+  max-width: 400px;
+  margin: auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+#viewProfilePic {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ccc;
+  margin-bottom: 10px;
+}
+
+#viewProfileName {
+  font-size: 20px;
+  margin: 6px 0;
+}
+
+#viewProfileBio {
+  font-size: 14px;
+  color: #666;
+  margin: 4px 0;
+}
+
+#viewProfileUsername {
+  font-size: 14px;
+  color: #888;
+}
+
+#viewProfileEmail,
+#viewProfileStatus {
+  font-size: 13px;
+  margin-top: 2px;
+  color: #555;
+}
+
+/* Typing Indicator */
 .typing {
   font-style: italic;
   color: #666;
   margin: 5px 0;
 }
 
-/* === Floating Action Button (FAB) & Menu === */
-.fab-menu {
+/* Floating Action Button */
+.fab {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  z-index: 1000;
-}
-.fab {
   background: #25d366;
   color: white;
   font-size: 28px;
@@ -221,50 +261,30 @@ button.danger:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-.fab-options {
-  display: none;
-  position: absolute;
-  bottom: 70px;
-  right: 0;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  flex-direction: column;
-  overflow: hidden;
-}
-.fab-options button {
-  background: #25d366;
-  border: none;
-  color: white;
-  padding: 10px;
-  font-size: 14px;
-  border-bottom: 1px solid #1ebc5c;
-  text-align: left;
-  width: 160px;
-}
-.fab-options button:hover {
-  background: #1ebc5c;
+  z-index: 1000;
 }
 
-/* === Theme Toggle === */
+/* Theme Switch */
 .theme-switch {
   position: absolute;
   top: 10px;
   right: 10px;
 }
+
 .theme-switch input {
   display: none;
 }
+
 .slider {
   width: 40px;
   height: 20px;
   background: #ccc;
   border-radius: 12px;
-  display: inline-block;
   position: relative;
+  display: inline-block;
   transition: 0.3s;
 }
+
 .slider::before {
   content: "";
   position: absolute;
@@ -276,14 +296,16 @@ button.danger:hover {
   top: 2px;
   transition: 0.3s;
 }
+
 input:checked + .slider {
   background: #25d366;
 }
+
 input:checked + .slider::before {
   transform: translateX(20px);
 }
 
-/* === Loading Overlay === */
+/* Loading Overlay */
 #loadingOverlay {
   position: fixed;
   top: 0; left: 0;
@@ -294,6 +316,7 @@ input:checked + .slider::before {
   justify-content: center;
   z-index: 999;
 }
+
 .loader {
   border: 6px solid #f3f3f3;
   border-top: 6px solid #25d366;
@@ -302,68 +325,39 @@ input:checked + .slider::before {
   height: 40px;
   animation: spin 0.8s linear infinite;
 }
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
-/* === Profile Tab === */
-#profileTab {
-  text-align: center;
-}
-.profile-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-.profile-avatar {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #ccc;
-  transition: 0.3s;
-}
-.profile-avatar:hover {
-  transform: scale(1.05);
-  border-color: #25d366;
-}
-.profile-info p {
-  margin: 4px 0;
-}
-.profile-settings button {
-  margin: 6px 0;
-  width: 100%;
-}
-
-/* === Dark Theme === */
+/* Dark Mode */
 body.dark {
   background: #1e1e1e;
   color: #f8f8f8;
 }
+
 body.dark .header {
   background: #333;
 }
+
 body.dark .messages,
 body.dark .inbox-card,
 body.dark .friend-entry,
 body.dark .search-result,
-body.dark #threadMessages {
+body.dark #threadMessages,
+body.dark .view-profile {
   background: #2b2b2b;
   color: #fff;
 }
+
 body.dark .message-bubble.right {
   background: #2e7d32;
 }
+
 body.dark .message-bubble.left {
   background: #3a3a3a;
 }
+
 body.dark .message-avatar {
   border: 2px solid #444;
-}
-body.dark .fab-options {
-  background: #333;
-}
-body.dark .fab-options button {
-  border-bottom: 1px solid #444;
 }
