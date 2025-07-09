@@ -2,24 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>StringWasp</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="favicon.png" />
   <link rel="stylesheet" href="style.css" />
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script src="firebase.js"></script>
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
 </head>
-<body onload="applySavedTheme()">
+<body>
   <div id="loadingOverlay"><div class="loader"></div></div>
 
-  <!-- Login Page -->
+  <!-- Login/Register -->
   <div id="loginPage" class="tab active">
     <h2>Login</h2>
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
+    <input id="email" type="email" placeholder="Email" />
+    <input id="password" type="password" placeholder="Password" />
     <button onclick="login()">Login</button>
     <p>or</p>
     <button onclick="register()">Register</button>
@@ -29,57 +24,44 @@
   <div id="usernameDialog" class="tab">
     <h2>Choose Username</h2>
     <input id="newUsername" placeholder="Username" />
-    <button onclick="saveUsername()">Save</button>
+    <button onclick="saveUsername()">Continue</button>
   </div>
 
-  <!-- App Main -->
-  <div id="appPage" style="display:none;">
+  <!-- Main App -->
+  <div id="appPage" class="tab" style="display:none;">
     <div class="header">
-      <div>StringWasp</div>
-      <div>
-        <span id="usernameDisplay"></span>
-        <button onclick="logout()">⏻</button>
-      </div>
+      <span id="usernameDisplay"></span>
+      <button onclick="logout()">Logout</button>
     </div>
 
-    <!-- Tabs -->
     <div class="tabs">
-      <button onclick="switchTab('chatTab')" class="active">💬<span>Chat</span></button>
-      <button onclick="switchTab('inboxTab')">📥<span>Inbox</span></button>
-      <button onclick="switchTab('groupsTab')">👥<span>Groups</span></button>
+      <button onclick="switchTab('chatTab')">💬<span>Chat</span></button>
+      <button onclick="switchTab('friendsTab')">👥<span>Friends</span></button>
       <button onclick="switchTab('searchTab')">🔍<span>Search</span></button>
-      <button onclick="switchTab('profileTab')">👤<span>Profile</span></button>
+      <button onclick="switchTab('inboxTab')">📥<span>Inbox</span></button>
+      <button onclick="switchTab('groupsTab')">👨‍👩‍👧‍👦<span>Groups</span></button>
+      <button onclick="switchTab('profileTab')">🙍<span>Profile</span></button>
     </div>
 
-    <!-- Chat Tab -->
-    <div id="chatTab" class="tab active">
+    <!-- Chat -->
+    <div id="chatTab" class="tabContent active">
+      <h3>Group Chat</h3>
       <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
       <div class="messages" id="messages"></div>
-      <div class="input-bar">
-        <input id="messageInput" placeholder="Type a message" />
-        <button onclick="sendMessage()">➤</button>
-      </div>
+      <input id="messageInput" placeholder="Type a message" />
+      <button onclick="sendMessage()">Send</button>
     </div>
 
-    <!-- Inbox Tab -->
-    <div id="inboxTab" class="tab">
-      <button onclick="markAllRead()">Mark all as read</button>
-      <div id="inboxList"></div>
+    <!-- Friends -->
+    <div id="friendsTab" class="tabContent">
+      <h3>Friends</h3>
+      <div id="friendsList"></div>
     </div>
 
-    <!-- Groups Tab -->
-    <div id="groupsTab" class="tab">
-      <h3>Groups</h3>
-      <div id="groupMessages"></div>
-      <div class="input-bar">
-        <input id="groupMessageInput" placeholder="Group message..." />
-        <button onclick="sendGroupMessage()">➤</button>
-      </div>
-    </div>
-
-    <!-- Search Tab -->
-    <div id="searchTab" class="tab">
-      <input id="searchInput" placeholder="Search users/groups" />
+    <!-- Search -->
+    <div id="searchTab" class="tabContent">
+      <h3>Search</h3>
+      <input id="searchInput" placeholder="Search users/groups..." />
       <div class="search-buttons">
         <button onclick="switchSearchView('user')">Users</button>
         <button onclick="switchSearchView('group')">Groups</button>
@@ -89,9 +71,27 @@
       <div id="searchResultsGroup" class="search-results" style="display:none;"></div>
     </div>
 
-    <!-- Profile Tab -->
-    <div id="profileTab" class="tab">
-      <h3>My Profile</h3>
+    <!-- Inbox -->
+    <div id="inboxTab" class="tabContent">
+      <h3>Inbox <button onclick="markAllRead()">🧹</button></h3>
+      <div id="inboxList"></div>
+    </div>
+
+    <!-- Groups -->
+    <div id="groupsTab" class="tabContent">
+      <h3>Groups</h3>
+      <div class="fab-container">
+        <button class="fab" onclick="toggleFabMenu()">＋</button>
+        <div id="fabMenu" class="fab-menu hidden">
+          <button onclick="createGroup()">Create Group</button>
+          <button onclick="joinGroup()">Join Group</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile -->
+    <div id="profileTab" class="tabContent">
+      <h3>Profile</h3>
       <img id="profilePicPreview" src="default-avatar.png" />
       <input type="file" id="profilePic" style="display:none;" />
       <input id="profileName" placeholder="Name" />
@@ -103,48 +103,40 @@
         <option>Male</option>
         <option>Female</option>
       </select>
-      <button onclick="saveProfile()">Save Profile</button>
-      <button onclick="toggleTheme()">Toggle Theme</button>
+      <button onclick="saveProfile()">Save</button>
+      <button onclick="toggleTheme()">🌙 Theme</button>
     </div>
 
     <!-- Thread View -->
-    <div id="threadView" class="tab">
-      <div class="header">
-        <span id="threadWithName">Chat</span>
-        <button onclick="closeThread()">← Back</button>
-      </div>
-      <div id="threadMessages" class="messages"></div>
-      <div class="input-bar">
-        <input id="threadInput" placeholder="Type a message" />
-        <button onclick="sendThreadMessage()">➤</button>
-      </div>
-    </div>
-
-    <!-- Floating Actions (for Groups) -->
-    <div class="fab-container">
-      <button class="fab" onclick="toggleFabMenu()">+</button>
-      <div class="fab-menu hidden" id="fabMenu">
-        <button onclick="createGroup()">New Group</button>
-        <button onclick="joinGroup()">Join Group</button>
-      </div>
+    <div id="threadView" class="tabContent">
+      <h3 id="threadWithName">Chat</h3>
+      <div class="messages" id="threadMessages"></div>
+      <input id="threadInput" placeholder="Type a message" />
+      <button onclick="sendThreadMessage()">Send</button>
+      <button onclick="closeThread()">← Back</button>
     </div>
   </div>
 
   <!-- Profile Modal -->
-  <div class="modal" id="viewProfileModal">
+  <div id="viewProfileModal" class="modal">
     <div class="modal-content">
-      <img id="viewProfilePic" src="default-avatar.png" width="80" style="border-radius:50%;" />
-      <h3 id="viewProfileName">Name</h3>
-      <p id="viewProfileUsername">@username</p>
-      <p id="viewProfileBio">Bio</p>
+      <img id="viewProfilePic" src="default-avatar.png" width="80" height="80" />
+      <h3 id="viewProfileName"></h3>
+      <p id="viewProfileUsername"></p>
+      <p id="viewProfileBio"></p>
       <p id="viewProfileEmail"></p>
       <p id="viewProfileStatus"></p>
       <div class="modal-buttons">
-        <button onclick="document.getElementById('viewProfileModal').style.display='none'">Close</button>
+        <button onclick="document.getElementById('viewProfileModal').style.display='none'">OK</button>
       </div>
     </div>
   </div>
 
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="firebase.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
