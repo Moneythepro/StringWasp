@@ -284,6 +284,34 @@ input:checked + .slider::before {
   to { transform: rotate(360deg); }
 }
 
+/* File Card for WebTorrent */
+.file-card {
+  background: #f0f0f0;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 6px 0;
+  font-size: 14px;
+  word-break: break-word;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.file-card a {
+  color: #075e54;
+  text-decoration: underline;
+}
+
+/* Developer Badge */
+.dev-badge {
+  background: #ffcc00;
+  color: #000;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  margin-left: 6px;
+}
+
 /* Dark Mode */
 body.dark {
   background: #1e1e1e;
@@ -297,11 +325,24 @@ body.dark .header {
 body.dark .messages,
 body.dark .inbox-card,
 body.dark .friend-entry,
-body.dark .search-result {
+body.dark .search-result,
+body.dark .file-card {
   background: #2b2b2b;
   color: #fff;
 }
 
 body.dark .message span {
   background: #444;
+}
+
+body.dark .tabs {
+  background: #2b2b2b;
+}
+
+body.dark .tabs button {
+  color: #25d366;
+}
+
+body.dark .search-buttons button {
+  color: #25d366;
 }
