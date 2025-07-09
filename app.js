@@ -399,3 +399,10 @@ window.onload = () => {
     preview.onclick = () => document.getElementById("profilePic").click();
   }
 };
+function toggleFabMenu() {
+  alert("FAB Menu clicked — implement actions like New Chat, New Group, etc.");
+}
+
+function markAllRead() {
+  alert("Marking all inbox notifications as read — not implemented yet.");
+}
