@@ -1,45 +1,41 @@
-const CACHE_NAME = 'stringwasp-v1';
+const CACHE_NAME = "stringwasp-v1.1";
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/app.js',
-  '/firebase.js',
-  '/manifest.json',
-  '/favicon.png',
-  '/notif.mp3',
-  'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js',
-  'https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js',
-  'https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js'
+  "/",
+  "/index.html",
+  "/style.css",
+  "/app.js",
+  "/firebase.js",
+  "/manifest.json",
+  "/favicon.png",
+  "/notif.mp3",
+  "https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js",
+  "https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js",
+  "https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js",
+  "https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"
 ];
 
-// Install event
-self.addEventListener('install', event => {
+self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(urlsToCache);
+    })
   );
 });
 
-// Activate event
-self.addEventListener('activate', event => {
+self.addEventListener("fetch", event => {
+  event.respondWith(
+    caches.match(event.request).then(response =>
+      response || fetch(event.request)
+    )
+  );
+});
+
+self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
       )
     )
-  );
-  self.clients.claim();
-});
-
-// Fetch event
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
-
-  event.respondWith(
-    caches.match(event.request)
-      .then(cached => cached || fetch(event.request))
   );
 });
