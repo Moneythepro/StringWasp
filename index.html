@@ -32,6 +32,7 @@
 
   <!-- Main App -->
   <div id="appPage" class="tabContent">
+
     <!-- Theme Toggle -->
     <label class="theme-switch">
       <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()" />
@@ -88,11 +89,17 @@
 
     <!-- Profile Tab -->
     <div id="profileTab" class="tab">
-      <h3>Your Profile</h3>
+      <div class="profile-header">
+        <button onclick="switchTab('chatTab')">← Back</button>
+        <h3>Your Profile</h3>
+      </div>
       <img id="profilePicPreview" src="default-avatar.png" alt="Avatar" />
+      <label class="profile-edit-label">Click image to upload</label>
       <input type="file" id="profilePic" accept="image/*" style="display:none;" />
       <input id="profileName" placeholder="Your Name" />
       <textarea id="profileBio" placeholder="Your Bio"></textarea>
+      <input id="profilePhone" placeholder="Phone Number" />
+      <input id="profileEmail" placeholder="Public Email" />
       <button onclick="saveProfile()">Save</button>
     </div>
 
@@ -103,20 +110,6 @@
       <div id="threadMessages" class="messages"></div>
       <input id="threadInput" placeholder="Type message..." />
       <button onclick="sendThreadMessage()">Send</button>
-    </div>
-
-    <!-- Profile Modal View -->
-    <div id="viewProfileModal" class="tab" style="display:none;">
-      <button onclick="closeProfileModal()">← Back</button>
-      <div class="view-profile">
-        <img id="viewProfilePic" src="default-avatar.png" />
-        <h3 id="viewProfileName">Name</h3>
-        <p id="viewProfileBio">Bio goes here...</p>
-        <p id="viewProfileUsername">@username</p>
-        <p id="viewProfileEmail"></p>
-        <p id="viewProfileStatus"></p>
-        <button id="sendFriendRequestBtn" onclick="">Add Friend</button>
-      </div>
     </div>
 
     <!-- Floating Action Button -->
@@ -132,7 +125,7 @@
   <!-- Firebase Config -->
   <script src="firebase.js"></script>
 
-  <!-- App Logic -->
+  <!-- Main App -->
   <script src="app.js"></script>
 
   <!-- Service Worker -->
