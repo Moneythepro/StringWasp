@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>StringWasp</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="manifest.json" />
@@ -90,9 +90,10 @@
     <!-- Profile Tab -->
     <div id="profileTab" class="tab">
       <h3>Your Profile</h3>
+      <img id="profilePicPreview" src="default-avatar.png" alt="Avatar" style="width:80px;height:80px;border-radius:50%;cursor:pointer;" />
+      <input type="file" id="profilePic" accept="image/*" style="display:none;" />
       <input id="profileName" placeholder="Your Name" />
       <textarea id="profileBio" placeholder="Your Bio"></textarea>
-      <input type="file" id="profilePic" accept="image/*" />
       <button onclick="saveProfile()">Save</button>
     </div>
 
@@ -118,7 +119,7 @@
   <!-- Firebase Config -->
   <script src="firebase.js"></script>
 
-  <!-- Main App -->
+  <!-- App Logic -->
   <script src="app.js"></script>
 
   <!-- Service Worker -->
