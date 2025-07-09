@@ -114,12 +114,25 @@
       <button onclick="sendThreadMessage()">Send</button>
     </div>
 
+    <!-- View Profile Modal -->
+    <div id="viewProfileModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="document.getElementById('viewProfileModal').style.display='none'">×</span>
+        <img id="viewProfilePic" src="default-avatar.png" alt="Avatar" />
+        <h3 id="viewProfileName">Name</h3>
+        <p id="viewProfileUsername">@username</p>
+        <p id="viewProfileBio">No bio</p>
+        <p id="viewProfileEmail"></p>
+        <p id="viewProfileStatus"></p>
+      </div>
+    </div>
+
     <!-- Floating Action Button + Menu -->
     <div class="fab-container">
-      <button class="fab" onclick="toggleFabMenu()">+</button>
+      <button class="fab" onclick="toggleFabMenu()">＋</button>
       <div id="fabMenu" class="fab-menu hidden">
         <button onclick="createOrJoinRoom()">Create/Join Group</button>
-        <button onclick="discoverGroups()">Discover Groups</button>
+        <button onclick="runSearch(); switchTab('searchTab')">Discover Groups</button>
       </div>
     </div>
   </div>
