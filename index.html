@@ -1,3 +1,4 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,7 +12,6 @@
 <body>
 <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
-<!-- Loading Overlay -->
 <div id="loadingOverlay"><div class="loader"></div></div>
 
 <!-- Login -->
@@ -63,6 +63,7 @@
     <div id="messageRequests" class="chat-subtab" style="display:none;">
       <div id="messageRequestList"></div>
     </div>
+    <div id="friendsList"></div> <!-- ✅ FIX: Missing container -->
   </div>
 
   <!-- Groups Tab -->
@@ -177,6 +178,5 @@
       .catch(console.error);
   }
 </script>
-
 </body>
 </html>
