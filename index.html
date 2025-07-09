@@ -30,8 +30,9 @@
     <button onclick="saveUsername()">Save</button>
   </div>
 
-  <!-- App Page -->
+  <!-- Main App -->
   <div id="appPage" class="tabContent">
+
     <!-- Theme Toggle -->
     <label class="theme-switch">
       <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()" />
@@ -41,21 +42,12 @@
     <!-- Header -->
     <div class="header">
       <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
-      <input id="customRoom" placeholder="New Room Name" />
+      <input id="customRoom" placeholder="New Group Name" />
+      <button onclick="createOrJoinRoom()">Go</button>
       <span id="usernameDisplay"></span>
     </div>
 
-    <!-- Admin Panel -->
-    <div id="adminPanel" class="admin-panel">
-      <h4>Room Admin Tools</h4>
-      <pre id="adminInfo"></pre>
-      <input id="memberEmail" placeholder="Member Email" />
-      <button onclick="addMember()">Add</button>
-      <button onclick="removeMember()">Remove</button>
-      <button onclick="promoteMember()">Promote</button>
-    </div>
-
-    <!-- Tab Navigation -->
+    <!-- Tabs -->
     <div class="tabs">
       <button onclick="switchTab('chatTab')">Chat</button>
       <button onclick="switchTab('friendsTab')">Friends</button>
@@ -94,26 +86,16 @@
         <button onclick="runSearch()">Search</button>
       </div>
       <div id="searchResultsUser" class="search-results"></div>
-      <div id="searchResultsGroup" class="search-results"></div>
+      <div id="searchResultsGroup" class="search-results" style="display:none;"></div>
     </div>
 
     <!-- Profile Tab -->
     <div id="profileTab" class="tab">
       <h3>Your Profile</h3>
-      <img id="profilePicPreview" src="default-avatar.png" alt="Profile" class="profile-pic-preview"/>
-      <input type="file" id="profilePicInput" accept="image/*" />
       <input id="profileName" placeholder="Your Name" />
       <textarea id="profileBio" placeholder="Your Bio"></textarea>
+      <input type="file" id="profilePic" accept="image/*" />
       <button onclick="saveProfile()">Save</button>
-    </div>
-
-    <!-- User Profile View -->
-    <div id="userProfileView" class="tab">
-      <button onclick="closeUserProfile()">← Back</button>
-      <img id="viewProfilePic" class="profile-pic-preview" />
-      <h3 id="viewProfileName"></h3>
-      <p id="viewProfileBio"></p>
-      <button onclick="sendFriendRequest()">Send Friend Request</button>
     </div>
 
     <!-- Thread View -->
@@ -121,28 +103,27 @@
       <button onclick="closeThread()">← Back to Friends</button>
       <h3 id="threadWithName"></h3>
       <div id="threadMessages" class="messages"></div>
-      <div id="threadTyping" class="typing"></div>
       <input id="threadInput" placeholder="Type message..." />
       <button onclick="sendThreadMessage()">Send</button>
     </div>
 
     <!-- Floating Action Button -->
-    <button class="fab" onclick="createOrJoinRoom()">+</button>
+    <button class="fab" onclick="switchTab('chatTab')">+</button>
+
   </div>
 
-  <!-- Firebase SDK (v8) -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
   <!-- Firebase Config -->
   <script src="firebase.js"></script>
 
-  <!-- Main App Script -->
+  <!-- Main App -->
   <script src="app.js"></script>
 
-  <!-- Register Service Worker -->
+  <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
