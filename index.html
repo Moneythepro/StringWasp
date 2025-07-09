@@ -42,7 +42,6 @@
     <div class="header">
       <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
       <input id="customRoom" placeholder="New Room Name" />
-      <button onclick="createOrJoinRoom()">Go</button>
       <span id="usernameDisplay"></span>
     </div>
 
@@ -101,9 +100,20 @@
     <!-- Profile Tab -->
     <div id="profileTab" class="tab">
       <h3>Your Profile</h3>
+      <img id="profilePicPreview" src="default-avatar.png" alt="Profile" class="profile-pic-preview"/>
+      <input type="file" id="profilePicInput" accept="image/*" />
       <input id="profileName" placeholder="Your Name" />
       <textarea id="profileBio" placeholder="Your Bio"></textarea>
       <button onclick="saveProfile()">Save</button>
+    </div>
+
+    <!-- User Profile View -->
+    <div id="userProfileView" class="tab">
+      <button onclick="closeUserProfile()">← Back</button>
+      <img id="viewProfilePic" class="profile-pic-preview" />
+      <h3 id="viewProfileName"></h3>
+      <p id="viewProfileBio"></p>
+      <button onclick="sendFriendRequest()">Send Friend Request</button>
     </div>
 
     <!-- Thread View -->
@@ -117,13 +127,14 @@
     </div>
 
     <!-- Floating Action Button -->
-    <button class="fab" onclick="switchTab('chatTab')">+</button>
+    <button class="fab" onclick="createOrJoinRoom()">+</button>
   </div>
 
-  <!-- Firebase SDK (v8 Classic) -->
+  <!-- Firebase SDK (v8) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
   <!-- Firebase Config -->
   <script src="firebase.js"></script>
