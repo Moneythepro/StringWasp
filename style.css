@@ -1,4 +1,6 @@
-/* Global Styles */
+/* ===========================
+   Global Layout & Defaults
+=========================== */
 body {
   font-family: 'Segoe UI', sans-serif;
   margin: 0;
@@ -24,7 +26,9 @@ body {
   background: #f8f9fa;
 }
 
-/* Inputs & Buttons */
+/* ===========================
+   Inputs & Buttons
+=========================== */
 input, textarea, button, select {
   margin: 8px 0;
   padding: 10px;
@@ -48,7 +52,9 @@ button:hover {
   background: #1ebc5c;
 }
 
-/* Header */
+/* ===========================
+   Header & Tabs
+=========================== */
 .header {
   display: flex;
   align-items: center;
@@ -59,7 +65,6 @@ button:hover {
   font-weight: bold;
 }
 
-/* Tabs */
 .tabs {
   display: flex;
   justify-content: space-around;
@@ -95,7 +100,9 @@ button:hover {
   background: #d9fdd3;
 }
 
-/* Badge Counter */
+/* ===========================
+   Badge
+=========================== */
 .badge {
   background: red;
   color: white;
@@ -106,7 +113,9 @@ button:hover {
   vertical-align: top;
 }
 
-/* Messages */
+/* ===========================
+   Messages & Bubbles
+=========================== */
 .messages {
   height: calc(100vh - 260px);
   max-height: 60vh;
@@ -127,7 +136,6 @@ button:hover {
   border-radius: 3px;
 }
 
-/* Message Bubble */
 .message-bubble {
   display: flex;
   align-items: flex-start;
@@ -162,7 +170,9 @@ button:hover {
   align-self: flex-end;
 }
 
-/* Sender Info */
+/* ===========================
+   Sender Info
+=========================== */
 .sender-info {
   display: flex;
   align-items: center;
@@ -184,7 +194,9 @@ button:hover {
   color: #333;
 }
 
-/* Cards */
+/* ===========================
+   Cards (Inbox, Friends, Search)
+=========================== */
 .inbox-card, .friend-entry, .search-result {
   background: white;
   margin: 6px 0;
@@ -201,7 +213,9 @@ button:hover {
   background: #f1f1f1;
 }
 
-/* Profile Section */
+/* ===========================
+   Profile
+=========================== */
 #profileTab {
   text-align: center;
 }
@@ -222,66 +236,75 @@ button:hover {
   border-color: #25d366;
 }
 
-/* Typing Indicator */
+/* ===========================
+   Typing Indicator
+=========================== */
 .typing {
   font-style: italic;
   color: #666;
   margin: 5px 0;
 }
 
-/* FAB + Menu */
-.fab-container {
+/* ===========================
+   Floating Action Button (FAB)
+=========================== */
+.fab {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  z-index: 1000;
-}
-
-.fab {
-  background: #25d366;
+  background: #007bff;
   color: white;
-  font-size: 28px;
-  width: 56px;
-  height: 56px;
+  padding: 16px 20px;
   border-radius: 50%;
+  font-size: 24px;
   border: none;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  z-index: 1001;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
-.fab-menu {
-  position: absolute;
-  bottom: 70px;
-  right: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.fab-menu.hidden {
-  display: none;
-}
-
-.fab-menu button {
-  background: #128c7e;
+/* ===========================
+   Side Menu
+=========================== */
+.side-menu {
+  position: fixed;
+  top: 0;
+  left: -260px;
+  width: 250px;
+  height: 100%;
+  background: #1a1a1a;
   color: white;
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 14px;
-  border: none;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  transition: left 0.3s ease;
+  padding: 20px;
+  z-index: 1000;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+}
+
+.side-menu ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+}
+
+.side-menu li {
+  margin-bottom: 12px;
   cursor: pointer;
-  transition: background 0.3s;
+  padding: 10px;
+  border-radius: 6px;
+  transition: background 0.2s;
 }
 
-.fab-menu button:hover {
-  background: #0d6b5d;
+.side-menu li:hover {
+  background: #333;
 }
 
-/* Loading Overlay */
+.side-menu.show {
+  left: 0;
+}
+
+/* ===========================
+   Loading Overlay
+=========================== */
 #loadingOverlay {
   position: fixed;
   top: 0; left: 0;
@@ -306,7 +329,9 @@ button:hover {
   to { transform: rotate(360deg); }
 }
 
-/* Modal */
+/* ===========================
+   Modal Dialog
+=========================== */
 .modal {
   display: none;
   position: fixed;
@@ -351,7 +376,9 @@ button:hover {
   cursor: pointer;
 }
 
-/* Dark Mode */
+/* ===========================
+   Dark Mode Support
+=========================== */
 body.dark {
   background: #1e1e1e;
   color: #f8f8f8;
