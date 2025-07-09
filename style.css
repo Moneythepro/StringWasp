@@ -1,4 +1,4 @@
-/* Global */
+/* Base Reset & Layout */
 body {
   font-family: 'Segoe UI', sans-serif;
   margin: 0;
@@ -135,7 +135,7 @@ button:hover {
   margin: 5px 0;
 }
 
-/* Inbox & Friend Cards */
+/* Inbox, Friends, Search */
 .inbox-card, .friend-entry, .search-result {
   background: white;
   margin: 6px 0;
@@ -152,17 +152,6 @@ button:hover {
   background: #f1f1f1;
 }
 
-/* Admin Panel */
-.admin-panel {
-  background: #fff8dc;
-  border-left: 5px solid #f0ad4e;
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 8px;
-  display: none;
-}
-
-/* Search */
 .search-buttons {
   margin: 10px 0;
   display: flex;
@@ -191,11 +180,6 @@ button:hover {
   padding: 10px;
   margin: 10px 0;
   border-radius: 8px;
-}
-
-textarea {
-  resize: none;
-  height: 60px;
 }
 
 /* Floating Action Button */
@@ -283,7 +267,7 @@ input:checked + .slider::before {
   to { transform: rotate(360deg); }
 }
 
-/* Dark Mode */
+/* Dark Theme */
 body.dark {
   background: #1e1e1e;
   color: #f8f8f8;
