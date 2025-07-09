@@ -1,185 +1,215 @@
-/* ================================
-   🌐 Global Reset & Layout
-================================ */
+/* 🌐 Global */
 * {
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
+
 body {
-  font-family: 'Segoe UI', sans-serif;
-  background: #f1f1f1;
+  background: #f5f5f5;
+  color: #222;
+  transition: background 0.3s, color 0.3s;
   padding: 10px;
-}
-header {
-  text-align: center;
-  padding: 10px 0;
-  background: #222;
-  color: white;
-  border-radius: 12px;
-  margin-bottom: 10px;
-}
-#chatContainer {
-  height: 400px;
-  overflow-y: auto;
-  border: 2px solid #ccc;
-  padding: 10px;
-  border-radius: 12px;
-  background: white;
-}
-.msg {
-  padding: 6px 12px;
-  margin: 4px 0;
-  background: #def;
-  border-radius: 10px;
-  word-wrap: break-word;
-}
-#inputBar {
-  display: flex;
-  gap: 6px;
-  margin: 10px 0;
-}
-#inputBar input {
-  flex: 1;
-  padding: 8px;
-  border-radius: 8px;
-  border: 1px solid #aaa;
-}
-#inputBar button {
-  padding: 8px 10px;
-  border: none;
-  background: #4caf50;
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
-}
-#actionBar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 10px;
-}
-#actionBar button {
-  flex: 1 1 100px;
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 6px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-#pinnedMessage {
-  background: #ffe58a;
-  padding: 6px 12px;
-  border-left: 5px solid orange;
-  margin-bottom: 6px;
-  border-radius: 10px;
-  font-weight: bold;
-}
-#themeSwitcher {
-  margin-top: 10px;
-  padding: 6px;
-  border-radius: 8px;
-}
-#userBadge {
-  margin-top: 10px;
-  font-weight: bold;
-  color: green;
 }
 
-/* ================================
-   🔔 Notification Area
-================================ */
-#notificationArea {
-  position: fixed;
-  bottom: 15px;
-  right: 15px;
-  background: #333;
-  color: white;
-  padding: 10px;
-  border-radius: 12px;
-  display: none;
-  z-index: 999;
+/* 🌙 Dark Theme */
+body.dark {
+  background: #121212;
+  color: #eee;
 }
 
-/* ================================
-   ⚙️ Settings Modal
-================================ */
-#settingsModal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
+/* ☀️ Light Theme */
+body.light {
+  background: #fff;
+  color: #222;
+}
+
+/* 🔐 Auth Section */
+#authContainer {
+  max-width: 400px;
+  margin: 80px auto;
+  background: #fff;
   padding: 20px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1);
   border-radius: 12px;
-  border: 2px solid #333;
-  z-index: 999;
-}
-#settingsModal h2 {
-  margin-bottom: 12px;
-}
-#settingsModal button {
-  background: red;
-  color: white;
-  padding: 8px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
 }
 
-/* ================================
-   🎨 Themes
-================================ */
-body.theme-dark {
-  background: #111;
-  color: white;
+#authContainer input, #authContainer button {
+  width: 100%;
+  margin: 8px 0;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
 }
-body.theme-dark #chatContainer {
-  background: #222;
+
+/* 🧭 Navigation Tabs */
+nav {
+  display: flex;
+  justify-content: space-around;
+  background: #eee;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+body.dark nav {
+  background: #1e1e1e;
+}
+
+nav button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+nav button:hover {
+  background: #ddd;
+}
+
+body.dark nav button:hover {
+  background: #333;
+}
+
+/* 📌 Tabs */
+.tab {
+  display: none;
+  padding: 15px;
+}
+
+.tab.active {
+  display: block;
+}
+
+/* 💬 Chat */
+#chatArea {
+  border: 1px solid #ccc;
+  height: 300px;
+  overflow-y: auto;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+body.dark #chatArea {
+  background: #1c1c1c;
   border-color: #444;
 }
-body.theme-dark .msg {
-  background: #444;
-  color: white;
+
+.msg {
+  margin: 6px 0;
+  padding: 8px;
+  background: #e6e6e6;
+  border-radius: 10px;
 }
-body.theme-dark header {
-  background: #000;
+
+body.dark .msg {
+  background: #2e2e2e;
 }
-body.theme-dark #pinnedMessage {
-  background: #444;
+
+/* 🖼️ Profile */
+#tab-profile input,
+#tab-profile select,
+#tab-profile button {
+  margin: 8px 0;
+  padding: 10px;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+#profilePreview {
+  border-radius: 50%;
+  margin: 10px 0;
+}
+
+/* 🧩 Plugin / Backup Buttons */
+#fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#fab button {
+  padding: 10px;
+  border: none;
+  border-radius: 50%;
+  background: #222;
   color: #fff;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(0,0,0,0.3);
+  font-size: 18px;
 }
 
-body.theme-neon {
-  background: #000;
-  color: #0ff;
-}
-body.theme-neon #chatContainer {
-  background: #111;
-  color: #0ff;
-}
-body.theme-neon .msg {
-  background: #0ff;
-  color: #000;
-}
-body.theme-neon header {
-  background: #000;
-  color: #0ff;
-}
-body.theme-neon #pinnedMessage {
-  background: #ff0;
-  color: #000;
+body.light #fab button {
+  background: #333;
 }
 
-/* ================================
-   📱 Responsive
-================================ */
+/* 📌 Pinned */
+#pinnedMessage {
+  background: #ffd700;
+  padding: 6px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+/* 📩 Inbox & Friends */
+#inboxArea,
+#friendList,
+#searchResults {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 10px;
+  background: #fafafa;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+body.dark #inboxArea,
+body.dark #friendList,
+body.dark #searchResults {
+  background: #1b1b1b;
+  border-color: #444;
+}
+
+/* 🖥️ Terminal Tab */
+#terminalLog {
+  width: 100%;
+  background: #000;
+  color: #0f0;
+  padding: 10px;
+  margin-bottom: 8px;
+  height: 150px;
+  border-radius: 8px;
+  font-family: monospace;
+  resize: none;
+}
+
+#terminalInput {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+/* 📱 Responsive */
 @media screen and (max-width: 600px) {
-  #inputBar, #actionBar {
+  nav {
     flex-direction: column;
   }
-  #chatContainer {
-    height: 300px;
+
+  #fab {
+    right: 10px;
+    bottom: 10px;
   }
 }
