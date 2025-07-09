@@ -47,11 +47,11 @@
 
     <!-- Tabs -->
     <div class="tabs">
-      <button onclick="switchTab('chatTab')">Chat</button>
-      <button onclick="switchTab('friendsTab')">Friends</button>
-      <button onclick="switchTab('inboxTab')">Inbox</button>
-      <button onclick="switchTab('searchTab')">Search</button>
-      <button onclick="switchTab('profileTab')">Profile</button>
+      <button onclick="switchTab('chatTab')" id="tab-chat">💬<br><span>Chats</span></button>
+      <button onclick="switchTab('friendsTab')" id="tab-friends">👥<br><span>Friends</span></button>
+      <button onclick="switchTab('inboxTab')" id="tab-inbox">🔔<br><span>Inbox</span><span id="inboxBadge" class="badge"></span></button>
+      <button onclick="switchTab('searchTab')" id="tab-search">🔍<br><span>Search</span></button>
+      <button onclick="switchTab('profileTab')" id="tab-profile">🙍‍♂️<br><span>Profile</span></button>
     </div>
 
     <!-- Chat Tab -->
@@ -65,12 +65,14 @@
     <!-- Friends Tab -->
     <div id="friendsTab" class="tab">
       <h3>Your Friends</h3>
+      <input id="friendSearchInput" placeholder="Search friends..." />
       <div id="friendsList"></div>
     </div>
 
     <!-- Inbox Tab -->
     <div id="inboxTab" class="tab">
       <h3>Inbox</h3>
+      <button onclick="markAllRead()">Mark All as Read</button>
       <div id="inboxList"></div>
     </div>
 
@@ -112,8 +114,14 @@
       <button onclick="sendThreadMessage()">Send</button>
     </div>
 
-    <!-- Floating Action Button -->
-    <button class="fab" onclick="createOrJoinRoom()">+</button>
+    <!-- Floating Action Button + Menu -->
+    <div class="fab-container">
+      <button class="fab" onclick="toggleFabMenu()">+</button>
+      <div id="fabMenu" class="fab-menu hidden">
+        <button onclick="createOrJoinRoom()">Create/Join Group</button>
+        <button onclick="discoverGroups()">Discover Groups</button>
+      </div>
+    </div>
   </div>
 
   <!-- Firebase SDK -->
@@ -125,7 +133,7 @@
   <!-- Firebase Config -->
   <script src="firebase.js"></script>
 
-  <!-- Main App -->
+  <!-- App Logic -->
   <script src="app.js"></script>
 
   <!-- Service Worker -->
