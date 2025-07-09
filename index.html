@@ -24,7 +24,7 @@
   </div>
 
   <!-- Username Picker -->
-  <div id="usernameDialog" class="tab">
+  <div id="usernameDialog" class="tab" style="display:none;">
     <h3>Pick a Username</h3>
     <input id="newUsername" placeholder="Username" />
     <button onclick="saveUsername()">Save</button>
@@ -126,15 +126,8 @@
       </div>
     </div>
 
-    <!-- Floating Action Button + Menu (Upgraded) -->
-    <div class="fab-container">
-  <button class="fab" onclick="toggleFabMenu()">+</button>
-  <div class="fab-menu hidden" id="fabMenu">
-    <button onclick="createOrJoinRoom()">➕ Group</button>
-    <button onclick="promptPrivateChat()">👤 Chat</button>
-    <button onclick="document.getElementById('profileTabBtn').click()">⚙️ Profile</button>
-  </div>
-    </div>
+    <!-- Floating Action Button (Classic FAB) -->
+    <button class="fab" onclick="showUsernameDialog()">+</button>
   </div>
 
   <!-- Firebase SDK -->
@@ -157,20 +150,5 @@
         .catch(console.error);
     }
   </script>
-  <!-- Side Menu -->
-<div id="sideMenu" class="side-menu">
-  <h3>Menu</h3>
-  <ul>
-    <li onclick="switchTab('chatTab')">Chat</li>
-    <li onclick="switchTab('friendsTab')">Friends</li>
-    <li onclick="switchTab('inboxTab')">Inbox</li>
-    <li onclick="switchTab('searchTab')">Search</li>
-    <li onclick="switchTab('profileTab')">Profile</li>
-    <li onclick="auth.signOut()">Logout</li>
-  </ul>
-</div>
-
-<!-- FAB Button -->
-<button id="toggleBtn" class="fab">☰</button>
 </body>
 </html>
