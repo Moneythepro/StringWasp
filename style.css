@@ -1,3 +1,4 @@
+/* General Layout */
 body {
   font-family: 'Segoe UI', sans-serif;
   margin: 0;
@@ -8,11 +9,13 @@ body {
   height: 100vh;
 }
 
+/* Tabs */
 .tab, .tabContent {
   display: none;
   padding: 16px;
 }
 
+/* Login & Username Pages */
 #loginPage, #usernameDialog {
   display: flex;
   flex-direction: column;
@@ -22,6 +25,7 @@ body {
   background: #f8f9fa;
 }
 
+/* Inputs, Buttons */
 input, textarea, button, select {
   margin: 8px 0;
   padding: 10px;
@@ -44,9 +48,9 @@ button:hover {
   background: #1ebc5c;
 }
 
+/* Header */
 .header {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   background: #075e54;
@@ -55,6 +59,7 @@ button:hover {
   font-weight: bold;
 }
 
+/* Tabs Nav */
 .tabs {
   display: flex;
   justify-content: space-around;
@@ -77,6 +82,7 @@ button:hover {
   background: #dfe5e8;
 }
 
+/* Chat Messages */
 .messages {
   height: 300px;
   overflow-y: auto;
@@ -84,23 +90,54 @@ button:hover {
   background: white;
   margin-bottom: 10px;
   border-radius: 8px;
+  display: flex;
+  flex-direction: column;
 }
 
 .messages div {
-  background: #dcf8c6;
   padding: 8px 12px;
   margin: 4px 0;
   border-radius: 16px;
   max-width: 80%;
   word-wrap: break-word;
+  position: relative;
 }
 
+/* Own Message (right) */
+.messages .me {
+  align-self: flex-end;
+  background: #dcf8c6;
+  text-align: right;
+}
+
+/* Others' Messages (left) */
+.messages .other {
+  align-self: flex-start;
+  background: #ffffff;
+}
+
+/* Avatar + Username */
+.message-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.message-header img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
+
+/* Typing Indicator */
 .typing {
   font-style: italic;
   color: #666;
   margin: 5px 0;
 }
 
+/* Inbox Cards */
 .inbox-card, .friend-entry, .search-result {
   background: white;
   margin: 6px 0;
@@ -117,6 +154,7 @@ button:hover {
   background: #f1f1f1;
 }
 
+/* Admin Panel */
 .admin-panel {
   background: #fff8dc;
   border-left: 5px solid #f0ad4e;
@@ -126,6 +164,7 @@ button:hover {
   display: none;
 }
 
+/* Search */
 .search-buttons {
   margin: 10px 0;
   display: flex;
@@ -136,6 +175,7 @@ button:hover {
   display: none;
 }
 
+/* Thread View */
 #threadView {
   background: #ffffff;
 }
@@ -156,11 +196,13 @@ button:hover {
   border-radius: 12px;
 }
 
+/* Text Area */
 textarea {
   resize: none;
   height: 60px;
 }
 
+/* Floating Action Button */
 .fab {
   position: fixed;
   bottom: 20px;
@@ -168,19 +210,14 @@ textarea {
   background: #25d366;
   color: white;
   font-size: 28px;
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   border: none;
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.fab:hover {
-  background: #1ebc5c;
+  text-align: center;
+  line-height: 56px;
 }
 
 /* Loading Overlay */
@@ -208,82 +245,38 @@ textarea {
   to { transform: rotate(360deg); }
 }
 
-/* Dark Mode Support */
+/* Profile Picture Preview */
+.profile-pic-preview {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+  margin: 10px auto;
+}
+
+/* Dark Mode */
 body.dark {
   background: #121212;
   color: #eee;
 }
 
-body.dark .header {
-  background: #1f1f1f;
-  color: #fff;
-}
-
-body.dark .messages {
-  background: #222;
-}
-
-body.dark .messages div {
-  background: #1e3d29;
-  color: #eee;
-}
-
-body.dark .admin-panel {
-  background: #333;
-  color: #fff;
-}
-
-body.dark .tab,
-body.dark .tabContent {
-  background: #181818;
-}
-
+body.dark .tab, 
+body.dark .tabContent,
 body.dark input,
 body.dark textarea,
-body.dark button,
-body.dark select {
-  background: #222;
+body.dark select,
+body.dark .messages,
+body.dark .inbox-card,
+body.dark .friend-entry,
+body.dark .search-result {
+  background: #1f1f1f;
   color: #eee;
-  border: 1px solid #444;
+  border-color: #333;
 }
 
-/* Theme Toggle UI */
-.theme-switch {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-}
-
-.theme-switch input {
-  display: none;
-}
-
-.theme-switch .slider {
-  width: 40px;
-  height: 20px;
-  background: #ccc;
-  display: inline-block;
-  border-radius: 20px;
-  position: relative;
-  transition: 0.3s;
-}
-
-.theme-switch .slider::before {
-  content: "";
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  left: 1px;
-  top: 1px;
-  background: white;
-  border-radius: 50%;
-  transition: 0.3s;
-}
-
-.theme-switch input:checked + .slider {
-  background: #25d366;
-}
-
-.theme-switch input:checked + .slider::before {
-  transform: translateX(20px);
+body.dark .header,
+body.dark .tabs {
+  background: #222;
+  color: white;
 }
