@@ -7,7 +7,6 @@ let unsubscribeMessages = null;
 let unsubscribeThread = null;
 let currentThreadUser = null;
 
-// UI Helper
 function showLoading(show) {
   document.getElementById("loadingOverlay").style.display = show ? "flex" : "none";
 }
@@ -54,7 +53,7 @@ function saveUsername() {
   });
 }
 
-// Main
+// Main App Load
 function loadMainUI() {
   document.getElementById("appPage").style.display = "block";
   switchTab("chatTab");
@@ -129,7 +128,8 @@ function listenMessages() {
 
         const text = document.createElement("div");
         text.className = "message-text";
-        text.textContent = isMine ? msg.text : `${msg.senderName}: ${msg.text}`;
+        text.textContent = msg.text;
+
         if (isMine) {
           text.oncontextmenu = e => {
             e.preventDefault();
@@ -210,6 +210,8 @@ function loadProfile() {
     const data = doc.data();
     document.getElementById("profileName").value = data.name || "";
     document.getElementById("profileBio").value = data.bio || "";
+    const avatar = document.getElementById("profilePicPreview");
+    if (avatar) avatar.src = data.photoURL || "default-avatar.png";
   });
 }
 
@@ -224,11 +226,16 @@ function saveProfile() {
     const reader = new FileReader();
     reader.onload = function (e) {
       data.photoURL = e.target.result;
-      db.collection("users").doc(currentUser.uid).set(data, { merge: true });
+      db.collection("users").doc(currentUser.uid).set(data, { merge: true }).then(() => {
+        document.getElementById("profilePicPreview").src = e.target.result;
+        alert("Profile updated.");
+      });
     };
     reader.readAsDataURL(file);
   } else {
-    db.collection("users").doc(currentUser.uid).set(data, { merge: true });
+    db.collection("users").doc(currentUser.uid).set(data, { merge: true }).then(() => {
+      alert("Profile updated.");
+    });
   }
 }
 
@@ -267,7 +274,7 @@ function loadFriends() {
   });
 }
 
-// Threaded Chat
+// Thread Chat
 function threadId(a, b) {
   return [a, b].sort().join("_");
 }
@@ -387,4 +394,8 @@ function applySavedTheme() {
 
 window.onload = () => {
   applySavedTheme();
+  const preview = document.getElementById("profilePicPreview");
+  if (preview) {
+    preview.onclick = () => document.getElementById("profilePic").click();
+  }
 };
