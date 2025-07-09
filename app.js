@@ -377,3 +377,59 @@ window.onload = () => {
   const preview = document.getElementById("profilePicPreview");
   if (preview) preview.onclick = () => document.getElementById("profilePic").click();
 };
+function switchSubChat(id) {
+  document.querySelectorAll(".chat-subtab").forEach(el => el.style.display = "none");
+  document.getElementById(id).style.display = "block";
+}
+
+function sendGroupMessage() {
+  const input = document.getElementById("groupMessageInput");
+  const text = input.value.trim();
+  if (!text || !currentRoom) return;
+
+  db.collection("groups").doc(currentRoom).collection("messages").add({
+    text,
+    senderId: currentUser.uid,
+    senderName: document.getElementById("usernameDisplay").textContent,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  input.value = "";
+}
+
+function switchSearchView(type) {
+  document.getElementById("searchResultsUser").style.display = type === "user" ? "block" : "none";
+  document.getElementById("searchResultsGroup").style.display = type === "group" ? "block" : "none";
+}
+
+function runSearch() {
+  const query = document.getElementById("searchInput").value.trim().toLowerCase();
+  if (!query) return;
+
+  const userResults = document.getElementById("searchResultsUser");
+  const groupResults = document.getElementById("searchResultsGroup");
+  userResults.innerHTML = "";
+  groupResults.innerHTML = "";
+
+  db.collection("users").where("username", ">=", query).where("username", "<=", query + "\uf8ff")
+    .get().then(snapshot => {
+      snapshot.forEach(doc => {
+        const user = doc.data();
+        const div = document.createElement("div");
+        div.textContent = `@${user.username} ${user.name || ""}`;
+        if (user.username === "moneythepro") div.textContent += " 🛠️ Developer";
+        div.onclick = () => showUserProfile(doc.id);
+        userResults.appendChild(div);
+      });
+    });
+
+  db.collection("groups").where("name", ">=", query).where("name", "<=", query + "\uf8ff")
+    .get().then(snapshot => {
+      snapshot.forEach(doc => {
+        const group = doc.data();
+        const div = document.createElement("div");
+        div.textContent = group.name;
+        div.onclick = () => joinRoomPrompt(group.name);
+        groupResults.appendChild(div);
+      });
+    });
+}
