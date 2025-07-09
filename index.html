@@ -32,7 +32,6 @@
 
   <!-- Main App -->
   <div id="appPage" class="tabContent">
-
     <!-- Theme Toggle -->
     <label class="theme-switch">
       <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()" />
@@ -127,12 +126,14 @@
       </div>
     </div>
 
-    <!-- Floating Action Button + Menu -->
+    <!-- Floating Action Button + Menu (Upgraded) -->
     <div class="fab-container">
       <button class="fab" onclick="toggleFabMenu()">＋</button>
       <div id="fabMenu" class="fab-menu hidden">
-        <button onclick="createOrJoinRoom()">Create/Join Group</button>
-        <button onclick="runSearch(); switchTab('searchTab')">Discover Groups</button>
+        <button onclick="startNewChat()">💬 New Chat</button>
+        <button onclick="createGroup()">👥 New Group</button>
+        <button onclick="promptJoinGroup()">🔗 Join Group</button>
+        <button onclick="runSearch(); switchTab('searchTab')">🌐 Discover Groups</button>
       </div>
     </div>
   </div>
