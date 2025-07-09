@@ -15,6 +15,7 @@ function showLoading(show) {
 function switchTab(id) {
   document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
   document.getElementById(id).style.display = "block";
+  closeSideMenu(); // Close menu after switching tab (optional)
 }
 
 // Auth
@@ -400,7 +401,7 @@ function applySavedTheme() {
   if (theme === "dark") document.body.classList.add("dark");
 }
 
-// FAB Menu
+// FAB
 function promptPrivateChat() {
   const username = prompt("Enter username to chat:");
   if (!username) return;
@@ -412,11 +413,25 @@ function promptPrivateChat() {
   });
 }
 
+// TOGGLE MENU
+function closeSideMenu() {
+  document.getElementById("sideMenu")?.classList.remove("show");
+}
+
 // Init
 window.onload = () => {
   applySavedTheme();
+
   const preview = document.getElementById("profilePicPreview");
   if (preview) {
     preview.onclick = () => document.getElementById("profilePic").click();
+  }
+
+  const toggleBtn = document.getElementById("toggleBtn");
+  if (toggleBtn) {
+    toggleBtn.addEventListener("click", () => {
+      const side = document.getElementById("sideMenu");
+      side?.classList.toggle("show");
+    });
   }
 };
