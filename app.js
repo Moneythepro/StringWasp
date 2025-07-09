@@ -15,7 +15,6 @@ function showLoading(show) {
 function switchTab(id) {
   document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
   document.getElementById(id).style.display = "block";
-  closeSideMenu(); // Close menu after switching tab (optional)
 }
 
 // Auth
@@ -401,11 +400,10 @@ function applySavedTheme() {
   if (theme === "dark") document.body.classList.add("dark");
 }
 
-// FAB
+// Private Chat
 function promptPrivateChat() {
   const username = prompt("Enter username to chat:");
   if (!username) return;
-
   db.collection("users").where("username", "==", username).limit(1).get().then(snapshot => {
     if (snapshot.empty) return alert("User not found.");
     const doc = snapshot.docs[0];
@@ -413,25 +411,20 @@ function promptPrivateChat() {
   });
 }
 
-// TOGGLE MENU
-function closeSideMenu() {
-  document.getElementById("sideMenu")?.classList.remove("show");
-}
-
-// Init
+// INIT
 window.onload = () => {
   applySavedTheme();
-
   const preview = document.getElementById("profilePicPreview");
   if (preview) {
     preview.onclick = () => document.getElementById("profilePic").click();
   }
 
+  // ✅ FAB Toggle Button
   const toggleBtn = document.getElementById("toggleBtn");
   if (toggleBtn) {
     toggleBtn.addEventListener("click", () => {
       const side = document.getElementById("sideMenu");
-      side?.classList.toggle("show");
+      if (side) side.classList.toggle("show");
     });
   }
 };
