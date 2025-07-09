@@ -34,16 +34,16 @@ button:hover {
   background: #128c7e;
 }
 
+/* ======= Tabs and Pages ======= */
 .tab, .tabContent {
   display: none;
   padding: 15px;
 }
 
-.tabContent {
-  display: none;
-}
-
-.tab.active, .tabContent.active {
+.tab.active, .tabContent.active,
+.tabContent:target,
+.tab[style*="display: block"],
+.tabContent[style*="display: block"] {
   display: block;
 }
 
@@ -96,7 +96,7 @@ button:hover {
   color: #ccc;
 }
 
-/* ======= Messages ======= */
+/* ======= Chat & Messages ======= */
 .messages {
   height: 300px;
   overflow-y: auto;
@@ -154,6 +154,61 @@ button:hover {
   margin-left: 5px;
 }
 
+/* ======= Chat Subtabs ======= */
+.chat-subtabs {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 10px;
+}
+
+.chat-subtab {
+  display: none;
+}
+
+.chat-subtab.active,
+.chat-subtab[style*="display: block"] {
+  display: block;
+}
+
+/* Friend List */
+.friend-entry {
+  padding: 8px;
+  margin: 5px;
+  background: #f1f1f1;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.friend-entry:hover {
+  background: #e0f7da;
+}
+
+.dark .friend-entry {
+  background: #2e2e2e;
+}
+
+/* ======= Thread View ======= */
+#threadView {
+  padding: 10px;
+}
+
+#threadMessages {
+  max-height: 300px;
+  overflow-y: auto;
+  background: #fff;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.dark #threadMessages {
+  background: #1f1f1f;
+}
+
+#threadInput {
+  width: 100%;
+  margin-top: 10px;
+}
+
 /* ======= FAB (Floating Action Button) ======= */
 .fab-container {
   position: fixed;
@@ -162,6 +217,7 @@ button:hover {
   display: none;
   flex-direction: column;
   align-items: flex-end;
+  z-index: 999;
 }
 
 .fab {
@@ -173,6 +229,7 @@ button:hover {
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   border: none;
   margin-bottom: 10px;
+  transition: all 0.3s ease;
 }
 
 .fab-menu button {
@@ -180,6 +237,7 @@ button:hover {
   background: #128c7e;
   padding: 8px 12px;
   border-radius: 12px;
+  color: white;
 }
 
 .fab-menu.hidden {
@@ -233,6 +291,7 @@ button:hover {
   display: none;
   justify-content: center;
   align-items: center;
+  z-index: 9999;
 }
 
 .modal-content {
@@ -254,7 +313,7 @@ button:hover {
   color: white;
 }
 
-/* ======= Misc ======= */
+/* ======= Loader ======= */
 .loader {
   border: 6px solid #f3f3f3;
   border-top: 6px solid #25d366;
@@ -285,6 +344,7 @@ button:hover {
   100% { transform: rotate(360deg); }
 }
 
+/* ======= Search ======= */
 .search-buttons {
   display: flex;
   justify-content: center;
