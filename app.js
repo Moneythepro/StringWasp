@@ -1,397 +1,300 @@
+// app.js — StringWasp Final Production Build
+
 // Firebase Setup
+firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage();
+
+// Global State
 let currentUser = null;
-let currentRoom = "global";
-let currentThreadUser = null;
-let unsubscribeMessages = null;
-let unsubscribeThread = null;
+let currentUsername = '';
+let typingTimeout;
+let typingInterval;
+let currentRoomId = '';
+let chatTabMode = 'friends'; // friends | requests
+let selectedProfilePicFile = null;
 
-// Loading UI
-function showLoading(show) {
-  document.getElementById("loadingOverlay").style.display = show ? "flex" : "none";
+// Utility Functions
+function $(id) {
+  return document.getElementById(id);
 }
-
-// Tabs
-function switchTab(id) {
-  document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-  document.querySelector(".fab-container").style.display = id === "groupsTab" ? "flex" : "none";
+function showTab(tabId) {
+  document.querySelectorAll('.tab, .tabContent').forEach(el => el.style.display = 'none');
+  $(tabId).style.display = 'block';
 }
+function showLoader(show = true) {
+  $('loadingOverlay').style.display = show ? 'flex' : 'none';
+}
+function showAlert(title, body, actions = []) {
+  const modal = $('viewProfileModal');
+  modal.innerHTML = `<div class="modal-content">
+    <h3>${title}</h3><p>${body}</p>
+    ${actions.map(a => `<button onclick="${a.action}">${a.label}</button>`).join('')}
+    <span class="close" onclick="closeModal()">×</span>
+  </div>`;
+  modal.style.display = 'block';
+}
+function closeModal() {
+  $('viewProfileModal').style.display = 'none';
+}
+function compressImage(file, maxSize = 200) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const scale = maxSize / Math.max(img.width, img.height);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.7);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function toggleTheme() {
+  document.body.classList.toggle('dark');
+  localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+}
+if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
 
-// Auth
+// Auth Flow
 auth.onAuthStateChanged(async user => {
   if (user) {
     currentUser = user;
-    const doc = await db.collection("users").doc(user.uid).get();
-    if (!doc.exists || !doc.data().username) {
-      switchTab("usernameDialog");
+    const userDoc = await db.collection('users').doc(user.uid).get();
+    if (userDoc.exists && userDoc.data().username) {
+      currentUsername = userDoc.data().username;
+      $('usernameDisplay').innerText = `@${currentUsername}`;
+      showTab('appPage');
+      initApp();
     } else {
-      document.getElementById("usernameDisplay").textContent = doc.data().username;
-      loadMainUI();
+      showTab('usernameDialog');
     }
   } else {
-    switchTab("loginPage");
+    showTab('loginPage');
   }
 });
 
 function login() {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-  auth.signInWithEmailAndPassword(email, password).catch(alert);
+  const email = $('email').value;
+  const password = $('password').value;
+  auth.signInWithEmailAndPassword(email, password).catch(e => alert(e.message));
 }
-
 function register() {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-  auth.createUserWithEmailAndPassword(email, password).catch(alert);
+  const email = $('email').value;
+  const password = $('password').value;
+  auth.createUserWithEmailAndPassword(email, password).catch(e => alert(e.message));
 }
-
-function logout() {
-  auth.signOut().then(() => location.reload());
-}
-
 function saveUsername() {
-  const username = document.getElementById("newUsername").value.trim();
-  if (!username) return alert("Enter a username.");
-  db.collection("users").doc(currentUser.uid).set({ username }, { merge: true }).then(() => {
-    document.getElementById("usernameDisplay").textContent = username;
-    loadMainUI();
+  const username = $('newUsername').value.trim().toLowerCase();
+  if (!username) return alert("Username can't be empty");
+  db.collection('usernames').doc(username).get().then(doc => {
+    if (doc.exists) return alert("Username taken");
+    const batch = db.batch();
+    const userRef = db.collection('users').doc(currentUser.uid);
+    batch.set(userRef, { username }, { merge: true });
+    batch.set(db.collection('usernames').doc(username), { uid: currentUser.uid });
+    batch.commit().then(() => {
+      currentUsername = username;
+      $('usernameDisplay').innerText = `@${username}`;
+      showTab('appPage');
+      initApp();
+    });
   });
 }
 
-function loadMainUI() {
-  document.getElementById("appPage").style.display = "block";
-  switchTab("chatTab");
+// App Init
+function initApp() {
   loadRooms();
-  listenMessages();
   loadInbox();
   loadFriends();
   loadProfile();
-  updateFollowers();
+  loadGroups();
 }
 
-// Chat Rooms
+// Room Functions
 function loadRooms() {
-  const dropdown = document.getElementById("roomDropdown");
-  dropdown.innerHTML = "";
-  db.collection("groups").get().then(snapshot => {
+  const dropdown = $('roomDropdown');
+  dropdown.innerHTML = '';
+  db.collection('rooms').onSnapshot(snapshot => {
     snapshot.forEach(doc => {
-      db.collection("groups").doc(doc.id).collection("members").doc(currentUser.uid).get().then(member => {
-        if (member.exists) {
-          const option = document.createElement("option");
-          option.value = doc.id;
-          option.textContent = doc.id;
-          dropdown.appendChild(option);
-        }
-      });
+      const opt = document.createElement('option');
+      opt.value = doc.id;
+      opt.textContent = doc.data().name;
+      dropdown.appendChild(opt);
     });
   });
 }
-
-function joinRoom(room) {
-  currentRoom = room;
-  if (unsubscribeMessages) unsubscribeMessages();
-  listenMessages();
+function joinRoom(roomId) {
+  currentRoomId = roomId;
+  loadRoomMessages(roomId);
 }
-
-function createGroup() {
-  const name = prompt("Group name?");
-  if (!name) return;
-  const ref = db.collection("groups").doc(name);
-  ref.set({
-    name,
-    createdBy: currentUser.uid,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    autoJoin: true
-  });
-  ref.collection("members").doc(currentUser.uid).set({ joinedAt: Date.now() });
-  joinRoom(name);
-}
-
-function joinGroup(name) {
-  if (!name) return;
-  db.collection("groups").doc(name).get().then(doc => {
-    if (doc.exists) {
-      db.collection("groups").doc(name).collection("members").doc(currentUser.uid).set({ joinedAt: Date.now() });
-      joinRoom(name);
-    } else {
-      alert("Group does not exist.");
-    }
-  });
-}
-
-function listenMessages() {
-  const messages = document.getElementById("messages");
-  unsubscribeMessages = db.collection("rooms").doc(currentRoom).collection("messages")
-    .orderBy("timestamp").onSnapshot(snapshot => {
-      messages.innerHTML = "";
-      snapshot.forEach(doc => {
-        const msg = doc.data();
-        const isMe = msg.senderId === currentUser.uid;
-        const bubble = document.createElement("div");
-        bubble.className = "message-bubble " + (isMe ? "right" : "left");
-        if (!isMe) {
-          const info = document.createElement("div");
-          info.className = "sender-info";
-          const avatar = document.createElement("img");
-          avatar.src = msg.senderPic || "default-avatar.png";
-          avatar.className = "message-avatar";
-          avatar.onclick = () => showUserProfile(msg.senderId);
-          const name = document.createElement("div");
-          name.className = "sender-name";
-          name.textContent = msg.senderName || "User";
-          info.appendChild(avatar);
-          info.appendChild(name);
-          bubble.appendChild(info);
-        }
-        const text = document.createElement("div");
-        text.textContent = msg.text;
-        bubble.appendChild(text);
-        messages.appendChild(bubble);
-      });
-      messages.scrollTop = messages.scrollHeight;
+function loadRoomMessages(roomId) {
+  const msgDiv = $('messages');
+  msgDiv.innerHTML = '';
+  db.collection('rooms').doc(roomId).collection('messages').orderBy('timestamp')
+    .onSnapshot(snapshot => {
+      msgDiv.innerHTML = '';
+      snapshot.forEach(doc => renderMessage(doc.data(), msgDiv));
+      msgDiv.scrollTop = msgDiv.scrollHeight;
     });
 }
-
 function sendMessage() {
-  const input = document.getElementById("messageInput");
+  const input = $('messageInput');
   const text = input.value.trim();
-  if (!text) return;
-  db.collection("users").doc(currentUser.uid).get().then(doc => {
-    const { username, photoURL } = doc.data();
-    db.collection("rooms").doc(currentRoom).collection("messages").add({
-      text,
-      senderId: currentUser.uid,
-      senderName: username,
-      senderPic: photoURL || "default-avatar.png",
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
-  });
-  input.value = "";
-}
-
-// Group Chat
-function sendGroupMessage() {
-  const input = document.getElementById("groupMessageInput");
-  const text = input.value.trim();
-  if (!text || !currentRoom) return;
-  db.collection("groups").doc(currentRoom).collection("messages").add({
+  if (!text || !currentRoomId) return;
+  db.collection('rooms').doc(currentRoomId).collection('messages').add({
     text,
-    senderId: currentUser.uid,
-    senderName: document.getElementById("usernameDisplay").textContent,
+    sender: currentUsername,
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   });
-  input.value = "";
+  input.value = '';
 }
+$('messageInput').addEventListener('keypress', e => {
+  if (e.key === 'Enter') sendMessage();
+});
 
-// Inbox System
+// Inbox
 function loadInbox() {
-  db.collection("inbox").where("to", "==", currentUser.uid).onSnapshot(snapshot => {
-    const list = document.getElementById("inboxList");
-    list.innerHTML = "";
-    snapshot.forEach(doc => {
-      const item = doc.data();
-      const card = document.createElement("div");
-      card.className = "inbox-card";
-      const info = document.createElement("div");
-      info.textContent = `${item.type}: ${item.fromName || item.from || "Unknown"}`;
-      card.appendChild(info);
-      const btns = document.createElement("div");
-      btns.className = "btn-group";
-      const accept = document.createElement("button");
-      accept.textContent = "✓";
-      accept.onclick = () => acceptRequest(doc.id);
-      const decline = document.createElement("button");
-      decline.textContent = "✕";
-      decline.onclick = () => declineRequest(doc.id);
-      btns.appendChild(accept);
-      btns.appendChild(decline);
-      card.appendChild(btns);
-      list.appendChild(card);
+  const inboxDiv = $('inboxList');
+  db.collection('users').doc(currentUser.uid).collection('inbox')
+    .onSnapshot(snapshot => {
+      inboxDiv.innerHTML = '';
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const card = document.createElement('div');
+        card.className = 'inbox-card';
+        card.textContent = `${data.type}: ${data.from}`;
+        card.onclick = () => showAlert(
+          `${data.type} from ${data.from}`,
+          'What would you like to do?',
+          [
+            { label: 'View Profile', action: `viewUserProfile('${data.from}')` },
+            { label: data.type === 'Friend Request' ? 'Accept' : 'Join', action: `acceptInbox('${doc.id}')` }
+          ]
+        );
+        inboxDiv.appendChild(card);
+      });
     });
-  });
 }
-
-function acceptRequest(id) {
-  db.collection("inbox").doc(id).delete().then(() => alert("Accepted"));
-}
-function declineRequest(id) {
-  db.collection("inbox").doc(id).delete().then(() => alert("Declined"));
+function acceptInbox(id) {
+  // Handle accept logic...
+  db.collection('users').doc(currentUser.uid).collection('inbox').doc(id).delete();
+  closeModal();
 }
 function markAllRead() {
-  db.collection("inbox").where("to", "==", currentUser.uid).get().then(snapshot => {
+  db.collection('users').doc(currentUser.uid).collection('inbox').get().then(snapshot => {
     snapshot.forEach(doc => doc.ref.delete());
   });
-  alert("Inbox cleared.");
 }
 
-// Friends & Threads
+// Friends
 function loadFriends() {
-  const list = document.getElementById("friendsList");
-  if (!list) return;
-  db.collection("friends").doc(currentUser.uid).collection("list").onSnapshot(snapshot => {
-    list.innerHTML = "";
-    snapshot.forEach(doc => {
-      const user = doc.data();
-      const div = document.createElement("div");
-      div.className = "friend-entry";
-      div.textContent = user.username;
-      div.onclick = () => openThread(user.uid, user.username);
-      list.appendChild(div);
-    });
-  });
-}
-
-function threadId(a, b) {
-  return [a, b].sort().join("_");
-}
-
-function openThread(uid, username) {
-  currentThreadUser = uid;
-  document.getElementById("threadWithName").textContent = username;
-  switchTab("threadView");
-  if (unsubscribeThread) unsubscribeThread();
-  unsubscribeThread = db.collection("threads").doc(threadId(currentUser.uid, uid)).collection("messages")
-    .orderBy("timestamp").onSnapshot(snapshot => {
-      const area = document.getElementById("threadMessages");
-      area.innerHTML = "";
+  const friendList = $('friendsList');
+  friendList.innerHTML = '';
+  db.collection('users').doc(currentUser.uid).collection('friends')
+    .onSnapshot(snapshot => {
+      friendList.innerHTML = '';
       snapshot.forEach(doc => {
-        const msg = doc.data();
-        const div = document.createElement("div");
-        div.textContent = `${msg.fromName}: ${msg.text}`;
-        area.appendChild(div);
+        const div = document.createElement('div');
+        div.className = 'friend-entry';
+        div.textContent = doc.id;
+        friendList.appendChild(div);
       });
-      area.scrollTop = area.scrollHeight;
     });
 }
 
-function sendThreadMessage() {
-  const input = document.getElementById("threadInput");
-  const text = input.value.trim();
-  if (!text || !currentThreadUser) return;
-  db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser)).collection("messages").add({
-    text,
-    from: currentUser.uid,
-    fromName: document.getElementById("usernameDisplay").textContent,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  });
-  input.value = "";
-}
+// Search
+function runSearch() {
+  const query = $('searchInput').value.trim().toLowerCase();
+  if (!query) return;
+  const usersDiv = $('searchResultsUser');
+  const groupsDiv = $('searchResultsGroup');
+  usersDiv.innerHTML = '';
+  groupsDiv.innerHTML = '';
 
-function closeThread() {
-  switchTab("friendsTab");
-  if (unsubscribeThread) unsubscribeThread();
+  db.collection('usernames').get().then(snapshot => {
+    snapshot.forEach(doc => {
+      if (doc.id.includes(query)) {
+        const div = document.createElement('div');
+        div.className = 'search-result';
+        div.textContent = `@${doc.id}`;
+        usersDiv.appendChild(div);
+      }
+    });
+  });
+
+  db.collection('rooms').get().then(snapshot => {
+    snapshot.forEach(doc => {
+      if (doc.data().name.includes(query)) {
+        const div = document.createElement('div');
+        div.className = 'search-result';
+        div.textContent = doc.data().name;
+        div.onclick = () => joinRoom(doc.id);
+        groupsDiv.appendChild(div);
+      }
+    });
+  });
+}
+function switchSearchView(view) {
+  $('searchResultsUser').style.display = view === 'user' ? 'block' : 'none';
+  $('searchResultsGroup').style.display = view === 'group' ? 'block' : 'none';
 }
 
 // Profile
 function loadProfile() {
-  db.collection("users").doc(currentUser.uid).get().then(doc => {
-    const data = doc.data();
-    document.getElementById("profileName").value = data.name || "";
-    document.getElementById("profileBio").value = data.bio || "";
-    document.getElementById("profileEmail").value = data.email || "";
-    document.getElementById("profilePhone").value = data.phone || "";
-    document.getElementById("profileGender").value = data.gender || "Other";
-    document.getElementById("profilePicPreview").src = data.photoURL || "default-avatar.png";
+  const userRef = db.collection('users').doc(currentUser.uid);
+  userRef.get().then(doc => {
+    if (doc.exists) {
+      const data = doc.data();
+      $('profileName').value = data.name || '';
+      $('profileBio').value = data.bio || '';
+      $('profilePhone').value = data.phone || '';
+      $('profileEmail').value = data.publicEmail || '';
+      if (data.avatarUrl) $('profilePicPreview').src = data.avatarUrl;
+    }
   });
 }
-
+$('profilePic').addEventListener('change', e => {
+  selectedProfilePicFile = e.target.files[0];
+});
 function saveProfile() {
-  const name = document.getElementById("profileName").value.trim();
-  const bio = document.getElementById("profileBio").value.trim();
-  const email = document.getElementById("profileEmail").value.trim();
-  const phone = document.getElementById("profilePhone").value.trim();
-  const gender = document.getElementById("profileGender").value;
-  const file = document.getElementById("profilePic").files[0];
-  const data = { name, bio, email, phone, gender };
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      data.photoURL = e.target.result;
-      db.collection("users").doc(currentUser.uid).set(data, { merge: true }).then(() => {
-        document.getElementById("profilePicPreview").src = e.target.result;
-        alert("Profile updated.");
+  const name = $('profileName').value;
+  const bio = $('profileBio').value;
+  const phone = $('profilePhone').value;
+  const publicEmail = $('profileEmail').value;
+  const userRef = db.collection('users').doc(currentUser.uid);
+
+  const updateData = { name, bio, phone, publicEmail };
+
+  if (selectedProfilePicFile) {
+    compressImage(selectedProfilePicFile).then(blob => {
+      const ref = storage.ref(`avatars/${currentUser.uid}.jpg`);
+      ref.put(blob).then(() => ref.getDownloadURL()).then(url => {
+        updateData.avatarUrl = url;
+        userRef.update(updateData);
       });
-    };
-    reader.readAsDataURL(file);
+    });
   } else {
-    db.collection("users").doc(currentUser.uid).set(data, { merge: true }).then(() => alert("Profile updated."));
+    userRef.update(updateData);
   }
 }
 
-// Profile Viewer
-function showUserProfile(uid) {
-  db.collection("users").doc(uid).get().then(doc => {
-    const data = doc.data();
-    document.getElementById("viewProfilePic").src = data.photoURL || "default-avatar.png";
-    document.getElementById("viewProfileName").textContent = data.name || "Unnamed";
-    document.getElementById("viewProfileUsername").textContent = "@" + (data.username || "unknown");
-    document.getElementById("viewProfileBio").textContent = data.bio || "No bio";
-    document.getElementById("viewProfileEmail").textContent = data.email || "";
-    document.getElementById("viewProfileStatus").textContent = data.status || "";
-    document.getElementById("viewProfileModal").style.display = "flex";
-  });
+// Logout
+function logout() {
+  auth.signOut();
 }
 
-// Search
-function switchSearchView(type) {
-  document.getElementById("searchResultsUser").style.display = type === "user" ? "block" : "none";
-  document.getElementById("searchResultsGroup").style.display = type === "group" ? "block" : "none";
-}
-
-function runSearch() {
-  const query = document.getElementById("searchInput").value.trim().toLowerCase();
-  if (!query) return;
-  const userRes = document.getElementById("searchResultsUser");
-  const groupRes = document.getElementById("searchResultsGroup");
-  userRes.innerHTML = "";
-  groupRes.innerHTML = "";
-
-  db.collection("users").where("username", ">=", query).where("username", "<=", query + "\uf8ff").get().then(snapshot => {
-    snapshot.forEach(doc => {
-      const user = doc.data();
-      const div = document.createElement("div");
-      div.textContent = `@${user.username} ${user.name || ""}`;
-      if (user.username === "moneythepro") div.textContent += " 🛠️ Developer";
-      div.onclick = () => showUserProfile(doc.id);
-      userRes.appendChild(div);
-    });
-  });
-
-  db.collection("groups").where("name", ">=", query).where("name", "<=", query + "\uf8ff").get().then(snapshot => {
-    snapshot.forEach(doc => {
-      const group = doc.data();
-      const div = document.createElement("div");
-      div.textContent = group.name;
-      div.onclick = () => joinGroup(group.name);
-      groupRes.appendChild(div);
-    });
-  });
-}
-
-// Theme + UI
-function toggleTheme() {
-  const dark = document.body.classList.toggle("dark");
-  localStorage.setItem("theme", dark ? "dark" : "light");
-}
-function applySavedTheme() {
-  if (localStorage.getItem("theme") === "dark") document.body.classList.add("dark");
-}
+// Extra
 function toggleFabMenu() {
-  document.getElementById("fabMenu").classList.toggle("hidden");
+  $('fabMenu').classList.toggle('hidden');
 }
-
-// DOM Events
-window.onload = () => {
-  applySavedTheme();
-  document.getElementById("messageInput").addEventListener("keypress", e => {
-    if (e.key === "Enter") sendMessage();
-  });
-  document.getElementById("threadInput").addEventListener("keypress", e => {
-    if (e.key === "Enter") sendThreadMessage();
-  });
-  document.getElementById("profilePicPreview").onclick = () => {
-    document.getElementById("profilePic").click();
-  };
-};
+function refreshPage() {
+  location.reload();
+}
