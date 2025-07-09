@@ -411,20 +411,23 @@ function promptPrivateChat() {
   });
 }
 
+// Floating Button Menu Fix
+function ToggleFabMenu() {
+  const side = document.getElementById("sideMenu");
+  if (side) side.classList.toggle("show");
+}
+
 // INIT
 window.onload = () => {
   applySavedTheme();
+
   const preview = document.getElementById("profilePicPreview");
   if (preview) {
     preview.onclick = () => document.getElementById("profilePic").click();
   }
 
-  // ✅ FAB Toggle Button
   const toggleBtn = document.getElementById("toggleBtn");
   if (toggleBtn) {
-    toggleBtn.addEventListener("click", () => {
-      const side = document.getElementById("sideMenu");
-      if (side) side.classList.toggle("show");
-    });
+    toggleBtn.addEventListener("click", () => ToggleFabMenu());
   }
 };
