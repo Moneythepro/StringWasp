@@ -1,68 +1,88 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>StringWasp Messenger</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.ico">
 </head>
-<body class="theme-light">
+<body>
+  <div id="app">
+    <header>
+      <h1>🕸️ StringWasp</h1>
+      <select id="themeSwitcher">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <option value="matrix">Matrix</option>
+      </select>
+    </header><section id="loginSection">
+  <h2>Login / Register</h2>
+  <input type="text" id="username" placeholder="Username">
+  <input type="password" id="password" placeholder="Password">
+  <button id="loginBtn">Login</button>
+  <button id="registerBtn">Register</button>
+</section>
 
-  <!-- 🔒 Top Info -->
-  <header>
-    <h1>StringWasp 🐝</h1>
-    <p id="encryptionBanner">🔒 End-to-End Encryption Enabled</p>
-  </header>
-
-  <!-- 📌 Pinned Message -->
-  <div id="pinnedMessage" class="pinned"></div>
-
-  <!-- 💬 Chat Area -->
-  <div id="chatContainer">
-    <div id="chatArea"></div>
+<section id="mainSection" style="display:none">
+  <div id="tabs">
+    <button class="tab" data-tab="chats">Chats</button>
+    <button class="tab" data-tab="friends">Friends</button>
+    <button class="tab" data-tab="inbox">Inbox</button>
+    <button class="tab" data-tab="search">Search</button>
+    <button class="tab" data-tab="profile">Profile</button>
+    <button id="logoutBtn">Logout</button>
   </div>
 
-  <!-- 📝 Message Input -->
-  <div id="inputBar">
-    <input type="text" id="inputMsg" placeholder="Type your message..." />
-    <button id="btnSend">Send</button>
-    <button id="btnVoice">🎙️</button>
-    <label>
-      <input type="checkbox" id="selfDestruct" />
-      Self-Destruct
-    </label>
+  <div id="content">
+    <div id="chats" class="tabContent">
+      <h3>Chats</h3>
+      <div id="pinnedMessage"></div>
+      <div id="chatArea"></div>
+      <input type="text" id="inputMsg" placeholder="Type message">
+      <button id="btnSend">Send</button>
+      <button id="btnVoice">🎤 Voice</button>
+      <button id="btnBackup">Backup</button>
+      <button id="btnRestore">Restore</button>
+    </div>
+
+    <div id="friends" class="tabContent"><h3>Friends</h3></div>
+    <div id="inbox" class="tabContent"><h3>Inbox</h3></div>
+    <div id="search" class="tabContent">
+      <input type="text" placeholder="Search Users">
+    </div>
+    <div id="profile" class="tabContent">
+      <h3>Profile Editor</h3>
+      <input type="file" id="profilePicUpload">
+      <input type="text" placeholder="Status">
+      <input type="text" placeholder="Display Name">
+      <button>Save</button>
+    </div>
   </div>
+</section>
 
-  <!-- 🛠️ Action Bar -->
-  <div id="actionBar">
-    <button id="btnBackup">📁 Backup</button>
-    <button id="btnRestore">🔄 Restore</button>
-    <button id="btnPin">📌 Pin Last</button>
-    <button id="btnPlugin">🧩 Load Plugin</button>
-    <button id="btnJoinLink">🔗 Join Hidden Group</button>
-    <button id="btnSettings">⚙️ Settings</button>
+<div id="floatingMenu">
+  <button id="fab">+</button>
+  <div id="fabMenu">
+    <button id="joinGroupBtn">Join Group</button>
+    <button id="createGroupBtn">Create Group</button>
+    <button id="qrBtn">Scan QR</button>
   </div>
+</div>
 
-  <!-- 🎨 Theme Switcher -->
-  <select id="themeSwitcher">
-    <option value="theme-light">🌞 Light</option>
-    <option value="theme-dark">🌚 Dark</option>
-    <option value="theme-neon">🟩 Neon</option>
-  </select>
+<div id="modals"></div>
 
-  <!-- 🪪 User Badge -->
-  <div id="userBadge">Badge: 🛡️ Verified Wasp</div>
+  </div>  <!-- Firebase SDK -->  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>  <!-- Core Scripts -->  <script src="firebase.js"></script>  <script src="app.js" type="module"></script>  <script>
+    // UI tab switching
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.tabContent').forEach(tc => tc.style.display = 'none');
+        document.getElementById(btn.dataset.tab).style.display = 'block';
+      };
+    });
 
-  <!-- 🔔 Notification Area -->
-  <div id="notificationArea"></div>
-
-  <!-- ⚙️ Settings Modal Placeholder -->
-  <div id="settingsModal" style="display:none;">
-    <h2>Settings (Coming Soon)</h2>
-    <button onclick="this.parentElement.style.display='none'">Close</button>
-  </div>
-
-  <!-- 📜 Script -->
-  <script type="module" src="app.js"></script>
-</body>
+    // Floating Action Menu
+    document.getElementById('fab').onclick = () => {
+      document.getElementById('fabMenu').classList.toggle('open');
+    };
+  </script></body>
 </html>
