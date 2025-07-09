@@ -8,6 +8,10 @@ let unsubscribeThread = null;
 let currentThreadUser = null;
 
 // Tabs
+function showUsernameDialog() {
+  switchTab("usernameDialog");
+}
+
 function showLoading(show) {
   document.getElementById("loadingOverlay").style.display = show ? "flex" : "none";
 }
