@@ -157,5 +157,20 @@
         .catch(console.error);
     }
   </script>
+  <!-- Side Menu -->
+<div id="sideMenu" class="side-menu">
+  <h3>Menu</h3>
+  <ul>
+    <li onclick="switchTab('chatTab')">Chat</li>
+    <li onclick="switchTab('friendsTab')">Friends</li>
+    <li onclick="switchTab('inboxTab')">Inbox</li>
+    <li onclick="switchTab('searchTab')">Search</li>
+    <li onclick="switchTab('profileTab')">Profile</li>
+    <li onclick="auth.signOut()">Logout</li>
+  </ul>
+</div>
+
+<!-- FAB Button -->
+<button id="toggleBtn" class="fab">☰</button>
 </body>
 </html>
