@@ -1,4 +1,4 @@
-// Firebase
+// app.js
 const auth = firebase.auth();
 const db = firebase.firestore();
 let currentUser = null;
@@ -7,7 +7,7 @@ let unsubscribeMessages = null;
 let unsubscribeThread = null;
 let currentThreadUser = null;
 
-// Utility
+// UI Helper
 function showLoading(show) {
   document.getElementById("loadingOverlay").style.display = show ? "flex" : "none";
 }
@@ -54,7 +54,7 @@ function saveUsername() {
   });
 }
 
-// Main UI
+// Main
 function loadMainUI() {
   document.getElementById("appPage").style.display = "block";
   switchTab("chatTab");
@@ -67,9 +67,8 @@ function loadMainUI() {
 
 // Rooms
 function createOrJoinRoom() {
-  const room = document.getElementById("customRoom").value.trim();
+  const room = prompt("Enter group name:");
   if (!room) return;
-
   const ref = db.collection("groups").doc(room);
   ref.get().then(doc => {
     if (!doc.exists) {
@@ -80,6 +79,7 @@ function createOrJoinRoom() {
         autoJoin: true
       });
     }
+    db.collection("groups").doc(room).collection("members").doc(currentUser.uid).set({ joinedAt: Date.now() });
     joinRoom(room);
   });
 }
@@ -95,10 +95,14 @@ function loadRooms() {
   dropdown.innerHTML = "";
   db.collection("groups").get().then(snapshot => {
     snapshot.forEach(doc => {
-      const opt = document.createElement("option");
-      opt.textContent = doc.id;
-      opt.value = doc.id;
-      dropdown.appendChild(opt);
+      db.collection("groups").doc(doc.id).collection("members").doc(currentUser.uid).get().then(memberDoc => {
+        if (memberDoc.exists) {
+          const opt = document.createElement("option");
+          opt.textContent = doc.id;
+          opt.value = doc.id;
+          dropdown.appendChild(opt);
+        }
+      });
     });
   });
 }
@@ -111,31 +115,30 @@ function listenMessages() {
       messagesDiv.innerHTML = "";
       snapshot.forEach(doc => {
         const msg = doc.data();
-        const div = document.createElement("div");
         const isMine = msg.senderId === currentUser.uid;
+        const bubble = document.createElement("div");
+        bubble.className = "message-bubble " + (isMine ? "right" : "left");
 
-        div.className = "message " + (isMine ? "mine" : "other");
-        const avatar = msg.senderPic || "default-avatar.png";
         if (!isMine) {
           const img = document.createElement("img");
-          img.src = avatar;
-          img.className = "avatar";
+          img.src = msg.senderPic || "default-avatar.png";
+          img.className = "message-avatar";
           img.onclick = () => showUserProfile(msg.senderId);
-          div.appendChild(img);
+          bubble.appendChild(img);
         }
 
-        const content = document.createElement("span");
-        content.textContent = `${msg.senderName}: ${msg.text}`;
-        div.appendChild(content);
-
+        const text = document.createElement("div");
+        text.className = "message-text";
+        text.textContent = isMine ? msg.text : `${msg.senderName}: ${msg.text}`;
         if (isMine) {
-          div.oncontextmenu = (e) => {
+          text.oncontextmenu = e => {
             e.preventDefault();
             showMessageOptions(doc.id, msg);
           };
         }
 
-        messagesDiv.appendChild(div);
+        bubble.appendChild(text);
+        messagesDiv.appendChild(bubble);
       });
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
@@ -151,7 +154,7 @@ function sendMessage() {
       text,
       senderName: username,
       senderId: currentUser.uid,
-      senderPic: photoURL || "",
+      senderPic: photoURL || "default-avatar.png",
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
   });
@@ -169,27 +172,26 @@ function showMessageOptions(msgId, msg) {
     if (del) {
       db.collection("rooms").doc(currentRoom).collection("messages").doc(msgId).delete();
     } else {
-      alert("Only from me - not implemented yet.");
+      alert("Delete from me only: not implemented.");
     }
   }
 }
 
 // Inbox
 function loadInbox() {
-  db.collection("inbox").where("to", "==", currentUser.uid)
-    .onSnapshot(snapshot => {
-      const list = document.getElementById("inboxList");
-      list.innerHTML = "";
-      snapshot.forEach(doc => {
-        const item = doc.data();
-        const card = document.createElement("div");
-        card.className = "inbox-card";
-        card.innerHTML = `${item.type}: ${item.fromName} 
+  db.collection("inbox").where("to", "==", currentUser.uid).onSnapshot(snapshot => {
+    const list = document.getElementById("inboxList");
+    list.innerHTML = "";
+    snapshot.forEach(doc => {
+      const item = doc.data();
+      const card = document.createElement("div");
+      card.className = "inbox-card";
+      card.innerHTML = `${item.type}: ${item.fromName}
         <button onclick="acceptRequest('${doc.id}')">✓</button>
         <button onclick="declineRequest('${doc.id}')">✕</button>`;
-        list.appendChild(card);
-      });
+      list.appendChild(card);
     });
+  });
 }
 
 function acceptRequest(id) {
@@ -202,23 +204,74 @@ function declineRequest(id) {
   alert("Request Rejected");
 }
 
+// Profile
+function loadProfile() {
+  db.collection("users").doc(currentUser.uid).get().then(doc => {
+    const data = doc.data();
+    document.getElementById("profileName").value = data.name || "";
+    document.getElementById("profileBio").value = data.bio || "";
+  });
+}
+
+function saveProfile() {
+  const name = document.getElementById("profileName").value;
+  const bio = document.getElementById("profileBio").value;
+  const fileInput = document.getElementById("profilePic");
+  const file = fileInput.files[0];
+  const data = { name, bio };
+
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      data.photoURL = e.target.result;
+      db.collection("users").doc(currentUser.uid).set(data, { merge: true });
+    };
+    reader.readAsDataURL(file);
+  } else {
+    db.collection("users").doc(currentUser.uid).set(data, { merge: true });
+  }
+}
+
+function showUserProfile(uid) {
+  db.collection("users").doc(uid).get().then(doc => {
+    const data = doc.data();
+    const confirmed = confirm(`${data.username}\n${data.bio || "No bio"}\n\nOK = Send Request\nCancel = Close`);
+    if (confirmed) {
+      sendFriendRequest(uid, data.username);
+    }
+  });
+}
+
+function sendFriendRequest(toUid, toName) {
+  db.collection("inbox").add({
+    to: toUid,
+    from: currentUser.uid,
+    fromName: document.getElementById("usernameDisplay").textContent,
+    type: "Friend Request",
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
+
 // Friends
 function loadFriends() {
   const container = document.getElementById("friendsList");
-  db.collection("friends").doc(currentUser.uid).collection("list")
-    .onSnapshot(snapshot => {
-      container.innerHTML = "";
-      snapshot.forEach(doc => {
-        const friend = doc.data();
-        const btn = document.createElement("button");
-        btn.textContent = friend.username;
-        btn.onclick = () => openThread(friend.uid, friend.username);
-        container.appendChild(btn);
-      });
+  db.collection("friends").doc(currentUser.uid).collection("list").onSnapshot(snapshot => {
+    container.innerHTML = "";
+    snapshot.forEach(doc => {
+      const friend = doc.data();
+      const btn = document.createElement("button");
+      btn.textContent = friend.username;
+      btn.onclick = () => openThread(friend.uid, friend.username);
+      container.appendChild(btn);
     });
+  });
 }
 
 // Threaded Chat
+function threadId(a, b) {
+  return [a, b].sort().join("_");
+}
+
 function openThread(uid, username) {
   switchTab("threadView");
   document.getElementById("threadWithName").textContent = username;
@@ -244,54 +297,17 @@ function sendThreadMessage() {
   if (!text || !currentThreadUser) return;
   const fromName = document.getElementById("usernameDisplay").textContent;
   db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser)).collection("messages").add({
-    text, from: currentUser.uid, fromName,
+    text,
+    from: currentUser.uid,
+    fromName,
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   });
   input.value = "";
 }
 
-function threadId(a, b) {
-  return [a, b].sort().join("_");
-}
-
 function closeThread() {
   switchTab("friendsTab");
   if (unsubscribeThread) unsubscribeThread();
-}
-
-// Profile
-function loadProfile() {
-  db.collection("users").doc(currentUser.uid).get().then(doc => {
-    const data = doc.data();
-    document.getElementById("profileName").value = data.name || "";
-    document.getElementById("profileBio").value = data.bio || "";
-  });
-}
-
-function saveProfile() {
-  const name = document.getElementById("profileName").value;
-  const bio = document.getElementById("profileBio").value;
-  const fileInput = document.getElementById("profilePic");
-  const file = fileInput.files[0];
-
-  const data = { name, bio };
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      data.photoURL = e.target.result;
-      db.collection("users").doc(currentUser.uid).set(data, { merge: true });
-    };
-    reader.readAsDataURL(file);
-  } else {
-    db.collection("users").doc(currentUser.uid).set(data, { merge: true });
-  }
-}
-
-function showUserProfile(uid) {
-  db.collection("users").doc(uid).get().then(doc => {
-    const data = doc.data();
-    alert(`User: ${data.username}\nBio: ${data.bio || "No bio"}`);
-  });
 }
 
 // Search
@@ -302,54 +318,59 @@ function switchSearchView(view) {
 
 function runSearch() {
   const query = document.getElementById("searchInput").value.trim().toLowerCase();
-  db.collection("users").where("username", ">=", query)
-    .where("username", "<=", query + "\uf8ff").get().then(snapshot => {
-      const container = document.getElementById("searchResultsUser");
-      container.innerHTML = "";
-      snapshot.forEach(doc => {
-        const user = doc.data();
-        const div = document.createElement("div");
-        div.className = "search-result";
-        div.textContent = user.username;
-        div.onclick = () => {
-          const choice = confirm("OK = View Profile\nCancel = Send Friend Request");
-          if (choice) showUserProfile(doc.id);
-          else sendFriendRequest(doc.id, user.username);
-        };
-        container.appendChild(div);
-      });
-    });
 
-  db.collection("groups").where("name", ">=", query)
-    .where("name", "<=", query + "\uf8ff").get().then(snapshot => {
-      const container = document.getElementById("searchResultsGroup");
-      container.innerHTML = "";
-      snapshot.forEach(doc => {
-        const group = doc.data();
-        const div = document.createElement("div");
-        div.className = "search-result";
-        div.textContent = group.name;
-        div.onclick = () => {
-          const choice = confirm("OK = Join Group\nCancel = View Info");
-          if (choice) {
-            if (group.autoJoin) joinRoom(group.name);
-            else alert("Request sent for approval");
+  // Users
+  db.collection("users").where("username", ">=", query).where("username", "<=", query + "\uf8ff").get().then(snapshot => {
+    const container = document.getElementById("searchResultsUser");
+    container.innerHTML = "";
+    snapshot.forEach(doc => {
+      const user = doc.data();
+      const div = document.createElement("div");
+      div.className = "search-result";
+      div.textContent = user.username;
+      div.onclick = () => {
+        const choice = confirm("OK = View Profile\nCancel = Send Friend Request");
+        if (choice) showUserProfile(doc.id);
+        else sendFriendRequest(doc.id, user.username);
+      };
+      container.appendChild(div);
+    });
+  });
+
+  // Groups
+  db.collection("groups").where("name", ">=", query).where("name", "<=", query + "\uf8ff").get().then(snapshot => {
+    const container = document.getElementById("searchResultsGroup");
+    container.innerHTML = "";
+    snapshot.forEach(doc => {
+      const group = doc.data();
+      const div = document.createElement("div");
+      div.className = "search-result";
+      div.textContent = `${group.name}`;
+      div.onclick = () => {
+        const choice = confirm("OK = Join Group\nCancel = View Info");
+        if (choice) {
+          if (group.autoJoin) {
+            db.collection("groups").doc(group.name).collection("members").doc(currentUser.uid).set({ joinedAt: Date.now() });
+            joinRoom(group.name);
+            alert("Joined group successfully.");
           } else {
-            alert(`Group: ${group.name}\nCreated by: ${group.createdBy}`);
+            db.collection("inbox").add({
+              to: group.createdBy,
+              from: currentUser.uid,
+              fromName: document.getElementById("usernameDisplay").textContent,
+              type: `Group Join Request: ${group.name}`,
+              timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            alert("Join request sent.");
           }
-        };
-        container.appendChild(div);
-      });
+        } else {
+          db.collection("groups").doc(group.name).collection("members").get().then(members => {
+            alert(`Group: ${group.name}\nMembers: ${members.size}`);
+          });
+        }
+      };
+      container.appendChild(div);
     });
-}
-
-function sendFriendRequest(toUid, toName) {
-  db.collection("inbox").add({
-    to: toUid,
-    from: currentUser.uid,
-    fromName: document.getElementById("usernameDisplay").textContent,
-    type: "Friend Request",
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
   });
 }
 
