@@ -2,108 +2,102 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>StringWasp Messenger</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="logo.png" />
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 </head>
 <body>
-  <!-- 🔒 Auth Section -->
-  <div id="authContainer">
-    <h2>Login / Register</h2>
-    <input id="email" type="email" placeholder="Email" />
-    <input id="password" type="password" placeholder="Password" />
-    <button id="btnLogin">Login</button>
-    <button id="btnRegister">Register</button>
-  </div>
+  <div id="app">
+    <header>
+      <h1>StringWasp</h1>
+      <select id="themeSwitcher">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </header>
 
-  <!-- 💬 Main Messenger UI -->
-  <div id="mainApp" style="display:none;">
-    <!-- 🧭 Navigation Tabs -->
-    <nav>
-      <button data-tab="chats">Chats</button>
-      <button data-tab="friends">Friends</button>
-      <button data-tab="inbox">Inbox</button>
-      <button data-tab="search">Search</button>
-      <button data-tab="profile">Profile</button>
-      <button data-tab="terminal">💻</button>
-    </nav>
+    <div id="auth">
+      <input id="email" placeholder="Email" />
+      <input id="password" placeholder="Password" type="password" />
+      <button id="login">Login</button>
+      <button id="register">Register</button>
+    </div>
 
-    <!-- 📌 Pinned Message -->
-    <div id="pinnedMessage" class="pinned">📌 No pinned messages</div>
+    <div id="main" style="display: none">
+      <nav>
+        <button data-tab="chats">Chats</button>
+        <button data-tab="inbox">Inbox</button>
+        <button data-tab="friends">Friends</button>
+        <button data-tab="search">Search</button>
+        <button data-tab="profile">Profile</button>
+        <button id="logout">Logout</button>
+      </nav>
 
-    <!-- 🪟 Tab Content Area -->
-    <section id="tabContent">
-      <div id="tab-chats" class="tab">
+      <div class="tab" id="tab-chats">
+        <h2>Chat Threads</h2>
+        <div id="chatList"></div>
         <div id="chatArea"></div>
-        <input id="inputMsg" placeholder="Type a message..." />
+        <textarea id="inputMsg" placeholder="Type a message..."></textarea>
         <button id="btnSend">Send</button>
-        <button id="btnVoice">🎙</button>
-        <button id="btnSelfDestruct">💣</button>
+        <button id="btnVoice">🎤 Voice</button>
+        <button id="btnBackup">📤 Backup</button>
+        <button id="btnRestore">📥 Restore</button>
+        <button onclick="showPinnedMessage()">📌 Show Pinned</button>
       </div>
 
-      <div id="tab-friends" class="tab">
-        <h3>Friends</h3>
+      <div class="tab" id="tab-inbox">
+        <h2>Inbox</h2>
+        <div id="inbox"></div>
+      </div>
+
+      <div class="tab" id="tab-friends">
+        <h2>Friends</h2>
+        <input id="friendEmail" placeholder="Friend's Email" />
+        <button id="addFriend">Add Friend</button>
         <div id="friendList"></div>
-        <input id="friendEmail" placeholder="Friend Email"/>
-        <button id="btnAddFriend">Add Friend</button>
       </div>
 
-      <div id="tab-inbox" class="tab">
-        <h3>Inbox</h3>
-        <div id="inboxArea"></div>
-      </div>
-
-      <div id="tab-search" class="tab">
-        <h3>Search Users</h3>
-        <input id="searchQuery" placeholder="Username or Email" />
-        <button id="btnSearch">Search</button>
+      <div class="tab" id="tab-search">
+        <h2>Search Users</h2>
+        <input id="searchBox" placeholder="Search usernames..." />
         <div id="searchResults"></div>
       </div>
 
-      <div id="tab-profile" class="tab">
-        <h3>Your Profile</h3>
-        <input id="displayName" placeholder="Display Name" />
-        <input id="bio" placeholder="Bio" />
+      <div class="tab" id="tab-profile">
+        <h2>Profile</h2>
+        <input id="username" placeholder="Username" />
         <input type="file" id="profilePic" />
-        <img id="profilePreview" width="100" />
-        <select id="badgeSelector">
-          <option value="">No Badge</option>
-          <option value="🛡️">🛡️ Defender</option>
-          <option value="🧠">🧠 Thinker</option>
-          <option value="🔥">🔥 OG</option>
-        </select>
-        <button id="btnSaveProfile">Save</button>
-        <select id="themeSwitcher">
-          <option value="light">☀️ Light</option>
-          <option value="dark">🌙 Dark</option>
-        </select>
-        <label><input type="checkbox" id="notifToggle" />🔔 Notifications</label>
-        <button id="btnLogout">Logout</button>
+        <button id="saveProfile">Save</button>
+        <div id="userProfile"></div>
       </div>
-
-      <div id="tab-terminal" class="tab">
-        <h3>Dev Terminal</h3>
-        <textarea id="terminalLog" rows="10" readonly></textarea><br/>
-        <input id="terminalInput" placeholder="Enter command..." />
-        <button id="runCommand">Run</button>
-      </div>
-    </section>
-
-    <!-- ➕ Floating Action Button -->
-    <div id="fab">
-      <button id="btnPin">📌</button>
-      <button id="btnBackup">📁</button>
-      <button id="btnRestore">📂</button>
-      <button id="btnPlugin">🧩</button>
     </div>
   </div>
 
-  <!-- 📦 Scripts -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js" type="module"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js" type="module"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js" type="module"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js" type="module"></script>
-  <script src="app.js" type="module"></script>
+  <!-- Firebase Config -->
+  <script>
+    var firebaseConfig = {
+      apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
+      authDomain: "stringwasp.firebaseapp.com",
+      projectId: "stringwasp",
+      storageBucket: "stringwasp.appspot.com",
+      messagingSenderId: "974718019508",
+      appId: "1:974718019508:web:59fabe6306517d10b374e1"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    window.auth = firebase.auth();
+    window.db = firebase.firestore();
+    window.storage = firebase.storage(); // ✅ For profile pictures
+  </script>
+
+  <!-- App Logic -->
+  <script type="module" src="app.js"></script>
 </body>
 </html>
