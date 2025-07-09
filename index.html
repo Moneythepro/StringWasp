@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,67 +17,63 @@
         <option value="light">Light</option>
         <option value="dark">Dark</option>
       </select>
-    </header>
+    </header><div id="auth">
+  <input id="email" placeholder="Email" />
+  <input id="password" placeholder="Password" type="password" />
+  <button id="login">Login</button>
+  <button id="register">Register</button>
+</div>
 
-    <div id="auth">
-      <input id="email" placeholder="Email" />
-      <input id="password" placeholder="Password" type="password" />
-      <button id="login">Login</button>
-      <button id="register">Register</button>
-    </div>
+<div id="main" style="display: none">
+  <nav>
+    <button data-tab="chats">Chats</button>
+    <button data-tab="inbox">Inbox</button>
+    <button data-tab="friends">Friends</button>
+    <button data-tab="search">Search</button>
+    <button data-tab="profile">Profile</button>
+    <button id="logout">Logout</button>
+  </nav>
 
-    <div id="main" style="display: none">
-      <nav>
-        <button data-tab="chats">Chats</button>
-        <button data-tab="inbox">Inbox</button>
-        <button data-tab="friends">Friends</button>
-        <button data-tab="search">Search</button>
-        <button data-tab="profile">Profile</button>
-        <button id="logout">Logout</button>
-      </nav>
-
-      <div class="tab" id="tab-chats">
-        <h2>Chat Threads</h2>
-        <div id="chatList"></div>
-        <div id="chatArea"></div>
-        <textarea id="inputMsg" placeholder="Type a message..."></textarea>
-        <button id="btnSend">Send</button>
-        <button id="btnVoice">🎤 Voice</button>
-        <button id="btnBackup">📤 Backup</button>
-        <button id="btnRestore">📥 Restore</button>
-        <button onclick="showPinnedMessage()">📌 Show Pinned</button>
-      </div>
-
-      <div class="tab" id="tab-inbox">
-        <h2>Inbox</h2>
-        <div id="inbox"></div>
-      </div>
-
-      <div class="tab" id="tab-friends">
-        <h2>Friends</h2>
-        <input id="friendEmail" placeholder="Friend's Email" />
-        <button id="addFriend">Add Friend</button>
-        <div id="friendList"></div>
-      </div>
-
-      <div class="tab" id="tab-search">
-        <h2>Search Users</h2>
-        <input id="searchBox" placeholder="Search usernames..." />
-        <div id="searchResults"></div>
-      </div>
-
-      <div class="tab" id="tab-profile">
-        <h2>Profile</h2>
-        <input id="username" placeholder="Username" />
-        <input type="file" id="profilePic" />
-        <button id="saveProfile">Save</button>
-        <div id="userProfile"></div>
-      </div>
-    </div>
+  <div class="tab" id="tab-chats">
+    <h2>Chat Threads</h2>
+    <div id="chatList"></div>
+    <div id="chatArea"></div>
+    <textarea id="inputMsg" placeholder="Type a message..."></textarea>
+    <button id="btnSend">Send</button>
+    <button id="btnVoice">🎤 Voice</button>
+    <button id="btnBackup">📤 Backup</button>
+    <button id="btnRestore">📥 Restore</button>
+    <button onclick="showPinnedMessage()">📌 Show Pinned</button>
   </div>
 
-  <!-- Firebase Config -->
-  <script>
+  <div class="tab" id="tab-inbox">
+    <h2>Inbox</h2>
+    <div id="inbox"></div>
+  </div>
+
+  <div class="tab" id="tab-friends">
+    <h2>Friends</h2>
+    <input id="friendEmail" placeholder="Friend's Email" />
+    <button id="addFriend">Add Friend</button>
+    <div id="friendList"></div>
+  </div>
+
+  <div class="tab" id="tab-search">
+    <h2>Search Users</h2>
+    <input id="searchBox" placeholder="Search usernames..." />
+    <div id="searchResults"></div>
+  </div>
+
+  <div class="tab" id="tab-profile">
+    <h2>Profile</h2>
+    <input id="username" placeholder="Username" />
+    <input type="file" id="profilePic" />
+    <button id="saveProfile">Save</button>
+    <div id="userProfile"></div>
+  </div>
+</div>
+
+  </div>  <!-- Firebase Config -->  <script>
     var firebaseConfig = {
       apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
       authDomain: "stringwasp.firebaseapp.com",
@@ -94,10 +89,6 @@
 
     window.auth = firebase.auth();
     window.db = firebase.firestore();
-    window.storage = firebase.storage(); // ✅ For profile pictures
-  </script>
-
-  <!-- App Logic -->
-  <script type="module" src="app.js"></script>
-</body>
+    window.storage = firebase.storage();
+  </script>  <!-- App Logic -->  <script type="module" src="app.js"></script></body>
 </html>
