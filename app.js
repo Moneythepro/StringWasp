@@ -1,115 +1,75 @@
-// DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
+  // Hide loader
   document.getElementById('init-overlay').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
 
-  // Tab Switching
-  document.querySelectorAll('[data-tab]').forEach(btn => {
+  // Tabs
+  document.querySelectorAll('nav button').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-      document.getElementById(btn.dataset.tab).classList.add('active');
+      const tab = btn.dataset.tab;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
     });
   });
 
-  // Theme Switcher
-  const themeSwitcher = document.getElementById('themeSwitcher');
-  themeSwitcher.addEventListener('change', e => {
+  // Theme toggle
+  document.getElementById('themeSwitcher').addEventListener('change', (e) => {
     document.body.className = `${e.target.value}-theme`;
     localStorage.setItem('theme', e.target.value);
   });
-  const savedTheme = localStorage.getItem('theme') || 'light';
-  themeSwitcher.value = savedTheme;
-  document.body.className = `${savedTheme}-theme`;
+  document.body.className = `${localStorage.getItem('theme') || 'light'}-theme`;
 
-  // Panic Button
+  // Panic button
   document.getElementById('panicBtn').addEventListener('click', () => {
     localStorage.clear();
-    sessionStorage.clear();
-    alert("All local data cleared.");
+    alert('All local data cleared. Reloading...');
     location.reload();
   });
 
-  // Send Encrypted Message
-  document.getElementById('sendMessageBtn').addEventListener('click', async () => {
-    const msg = document.getElementById('messageInput').value.trim();
-    const anonymous = document.getElementById('anonymousToggle').checked;
-    if (!msg) return;
+  // Send chat
+  document.getElementById('sendBtn').addEventListener('click', async () => {
+    const msg = document.getElementById('chatInput').value;
+    const isAnon = document.getElementById('anonToggle').checked;
+    const user = auth.currentUser;
+    if (!user || !msg) return;
 
-    const encoded = btoa(msg);
-    await db.collection('messages').add({
-      content: encoded,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      uid: auth.currentUser ? auth.currentUser.uid : null,
-      anonymous: anonymous
+    const encrypted = btoa(msg);
+    await db.collection('chats').add({
+      uid: user.uid,
+      msg: encrypted,
+      anon: isAnon,
+      name: isAnon ? 'Anonymous' : user.displayName || 'User',
+      time: firebase.firestore.FieldValue.serverTimestamp()
     });
-    document.getElementById('messageInput').value = '';
+    document.getElementById('chatInput').value = '';
   });
 
-  // Realtime Chat Updates
-  db.collection('messages').orderBy('createdAt').onSnapshot(snapshot => {
-    const chatContainer = document.getElementById('chatContainer');
-    chatContainer.innerHTML = '';
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const msg = document.createElement('div');
-      msg.textContent = `${data.anonymous ? 'Anonymous' : data.uid}: ${atob(data.content)}`;
-      chatContainer.appendChild(msg);
-    });
-  });
-
-  // Group Creation
-  document.getElementById('createGroupBtn').addEventListener('click', async () => {
-    const name = document.getElementById('groupNameInput').value.trim();
-    const privacy = document.getElementById('groupPrivacy').value;
-    if (!name) return;
-
-    await db.collection('groups').add({
-      name,
-      privacy,
-      members: [auth.currentUser ? auth.currentUser.uid : null],
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    document.getElementById('groupNameInput').value = '';
-  });
-
-  // Load Groups
-  db.collection('groups').orderBy('createdAt').onSnapshot(snapshot => {
-    const list = document.getElementById('groupList');
-    list.innerHTML = '';
+  // Load chat
+  db.collection('chats').orderBy('time').onSnapshot(snapshot => {
+    const chatArea = document.getElementById('chatArea');
+    chatArea.innerHTML = '';
     snapshot.forEach(doc => {
       const data = doc.data();
       const div = document.createElement('div');
-      div.textContent = `${data.name} (${data.privacy})`;
-      list.appendChild(div);
+      div.textContent = `${data.name}: ${atob(data.msg || '')}`;
+      chatArea.appendChild(div);
     });
   });
 
-  // Save Profile
+  // Save profile
   document.getElementById('saveProfileBtn').addEventListener('click', async () => {
-    const displayName = document.getElementById('displayNameInput').value;
-    const music = document.getElementById('musicToggle').checked;
-    const emotion = document.getElementById('emotionalToggle').checked;
-    const lastSeen = document.getElementById('lastSeenToggle').checked;
-
-    const uid = auth.currentUser?.uid;
-    if (!uid) return;
-
+    const user = auth.currentUser;
+    const name = document.getElementById('displayNameInput').value;
     const file = document.getElementById('profilePicInput').files[0];
-    let photoURL = null;
+
+    if (name) await user.updateProfile({ displayName: name });
+
     if (file) {
-      const ref = storage.ref(`profiles/${uid}`);
+      const ref = storage.ref(`profiles/${user.uid}`);
       await ref.put(file);
-      photoURL = await ref.getDownloadURL();
+      const url = await ref.getDownloadURL();
+      await user.updateProfile({ photoURL: url });
     }
 
-    await db.collection('users').doc(uid).set({
-      displayName,
-      music,
-      emotion,
-      lastSeen,
-      photoURL
-    }, { merge: true });
-
-    alert('Profile saved!');
+    alert('Profile updated!');
   });
 });
