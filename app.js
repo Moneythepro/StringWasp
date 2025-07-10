@@ -522,6 +522,21 @@ function joinGroupFromSearch(groupId) {
   }).catch(error => alert(error.message));
 }
 
+function sendGroupMessage() {
+  const input = document.getElementById("groupMessageInput");
+  const text = input?.value.trim();
+  if (!text || !currentRoom) return;
+
+  db.collection("groups").doc(currentRoom).collection("messages").add({
+    text,
+    senderId: currentUser.uid,
+    senderName: document.getElementById("usernameDisplay").textContent,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  input.value = "";
+}
+
 // ===== Theme Management =====
 function toggleTheme() {
   const isDark = document.body.classList.toggle("dark");
