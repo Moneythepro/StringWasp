@@ -298,34 +298,9 @@ function listenMessages() {
   unsubscribeMessages = db.collection("groups").doc(currentRoom).collection("messages")
     .orderBy("timestamp")
     .onSnapshot(snapshot => {
-      messagesDiv.innerHTML = "";
-
-      snapshot.forEach(doc => {
-        const msg = doc.data();
-
-        const bubble = document.createElement("div");
-        bubble.className = "message-bubble " + (msg.senderId === currentUser.uid ? "right" : "left");
-
-        const senderInfo = document.createElement("div");
-        senderInfo.className = "sender-info";
-
-        const name = document.createElement("div");
-        name.className = "sender-name";
-        name.textContent = msg.senderName || "Unknown";
-
-        senderInfo.appendChild(name);
-        bubble.appendChild(senderInfo);
-
-        const text = document.createElement("div");
-        text.textContent = msg.text;
-        bubble.appendChild(text);
-
-        messagesDiv.appendChild(bubble);
-      });
-
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      // ... message rendering code ...
     });
-}
+
   // Typing Indicator
   const typingRef = db.collection("groups").doc(currentRoom).collection("typing");
   unsubscribeTyping = typingRef.onSnapshot(snapshot => {
