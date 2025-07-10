@@ -220,6 +220,7 @@ function joinRoom(roomName) {
 }
 
 function loadGroupInfo(groupId) {
+function loadGroupInfo(groupId) {
   const infoDiv = document.getElementById("groupInfo");
   if (!infoDiv) return;
 
