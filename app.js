@@ -260,8 +260,6 @@ function handleTyping(type) {
 }
 
 // ===== Inbox System =====
-
-function listenInbox() {
 function listenInbox() {
   const inboxList = document.getElementById("inboxList");
   if (!inboxList || !currentUser) return;
