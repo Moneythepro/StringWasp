@@ -136,6 +136,7 @@ function joinGroup() {
 function joinRoom(roomName) {
   currentRoom = roomName;
   if (unsubscribeMessages) unsubscribeMessages();
+  if (unsubscribeTyping) unsubscribeTyping();
   listenMessages();
   loadGroupInfo(roomName);
 }
@@ -183,6 +184,7 @@ function loadGroupInfo(groupId) {
 }
 
 // ===== Group Messages =====
+
 function listenMessages() {
   const messagesDiv = document.getElementById("groupMessages");
   if (!messagesDiv || !currentRoom) return;
@@ -209,24 +211,26 @@ function listenMessages() {
         const text = document.createElement("div");
         text.textContent = msg.text;
         bubble.appendChild(text);
+
         messagesDiv.appendChild(bubble);
-
-        const typingRef = db.collection("groups").doc(currentRoom).collection("typing");
-if (unsubscribeTyping) unsubscribeTyping();
-unsubscribeTyping = typingRef.onSnapshot(snapshot => {
-  let typingUsers = [];
-  snapshot.forEach(doc => {
-    if (doc.id !== currentUser.uid) typingUsers.push(doc.id);
-  });
-
-  const typingDiv = document.getElementById("groupTypingIndicator");
-  typingDiv.textContent = typingUsers.length
-    ? `${typingUsers.join(", ")} typing...`
-    : "";
-});
       });
+
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
+
+  // Typing Indicator
+  const typingRef = db.collection("groups").doc(currentRoom).collection("typing");
+  unsubscribeTyping = typingRef.onSnapshot(snapshot => {
+    let typingUsers = [];
+    snapshot.forEach(doc => {
+      if (doc.id !== currentUser.uid) typingUsers.push(doc.id);
+    });
+
+    const typingDiv = document.getElementById("groupTypingIndicator");
+    typingDiv.textContent = typingUsers.length
+      ? `${typingUsers.join(", ")} typing...`
+      : "";
+  });
 }
 
 function sendGroupMessage() {
@@ -247,6 +251,7 @@ function sendGroupMessage() {
   input.value = "";
 }
 
+// Typing input handler
 document.getElementById("groupMessageInput").addEventListener("input", () => {
   const input = document.getElementById("groupMessageInput").value;
   const typingRef = db.collection("groups").doc(currentRoom).collection("typing").doc(currentUser.uid);
@@ -257,6 +262,8 @@ document.getElementById("groupMessageInput").addEventListener("input", () => {
     typingRef.delete();
   }
 });
+
+// ===== Global Chat Fallback (Optional) =====
 
 function sendMessage() {
   const input = document.getElementById("messageInput");
@@ -272,7 +279,7 @@ function sendMessage() {
 
   input.value = "";
 }
-
+  
 // ===== Rooms (Group List) =====
 function loadRooms() {
   const dropdown = document.getElementById("roomDropdown");
