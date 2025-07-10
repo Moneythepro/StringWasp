@@ -5,14 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>StringWasp</title>
   <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="light-theme">
-  <div id="init-overlay">Loading...</div>
+  <div id="init-overlay">
+    <div class="loader"></div>
+  </div>
   <div id="app">
     <header>
       <h1>StringWasp</h1>
@@ -29,7 +31,7 @@
         <div class="placeholder">🤝 See your friends & requests here.</div>
       </section>
       <section id="explore" class="tab">
-        <div class="placeholder">🔍 Explore public groups & users.</div>
+        <div class="placeholder" id="exploreContent">🔍 Explore public groups & users.</div>
       </section>
       <section id="profile" class="tab">
         <div class="placeholder">
@@ -48,10 +50,8 @@
             <label>
               🎵 Profile Music:
               <input type="checkbox" id="musicToggle"/>
-              <input type="file" id="musicUpload" accept="audio/*" />
             </label>
           </div>
-          <audio id="profileMusic" controls hidden></audio>
           <div>
             <label>
               🧠 Emotional Mode:
