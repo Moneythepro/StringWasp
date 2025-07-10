@@ -1,4 +1,4 @@
-// UUID generator (replaces external uuidv4.js dependency)
+// === UUID Generator ===
 function uuidv4() {
   return ([1e7]+-1e3+-4e3+-8e3+-1e11)
     .replace(/[018]/g, c =>
@@ -80,6 +80,69 @@ function loadMainUI() {
   loadProfile();
 }
 
+// === Group FAB Logic ===
+function handleFabClick() {
+  const choice = prompt("1. Create Group\n2. Join Group\n3. Leave Current Group");
+  if (!choice) return;
+
+  if (choice === "1") return createGroup();
+  if (choice === "2") return joinGroupPrompt();
+  if (choice === "3") return leaveCurrentGroup();
+
+  alert("Invalid choice");
+}
+
+// === Group Create/Join ===
+function createGroup() {
+  const name = prompt("Enter new group name:");
+  if (!name) return;
+
+  const groupRef = db.collection("groups").doc(name);
+  groupRef.get().then(doc => {
+    if (doc.exists) return alert("Group already exists");
+
+    groupRef.set({
+      name,
+      createdBy: currentUser.uid,
+      createdAt: Date.now(),
+      autoJoin: true
+    }).then(() => {
+      groupRef.collection("members").doc(currentUser.uid).set({
+        joinedAt: Date.now()
+      });
+      joinRoom(name);
+    });
+  });
+}
+
+function joinGroupPrompt() {
+  const name = prompt("Enter group name to join:");
+  if (!name) return;
+
+  db.collection("groups").doc(name).get().then(doc => {
+    if (!doc.exists) return alert("Group not found");
+
+    db.collection("groups").doc(name).collection("members").doc(currentUser.uid).set({
+      joinedAt: Date.now()
+    }).then(() => {
+      joinRoom(name);
+    });
+  });
+}
+
+function leaveCurrentGroup() {
+  if (currentRoom === "global") return alert("You're in the global room");
+
+  const confirmLeave = confirm("Leave group: " + currentRoom + "?");
+  if (!confirmLeave) return;
+
+  db.collection("groups").doc(currentRoom).collection("members").doc(currentUser.uid).delete().then(() => {
+    alert("Left group successfully");
+    currentRoom = "global";
+    listenMessages();
+  });
+}
+
 // ===== Rooms =====
 function createOrJoinRoom() {
   const room = prompt("Enter group name:");
@@ -105,6 +168,24 @@ function joinRoom(roomName) {
   listenMessages();
 }
 
+function joinRoom(name) {
+  currentRoom = name;
+  listenMessages();
+  updateGroupHeader(name); // Show group header on join
+}
+
+function updateGroupHeader(groupName) {
+  const groupHeader = document.querySelector(".group-header");
+  const groupNameDiv = document.getElementById("groupHeaderName");
+
+  if (!groupHeader || !groupNameDiv) return;
+
+  groupNameDiv.textContent = groupName;
+  groupHeader.style.display = "flex";
+
+  groupHeader.onclick = () => showGroupInfo(groupName);
+}
+
 function loadRooms() {
   const dropdown = document.getElementById("roomDropdown");
   dropdown.innerHTML = "";
@@ -117,6 +198,24 @@ function loadRooms() {
           opt.value = doc.id;
           dropdown.appendChild(opt);
         }
+
+        function joinRoom(name) {
+  currentRoom = name;
+  listenMessages();
+  updateGroupHeader(name); // Show group header on join
+}
+
+function updateGroupHeader(groupName) {
+  const groupHeader = document.querySelector(".group-header");
+  const groupNameDiv = document.getElementById("groupHeaderName");
+
+  if (!groupHeader || !groupNameDiv) return;
+
+  groupNameDiv.textContent = groupName;
+  groupHeader.style.display = "flex";
+
+  groupHeader.onclick = () => showGroupInfo(groupName);
+       }
       });
     });
   });
