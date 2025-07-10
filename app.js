@@ -415,33 +415,6 @@ function applySavedTheme() {
   if (theme === "dark") document.body.classList.add("dark");
 }
 
-function toggleFabMenu() {
-  const menu = document.getElementById("fabMenu");
-  if (menu) menu.classList.toggle("hidden");
-}
-
-function handleFabClick() {
-  const choice = prompt(`Choose an option:
-1. Create or Join Group
-2. View My Groups
-3. Leave Current Group`);
-
-  if (!choice) return;
-  switch (choice.trim()) {
-    case "1":
-      createOrJoinRoom();
-      break;
-    case "2":
-      showJoinedGroups();
-      break;
-    case "3":
-      leaveCurrentGroup();
-      break;
-    default:
-      alert("Invalid choice.");
-  }
-}
-
 function showJoinedGroups() {
   db.collection("groups").get().then(snapshot => {
     const joined = [];
