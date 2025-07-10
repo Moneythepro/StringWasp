@@ -51,6 +51,17 @@
     </div>
 
     <div id="chatTab" class="tab">
+    <!-- 👑 Group Header -->
+<div id="groupHeader" class="group-header" onclick="openGroupDetails()">
+  <img id="groupAvatar" src="group.png" />
+  <div>
+    <div id="groupName">Group Name</div>
+    <div id="groupMembersCount">3 Members</div>
+  </div>
+</div>
+
+<!-- 💬 Messages container -->
+<div class="messages" id="threadMessages"></div>
       <div id="messages" class="messages"></div>
       <div id="typingIndicator" class="typing"></div>
       <input id="messageInput" placeholder="Type message..." />
