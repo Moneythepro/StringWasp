@@ -668,3 +668,30 @@ function patchInboxFromFields() {
     });
   }).catch(e => console.error("Patch failed:", e));
 }
+
+// ===== PATCH FUNCTION to fix [object Object] in Inbox =====
+function patchInboxFromFields() {
+  if (!currentUser) {
+    console.error("❌ User not logged in.");
+    return;
+  }
+
+  db.collection("inbox").where("to", "==", currentUser.uid).get()
+    .then(snapshot => {
+      snapshot.forEach(doc => {
+        const data = doc.data();
+
+        // Only patch if 'from' is an object and 'fromName' is missing
+        if (typeof data.from === "object" && data.from !== null && !data.fromName) {
+          const senderName = data.from.username || data.from.name || data.from.email || "Unknown";
+          const senderUID = data.from.uid || "unknown";
+
+          doc.ref.update({
+            from: senderUID,
+            fromName: senderName
+          }).then(() => console.log(`✅ Patched: ${doc.id}`));
+        }
+      });
+    })
+    .catch(error => console.error("❌ Patch failed:", error));
+}
