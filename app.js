@@ -635,3 +635,19 @@ window.onload = () => {
     picPreview.onclick = () => picInput.click();
   }
 };
+// ===== TEMP PATCH to fix old inbox data (run once in console after login) =====
+function patchInboxFromFields() {
+  db.collection("inbox").where("to", "==", currentUser.uid).get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (typeof data.from === "object" && data.from !== null) {
+        const senderName = data.from.username || data.from.name || data.from.email || "Unknown";
+        const senderUID = data.from.uid || "unknown";
+        doc.ref.update({
+          from: senderUID,
+          fromName: senderName
+        }).then(() => console.log(`🔧 Patched inbox entry: ${doc.id}`));
+      }
+    });
+  });
+}
