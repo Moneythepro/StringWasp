@@ -147,6 +147,34 @@ function loadGroupInfo(groupId) {
     }
 
     const group = doc.data();
+    const createdBy = group.createdBy;
+    const createdAt = group.createdAt?.toDate().toLocaleString() || "N/A";
+    const adminList = group.admins || [];
+
+    db.collection("groups").doc(groupId).collection("members").get().then(membersSnap => {
+      const members = membersSnap.docs.map(doc => doc.id);
+
+      let membersHTML = members.map(uid => {
+        let badge = "";
+        if (uid === createdBy) badge = " 👑";
+        else if (adminList.includes(uid)) badge = " 🛠️";
+
+        return `<div class="member-entry" onclick="showUserProfile('${uid}')">${uid}${badge}</div>`;
+      }).join("");
+
+      infoDiv.innerHTML = `
+        <div class="group-meta">
+          <strong>${group.name}</strong><br>
+          🧑‍💼 Owner: ${createdBy}<br>
+          🕓 Created: ${createdAt}<br>
+          👥 Members (${members.length}):
+          <div class="member-list">${membersHTML}</div>
+        </div>
+      `;
+    });
+  });
+}
+    const group = doc.data();
     let owner = group.createdBy || "Unknown";
     let createdAt = group.createdAt?.toDate().toLocaleString() || "N/A";
 
