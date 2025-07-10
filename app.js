@@ -1,41 +1,30 @@
-// UUID generator with better error handling
+// UUID generator
 function uuidv4() {
-  try {
-    return ([1e7]+-1e3+-4e3+-8e3+-1e11)
-      .replace(/[018]/g, c =>
-        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-      );
-  } catch (e) {
-    console.error("UUID generation failed:", e);
-    return `fallback-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-  }
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11)
+    .replace(/[018]/g, c =>
+      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    );
 }
 
-// Firebase Initialization with null checks
-const auth = firebase?.auth();
-const db = firebase?.firestore();
-if (!auth || !db) console.error("Firebase not properly initialized");
-
+// Firebase Initialization
+const auth = firebase.auth();
+const db = firebase.firestore();
 let currentUser = null;
 let currentRoom = null;
 let unsubscribeMessages = null;
 let unsubscribeThread = null;
+let unsubscribeInbox = null; // Added missing unsubscribe
 let currentThreadUser = null;
 
-// ===== UI Functions with null checks =====
+// ===== UI Functions =====
 function switchTab(id) {
   const tabs = document.querySelectorAll(".tab");
   const targetTab = document.getElementById(id);
+  if (!tabs.length || !targetTab) return;
   
-  if (!tabs.length || !targetTab) {
-    console.error("Tab elements not found");
-    return;
-  }
-
   tabs.forEach(t => t.style.display = "none");
   targetTab.style.display = "block";
   
-  // Special handling for groups tab
   if (id === "groupsTab") {
     loadRooms();
     if (currentRoom) listenMessages();
@@ -47,11 +36,11 @@ function showLoading(show) {
   if (loader) loader.style.display = show ? "flex" : "none";
 }
 
-// ===== Authentication with enhanced validation =====
-auth?.onAuthStateChanged(async user => {
-  if (user) {
-    currentUser = user;
-    try {
+// ===== Authentication =====
+auth.onAuthStateChanged(async user => {
+  try {
+    if (user) {
+      currentUser = user;
       const userDoc = await db.collection("users").doc(user.uid).get();
       const usernameDisplay = document.getElementById("usernameDisplay");
       
@@ -61,82 +50,46 @@ auth?.onAuthStateChanged(async user => {
         if (usernameDisplay) usernameDisplay.textContent = userDoc.data().username;
         loadMainUI();
       }
-    } catch (error) {
-      console.error("Auth state error:", error);
-      alert("Error loading user data");
+    } else {
+      switchTab("loginPage");
     }
-  } else {
-    switchTab("loginPage");
+  } catch (error) {
+    console.error("Auth error:", error);
   }
 });
 
-async function login() {
+function login() {
   const email = document.getElementById("email")?.value.trim();
   const pass = document.getElementById("password")?.value;
+  if (!email || !pass) return;
   
-  if (!email || !pass) {
-    alert("Please enter both email and password");
-    return;
-  }
-
-  try {
-    await auth.signInWithEmailAndPassword(email, pass);
-  } catch (error) {
-    alert(`Login failed: ${error.message}`);
-  }
+  auth.signInWithEmailAndPassword(email, pass)
+    .catch(error => alert(error.message));
 }
 
-async function register() {
+function register() {
   const email = document.getElementById("email")?.value.trim();
   const pass = document.getElementById("password")?.value;
+  if (!email || !pass || pass.length < 6) return;
   
-  if (!email || !pass) {
-    alert("Please enter both email and password");
-    return;
-  }
-  
-  if (pass.length < 6) {
-    alert("Password must be at least 6 characters");
-    return;
-  }
-
-  try {
-    await auth.createUserWithEmailAndPassword(email, pass);
-    alert("Account created! Please set your username");
-  } catch (error) {
-    alert(`Registration failed: ${error.message}`);
-  }
+  auth.createUserWithEmailAndPassword(email, pass)
+    .then(() => alert("Account created! Please set your username"))
+    .catch(error => alert(error.message));
 }
 
-async function saveUsername() {
-  const usernameInput = document.getElementById("newUsername");
-  if (!usernameInput) return;
+function saveUsername() {
+  const username = document.getElementById("newUsername")?.value.trim();
+  if (!username || username.length > 15) return;
   
-  const username = usernameInput.value.trim();
-  
-  if (!username) {
-    alert("Username cannot be empty");
-    return;
-  }
-  
-  if (username.length > 15) {
-    alert("Username too long (max 15 chars)");
-    return;
-  }
-
-  try {
-    await db.collection("users").doc(currentUser.uid).set({
-      username,
-      email: currentUser.email,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-    
+  db.collection("users").doc(currentUser.uid).set({
+    username,
+    email: currentUser.email,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true }).then(() => {
     const usernameDisplay = document.getElementById("usernameDisplay");
     if (usernameDisplay) usernameDisplay.textContent = username;
     loadMainUI();
-  } catch (error) {
-    alert(`Error saving username: ${error.message}`);
-  }
+  });
 }
 
 // ===== Main App Functions =====
@@ -149,144 +102,100 @@ function loadMainUI() {
   loadProfile();
 }
 
-// ===== Group Management with enhanced error handling =====
-async function createGroup() {
+// ===== Group Management =====
+function createGroup() {
   const groupName = prompt("Enter new group name:");
-  if (!groupName) return;
+  if (!groupName || groupName.length > 20) return;
   
-  if (groupName.length > 20) {
-    alert("Group name too long (max 20 chars)");
-    return;
-  }
-
-  try {
-    const groupDoc = await db.collection("groups").doc(groupName).get();
+  db.collection("groups").doc(groupName).get().then(doc => {
+    if (doc.exists) return alert("Group already exists");
     
-    if (groupDoc.exists) {
-      alert("Group already exists");
-      return;
-    }
-    
-    await db.collection("groups").doc(groupName).set({
+    db.collection("groups").doc(groupName).set({
       name: groupName,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       createdBy: currentUser.uid,
-      members: {
-        [currentUser.uid]: true
-      }
+      members: { [currentUser.uid]: true }
+    }).then(() => {
+      joinRoom(groupName);
+      alert(`Group "${groupName}" created successfully!`);
     });
-    
-    joinRoom(groupName);
-    alert(`Group "${groupName}" created successfully!`);
-  } catch (error) {
-    alert(`Error creating group: ${error.message}`);
-  }
+  });
 }
 
-async function joinGroup() {
+function joinGroup() {
   const groupName = prompt("Enter group name to join:");
   if (!groupName) return;
   
-  try {
-    const groupDoc = await db.collection("groups").doc(groupName).get();
+  db.collection("groups").doc(groupName).get().then(doc => {
+    if (!doc.exists) return alert("Group doesn't exist");
     
-    if (!groupDoc.exists) {
-      alert("Group doesn't exist");
-      return;
-    }
-    
-    await db.collection("groups").doc(groupName).update({
+    db.collection("groups").doc(groupName).update({
       [`members.${currentUser.uid}`]: true
-    });
-    
-    joinRoom(groupName);
-    alert(`Joined group "${groupName}" successfully!`);
-  } catch (error) {
-    alert(`Error joining group: ${error.message}`);
-  }
+    }).then(() => {
+      joinRoom(groupName);
+      alert(`Joined group "${groupName}" successfully!`);
+    }).catch(error => alert(error.message));
+  });
 }
 
-async function leaveGroup() {
-  if (!currentRoom) {
-    alert("Not in any group");
-    return;
-  }
-  
+function leaveGroup() {
+  if (!currentRoom) return alert("Not in any group");
   if (!confirm(`Leave group "${currentRoom}"?`)) return;
   
-  try {
-    await db.collection("groups").doc(currentRoom).update({
-      [`members.${currentUser.uid}`]: firebase.firestore.FieldValue.delete()
-    });
-    
+  db.collection("groups").doc(currentRoom).update({
+    [`members.${currentUser.uid}`]: firebase.firestore.FieldValue.delete()
+  }).then(() => {
     alert(`Left group "${currentRoom}"`);
     currentRoom = null;
     loadRooms();
-    
     const messagesDiv = document.getElementById("messages");
     if (messagesDiv) messagesDiv.innerHTML = "";
-  } catch (error) {
-    alert(`Error leaving group: ${error.message}`);
-  }
+  }).catch(error => alert(error.message));
 }
 
 function joinRoom(roomName) {
   currentRoom = roomName;
-  
   const dropdown = document.getElementById("roomDropdown");
   if (dropdown) dropdown.value = roomName;
-  
   if (unsubscribeMessages) unsubscribeMessages();
   listenMessages();
 }
 
-async function loadRooms() {
+function loadRooms() {
   const dropdown = document.getElementById("roomDropdown");
   if (!dropdown) return;
   
   dropdown.innerHTML = '<option value="">Select a group</option>';
   
-  try {
-    const snapshot = await db.collection("groups")
-      .where(`members.${currentUser.uid}`, "==", true)
-      .get();
-    
+  db.collection("groups").where(`members.${currentUser.uid}`, "==", true).get().then(snapshot => {
     if (snapshot.empty) {
       dropdown.innerHTML = '<option value="">No groups yet</option>';
-      return;
+    } else {
+      snapshot.forEach(doc => {
+        const opt = document.createElement("option");
+        opt.textContent = doc.id;
+        opt.value = doc.id;
+        dropdown.appendChild(opt);
+      });
     }
-    
-    snapshot.forEach(doc => {
-      const opt = document.createElement("option");
-      opt.textContent = doc.id;
-      opt.value = doc.id;
-      dropdown.appendChild(opt);
-    });
-  } catch (error) {
-    console.error("Error loading rooms:", error);
-  }
+  });
 }
 
-// ===== Messaging System =====
+// ===== Messaging =====
 function listenMessages() {
   if (!currentRoom) return;
-  
   const messagesDiv = document.getElementById("messages");
   if (!messagesDiv) return;
   
-  unsubscribeMessages = db.collection("groups").doc(currentRoom)
-    .collection("messages")
+  if (unsubscribeMessages) unsubscribeMessages();
+  
+  unsubscribeMessages = db.collection("groups").doc(currentRoom).collection("messages")
     .orderBy("timestamp")
-    .onSnapshot(
-      snapshot => {
-        messagesDiv.innerHTML = "";
-        snapshot.forEach(doc => {
-          displayMessage(doc.data());
-        });
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      },
-      error => console.error("Message listener error:", error)
-    );
+    .onSnapshot(snapshot => {
+      messagesDiv.innerHTML = "";
+      snapshot.forEach(doc => displayMessage(doc.data()));
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }, error => console.error("Messages error:", error));
 }
 
 function displayMessage(msg) {
@@ -296,9 +205,7 @@ function displayMessage(msg) {
   const isMine = msg.senderId === currentUser.uid;
   const bubble = document.createElement("div");
   bubble.className = `message-bubble ${isMine ? "right" : "left"}`;
-  
-  const timestamp = msg.timestamp?.toDate?.();
-  bubble.title = timestamp ? timestamp.toLocaleString() : "";
+  bubble.title = msg.timestamp?.toDate?.().toLocaleString() || "";
 
   if (!isMine) {
     const senderInfo = document.createElement("div");
@@ -324,84 +231,314 @@ function displayMessage(msg) {
   messagesDiv.appendChild(bubble);
 }
 
-async function sendMessage() {
+function sendMessage() {
   const input = document.getElementById("messageInput");
-  if (!input) return;
-  
-  const text = input.value.trim();
+  const text = input?.value.trim();
   if (!text || !currentRoom) return;
 
-  try {
-    const userDoc = await db.collection("users").doc(currentUser.uid).get();
-    const userData = userDoc.data();
-    
-    await db.collection("groups").doc(currentRoom).collection("messages").add({
+  db.collection("users").doc(currentUser.uid).get().then(doc => {
+    const userData = doc.data();
+    db.collection("groups").doc(currentRoom).collection("messages").add({
       text,
-      senderName: userData?.username || "Anonymous",
+      senderName: userData.username,
       senderId: currentUser.uid,
-      senderPic: userData?.photoURL || "default-avatar.png",
+      senderPic: userData.photoURL || "default-avatar.png",
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
-    
     input.value = "";
-  } catch (error) {
-    console.error("Error sending message:", error);
-  }
+  });
 }
 
-// ===== Inbox System with improved UI =====
+// ===== Inbox System =====
 function loadInbox() {
   const list = document.getElementById("inboxList");
   if (!list) return;
   
-  unsubscribeInbox = db.collection("inbox")
-    .where("to", "==", currentUser.uid)
+  if (unsubscribeInbox) unsubscribeInbox();
+  
+  unsubscribeInbox = db.collection("inbox").where("to", "==", currentUser.uid)
     .orderBy("timestamp", "desc")
-    .onSnapshot(
-      snapshot => {
-        list.innerHTML = "";
-        
-        if (snapshot.empty) {
-          list.innerHTML = "<div class='empty'>No new messages</div>";
-          return;
-        }
-        
-        snapshot.forEach(doc => {
-          const item = doc.data();
-          const card = document.createElement("div");
-          card.className = "inbox-card";
-          card.innerHTML = `
-            <div class="inbox-header">
-              <span class="inbox-type">${item.type}</span>
-              <span class="inbox-time">${item.timestamp?.toDate?.().toLocaleTimeString() || ""}</span>
-            </div>
-            <div class="inbox-from">From: ${item.fromName}</div>
-            <div class="inbox-actions">
-              <button onclick="acceptRequest('${doc.id}')">✓ Accept</button>
-              <button onclick="declineRequest('${doc.id}')">✕ Decline</button>
-            </div>
-          `;
-          list.appendChild(card);
-        });
-      },
-      error => console.error("Inbox error:", error)
-    );
+    .onSnapshot(snapshot => {
+      list.innerHTML = snapshot.empty 
+        ? "<div class='empty'>No new messages</div>"
+        : snapshot.docs.map(doc => createInboxCard(doc)).join("");
+    }, error => console.error("Inbox error:", error));
 }
 
-// ... (rest of the code remains similar with added null checks)
+function createInboxCard(doc) {
+  const item = doc.data();
+  return `
+    <div class="inbox-card">
+      <div class="inbox-type">${item.type}</div>
+      <div class="inbox-from">From: ${item.fromName}</div>
+      <div class="inbox-actions">
+        <button onclick="acceptRequest('${doc.id}')">✓ Accept</button>
+        <button onclick="declineRequest('${doc.id}')">✕ Decline</button>
+      </div>
+    </div>
+  `;
+}
 
-// Initialize app with error handling
-window.onload = () => {
-  try {
-    applySavedTheme();
-    
-    const picPreview = document.getElementById("profilePicPreview");
-    const picInput = document.getElementById("profilePic");
-    
-    if (picPreview && picInput) {
-      picPreview.onclick = () => picInput.click();
+function acceptRequest(requestId) {
+  db.collection("inbox").doc(requestId).get().then(doc => {
+    const request = doc.data();
+    if (request.type.includes("Friend Request")) {
+      db.collection("friends").doc(currentUser.uid).collection("list").doc(request.from).set({
+        uid: request.from,
+        username: request.fromName,
+        addedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
     }
-  } catch (error) {
-    console.error("Initialization error:", error);
+    doc.ref.delete();
+  });
+}
+
+function declineRequest(requestId) {
+  db.collection("inbox").doc(requestId).delete();
+}
+
+function markAllRead() {
+  db.collection("inbox").where("to", "==", currentUser.uid).get().then(snapshot => {
+    const batch = db.batch();
+    snapshot.forEach(doc => batch.delete(doc.ref));
+    return batch.commit();
+  }).then(() => alert("All messages marked as read"));
+}
+
+// ===== Friends System =====
+function loadFriends() {
+  const container = document.getElementById("friendsList");
+  if (!container) return;
+  
+  db.collection("friends").doc(currentUser.uid).collection("list")
+    .orderBy("addedAt", "desc")
+    .onSnapshot(snapshot => {
+      container.innerHTML = snapshot.empty
+        ? "<div class='empty'>No friends yet</div>"
+        : snapshot.docs.map(doc => createFriendElement(doc.data())).join("");
+    }, error => console.error("Friends error:", error));
+}
+
+function createFriendElement(friend) {
+  return `
+    <div class="friend-item">
+      <img src="${friend.photoURL || 'default-avatar.png'}" class="friend-avatar">
+      <span class="friend-name">${friend.username}</span>
+      <button onclick="openThread('${friend.uid}', '${friend.username}')">Message</button>
+    </div>
+  `;
+}
+
+// ===== Profile Management =====
+function loadProfile() {
+  db.collection("users").doc(currentUser.uid).get().then(doc => {
+    const data = doc.data();
+    const nameInput = document.getElementById("profileName");
+    const bioInput = document.getElementById("profileBio");
+    const picPreview = document.getElementById("profilePicPreview");
+    
+    if (nameInput) nameInput.value = data.name || "";
+    if (bioInput) bioInput.value = data.bio || "";
+    if (picPreview) picPreview.src = data.photoURL || "default-avatar.png";
+  });
+}
+
+function saveProfile() {
+  const name = document.getElementById("profileName")?.value.trim();
+  const bio = document.getElementById("profileBio")?.value.trim();
+  const file = document.getElementById("profilePic")?.files[0];
+  
+  const updateData = { 
+    name, 
+    bio, 
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp() 
+  };
+
+  if (file) {
+    const storageRef = firebase.storage().ref(`profile_pics/${currentUser.uid}`);
+    storageRef.put(file).then(snapshot => snapshot.ref.getDownloadURL())
+      .then(downloadURL => {
+        updateData.photoURL = downloadURL;
+        return saveProfileData(updateData);
+      })
+      .then(() => {
+        const picPreview = document.getElementById("profilePicPreview");
+        if (picPreview) picPreview.src = updateData.photoURL;
+        alert("Profile updated with new photo!");
+      })
+      .catch(error => alert(error.message));
+  } else {
+    saveProfileData(updateData)
+      .then(() => alert("Profile updated!"))
+      .catch(error => alert(error.message));
+  }
+}
+
+function saveProfileData(data) {
+  return db.collection("users").doc(currentUser.uid).set(data, { merge: true });
+}
+
+// ===== Threads (Private Messages) =====
+function openThread(uid, username) {
+  switchTab("threadView");
+  const threadWithName = document.getElementById("threadWithName");
+  if (threadWithName) threadWithName.textContent = username;
+  
+  currentThreadUser = uid;
+  if (unsubscribeThread) unsubscribeThread();
+
+  unsubscribeThread = db.collection("threads").doc(threadId(currentUser.uid, uid)).collection("messages")
+    .orderBy("timestamp")
+    .onSnapshot(snapshot => {
+      const area = document.getElementById("threadMessages");
+      if (!area) return;
+      
+      area.innerHTML = snapshot.docs.map(doc => 
+        createThreadMessage(doc.data(), doc.data().from === currentUser.uid)
+      ).join("");
+      area.scrollTop = area.scrollHeight;
+    }, error => console.error("Thread error:", error));
+}
+
+function createThreadMessage(msg, isMine) {
+  return `
+    <div class="thread-message ${isMine ? "sent" : "received"}">
+      <div class="message-content">${msg.text}</div>
+      <div class="message-time">${msg.timestamp?.toDate?.().toLocaleTimeString() || ""}</div>
+    </div>
+  `;
+}
+
+function sendThreadMessage() {
+  const input = document.getElementById("threadInput");
+  const text = input?.value.trim();
+  if (!text || !currentThreadUser) return;
+  
+  const threadRef = db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser));
+  const fromName = document.getElementById("usernameDisplay")?.textContent || "Anonymous";
+  
+  db.runTransaction(transaction => {
+    return transaction.get(threadRef).then(doc => {
+      if (!doc.exists) {
+        transaction.set(threadRef, {
+          participants: [currentUser.uid, currentThreadUser],
+          lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    });
+  }).then(() => {
+    return threadRef.collection("messages").add({
+      text,
+      from: currentUser.uid,
+      fromName,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }).then(() => {
+    input.value = "";
+  }).catch(error => alert(error.message));
+}
+
+function threadId(a, b) {
+  return [a, b].sort().join("_");
+}
+
+function closeThread() {
+  switchTab("friendsTab");
+  if (unsubscribeThread) unsubscribeThread();
+}
+
+// ===== Search Functionality =====
+function runSearch() {
+  const query = document.getElementById("searchInput")?.value.trim().toLowerCase();
+  if (!query) return;
+
+  // Search users
+  db.collection("users").where("username", ">=", query)
+    .where("username", "<=", query + "\uf8ff")
+    .limit(10)
+    .get().then(snapshot => {
+      const container = document.getElementById("searchResultsUser");
+      if (!container) return;
+      
+      container.innerHTML = snapshot.docs
+        .filter(doc => doc.data().uid !== currentUser.uid)
+        .map(doc => createUserSearchResult(doc))
+        .join("");
+    });
+
+  // Search groups
+  db.collection("groups").where("name", ">=", query)
+    .where("name", "<=", query + "\uf8ff")
+    .limit(10)
+    .get().then(snapshot => {
+      const container = document.getElementById("searchResultsGroup");
+      if (!container) return;
+      
+      container.innerHTML = snapshot.docs.map(doc => createGroupSearchResult(doc)).join("");
+    });
+}
+
+function createUserSearchResult(doc) {
+  const user = doc.data();
+  return `
+    <div class="search-result">
+      <img src="${user.photoURL || 'default-avatar.png'}" class="search-avatar">
+      <span class="search-username">${user.username}</span>
+      <button onclick="sendFriendRequest('${doc.id}', '${user.username}')">Add Friend</button>
+    </div>
+  `;
+}
+
+function createGroupSearchResult(doc) {
+  const group = doc.data();
+  return `
+    <div class="search-result">
+      <div class="group-name">${group.name}</div>
+      <div class="group-members">${Object.keys(group.members || {}).length} members</div>
+      <button onclick="joinGroupFromSearch('${doc.id}')">Join Group</button>
+    </div>
+  `;
+}
+
+function sendFriendRequest(uid, username) {
+  const fromName = document.getElementById("usernameDisplay")?.textContent;
+  if (!fromName) return;
+  
+  db.collection("inbox").add({
+    to: uid,
+    from: currentUser.uid,
+    fromName,
+    type: "Friend Request",
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => alert(`Friend request sent to ${username}`));
+}
+
+function joinGroupFromSearch(groupId) {
+  db.collection("groups").doc(groupId).update({
+    [`members.${currentUser.uid}`]: true
+  }).then(() => {
+    alert("Joined group successfully!");
+    joinRoom(groupId);
+  }).catch(error => alert(error.message));
+}
+
+// ===== Theme Management =====
+function toggleTheme() {
+  const isDark = document.body.classList.toggle("dark");
+  localStorage.setItem("theme", isDark ? "dark" : "light");
+}
+
+function applySavedTheme() {
+  const theme = localStorage.getItem("theme");
+  if (theme === "dark") document.body.classList.add("dark");
+}
+
+// Initialize app
+window.onload = () => {
+  applySavedTheme();
+  const picPreview = document.getElementById("profilePicPreview");
+  const picInput = document.getElementById("profilePic");
+  if (picPreview && picInput) {
+    picPreview.onclick = () => picInput.click();
   }
 };
