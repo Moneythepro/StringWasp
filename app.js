@@ -219,6 +219,21 @@ function sendGroupMessage() {
   updateTypingStatus(false);
 }
 
+function sendMessage() {
+  const input = document.getElementById("messageInput");
+  const text = input?.value.trim();
+  if (!text || !currentRoom) return;
+
+  db.collection("rooms").doc(currentRoom).collection("messages").add({
+    text,
+    senderId: currentUser.uid,
+    senderName: document.getElementById("usernameDisplay").textContent,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  input.value = "";
+}
+
 // ===== Rooms (Group List) =====
 function loadRooms() {
   const dropdown = document.getElementById("roomDropdown");
