@@ -1,89 +1,115 @@
-// Firebase Init
-const firebaseConfig = {
-  apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
-  authDomain: "stringwasp.firebaseapp.com",
-  projectId: "stringwasp",
-  storageBucket: "stringwasp.appspot.com",
-  messagingSenderId: "974718019508",
-  appId: "1:974718019508:web:59fabe6306517d10b374e1"
-};
+// DOM Ready
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('init-overlay').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-const storage = firebase.storage();
+  // Tab Switching
+  document.querySelectorAll('[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+  });
 
-let currentUserId = null;
+  // Theme Switcher
+  const themeSwitcher = document.getElementById('themeSwitcher');
+  themeSwitcher.addEventListener('change', e => {
+    document.body.className = `${e.target.value}-theme`;
+    localStorage.setItem('theme', e.target.value);
+  });
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  themeSwitcher.value = savedTheme;
+  document.body.className = `${savedTheme}-theme`;
 
-// Tab Switching
-document.querySelectorAll('nav button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const tab = btn.getAttribute('data-tab');
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.getElementById(tab).classList.add('active');
+  // Panic Button
+  document.getElementById('panicBtn').addEventListener('click', () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    alert("All local data cleared.");
+    location.reload();
+  });
+
+  // Send Encrypted Message
+  document.getElementById('sendMessageBtn').addEventListener('click', async () => {
+    const msg = document.getElementById('messageInput').value.trim();
+    const anonymous = document.getElementById('anonymousToggle').checked;
+    if (!msg) return;
+
+    const encoded = btoa(msg);
+    await db.collection('messages').add({
+      content: encoded,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      uid: auth.currentUser ? auth.currentUser.uid : null,
+      anonymous: anonymous
+    });
+    document.getElementById('messageInput').value = '';
+  });
+
+  // Realtime Chat Updates
+  db.collection('messages').orderBy('createdAt').onSnapshot(snapshot => {
+    const chatContainer = document.getElementById('chatContainer');
+    chatContainer.innerHTML = '';
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const msg = document.createElement('div');
+      msg.textContent = `${data.anonymous ? 'Anonymous' : data.uid}: ${atob(data.content)}`;
+      chatContainer.appendChild(msg);
+    });
+  });
+
+  // Group Creation
+  document.getElementById('createGroupBtn').addEventListener('click', async () => {
+    const name = document.getElementById('groupNameInput').value.trim();
+    const privacy = document.getElementById('groupPrivacy').value;
+    if (!name) return;
+
+    await db.collection('groups').add({
+      name,
+      privacy,
+      members: [auth.currentUser ? auth.currentUser.uid : null],
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById('groupNameInput').value = '';
+  });
+
+  // Load Groups
+  db.collection('groups').orderBy('createdAt').onSnapshot(snapshot => {
+    const list = document.getElementById('groupList');
+    list.innerHTML = '';
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const div = document.createElement('div');
+      div.textContent = `${data.name} (${data.privacy})`;
+      list.appendChild(div);
+    });
+  });
+
+  // Save Profile
+  document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+    const displayName = document.getElementById('displayNameInput').value;
+    const music = document.getElementById('musicToggle').checked;
+    const emotion = document.getElementById('emotionalToggle').checked;
+    const lastSeen = document.getElementById('lastSeenToggle').checked;
+
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+
+    const file = document.getElementById('profilePicInput').files[0];
+    let photoURL = null;
+    if (file) {
+      const ref = storage.ref(`profiles/${uid}`);
+      await ref.put(file);
+      photoURL = await ref.getDownloadURL();
+    }
+
+    await db.collection('users').doc(uid).set({
+      displayName,
+      music,
+      emotion,
+      lastSeen,
+      photoURL
+    }, { merge: true });
+
+    alert('Profile saved!');
   });
 });
-
-// Theme Toggle
-document.getElementById('themeSwitcher').addEventListener('change', (e) => {
-  document.body.className = `${e.target.value}-theme`;
-});
-
-// Panic Button
-document.getElementById('panicBtn').addEventListener('click', () => {
-  localStorage.clear();
-  alert("Local storage wiped!");
-});
-
-// Fake encryption (Base64)
-function simulateEncryptedMessage(msg) {
-  return btoa(unescape(encodeURIComponent(msg)));
-}
-function simulateDecryption(encoded) {
-  return decodeURIComponent(escape(atob(encoded)));
-}
-
-// Auth State
-auth.onAuthStateChanged(user => {
-  if (user) {
-    currentUserId = user.uid;
-    listenForMessages();
-  } else {
-    auth.signInAnonymously();
-  }
-});
-
-// Send Message
-document.getElementById('sendBtn').addEventListener('click', () => {
-  const input = document.getElementById('chatMessage');
-  const text = input.value.trim();
-  if (text) {
-    const encrypted = simulateEncryptedMessage(text);
-    db.collection('messages').add({
-      uid: currentUserId,
-      message: encrypted,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    input.value = '';
-  }
-});
-
-// Real-time message display
-function listenForMessages() {
-  const chatWindow = document.getElementById('chatWindow');
-  db.collection('messages')
-    .orderBy('timestamp')
-    .limit(50)
-    .onSnapshot(snapshot => {
-      chatWindow.innerHTML = '';
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const msg = simulateDecryption(data.message || '');
-        const div = document.createElement('div');
-        div.className = 'chat-message';
-        div.textContent = msg;
-        chatWindow.appendChild(div);
-      });
-      chatWindow.scrollTop = chatWindow.scrollHeight;
-    });
-}
