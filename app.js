@@ -273,41 +273,38 @@ function loadInbox() {
   const list = document.getElementById("inboxList");
   if (!list) return;
 
-  if (unsubscribeInbox) unsubscribeInbox();
+  if (window.unsubscribeInbox) unsubscribeInbox();
 
-  unsubscribeInbox = db.collection("inbox").where("to", "==", currentUser.uid)
+  unsubscribeInbox = db.collection("inbox")
+    .where("to", "==", currentUser.uid)
     .orderBy("timestamp", "desc")
     .onSnapshot(snapshot => {
       list.innerHTML = snapshot.empty
         ? "<div class='empty'>No new messages</div>"
-        : snapshot.docs.map(doc => createInboxCard(doc)).join(""); // JOIN IS IMPORTANT
+        : snapshot.docs.map(doc => createInboxCard(doc)).join(""); // Join required
     }, error => console.error("Inbox error:", error));
 }
 
 function createInboxCard(doc) {
-function createInboxCard(doc) {
   const data = doc.data();
   let sender = "Unknown";
 
-  try {
-    if (typeof data.from === "string") {
-      sender = data.from;
-    } else if (typeof data.from === "object" && data.from !== null) {
-      sender =
-        data.from.name ||
-        data.from.username ||
-        data.from.email ||
-        JSON.stringify(data.from);
-    } else if (data.fromName) {
-      sender = data.fromName;
-    }
-  } catch (e) {
-    console.error("Error parsing sender:", e);
+  // Fallbacks for sender
+  if (data.fromName) {
+    sender = data.fromName;
+  } else if (typeof data.from === "object" && data.from !== null) {
+    sender =
+      data.from.username ||
+      data.from.name ||
+      data.from.email ||
+      JSON.stringify(data.from);
+  } else if (typeof data.from === "string") {
+    sender = data.from;
   }
 
   return `
     <div class="inbox-card">
-      <div><strong>${data.type || "Notification"}</strong>: ${sender}</div>
+      <div><strong>${data.type || "Request"}</strong> from: ${sender}</div>
       <div class="btn-group">
         <button onclick="acceptRequest('${doc.id}')">✓</button>
         <button onclick="declineRequest('${doc.id}')">✕</button>
@@ -317,42 +314,36 @@ function createInboxCard(doc) {
 }
 
 function acceptRequest(requestId) {
-  if (!requestId) return console.error("❌ Invalid request ID");
+  if (!requestId) return console.warn("No request ID");
 
   db.collection("inbox").doc(requestId).get().then(doc => {
-    if (!doc.exists) return console.error("❌ Request not found");
-    
-    const request = doc.data();
-    const fromUID = typeof request.from === "string" ? request.from : null;
-    const fromName = request.fromName || "Unknown";
+    if (!doc.exists) return console.warn("Request does not exist.");
 
-    if (!fromUID) {
-      console.error("❌ Missing or invalid sender UID in request:", request);
-      return;
-    }
+    const data = doc.data();
+    const fromUID = typeof data.from === "string" ? data.from : null;
+    const fromName = data.fromName || "Unknown";
 
-    if (request.type && request.type.includes("Friend Request")) {
+    if (!fromUID) return console.warn("Missing sender UID");
+
+    if (data.type?.includes("Friend Request")) {
       db.collection("friends").doc(currentUser.uid).collection("list").doc(fromUID).set({
         uid: fromUID,
         username: fromName,
         addedAt: firebase.firestore.FieldValue.serverTimestamp()
       }).then(() => {
         doc.ref.delete();
-        console.log("✅ Friend request accepted.");
       });
     } else {
       doc.ref.delete();
     }
-  }).catch(error => {
-    console.error("❌ Error accepting request:", error);
+  }).catch(err => {
+    console.error("Error accepting request:", err);
   });
 }
 
 function declineRequest(requestId) {
-  if (!requestId) return console.error("❌ Invalid request ID");
-  db.collection("inbox").doc(requestId).delete()
-    .then(() => console.log("✅ Request declined."))
-    .catch(error => console.error("❌ Error declining request:", error));
+  if (!requestId) return;
+  db.collection("inbox").doc(requestId).delete().catch(console.error);
 }
 
 function markAllRead() {
@@ -360,7 +351,7 @@ function markAllRead() {
     const batch = db.batch();
     snapshot.forEach(doc => batch.delete(doc.ref));
     return batch.commit();
-  }).then(() => alert("All messages marked as read"));
+  }).then(() => alert("Inbox cleared"));
 }
 
 // ===== Friends System =====
