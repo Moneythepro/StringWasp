@@ -1,14 +1,68 @@
 body {
-  font-family: sans-serif;
+  font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
+  background: var(--bg-color);
+  color: var(--text-color);
+  transition: background 0.3s, color 0.3s;
+}
+
+:root {
+  --bg-color: #ffffff;
+  --text-color: #000000;
+  --accent-color: #007bff;
+  --card-bg: #f0f0f0;
+}
+
+body.dark {
+  --bg-color: #121212;
+  --text-color: #f0f0f0;
+  --accent-color: #4e9eff;
+  --card-bg: #1e1e1e;
+}
+
+.hidden {
+  display: none;
+}
+
+#loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-color);
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5em;
+  z-index: 999;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background: var(--accent-color);
+  color: white;
 }
 
 nav {
   display: flex;
-  gap: 8px;
+  justify-content: space-around;
+  background: var(--card-bg);
   padding: 10px;
-  background: #eee;
+  border-bottom: 1px solid #ccc;
+}
+
+nav button {
+  background: none;
+  border: none;
+  font-size: 1em;
+  cursor: pointer;
+  color: var(--text-color);
 }
 
 main {
@@ -23,74 +77,137 @@ main {
   display: block;
 }
 
+.chat-box {
+  margin-top: 10px;
+  border-top: 1px solid #ccc;
+  padding-top: 10px;
+}
+
 .messages {
   max-height: 300px;
   overflow-y: auto;
-  background: #f9f9f9;
   padding: 10px;
-  margin-bottom: 10px;
   border: 1px solid #ccc;
+  background: var(--card-bg);
+  margin-bottom: 10px;
+  border-radius: 5px;
 }
 
-.message {
-  padding: 5px;
-  margin-bottom: 5px;
+.messages div {
+  margin-bottom: 8px;
 }
 
-.message.self {
-  background-color: #d1ffd1;
+input[type="text"], input[type="file"] {
+  padding: 8px;
+  width: calc(100% - 20px);
+  margin: 5px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: var(--bg-color);
+  color: var(--text-color);
 }
 
-.message.anonymous {
-  font-style: italic;
+input[type="checkbox"] {
+  margin-right: 5px;
 }
 
-#init-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: white;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-}
-
-.light-theme {
-  background: white;
-  color: black;
-}
-
-.dark-theme {
-  background: #222;
+button {
+  padding: 8px 12px;
+  margin: 5px 0;
+  border: none;
+  background: var(--accent-color);
   color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
-.toast {
+button:hover {
+  background: #005bb5;
+}
+
+img#profilePic {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 10px;
+  border: 2px solid var(--accent-color);
+}
+
+.settings {
+  margin-top: 15px;
+}
+
+.settings label {
+  display: block;
+  margin: 5px 0;
+}
+
+#toast {
   position: fixed;
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background: #444;
+  background: var(--accent-color);
   color: white;
-  padding: 10px 20px;
-  border-radius: 10px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: bold;
   opacity: 0;
-  transition: opacity 0.4s ease;
-  z-index: 1001;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  z-index: 1000;
 }
 
-.toast.show {
+#toast.show {
   opacity: 1;
+  pointer-events: auto;
 }
 
-.loading::before {
-  content: "Loading messages...";
-  display: block;
-  text-align: center;
-  padding: 10px;
-  color: gray;
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--accent-color);
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+#chatMessages::-webkit-scrollbar,
+#groupChatMessages::-webkit-scrollbar {
+  width: 6px;
+}
+
+#chatMessages::-webkit-scrollbar-thumb,
+#groupChatMessages::-webkit-scrollbar-thumb {
+  background-color: var(--accent-color);
+  border-radius: 6px;
+}
+
+#chatMessages, #groupChatMessages {
+  scroll-behavior: smooth;
+}
+
+@media (max-width: 600px) {
+  nav {
+    flex-direction: column;
+  }
+
+  button {
+    width: 100%;
+  }
+
+  .messages {
+    max-height: 200px;
+  }
+
+  input[type="text"] {
+    width: 100%;
+  }
+
+  #profilePic {
+    width: 80px;
+    height: 80px;
+  }
 }
