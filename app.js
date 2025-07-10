@@ -132,10 +132,42 @@ function joinGroup() {
 function joinRoom(roomName) {
   currentRoom = roomName;
   if (unsubscribeMessages) unsubscribeMessages();
-  if (unsubscribeTyping) unsubscribeTyping();
   listenMessages();
-  listenTyping();
-  loadGroupInfo();
+  loadGroupInfo(roomName); // ✅ ADD THIS
+}
+
+function loadGroupInfo(groupId) {
+  const infoDiv = document.getElementById("groupInfo");
+  if (!infoDiv) return;
+
+  db.collection("groups").doc(groupId).get().then(doc => {
+    if (!doc.exists) {
+      infoDiv.innerHTML = "Group not found.";
+      return;
+    }
+
+    const group = doc.data();
+    let owner = group.createdBy || "Unknown";
+    let createdAt = group.createdAt?.toDate().toLocaleString() || "N/A";
+
+    db.collection("groups").doc(groupId).collection("members").get().then(membersSnap => {
+      const members = membersSnap.docs.map(m => m.id);
+      const isAdmin = group.admins?.includes(currentUser.uid);
+
+      infoDiv.innerHTML = `
+        <div class="group-meta">
+          <strong>${group.name}</strong><br>
+          👑 Owner: ${owner}<br>
+          📅 Created: ${createdAt}<br>
+          👥 Members (${members.length})
+        </div>
+      `;
+
+      if (isAdmin) {
+        infoDiv.innerHTML += `<button onclick="deleteGroup('${groupId}')">🗑️ Delete Group</button>`;
+      }
+    });
+  });
 }
 
 // ===== Group Messages =====
