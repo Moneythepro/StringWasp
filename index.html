@@ -2,79 +2,87 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>StringWasp</title>
-  <link rel="stylesheet" href="style.css"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+  <script src="https://kit.fontawesome.com/a2e0e6fa0b.js" crossorigin="anonymous"></script>
 </head>
 <body class="light-theme">
+
+  <!-- Loading Overlay -->
   <div id="init-overlay">
-    <div class="loader"></div>
+    <div class="spinner"></div>
   </div>
+
+  <!-- Theme & Panic Controls -->
+  <div id="controls">
+    <select id="themeSwitcher">
+      <option value="light">☀️ Light</option>
+      <option value="dark">🌙 Dark</option>
+    </select>
+    <button id="panicBtn">Panic</button>
+  </div>
+
+  <!-- Main App -->
   <div id="app">
-    <header>
-      <h1>StringWasp</h1>
-      <button id="panicBtn">🧨</button>
-    </header>
-    <main>
-      <section id="chats" class="tab active">
-        <div class="placeholder">🔐 Encrypted chats will appear here.</div>
-      </section>
-      <section id="groups" class="tab">
-        <div class="placeholder">👥 Manage or discover groups (Owner/Admin/Member roles).</div>
-      </section>
-      <section id="friends" class="tab">
-        <div class="placeholder">🤝 See your friends & requests here.</div>
-      </section>
-      <section id="explore" class="tab">
-        <div class="placeholder" id="exploreContent">🔍 Explore public groups & users.</div>
-      </section>
-      <section id="profile" class="tab">
-        <div class="placeholder">
-          <div>🧑 Profile Editor</div>
-          <div>🎭 Role: <span id="roleBadge">Member</span></div>
-          <div>
-            <label>
-              🌗 Theme:
-              <select id="themeSwitcher">
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-              </select>
-            </label>
-          </div>
-          <div>
-            <label>
-              🎵 Profile Music:
-              <input type="checkbox" id="musicToggle"/>
-            </label>
-          </div>
-          <div>
-            <label>
-              🧠 Emotional Mode:
-              <input type="checkbox" id="emotionalToggle"/>
-            </label>
-          </div>
-          <div>
-            <label>
-              ⏰ Last Seen:
-              <input type="checkbox" id="lastSeenToggle" checked/>
-            </label>
-          </div>
-        </div>
-      </section>
-    </main>
     <nav>
-      <button data-tab="chats">💬</button>
-      <button data-tab="groups">👥</button>
-      <button data-tab="friends">🤝</button>
-      <button data-tab="explore">🔍</button>
-      <button data-tab="profile">🧑</button>
+      <button data-tab="chats">Chats</button>
+      <button data-tab="groups">Groups</button>
+      <button data-tab="friends">Friends</button>
+      <button data-tab="explore">Explore</button>
+      <button data-tab="profile">Profile</button>
     </nav>
+
+    <!-- Tabs -->
+    <div id="tabs">
+      <div class="tab" id="tab-chats">
+        <h2>Chats</h2>
+        <div id="chat-messages"></div>
+        <input id="chatInput" placeholder="Type a message" />
+        <label><input type="checkbox" id="anonymousToggle" /> Send Anonymously</label>
+        <button id="sendChatBtn">Send</button>
+      </div>
+
+      <div class="tab" id="tab-groups">
+        <h2>Groups</h2>
+        <div id="groupList"></div>
+        <input id="newGroupName" placeholder="New Group Name" />
+        <label><input type="checkbox" id="groupPrivate" /> Private</label>
+        <button id="createGroupBtn">Create Group</button>
+      </div>
+
+      <div class="tab" id="tab-friends">
+        <h2>Friends</h2>
+        <input id="friendEmail" placeholder="Add friend by email" />
+        <button id="addFriendBtn">Add Friend</button>
+        <ul id="friendList"></ul>
+      </div>
+
+      <div class="tab" id="tab-explore">
+        <h2>Explore Users</h2>
+        <ul id="exploreList"></ul>
+      </div>
+
+      <div class="tab" id="tab-profile">
+        <h2>Your Profile</h2>
+        <input id="displayName" placeholder="Display Name" />
+        <input type="file" id="profilePicInput" />
+        <img id="profilePic" src="" alt="Profile Picture" />
+        <label><input type="checkbox" id="musicToggle" /> Profile Music</label>
+        <label><input type="checkbox" id="emotionToggle" /> Emotional Mode</label>
+        <label><input type="checkbox" id="lastSeenToggle" /> Show Last Seen</label>
+        <button id="saveProfileBtn">Save Profile</button>
+        <audio id="profileMusic" controls style="display:none;" loop>
+          <source src="https://www.bensound.com/bensound-music/bensound-goinghigher.mp3" type="audio/mp3">
+        </audio>
+      </div>
+    </div>
   </div>
+
   <script src="firebase.js"></script>
   <script src="app.js"></script>
 </body>
