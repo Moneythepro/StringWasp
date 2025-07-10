@@ -1,88 +1,118 @@
+/* RESET */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
-body {
-  font-family: 'Segoe UI', sans-serif;
+
+/* THEMES */
+body.light-theme {
+  background: #f0f0f0;
+  color: #000;
 }
-.light-theme {
-  background: #f5f5f5;
-  color: #111;
-}
-.dark-theme {
+body.dark-theme {
   background: #121212;
-  color: #f5f5f5;
+  color: #fff;
 }
+
+/* OVERLAY */
+#init-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #000a;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  z-index: 999;
+}
+
+/* APP CONTAINER */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* HEADER */
 header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1rem;
-  background: #6200ea;
+  background: #222;
   color: white;
 }
-nav {
-  display: flex;
-  justify-content: space-around;
-  padding: 0.5rem;
-  background: #eee;
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-}
+
+/* MAIN CONTENT */
 main {
+  flex: 1;
   padding: 1rem;
-  padding-bottom: 4rem;
+  overflow-y: auto;
 }
+
+/* TABS */
 .tab {
   display: none;
 }
 .tab.active {
   display: block;
 }
-.placeholder {
-  margin-bottom: 1rem;
-}
-#init-overlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.75);
-  color: #fff;
-  z-index: 9999;
+
+/* GROUP CHAT */
+.group-chat {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  gap: 0.5rem;
 }
-.loader {
-  border: 6px solid #eee;
-  border-top: 6px solid #6200ea;
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-}
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-input, select, button {
-  margin: 0.3rem;
+#groupSelect {
   padding: 0.5rem;
 }
-.chat-input {
+.messages {
+  flex: 1;
+  max-height: 300px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+}
+.input-area {
   display: flex;
   gap: 0.5rem;
-  margin-top: 1rem;
+  align-items: center;
 }
+.input-area input[type="text"] {
+  flex: 1;
+  padding: 0.5rem;
+}
+.input-area button {
+  padding: 0.5rem 1rem;
+}
+
+/* NAVIGATION */
+nav {
+  display: flex;
+  justify-content: space-around;
+  padding: 0.5rem;
+  background: #ddd;
+}
+nav button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+}
+
+/* MOBILE */
 @media (max-width: 768px) {
-  header h1 {
-    font-size: 1.2rem;
+  main {
+    padding: 0.5rem;
   }
-  nav button {
-    font-size: 1rem;
+  .input-area {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
