@@ -368,3 +368,33 @@ input:checked + .slider:before {
   color: #888;
   margin: 4px 12px;
 }
+
+.input-bar {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  background: #fff;
+  border-top: 1px solid #ccc;
+}
+
+.input-bar input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  margin: 0 8px;
+  font-size: 14px;
+  outline: none;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #075e54;
+}
+
+.icon-btn:hover {
+  color: #0b6c60;
+}
