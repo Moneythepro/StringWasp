@@ -40,9 +40,10 @@
       <span class="slider"></span>
     </label>
 
-    <!-- 👤 Username Display -->
+    <!-- 👤 Username Display + Online -->
     <div class="header">
       <span id="usernameDisplay"></span>
+      <span id="userOnlineDot" class="online-dot"></span>
     </div>
 
     <!-- 🧭 Bottom Tabs -->
@@ -58,27 +59,24 @@
     <div id="chatTab" class="tab">
       <h3>Chats</h3>
       <div id="messages" class="messages"></div>
-      <div id="typingIndicator" class="typing"></div>
+      <div id="typingIndicator" class="typing">Typing...</div>
       <input id="messageInput" placeholder="Type a message..." />
       <button onclick="sendMessage()">Send</button>
     </div>
 
     <!-- 👥 Group Chats -->
     <div id="groupsTab" class="tab">
-  <div class="header">
-    <button onclick="createGroup()">Create Group</button>
-    <button onclick="joinGroup()">Join Group</button>
-  </div>
-
-  <!-- Room selector -->
-  <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
-
-  <!-- Group messages -->
-  <div id="groupMessages" class="messages"></div>
-  <input id="groupMessageInput" placeholder="Type a message..." />
-  <button onclick="sendGroupMessage()">Send</button>
+      <div class="header">
+        <button onclick="createGroup()">Create Group</button>
+        <button onclick="joinGroup()">Join Group</button>
+        <button onclick="showGroupInfo()">Group Info</button>
+      </div>
+      <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
+      <div id="groupMessages" class="messages"></div>
+      <input id="groupMessageInput" placeholder="Type a message..." />
+      <button onclick="sendGroupMessage()">Send</button>
     </div>
-  
+
     <!-- 🔔 Inbox -->
     <div id="inboxTab" class="tab">
       <h3>Inbox</h3>
@@ -109,7 +107,16 @@
       <textarea id="profileBio" placeholder="Your Bio"></textarea>
       <input id="profilePhone" placeholder="Phone Number" />
       <input id="profileEmail" placeholder="Public Email" />
+      <select id="profileGender">
+        <option value="">Select Gender</option>
+        <option>Male</option>
+        <option>Female</option>
+        <option>Other</option>
+      </select>
+      <input id="profileUsername" placeholder="Edit Username" />
       <button onclick="saveProfile()">Save</button>
+      <button onclick="logout()">Logout</button>
+      <button onclick="window.location.href='mailto:moneythepro7@gmail.com'">Contact Support</button>
     </div>
 
     <!-- 💬 Thread View (Direct DM) -->
@@ -131,6 +138,21 @@
         <p id="viewProfileBio">No bio</p>
         <p id="viewProfileEmail"></p>
         <p id="viewProfileStatus"></p>
+        <div class="profile-options">
+          <button onclick="addFriendFromModal()">Add Friend</button>
+          <button onclick="messageFromModal()">Message</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🏷️ Group Info Modal -->
+    <div id="groupInfoModal" class="modal">
+      <div class="modal-content">
+        <h3>Group Info</h3>
+        <p><strong>Name:</strong> <span id="groupInfoName"></span></p>
+        <p><strong>Owner:</strong> <span id="groupInfoOwner"></span></p>
+        <ul id="groupMembersList"></ul>
+        <button onclick="document.getElementById('groupInfoModal').style.display='none'">Close</button>
       </div>
     </div>
   </div>
