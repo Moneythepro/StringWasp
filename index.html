@@ -9,13 +9,12 @@
   <link rel="icon" href="favicon.png" />
 </head>
 <body>
-  <!-- 🔊 Notification Sound -->
   <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
-  <!-- 🔃 Loading Overlay -->
+  <!-- Loading Overlay -->
   <div id="loadingOverlay"><div class="loader"></div></div>
 
-  <!-- 🔐 Login/Register -->
+  <!-- Login/Register -->
   <div id="loginPage" class="tab">
     <h2>Login</h2>
     <input type="email" id="email" placeholder="Email" />
@@ -24,28 +23,28 @@
     <button onclick="register()">Register</button>
   </div>
 
-  <!-- 👤 Username Setup -->
+  <!-- Username Setup -->
   <div id="usernameDialog" class="tab" style="display:none;">
     <h3>Pick a Username</h3>
     <input id="newUsername" placeholder="Username" />
     <button onclick="saveUsername()">Save</button>
   </div>
 
-  <!-- 💬 Main App Page -->
+  <!-- Main App -->
   <div id="appPage" class="tabContent">
-
-    <!-- 🔘 Theme Switch -->
+    <!-- Theme Switch -->
     <label class="theme-switch">
       <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()" />
       <span class="slider"></span>
     </label>
 
-    <!-- 👤 Username Display -->
+    <!-- Header with Username -->
     <div class="header">
       <span id="usernameDisplay"></span>
+      <span id="onlineStatus" class="status-indicator"></span>
     </div>
 
-    <!-- 🧭 Bottom Tabs -->
+    <!-- Bottom Tabs -->
     <div class="tabs">
       <button onclick="switchTab('chatTab')" id="tab-chat">💬<br><span>Chats</span></button>
       <button onclick="switchTab('groupsTab')" id="tab-groups">👥<br><span>Groups</span></button>
@@ -54,7 +53,7 @@
       <button onclick="switchTab('profileTab')" id="tab-profile">🙍‍♂️<br><span>Profile</span></button>
     </div>
 
-    <!-- 💬 Personal Chats -->
+    <!-- Personal Chats -->
     <div id="chatTab" class="tab">
       <h3>Chats</h3>
       <div id="messages" class="messages"></div>
@@ -63,28 +62,32 @@
       <button onclick="sendMessage()">Send</button>
     </div>
 
-    <!-- 👥 Group Chats -->
+    <!-- Group Chats -->
     <div id="groupsTab" class="tab">
       <div class="header">
         <button onclick="createGroup()">Create Group</button>
         <button onclick="joinGroup()">Join Group</button>
       </div>
       <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
-      <div id="groupInfo"></div>
+      <div id="groupInfo">
+        <p><strong>Owner:</strong> <span id="groupOwner">-</span></p>
+        <p><strong>Admins:</strong> <span id="groupAdmins">-</span></p>
+        <p><strong>Members:</strong> <span id="groupMembers">-</span></p>
+      </div>
       <div id="groupTypingIndicator" class="typing"></div>
       <div id="groupMessages" class="messages"></div>
       <input id="groupMessageInput" placeholder="Type a message..." />
       <button onclick="sendGroupMessage()">Send</button>
     </div>
 
-    <!-- 🔔 Inbox -->
+    <!-- Inbox -->
     <div id="inboxTab" class="tab">
       <h3>Inbox</h3>
       <button onclick="markAllRead()">Mark All as Read</button>
       <div id="inboxList"></div>
     </div>
 
-    <!-- 🔍 Search -->
+    <!-- Search -->
     <div id="searchTab" class="tab">
       <h3>Search</h3>
       <input id="searchInput" placeholder="Search users or groups..." />
@@ -97,10 +100,10 @@
       <div id="searchResultsGroup" class="search-results" style="display:none;"></div>
     </div>
 
-    <!-- 🙍 Profile -->
+    <!-- Profile -->
     <div id="profileTab" class="tab">
       <h3>Your Profile</h3>
-      <img id="profilePicPreview" src="default-avatar.png" alt="Avatar" />
+      <img id="profilePicPreview" src="default-avatar.png" alt="Avatar" onerror="this.src='default-avatar.png'" />
       <label class="profile-edit-label">Tap to upload</label>
       <input type="file" id="profilePic" accept="image/*" style="display:none;" />
       <input id="profileName" placeholder="Your Name" />
@@ -119,7 +122,7 @@
       <button onclick="contactSupport()">Contact Us</button>
     </div>
 
-    <!-- 💬 Thread View -->
+    <!-- Direct Thread View -->
     <div id="threadView" class="tab">
       <button onclick="closeThread()">← Back</button>
       <h3 id="threadWithName"></h3>
@@ -128,11 +131,11 @@
       <button onclick="sendThreadMessage()">Send</button>
     </div>
 
-    <!-- 👁️ View Profile Modal -->
+    <!-- View Profile Modal -->
     <div id="viewProfileModal" class="modal">
       <div class="modal-content">
         <span class="close" onclick="document.getElementById('viewProfileModal').style.display='none'">×</span>
-        <img id="viewProfilePic" src="default-avatar.png" alt="Avatar" />
+        <img id="viewProfilePic" src="default-avatar.png" alt="Avatar" onerror="this.src='default-avatar.png'" />
         <h3 id="viewProfileName">Name</h3>
         <p id="viewProfileUsername">@username</p>
         <p id="viewProfileBio">No bio</p>
@@ -145,7 +148,7 @@
       </div>
     </div>
 
-    <!-- Custom Action Modal -->
+    <!-- Reusable Modal -->
     <div id="customModal" class="modal">
       <div class="modal-content">
         <p id="modalMessage">Are you sure?</p>
@@ -155,22 +158,21 @@
         </div>
       </div>
     </div>
-
   </div>
 
-  <!-- 🔥 Firebase v8 SDK -->
+  <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
-  <!-- 🔐 Firebase Config -->
+  <!-- Config -->
   <script src="firebase.js"></script>
 
-  <!-- 💡 App Logic -->
+  <!-- App -->
   <script src="app.js"></script>
 
-  <!-- 🛠️ Service Worker -->
+  <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
@@ -179,19 +181,11 @@
     }
   </script>
 
-  <!-- 🔐 Crypto -->
+  <!-- CryptoJS, Compression, IndexedDB, QR, Socket -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-
-  <!-- 📦 LZ Compression -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
-
-  <!-- 🧠 IndexedDB -->
   <script src="https://unpkg.com/idb@7/build/umd.js"></script>
-
-  <!-- 📷 QR Code -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
-
-  <!-- 🔌 Socket.IO -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </body>
 </html>
