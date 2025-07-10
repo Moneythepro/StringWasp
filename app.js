@@ -1,75 +1,81 @@
-document.addEventListener('DOMContentLoaded', () => {
-  // Hide loader
-  document.getElementById('init-overlay').style.display = 'none';
+// Firebase config and init already in firebase.js
 
-  // Tabs
-  document.querySelectorAll('nav button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tab = btn.dataset.tab;
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.getElementById(tab).classList.add('active');
+document.addEventListener("DOMContentLoaded", () => {
+  // Hide loading
+  document.getElementById("init-overlay").style.display = "none";
+
+  // Tab switching
+  document.querySelectorAll("nav button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach((tab) => tab.classList.remove("active"));
+      document.getElementById(btn.dataset.tab).classList.add("active");
     });
   });
 
-  // Theme toggle
-  document.getElementById('themeSwitcher').addEventListener('change', (e) => {
+  // Theme switching
+  const themeSwitcher = document.getElementById("themeSwitcher");
+  themeSwitcher.addEventListener("change", (e) => {
     document.body.className = `${e.target.value}-theme`;
-    localStorage.setItem('theme', e.target.value);
   });
-  document.body.className = `${localStorage.getItem('theme') || 'light'}-theme`;
 
   // Panic button
-  document.getElementById('panicBtn').addEventListener('click', () => {
-    localStorage.clear();
-    alert('All local data cleared. Reloading...');
-    location.reload();
-  });
-
-  // Send chat
-  document.getElementById('sendBtn').addEventListener('click', async () => {
-    const msg = document.getElementById('chatInput').value;
-    const isAnon = document.getElementById('anonToggle').checked;
-    const user = auth.currentUser;
-    if (!user || !msg) return;
-
-    const encrypted = btoa(msg);
-    await db.collection('chats').add({
-      uid: user.uid,
-      msg: encrypted,
-      anon: isAnon,
-      name: isAnon ? 'Anonymous' : user.displayName || 'User',
-      time: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    document.getElementById('chatInput').value = '';
-  });
-
-  // Load chat
-  db.collection('chats').orderBy('time').onSnapshot(snapshot => {
-    const chatArea = document.getElementById('chatArea');
-    chatArea.innerHTML = '';
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const div = document.createElement('div');
-      div.textContent = `${data.name}: ${atob(data.msg || '')}`;
-      chatArea.appendChild(div);
-    });
-  });
-
-  // Save profile
-  document.getElementById('saveProfileBtn').addEventListener('click', async () => {
-    const user = auth.currentUser;
-    const name = document.getElementById('displayNameInput').value;
-    const file = document.getElementById('profilePicInput').files[0];
-
-    if (name) await user.updateProfile({ displayName: name });
-
-    if (file) {
-      const ref = storage.ref(`profiles/${user.uid}`);
-      await ref.put(file);
-      const url = await ref.getDownloadURL();
-      await user.updateProfile({ photoURL: url });
+  document.getElementById("panicBtn").addEventListener("click", () => {
+    if (confirm("Clear chat data from this session?")) {
+      localStorage.clear();
+      location.reload();
     }
+  });
 
-    alert('Profile updated!');
+  // Load groups
+  const groupSelect = document.getElementById("groupSelect");
+  db.collection("groups").onSnapshot((snapshot) => {
+    groupSelect.innerHTML = "";
+    snapshot.forEach((doc) => {
+      const opt = document.createElement("option");
+      opt.value = doc.id;
+      opt.textContent = doc.data().name || doc.id;
+      groupSelect.appendChild(opt);
+    });
+  });
+
+  // Group chat send
+  document.getElementById("sendGroupMessage").addEventListener("click", async () => {
+    const groupId = groupSelect.value;
+    const message = document.getElementById("groupMessageInput").value.trim();
+    const anonymous = document.getElementById("anonGroupToggle").checked;
+    if (!groupId || !message) return;
+
+    const user = auth.currentUser;
+    const encoded = btoa(message);
+
+    await db.collection("groups").doc(groupId).collection("messages").add({
+      text: encoded,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      uid: user ? user.uid : "anon",
+      displayName: anonymous ? "Anonymous" : (user?.displayName || "Unknown"),
+      anonymous
+    });
+
+    document.getElementById("groupMessageInput").value = "";
+  });
+
+  // Listen for messages
+  groupSelect.addEventListener("change", () => {
+    const groupId = groupSelect.value;
+    const messagesDiv = document.getElementById("groupMessages");
+    messagesDiv.innerHTML = "";
+    if (!groupId) return;
+
+    db.collection("groups").doc(groupId).collection("messages")
+      .orderBy("timestamp")
+      .onSnapshot((snapshot) => {
+        messagesDiv.innerHTML = "";
+        snapshot.forEach((doc) => {
+          const msg = doc.data();
+          const div = document.createElement("div");
+          div.textContent = `${msg.displayName}: ${atob(msg.text || "")}`;
+          messagesDiv.appendChild(div);
+        });
+      });
   });
 });
