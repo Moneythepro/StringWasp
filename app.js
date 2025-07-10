@@ -140,6 +140,48 @@ function joinRoom(roomName) {
   loadGroupInfo(roomName); // ✅ ADD THIS
 }
 
+function showGroupInfo(groupId) {
+  const ownerEl = document.getElementById("groupOwner");
+  const adminEl = document.getElementById("groupAdmins");
+  const memberEl = document.getElementById("groupMembers");
+
+  ownerEl.innerHTML = "<strong>Owner:</strong>";
+  adminEl.innerHTML = "<strong>Admins:</strong>";
+  memberEl.innerHTML = "<strong>Members:</strong>";
+
+  db.collection("groups").doc(groupId).get().then(groupDoc => {
+    const groupData = groupDoc.data();
+    if (!groupData) return;
+
+    db.collection("groups").doc(groupId).collection("members").get().then(snapshot => {
+      snapshot.forEach(doc => {
+        const uid = doc.id;
+        const data = doc.data();
+
+        db.collection("users").doc(uid).get().then(userDoc => {
+          const user = userDoc.data();
+          const display = `${user?.username || "Unknown"}`;
+          const div = document.createElement("div");
+          div.className = "member-entry";
+
+          let badge = "";
+          if (uid === groupData.createdBy) badge = "👑";
+          else if (data.role === "admin") badge = "🛠️";
+
+          div.textContent = `${badge} ${display}`;
+          memberEl.appendChild(div);
+
+          if (uid === groupData.createdBy) {
+            ownerEl.innerHTML += ` ${display}`;
+          } else if (data.role === "admin") {
+            adminEl.innerHTML += ` ${display} `;
+          }
+        });
+      });
+    });
+  });
+}
+
 function loadGroupInfo(groupId) {
   const infoDiv = document.getElementById("groupInfo");
   if (!infoDiv) return;
