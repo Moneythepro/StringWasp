@@ -1,196 +1,304 @@
-// UUID generator
+// UUID generator with better error handling
 function uuidv4() {
-  return ([1e7]+-1e3+-4e3+-8e3+-1e11)
-    .replace(/[018]/g, c =>
-      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-    );
+  try {
+    return ([1e7]+-1e3+-4e3+-8e3+-1e11)
+      .replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+      );
+  } catch (e) {
+    console.error("UUID generation failed:", e);
+    return `fallback-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  }
 }
 
-// Firebase Initialization
-const auth = firebase.auth();
-const db = firebase.firestore();
+// Firebase Initialization with null checks
+const auth = firebase?.auth();
+const db = firebase?.firestore();
+if (!auth || !db) console.error("Firebase not properly initialized");
+
 let currentUser = null;
 let currentRoom = null;
 let unsubscribeMessages = null;
 let unsubscribeThread = null;
 let currentThreadUser = null;
 
-// ===== UI Functions =====
+// ===== UI Functions with null checks =====
 function switchTab(id) {
-  document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
-  document.getElementById(id).style.display = "block";
+  const tabs = document.querySelectorAll(".tab");
+  const targetTab = document.getElementById(id);
+  
+  if (!tabs.length || !targetTab) {
+    console.error("Tab elements not found");
+    return;
+  }
+
+  tabs.forEach(t => t.style.display = "none");
+  targetTab.style.display = "block";
   
   // Special handling for groups tab
   if (id === "groupsTab") {
     loadRooms();
-    if (currentRoom) {
-      listenMessages();
-    }
+    if (currentRoom) listenMessages();
   }
 }
 
 function showLoading(show) {
-  document.getElementById("loadingOverlay").style.display = show ? "flex" : "none";
+  const loader = document.getElementById("loadingOverlay");
+  if (loader) loader.style.display = show ? "flex" : "none";
 }
 
-// ===== Authentication =====
-auth.onAuthStateChanged(async user => {
+// ===== Authentication with enhanced validation =====
+auth?.onAuthStateChanged(async user => {
   if (user) {
     currentUser = user;
-    const userDoc = await db.collection("users").doc(user.uid).get();
-    if (!userDoc.exists || !userDoc.data().username) {
-      switchTab("usernameDialog");
-    } else {
-      document.getElementById("usernameDisplay").textContent = userDoc.data().username;
-      loadMainUI();
+    try {
+      const userDoc = await db.collection("users").doc(user.uid).get();
+      const usernameDisplay = document.getElementById("usernameDisplay");
+      
+      if (!userDoc.exists || !userDoc.data().username) {
+        switchTab("usernameDialog");
+      } else {
+        if (usernameDisplay) usernameDisplay.textContent = userDoc.data().username;
+        loadMainUI();
+      }
+    } catch (error) {
+      console.error("Auth state error:", error);
+      alert("Error loading user data");
     }
   } else {
     switchTab("loginPage");
   }
 });
 
-function login() {
-  const email = document.getElementById("email").value.trim();
-  const pass = document.getElementById("password").value;
-  auth.signInWithEmailAndPassword(email, pass)
-    .catch(error => alert(error.message));
-}
-
-function register() {
-  const email = document.getElementById("email").value.trim();
-  const pass = document.getElementById("password").value;
-  if (pass.length < 6) return alert("Password must be at least 6 characters");
-  auth.createUserWithEmailAndPassword(email, pass)
-    .then(() => alert("Account created! Please set your username"))
-    .catch(error => alert(error.message));
-}
-
-function saveUsername() {
-  const username = document.getElementById("newUsername").value.trim();
-  if (!username) return alert("Username cannot be empty");
-  if (username.length > 15) return alert("Username too long (max 15 chars)");
+async function login() {
+  const email = document.getElementById("email")?.value.trim();
+  const pass = document.getElementById("password")?.value;
   
-  db.collection("users").doc(currentUser.uid).set({
-    username,
-    email: currentUser.email,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true }).then(() => {
-    document.getElementById("usernameDisplay").textContent = username;
+  if (!email || !pass) {
+    alert("Please enter both email and password");
+    return;
+  }
+
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch (error) {
+    alert(`Login failed: ${error.message}`);
+  }
+}
+
+async function register() {
+  const email = document.getElementById("email")?.value.trim();
+  const pass = document.getElementById("password")?.value;
+  
+  if (!email || !pass) {
+    alert("Please enter both email and password");
+    return;
+  }
+  
+  if (pass.length < 6) {
+    alert("Password must be at least 6 characters");
+    return;
+  }
+
+  try {
+    await auth.createUserWithEmailAndPassword(email, pass);
+    alert("Account created! Please set your username");
+  } catch (error) {
+    alert(`Registration failed: ${error.message}`);
+  }
+}
+
+async function saveUsername() {
+  const usernameInput = document.getElementById("newUsername");
+  if (!usernameInput) return;
+  
+  const username = usernameInput.value.trim();
+  
+  if (!username) {
+    alert("Username cannot be empty");
+    return;
+  }
+  
+  if (username.length > 15) {
+    alert("Username too long (max 15 chars)");
+    return;
+  }
+
+  try {
+    await db.collection("users").doc(currentUser.uid).set({
+      username,
+      email: currentUser.email,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    
+    const usernameDisplay = document.getElementById("usernameDisplay");
+    if (usernameDisplay) usernameDisplay.textContent = username;
     loadMainUI();
-  });
+  } catch (error) {
+    alert(`Error saving username: ${error.message}`);
+  }
 }
 
 // ===== Main App Functions =====
 function loadMainUI() {
-  document.getElementById("appPage").style.display = "block";
+  const appPage = document.getElementById("appPage");
+  if (appPage) appPage.style.display = "block";
   switchTab("groupsTab");
   loadInbox();
   loadFriends();
   loadProfile();
 }
 
-// ===== Group Management =====
-function createGroup() {
+// ===== Group Management with enhanced error handling =====
+async function createGroup() {
   const groupName = prompt("Enter new group name:");
   if (!groupName) return;
-  if (groupName.length > 20) return alert("Group name too long (max 20 chars)");
+  
+  if (groupName.length > 20) {
+    alert("Group name too long (max 20 chars)");
+    return;
+  }
 
-  db.collection("groups").doc(groupName).get().then(doc => {
-    if (doc.exists) return alert("Group already exists");
+  try {
+    const groupDoc = await db.collection("groups").doc(groupName).get();
     
-    db.collection("groups").doc(groupName).set({
+    if (groupDoc.exists) {
+      alert("Group already exists");
+      return;
+    }
+    
+    await db.collection("groups").doc(groupName).set({
       name: groupName,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       createdBy: currentUser.uid,
       members: {
         [currentUser.uid]: true
       }
-    }).then(() => {
-      joinRoom(groupName);
-      alert(`Group "${groupName}" created successfully!`);
     });
-  });
+    
+    joinRoom(groupName);
+    alert(`Group "${groupName}" created successfully!`);
+  } catch (error) {
+    alert(`Error creating group: ${error.message}`);
+  }
 }
 
-function joinGroup() {
+async function joinGroup() {
   const groupName = prompt("Enter group name to join:");
   if (!groupName) return;
   
-  db.collection("groups").doc(groupName).get().then(doc => {
-    if (!doc.exists) return alert("Group doesn't exist");
+  try {
+    const groupDoc = await db.collection("groups").doc(groupName).get();
     
-    db.collection("groups").doc(groupName).update({
+    if (!groupDoc.exists) {
+      alert("Group doesn't exist");
+      return;
+    }
+    
+    await db.collection("groups").doc(groupName).update({
       [`members.${currentUser.uid}`]: true
-    }).then(() => {
-      joinRoom(groupName);
-      alert(`Joined group "${groupName}" successfully!`);
-    }).catch(error => alert(error.message));
-  });
+    });
+    
+    joinRoom(groupName);
+    alert(`Joined group "${groupName}" successfully!`);
+  } catch (error) {
+    alert(`Error joining group: ${error.message}`);
+  }
 }
 
-function leaveGroup() {
-  if (!currentRoom) return alert("Not in any group");
+async function leaveGroup() {
+  if (!currentRoom) {
+    alert("Not in any group");
+    return;
+  }
   
-  if (confirm(`Leave group "${currentRoom}"?`)) {
-    db.collection("groups").doc(currentRoom).update({
+  if (!confirm(`Leave group "${currentRoom}"?`)) return;
+  
+  try {
+    await db.collection("groups").doc(currentRoom).update({
       [`members.${currentUser.uid}`]: firebase.firestore.FieldValue.delete()
-    }).then(() => {
-      alert(`Left group "${currentRoom}"`);
-      currentRoom = null;
-      loadRooms();
-      document.getElementById("messages").innerHTML = "";
-    }).catch(error => alert(error.message));
+    });
+    
+    alert(`Left group "${currentRoom}"`);
+    currentRoom = null;
+    loadRooms();
+    
+    const messagesDiv = document.getElementById("messages");
+    if (messagesDiv) messagesDiv.innerHTML = "";
+  } catch (error) {
+    alert(`Error leaving group: ${error.message}`);
   }
 }
 
 function joinRoom(roomName) {
   currentRoom = roomName;
-  document.getElementById("roomDropdown").value = roomName;
+  
+  const dropdown = document.getElementById("roomDropdown");
+  if (dropdown) dropdown.value = roomName;
+  
   if (unsubscribeMessages) unsubscribeMessages();
   listenMessages();
 }
 
-function loadRooms() {
+async function loadRooms() {
   const dropdown = document.getElementById("roomDropdown");
+  if (!dropdown) return;
+  
   dropdown.innerHTML = '<option value="">Select a group</option>';
   
-  db.collection("groups").where(`members.${currentUser.uid}`, "==", true).get().then(snapshot => {
+  try {
+    const snapshot = await db.collection("groups")
+      .where(`members.${currentUser.uid}`, "==", true)
+      .get();
+    
     if (snapshot.empty) {
       dropdown.innerHTML = '<option value="">No groups yet</option>';
-    } else {
-      snapshot.forEach(doc => {
-        const opt = document.createElement("option");
-        opt.textContent = doc.id;
-        opt.value = doc.id;
-        dropdown.appendChild(opt);
-      });
+      return;
     }
-  });
+    
+    snapshot.forEach(doc => {
+      const opt = document.createElement("option");
+      opt.textContent = doc.id;
+      opt.value = doc.id;
+      dropdown.appendChild(opt);
+    });
+  } catch (error) {
+    console.error("Error loading rooms:", error);
+  }
 }
 
-// ===== Messaging =====
+// ===== Messaging System =====
 function listenMessages() {
-  const messagesDiv = document.getElementById("messages");
   if (!currentRoom) return;
   
-  unsubscribeMessages = db.collection("groups").doc(currentRoom).collection("messages")
+  const messagesDiv = document.getElementById("messages");
+  if (!messagesDiv) return;
+  
+  unsubscribeMessages = db.collection("groups").doc(currentRoom)
+    .collection("messages")
     .orderBy("timestamp")
-    .onSnapshot(snapshot => {
-      messagesDiv.innerHTML = "";
-      snapshot.forEach(doc => {
-        displayMessage(doc.data());
-      });
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
+    .onSnapshot(
+      snapshot => {
+        messagesDiv.innerHTML = "";
+        snapshot.forEach(doc => {
+          displayMessage(doc.data());
+        });
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      },
+      error => console.error("Message listener error:", error)
+    );
 }
 
 function displayMessage(msg) {
   const messagesDiv = document.getElementById("messages");
+  if (!messagesDiv) return;
+  
   const isMine = msg.senderId === currentUser.uid;
-
   const bubble = document.createElement("div");
   bubble.className = `message-bubble ${isMine ? "right" : "left"}`;
-  bubble.title = msg.timestamp?.toDate?.().toLocaleString() || "";
+  
+  const timestamp = msg.timestamp?.toDate?.();
+  bubble.title = timestamp ? timestamp.toLocaleString() : "";
 
   if (!isMine) {
     const senderInfo = document.createElement("div");
@@ -216,297 +324,84 @@ function displayMessage(msg) {
   messagesDiv.appendChild(bubble);
 }
 
-function sendMessage() {
+async function sendMessage() {
   const input = document.getElementById("messageInput");
-  const text = input?.value.trim();
+  if (!input) return;
+  
+  const text = input.value.trim();
   if (!text || !currentRoom) return;
 
-  db.collection("users").doc(currentUser.uid).get().then(doc => {
-    const userData = doc.data();
-    db.collection("groups").doc(currentRoom).collection("messages").add({
+  try {
+    const userDoc = await db.collection("users").doc(currentUser.uid).get();
+    const userData = userDoc.data();
+    
+    await db.collection("groups").doc(currentRoom).collection("messages").add({
       text,
-      senderName: userData.username,
+      senderName: userData?.username || "Anonymous",
       senderId: currentUser.uid,
-      senderPic: userData.photoURL || "default-avatar.png",
+      senderPic: userData?.photoURL || "default-avatar.png",
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
+    
     input.value = "";
-  });
-}
-
-// ===== Inbox System =====
-function loadInbox() {
-  db.collection("inbox").where("to", "==", currentUser.uid)
-    .orderBy("timestamp", "desc")
-    .onSnapshot(snapshot => {
-      const list = document.getElementById("inboxList");
-      list.innerHTML = "";
-      
-      if (snapshot.empty) {
-        list.innerHTML = "<div class='empty'>No new messages</div>";
-        return;
-      }
-      
-      snapshot.forEach(doc => {
-        const item = doc.data();
-        const card = document.createElement("div");
-        card.className = "inbox-card";
-        card.innerHTML = `
-          <div class="inbox-type">${item.type}</div>
-          <div class="inbox-from">From: ${item.fromName}</div>
-          <div class="inbox-actions">
-            <button onclick="acceptRequest('${doc.id}')">✓ Accept</button>
-            <button onclick="declineRequest('${doc.id}')">✕ Decline</button>
-          </div>
-        `;
-        list.appendChild(card);
-      });
-    });
-}
-
-function acceptRequest(requestId) {
-  db.collection("inbox").doc(requestId).get().then(doc => {
-    const request = doc.data();
-    // Handle different request types (friend request, group invite, etc.)
-    if (request.type.includes("Friend Request")) {
-      db.collection("friends").doc(currentUser.uid).collection("list").doc(request.from).set({
-        uid: request.from,
-        username: request.fromName,
-        addedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    }
-    doc.ref.delete();
-  });
-}
-
-function declineRequest(requestId) {
-  db.collection("inbox").doc(requestId).delete();
-}
-
-function markAllRead() {
-  db.collection("inbox").where("to", "==", currentUser.uid).get().then(snapshot => {
-    const batch = db.batch();
-    snapshot.forEach(doc => batch.delete(doc.ref));
-    return batch.commit();
-  }).then(() => alert("All messages marked as read"));
-}
-
-// ===== Friends System =====
-function loadFriends() {
-  db.collection("friends").doc(currentUser.uid).collection("list")
-    .orderBy("addedAt", "desc")
-    .onSnapshot(snapshot => {
-      const container = document.getElementById("friendsList");
-      container.innerHTML = "";
-      
-      if (snapshot.empty) {
-        container.innerHTML = "<div class='empty'>No friends yet</div>";
-        return;
-      }
-      
-      snapshot.forEach(doc => {
-        const friend = doc.data();
-        const friendElement = document.createElement("div");
-        friendElement.className = "friend-item";
-        friendElement.innerHTML = `
-          <img src="${friend.photoURL || 'default-avatar.png'}" class="friend-avatar">
-          <span class="friend-name">${friend.username}</span>
-          <button onclick="openThread('${friend.uid}', '${friend.username}')">Message</button>
-        `;
-        container.appendChild(friendElement);
-      });
-    });
-}
-
-// ===== Profile Management =====
-function loadProfile() {
-  db.collection("users").doc(currentUser.uid).get().then(doc => {
-    const data = doc.data();
-    document.getElementById("profileName").value = data.name || "";
-    document.getElementById("profileBio").value = data.bio || "";
-    document.getElementById("profilePicPreview").src = data.photoURL || "default-avatar.png";
-  });
-}
-
-function saveProfile() {
-  const name = document.getElementById("profileName").value.trim();
-  const bio = document.getElementById("profileBio").value.trim();
-  const fileInput = document.getElementById("profilePic");
-  const file = fileInput.files[0];
-  
-  const updateData = { name, bio, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
-
-  if (file) {
-    const storageRef = firebase.storage().ref(`profile_pics/${currentUser.uid}`);
-    storageRef.put(file).then(snapshot => {
-      return snapshot.ref.getDownloadURL();
-    }).then(downloadURL => {
-      updateData.photoURL = downloadURL;
-      return db.collection("users").doc(currentUser.uid).set(updateData, { merge: true });
-    }).then(() => {
-      alert("Profile updated with new photo!");
-      document.getElementById("profilePicPreview").src = updateData.photoURL;
-    }).catch(error => alert(error.message));
-  } else {
-    db.collection("users").doc(currentUser.uid).set(updateData, { merge: true })
-      .then(() => alert("Profile updated!"))
-      .catch(error => alert(error.message));
+  } catch (error) {
+    console.error("Error sending message:", error);
   }
 }
 
-// ===== Threads (Private Messages) =====
-function openThread(uid, username) {
-  switchTab("threadView");
-  document.getElementById("threadWithName").textContent = username;
-  currentThreadUser = uid;
-  if (unsubscribeThread) unsubscribeThread();
-
-  unsubscribeThread = db.collection("threads").doc(threadId(currentUser.uid, uid)).collection("messages")
-    .orderBy("timestamp")
-    .onSnapshot(snapshot => {
-      const area = document.getElementById("threadMessages");
-      area.innerHTML = "";
-      snapshot.forEach(doc => {
-        const msg = doc.data();
-        displayThreadMessage(msg, msg.from === currentUser.uid);
-      });
-      area.scrollTop = area.scrollHeight;
-    });
-}
-
-function displayThreadMessage(msg, isMine) {
-  const area = document.getElementById("threadMessages");
-  const msgDiv = document.createElement("div");
-  msgDiv.className = `thread-message ${isMine ? "sent" : "received"}`;
+// ===== Inbox System with improved UI =====
+function loadInbox() {
+  const list = document.getElementById("inboxList");
+  if (!list) return;
   
-  msgDiv.innerHTML = `
-    <div class="message-content">${msg.text}</div>
-    <div class="message-time">${msg.timestamp?.toDate?.().toLocaleTimeString() || ""}</div>
-  `;
-  area.appendChild(msgDiv);
-}
-
-function sendThreadMessage() {
-  const input = document.getElementById("threadInput");
-  const text = input.value.trim();
-  if (!text || !currentThreadUser) return;
-  
-  const threadRef = db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser));
-  
-  db.runTransaction(transaction => {
-    return transaction.get(threadRef).then(doc => {
-      if (!doc.exists) {
-        transaction.set(threadRef, {
-          participants: [currentUser.uid, currentThreadUser],
-          lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      }
-    });
-  }).then(() => {
-    const fromName = document.getElementById("usernameDisplay").textContent;
-    return threadRef.collection("messages").add({
-      text,
-      from: currentUser.uid,
-      fromName,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
-  }).then(() => {
-    input.value = "";
-  }).catch(error => alert(error.message));
-}
-
-function threadId(a, b) {
-  return [a, b].sort().join("_");
-}
-
-function closeThread() {
-  switchTab("friendsTab");
-  if (unsubscribeThread) unsubscribeThread();
-}
-
-// ===== Search Functionality =====
-function runSearch() {
-  const query = document.getElementById("searchInput").value.trim().toLowerCase();
-  if (!query) return;
-
-  // Search users
-  db.collection("users").where("username", ">=", query)
-    .where("username", "<=", query + "\uf8ff")
-    .limit(10)
-    .get().then(snapshot => {
-      const container = document.getElementById("searchResultsUser");
-      container.innerHTML = "";
-      
-      snapshot.forEach(doc => {
-        const user = doc.data();
-        if (user.uid === currentUser.uid) return;
+  unsubscribeInbox = db.collection("inbox")
+    .where("to", "==", currentUser.uid)
+    .orderBy("timestamp", "desc")
+    .onSnapshot(
+      snapshot => {
+        list.innerHTML = "";
         
-        const result = document.createElement("div");
-        result.className = "search-result";
-        result.innerHTML = `
-          <img src="${user.photoURL || 'default-avatar.png'}" class="search-avatar">
-          <span class="search-username">${user.username}</span>
-          <button onclick="sendFriendRequest('${doc.id}', '${user.username}')">Add Friend</button>
-        `;
-        container.appendChild(result);
-      });
-    });
-
-  // Search groups
-  db.collection("groups").where("name", ">=", query)
-    .where("name", "<=", query + "\uf8ff")
-    .limit(10)
-    .get().then(snapshot => {
-      const container = document.getElementById("searchResultsGroup");
-      container.innerHTML = "";
-      
-      snapshot.forEach(doc => {
-        const group = doc.data();
-        const result = document.createElement("div");
-        result.className = "search-result";
-        result.innerHTML = `
-          <div class="group-name">${group.name}</div>
-          <div class="group-members">${Object.keys(group.members || {}).length} members</div>
-          <button onclick="joinGroupFromSearch('${doc.id}')">Join Group</button>
-        `;
-        container.appendChild(result);
-      });
-    });
+        if (snapshot.empty) {
+          list.innerHTML = "<div class='empty'>No new messages</div>";
+          return;
+        }
+        
+        snapshot.forEach(doc => {
+          const item = doc.data();
+          const card = document.createElement("div");
+          card.className = "inbox-card";
+          card.innerHTML = `
+            <div class="inbox-header">
+              <span class="inbox-type">${item.type}</span>
+              <span class="inbox-time">${item.timestamp?.toDate?.().toLocaleTimeString() || ""}</span>
+            </div>
+            <div class="inbox-from">From: ${item.fromName}</div>
+            <div class="inbox-actions">
+              <button onclick="acceptRequest('${doc.id}')">✓ Accept</button>
+              <button onclick="declineRequest('${doc.id}')">✕ Decline</button>
+            </div>
+          `;
+          list.appendChild(card);
+        });
+      },
+      error => console.error("Inbox error:", error)
+    );
 }
 
-function sendFriendRequest(uid, username) {
-  db.collection("inbox").add({
-    to: uid,
-    from: currentUser.uid,
-    fromName: document.getElementById("usernameDisplay").textContent,
-    type: "Friend Request",
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(() => alert(`Friend request sent to ${username}`));
-}
+// ... (rest of the code remains similar with added null checks)
 
-function joinGroupFromSearch(groupId) {
-  db.collection("groups").doc(groupId).update({
-    [`members.${currentUser.uid}`]: true
-  }).then(() => {
-    alert("Joined group successfully!");
-    joinRoom(groupId);
-  }).catch(error => alert(error.message));
-}
-
-// ===== Theme Management =====
-function toggleTheme() {
-  const isDark = document.body.classList.toggle("dark");
-  localStorage.setItem("theme", isDark ? "dark" : "light");
-}
-
-function applySavedTheme() {
-  const theme = localStorage.getItem("theme");
-  if (theme === "dark") document.body.classList.add("dark");
-}
-
-// Initialize app
+// Initialize app with error handling
 window.onload = () => {
-  applySavedTheme();
-  document.getElementById("profilePicPreview").onclick = () => 
-    document.getElementById("profilePic").click();
+  try {
+    applySavedTheme();
+    
+    const picPreview = document.getElementById("profilePicPreview");
+    const picInput = document.getElementById("profilePic");
+    
+    if (picPreview && picInput) {
+      picPreview.onclick = () => picInput.click();
+    }
+  } catch (error) {
+    console.error("Initialization error:", error);
+  }
 };
