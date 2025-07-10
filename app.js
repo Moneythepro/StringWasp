@@ -115,8 +115,8 @@ function createGroup() {
   });
   ref.collection("members").doc(currentUser.uid).set({ joinedAt: Date.now() });
 
-  loadRooms();          // ✅ update dropdown
-  joinRoom(room);       // ✅ open immediately
+  loadRooms();
+  joinRoom(room);
 }
 
 function joinGroup() {
@@ -137,106 +137,7 @@ function joinRoom(roomName) {
   currentRoom = roomName;
   if (unsubscribeMessages) unsubscribeMessages();
   listenMessages();
-  loadGroupInfo(roomName); // ✅ ADD THIS
-}
-
-function showGroupInfo(groupId) {
-  const ownerEl = document.getElementById("groupOwner");
-  const adminEl = document.getElementById("groupAdmins");
-  const memberEl = document.getElementById("groupMembers");
-
-  ownerEl.innerHTML = "<strong>Owner:</strong>";
-  adminEl.innerHTML = "<strong>Admins:</strong>";
-  memberEl.innerHTML = "<strong>Members:</strong>";
-
-  db.collection("groups").doc(groupId).get().then(groupDoc => {
-    const groupData = groupDoc.data();
-    if (!groupData) return;
-
-    db.collection("groups").doc(groupId).collection("members").get().then(snapshot => {
-      snapshot.forEach(doc => {
-        const uid = doc.id;
-        const data = doc.data();
-
-        db.collection("users").doc(uid).get().then(userDoc => {
-          const user = userDoc.data();
-          const display = `${user?.username || "Unknown"}`;
-          const div = document.createElement("div");
-          div.className = "member-entry";
-
-          let badge = "";
-          if (uid === groupData.createdBy) badge = "👑";
-          else if (data.role === "admin") badge = "🛠️";
-
-          div.textContent = `${badge} ${display}`;
-          memberEl.appendChild(div);
-
-          if (uid === groupData.createdBy) {
-            ownerEl.innerHTML += ` ${display}`;
-          } else if (data.role === "admin") {
-            adminEl.innerHTML += ` ${display} `;
-          }
-        });
-      });
-    });
-  });
-}
-
-function loadGroupInfo(groupId) {
-  const infoDiv = document.getElementById("groupInfo");
-  if (!infoDiv) return;
-
-  db.collection("groups").doc(groupId).get().then(doc => {
-    if (!doc.exists) {
-      infoDiv.innerHTML = "Group not found.";
-      return;
-    }
-
-    const group = doc.data();
-    const createdBy = group.createdBy;
-    const createdAt = group.createdAt?.toDate().toLocaleString() || "N/A";
-    const adminList = group.admins || [];
-
-    db.collection("groups").doc(groupId).collection("members").get().then(membersSnap => {
-
-    // ===== Groups =====
-
-function createGroup() {
-  const room = prompt("Enter group name:");
-  if (!room) return;
-
-  const ref = db.collection("groups").doc(room);
-  ref.set({
-    name: room,
-    createdBy: currentUser.uid,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    admins: [currentUser.uid]
-  });
-  ref.collection("members").doc(currentUser.uid).set({ joinedAt: Date.now() });
-
-  loadRooms();          // ✅ update dropdown
-  joinRoom(room);       // ✅ open immediately
-}
-
-function joinGroup() {
-  const room = prompt("Enter group to join:");
-  if (!room) return;
-  db.collection("groups").doc(room).get().then(doc => {
-    if (doc.exists) {
-      db.collection("groups").doc(room).collection("members").doc(currentUser.uid).set({ joinedAt: Date.now() });
-      loadRooms();
-      joinRoom(room);
-    } else {
-      alert("Group does not exist.");
-    }
-  });
-}
-
-function joinRoom(roomName) {
-  currentRoom = roomName;
-  if (unsubscribeMessages) unsubscribeMessages();
-  listenMessages();
-  loadGroupInfo(roomName); // ✅ show metadata
+  loadGroupInfo(roomName);
 }
 
 function loadGroupInfo(groupId) {
@@ -257,7 +158,7 @@ function loadGroupInfo(groupId) {
     db.collection("groups").doc(groupId).collection("members").get().then(membersSnap => {
       const members = membersSnap.docs.map(doc => doc.id);
 
-      let membersHTML = members.map(uid => {
+      const membersHTML = members.map(uid => {
         let badge = "";
         if (uid === owner) badge = " 👑";
         else if (adminList.includes(uid)) badge = " 🛠️";
