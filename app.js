@@ -180,23 +180,33 @@ function openThread(uid, username) {
 
   // Load messages
   if (unsubscribeThread) unsubscribeThread();
-  unsubscribeThread = db.collection("threads")
-    .doc(threadId(currentUser.uid, uid))
-    .collection("messages")
-    .orderBy("timestamp")
-    .onSnapshot(snapshot => {
-      const area = document.getElementById("threadMessages");
-      area.innerHTML = "";
-      snapshot.forEach(doc => {
-        const msg = doc.data();
-        const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
-        const bubble = document.createElement("div");
-        bubble.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
-        bubble.textContent = `${msg.fromName}: ${decrypted}`;
-        area.appendChild(bubble);
-      });
-      area.scrollTop = area.scrollHeight;
+unsubscribeThread = db.collection("threads")
+  .doc(threadId(currentUser.uid, uid))
+  .collection("messages")
+  .orderBy("timestamp")
+  .onSnapshot(snapshot => {
+    const area = document.getElementById("threadMessages");
+    area.innerHTML = "";
+
+    snapshot.forEach(doc => {
+      const msg = doc.data();
+      let decrypted = "";
+
+      try {
+        decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+      } catch (e) {
+        decrypted = "[Message corrupted]";
+      }
+
+      const displayText = typeof decrypted === "string" ? decrypted : JSON.stringify(decrypted);
+      const div = document.createElement("div");
+      div.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
+      div.textContent = `${msg.fromName || "User"}: ${displayText}`;
+      area.appendChild(div);
     });
+
+    area.scrollTop = area.scrollHeight;
+  });
 
   // Typing
   db.collection("threads")
@@ -252,38 +262,42 @@ function handleTyping(type) {
 // ===== Inbox System =====
 
 function listenInbox() {
-  const inboxRef = db.collection("inbox").doc(currentUser.uid).collection("items");
+function listenInbox() {
+  const inboxList = document.getElementById("inboxList");
+  if (!inboxList || !currentUser) return;
 
   if (unsubscribeInbox) unsubscribeInbox();
-  unsubscribeInbox = inboxRef.onSnapshot(snapshot => {
-    const list = document.getElementById("inboxList");
-    const badge = document.getElementById("inboxBadge");
-    list.innerHTML = "";
-    let unreadCount = 0;
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      if (!data.read) unreadCount++;
+  unsubscribeInbox = db.collection("inbox").doc(currentUser.uid).collection("items")
+    .orderBy("timestamp", "desc")
+    .onSnapshot(snapshot => {
+      inboxList.innerHTML = snapshot.empty ? "<div class='empty'>No notifications</div>" : "";
 
-      const div = document.createElement("div");
-      div.className = "inbox-card";
-      div.innerHTML = `
-        <div>
-          <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
-          From: ${data.fromName || data.from}
-        </div>
-        <div class="btn-group">
-          <button onclick="acceptInbox('${doc.id}', '${data.type}', '${data.from}')">✅</button>
-          <button onclick="declineInbox('${doc.id}')">❌</button>
-        </div>
-      `;
-      list.appendChild(div);
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const fromDisplay =
+          data.fromName ||
+          (typeof data.from === "string"
+            ? data.from
+            : data.from?.username || data.from?.email || "Unknown");
+
+        const div = document.createElement("div");
+        div.className = "inbox-card";
+        div.innerHTML = `
+          <div>
+            <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
+            From: ${fromDisplay}
+          </div>
+          <div class="btn-group">
+            <button onclick="acceptInbox('${doc.id}', '${data.type}', '${data.from || ""}', '${data.group || ""}')">Accept</button>
+            <button onclick="declineInbox('${doc.id}')">Decline</button>
+          </div>
+        `;
+        inboxList.appendChild(div);
+      });
     });
-
-    badge.textContent = unreadCount > 0 ? unreadCount : "";
-  });
 }
-
+  
 function acceptInbox(id, type, from) {
   const ref = db.collection("inbox").doc(currentUser.uid).collection("items").doc(id);
   if (type === "friend") {
