@@ -1,4 +1,4 @@
-// UUID generator
+// ===== UUID Generator =====
 function uuidv4() {
   return ([1e7]+-1e3+-4e3+-8e3+-1e11)
     .replace(/[018]/g, c =>
@@ -6,299 +6,184 @@ function uuidv4() {
     );
 }
 
-// Firebase Initialization
+// ===== Firebase Init =====
 const auth = firebase.auth();
 const db = firebase.firestore();
 let currentUser = null;
 let currentRoom = null;
-let unsubscribeMessages = null;
-let unsubscribeThread = null;
-let unsubscribeInbox = null; // Added missing unsubscribe
 let currentThreadUser = null;
+let unsubscribeMessages = null;
+let unsubscribeInbox = null;
+let unsubscribeThread = null;
 
-// ===== UI Functions =====
+// ===== Theme =====
+function applySavedTheme() {
+  const theme = localStorage.getItem("theme");
+  if (theme === "dark") document.body.classList.add("dark");
+}
+function toggleTheme() {
+  document.body.classList.toggle("dark");
+  localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light");
+}
+
+// ===== UI Switch =====
 function switchTab(id) {
-  const tabs = document.querySelectorAll(".tab");
-  const targetTab = document.getElementById(id);
-  if (!tabs.length || !targetTab) return;
-  
-  tabs.forEach(t => t.style.display = "none");
-  targetTab.style.display = "block";
-  
+  document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
+  const el = document.getElementById(id);
+  if (el) el.style.display = "block";
   if (id === "groupsTab") {
     loadRooms();
-    if (currentRoom) listenMessages();
+    listenGroupMessages();
   }
 }
 
 function showLoading(show) {
-  const loader = document.getElementById("loadingOverlay");
-  if (loader) loader.style.display = show ? "flex" : "none";
+  const overlay = document.getElementById("loadingOverlay");
+  if (overlay) overlay.style.display = show ? "flex" : "none";
 }
 
-// ===== Authentication =====
+// ===== Auth =====
 auth.onAuthStateChanged(async user => {
-  try {
-    if (user) {
-      currentUser = user;
-      const userDoc = await db.collection("users").doc(user.uid).get();
-      const usernameDisplay = document.getElementById("usernameDisplay");
-      
-      if (!userDoc.exists || !userDoc.data().username) {
-        switchTab("usernameDialog");
-      } else {
-        if (usernameDisplay) usernameDisplay.textContent = userDoc.data().username;
-        loadMainUI();
-      }
+  if (user) {
+    currentUser = user;
+    const doc = await db.collection("users").doc(user.uid).get();
+    if (!doc.exists || !doc.data().username) {
+      switchTab("usernameDialog");
     } else {
-      switchTab("loginPage");
+      document.getElementById("usernameDisplay").textContent = doc.data().username;
+      loadMainUI();
     }
-  } catch (error) {
-    console.error("Auth error:", error);
+  } else {
+    switchTab("loginPage");
   }
 });
 
 function login() {
   const email = document.getElementById("email")?.value.trim();
-  const pass = document.getElementById("password")?.value;
-  if (!email || !pass) return;
-  
-  auth.signInWithEmailAndPassword(email, pass)
-    .catch(error => alert(error.message));
+  const password = document.getElementById("password")?.value;
+  auth.signInWithEmailAndPassword(email, password).catch(alert);
 }
 
 function register() {
   const email = document.getElementById("email")?.value.trim();
-  const pass = document.getElementById("password")?.value;
-  if (!email || !pass || pass.length < 6) return;
-  
-  auth.createUserWithEmailAndPassword(email, pass)
-    .then(() => alert("Account created! Please set your username"))
-    .catch(error => alert(error.message));
+  const password = document.getElementById("password")?.value;
+  auth.createUserWithEmailAndPassword(email, password).catch(alert);
 }
 
 function saveUsername() {
-  const username = document.getElementById("newUsername")?.value.trim();
-  if (!username || username.length > 15) return;
-  
-  db.collection("users").doc(currentUser.uid).set({
-    username,
-    email: currentUser.email,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true }).then(() => {
-    const usernameDisplay = document.getElementById("usernameDisplay");
-    if (usernameDisplay) usernameDisplay.textContent = username;
+  const username = document.getElementById("newUsername").value.trim();
+  if (!username) return alert("Enter username");
+  db.collection("users").doc(currentUser.uid).set({ username }, { merge: true }).then(() => {
+    document.getElementById("usernameDisplay").textContent = username;
     loadMainUI();
   });
 }
 
-// ===== Main App Functions =====
+function logout() {
+  auth.signOut().then(() => location.reload());
+}
+
+// ===== Main UI Loader =====
 function loadMainUI() {
-  const appPage = document.getElementById("appPage");
-  if (appPage) appPage.style.display = "block";
+  document.getElementById("appPage").style.display = "block";
   switchTab("groupsTab");
+  loadRooms();
   loadInbox();
   loadFriends();
   loadProfile();
 }
 
-// ===== Group Management =====
+// ===== Group =====
 function createGroup() {
-  const groupName = prompt("Enter new group name:");
-  if (!groupName || groupName.length > 20) return;
-  
-  db.collection("groups").doc(groupName).get().then(doc => {
-    if (doc.exists) return alert("Group already exists");
-    
-    db.collection("groups").doc(groupName).set({
-      name: groupName,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      createdBy: currentUser.uid,
-      members: { [currentUser.uid]: true }
-    }).then(() => {
-      joinRoom(groupName);
-      alert(`Group "${groupName}" created successfully!`);
-    });
-  });
+  const name = prompt("Enter group name");
+  if (!name) return;
+  db.collection("groups").doc(name).set({
+    name,
+    createdBy: currentUser.uid,
+    members: { [currentUser.uid]: "owner" },
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => joinRoom(name));
 }
 
 function joinGroup() {
-  const groupName = prompt("Enter group name to join:");
-  if (!groupName) return;
-  
-  db.collection("groups").doc(groupName).get().then(doc => {
-    if (!doc.exists) return alert("Group doesn't exist");
-    
-    db.collection("groups").doc(groupName).update({
-      [`members.${currentUser.uid}`]: true
-    }).then(() => {
-      joinRoom(groupName);
-      alert(`Joined group "${groupName}" successfully!`);
-    }).catch(error => alert(error.message));
-  });
-}
-
-function leaveGroup() {
-  if (!currentRoom) return alert("Not in any group");
-  if (!confirm(`Leave group "${currentRoom}"?`)) return;
-  
-  db.collection("groups").doc(currentRoom).update({
-    [`members.${currentUser.uid}`]: firebase.firestore.FieldValue.delete()
-  }).then(() => {
-    alert(`Left group "${currentRoom}"`);
-    currentRoom = null;
-    loadRooms();
-    const messagesDiv = document.getElementById("messages");
-    if (messagesDiv) messagesDiv.innerHTML = "";
-  }).catch(error => alert(error.message));
-}
-
-function joinRoom(roomName) {
-  currentRoom = roomName;
-  if (unsubscribeMessages) unsubscribeMessages(); // If you use for global chats
-
-  listenGroupMessages(); // For group messages
+  const name = prompt("Enter group name");
+  if (!name) return;
+  db.collection("groups").doc(name).update({
+    [`members.${currentUser.uid}`]: "member"
+  }).then(() => joinRoom(name)).catch(alert);
 }
 
 function loadRooms() {
   const dropdown = document.getElementById("roomDropdown");
-  if (!dropdown) return;
-  
-  dropdown.innerHTML = '<option value="">Select a group</option>';
-  
-  db.collection("groups").where(`members.${currentUser.uid}`, "==", true).get().then(snapshot => {
-    if (snapshot.empty) {
-      dropdown.innerHTML = '<option value="">No groups yet</option>';
-    } else {
-      snapshot.forEach(doc => {
+  dropdown.innerHTML = "";
+  db.collection("groups").get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.members && data.members[currentUser.uid]) {
         const opt = document.createElement("option");
-        opt.textContent = doc.id;
         opt.value = doc.id;
+        opt.textContent = doc.id;
         dropdown.appendChild(opt);
-      });
-    }
+      }
+    });
   });
 }
 
-// ===== Messaging =====
-function listenMessages() {
-  if (!currentRoom) return;
-  const messagesDiv = document.getElementById("messages");
-  if (!messagesDiv) return;
-  
-  if (unsubscribeMessages) unsubscribeMessages();
-  
-  unsubscribeMessages = db.collection("groups").doc(currentRoom).collection("messages")
-    .orderBy("timestamp")
-    .onSnapshot(snapshot => {
-      messagesDiv.innerHTML = "";
-      snapshot.forEach(doc => displayMessage(doc.data()));
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }, error => console.error("Messages error:", error));
+function joinRoom(room) {
+  currentRoom = room;
+  listenGroupMessages();
 }
 
 function listenGroupMessages() {
-  const messagesDiv = document.getElementById("groupMessages");
-  if (!messagesDiv) return;
-
+  if (!currentRoom) return;
+  const div = document.getElementById("groupMessages");
+  if (!div) return;
   db.collection("groups").doc(currentRoom).collection("messages")
     .orderBy("timestamp")
     .onSnapshot(snapshot => {
-      messagesDiv.innerHTML = "";
+      div.innerHTML = "";
       snapshot.forEach(doc => {
         const msg = doc.data();
         const bubble = document.createElement("div");
-        bubble.className = "message-bubble left";
-        bubble.textContent = `${msg.senderName}: ${msg.text}`;
-        messagesDiv.appendChild(bubble);
+        bubble.className = "message-bubble " + (msg.senderId === currentUser.uid ? "right" : "left");
+        bubble.innerHTML = `<strong>${msg.senderName}</strong>: ${msg.text}`;
+        div.appendChild(bubble);
       });
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      div.scrollTop = div.scrollHeight;
     });
 }
 
-function displayMessage(msg) {
-  const messagesDiv = document.getElementById("messages");
-  if (!messagesDiv) return;
-  
-  const isMine = msg.senderId === currentUser.uid;
-  const bubble = document.createElement("div");
-  bubble.className = `message-bubble ${isMine ? "right" : "left"}`;
-  bubble.title = msg.timestamp?.toDate?.().toLocaleString() || "";
-
-  if (!isMine) {
-    const senderInfo = document.createElement("div");
-    senderInfo.className = "sender-info";
-
-    const img = document.createElement("img");
-    img.src = msg.senderPic || "default-avatar.png";
-    img.className = "message-avatar";
-    img.onclick = () => showUserProfile(msg.senderId);
-
-    const name = document.createElement("div");
-    name.className = "sender-name";
-    name.textContent = msg.senderName || "User";
-
-    senderInfo.appendChild(img);
-    senderInfo.appendChild(name);
-    bubble.appendChild(senderInfo);
-  }
-
-  const text = document.createElement("div");
-  text.textContent = msg.text;
-  bubble.appendChild(text);
-  messagesDiv.appendChild(bubble);
-}
-
-function sendMessage() {
-  const input = document.getElementById("messageInput");
-  const text = input?.value.trim();
+function sendGroupMessage() {
+  const input = document.getElementById("groupMessageInput");
+  const text = input.value.trim();
   if (!text || !currentRoom) return;
-
-  db.collection("users").doc(currentUser.uid).get().then(doc => {
-    const userData = doc.data();
-    db.collection("groups").doc(currentRoom).collection("messages").add({
-      text,
-      senderName: userData.username,
-      senderId: currentUser.uid,
-      senderPic: userData.photoURL || "default-avatar.png",
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    input.value = "";
+  db.collection("groups").doc(currentRoom).collection("messages").add({
+    text,
+    senderId: currentUser.uid,
+    senderName: document.getElementById("usernameDisplay").textContent,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
   });
+  input.value = "";
 }
 
 // ===== Inbox System =====
-
 function loadInbox() {
   const list = document.getElementById("inboxList");
-  const badge = document.getElementById("inboxBadge");
-  if (!list || !badge) return;
-
+  if (!list) return;
   if (unsubscribeInbox) unsubscribeInbox();
 
-  let firstLoad = true;
   unsubscribeInbox = db.collection("inbox")
-    .where("to", "==", auth.currentUser.uid)
+    .where("to", "==", currentUser.uid)
     .orderBy("timestamp", "desc")
     .onSnapshot(snapshot => {
-      if (!firstLoad && !snapshot.empty) {
-        const sound = document.getElementById("notifSound");
-        if (sound) sound.play(); // 🔔 New notification
-      }
-      firstLoad = false;
-
       list.innerHTML = snapshot.empty
         ? "<div class='empty'>No new messages</div>"
         : snapshot.docs.map(doc => createInboxCard(doc)).join("");
-
-      // 🔴 Update badge count
-      badge.textContent = snapshot.size || "";
-      badge.style.display = snapshot.size ? "inline-block" : "none";
     }, error => {
       console.error("❌ Inbox error:", error.message || error);
     });
 }
-  
+
 function createInboxCard(doc) {
   const data = doc.data();
   let sender = "Unknown";
@@ -338,36 +223,28 @@ function acceptRequest(requestId) {
     if (!doc.exists) return console.error("❌ Request not found");
 
     const request = doc.data();
-    const fromUID = typeof request.from === "string" ? request.from : request.from?.uid || null;
+    const fromUID = typeof request.from === "string" ? request.from : null;
     const fromName = request.fromName || "Unknown";
 
-    if (!fromUID) {
-      console.error("❌ Missing sender UID in request:", request);
-      return;
-    }
+    if (!fromUID) return;
 
-    if (request.type?.includes("Friend Request")) {
+    if (request.type && request.type.includes("Friend Request")) {
       db.collection("friends").doc(currentUser.uid).collection("list").doc(fromUID).set({
         uid: fromUID,
         username: fromName,
         addedAt: firebase.firestore.FieldValue.serverTimestamp()
       }).then(() => {
         doc.ref.delete();
-        console.log("✅ Friend request accepted.");
-      }).catch(console.error);
+      });
     } else {
       doc.ref.delete();
     }
-  }).catch(error => {
-    console.error("❌ Error accepting request:", error);
-  });
+  }).catch(console.error);
 }
 
 function declineRequest(requestId) {
   if (!requestId) return console.error("❌ Invalid request ID");
-  db.collection("inbox").doc(requestId).delete()
-    .then(() => console.log("✅ Request declined."))
-    .catch(error => console.error("❌ Error declining request:", error));
+  db.collection("inbox").doc(requestId).delete().catch(console.error);
 }
 
 function markAllRead() {
@@ -376,6 +253,70 @@ function markAllRead() {
     snapshot.forEach(doc => batch.delete(doc.ref));
     return batch.commit();
   }).then(() => alert("✅ All messages marked as read"));
+}
+
+// ===== Friends =====
+function loadFriends() {
+  const container = document.getElementById("friendsList");
+  if (!container) return;
+  db.collection("friends").doc(currentUser.uid).collection("list")
+    .onSnapshot(snapshot => {
+      container.innerHTML = "";
+      snapshot.forEach(doc => {
+        const friend = doc.data();
+        const div = document.createElement("div");
+        div.className = "friend-entry";
+        div.textContent = friend.username;
+        div.onclick = () => openThread(friend.uid, friend.username);
+        container.appendChild(div);
+      });
+    });
+}
+
+// ===== Thread Chat =====
+function threadId(a, b) {
+  return [a, b].sort().join("_");
+}
+
+function openThread(uid, username) {
+  switchTab("threadView");
+  currentThreadUser = uid;
+  document.getElementById("threadWithName").textContent = username;
+  const area = document.getElementById("threadMessages");
+  if (!area) return;
+  if (unsubscribeThread) unsubscribeThread();
+
+  unsubscribeThread = db.collection("threads").doc(threadId(currentUser.uid, uid))
+    .collection("messages").orderBy("timestamp")
+    .onSnapshot(snapshot => {
+      area.innerHTML = "";
+      snapshot.forEach(doc => {
+        const msg = doc.data();
+        const div = document.createElement("div");
+        div.textContent = `${msg.fromName}: ${msg.text}`;
+        area.appendChild(div);
+      });
+      area.scrollTop = area.scrollHeight;
+    });
+}
+
+function sendThreadMessage() {
+  const input = document.getElementById("threadInput");
+  const text = input.value.trim();
+  if (!text || !currentThreadUser) return;
+
+  db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser)).collection("messages").add({
+    text,
+    from: currentUser.uid,
+    fromName: document.getElementById("usernameDisplay").textContent,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  input.value = "";
+}
+
+function closeThread() {
+  switchTab("friendsTab");
+  if (unsubscribeThread) unsubscribeThread();
 }
 
 // ===== Friends System =====
@@ -398,6 +339,7 @@ function createFriendElement(friend) {
       <img src="${friend.photoURL || 'default-avatar.png'}" class="friend-avatar">
       <span class="friend-name">${friend.username}</span>
       <button onclick="openThread('${friend.uid}', '${friend.username}')">Message</button>
+      <button onclick="viewUserProfile('${friend.uid}')">View Profile</button>
     </div>
   `;
 }
@@ -409,9 +351,13 @@ function loadProfile() {
     const nameInput = document.getElementById("profileName");
     const bioInput = document.getElementById("profileBio");
     const picPreview = document.getElementById("profilePicPreview");
-    
+    const phoneInput = document.getElementById("profilePhone");
+    const emailInput = document.getElementById("profileEmail");
+
     if (nameInput) nameInput.value = data.name || "";
     if (bioInput) bioInput.value = data.bio || "";
+    if (phoneInput) phoneInput.value = data.phone || "";
+    if (emailInput) emailInput.value = data.publicEmail || "";
     if (picPreview) picPreview.src = data.photoURL || "default-avatar.png";
   });
 }
@@ -419,11 +365,15 @@ function loadProfile() {
 function saveProfile() {
   const name = document.getElementById("profileName")?.value.trim();
   const bio = document.getElementById("profileBio")?.value.trim();
+  const phone = document.getElementById("profilePhone")?.value.trim();
+  const email = document.getElementById("profileEmail")?.value.trim();
   const file = document.getElementById("profilePic")?.files[0];
-  
+
   const updateData = { 
     name, 
     bio, 
+    phone,
+    publicEmail: email,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp() 
   };
 
@@ -451,68 +401,50 @@ function saveProfileData(data) {
   return db.collection("users").doc(currentUser.uid).set(data, { merge: true });
 }
 
-// ===== Threads (Private Messages) =====
+// ===== Threads (Private Chat) =====
+let unsubscribeThread = null;
+
 function openThread(uid, username) {
   switchTab("threadView");
-  const threadWithName = document.getElementById("threadWithName");
-  if (threadWithName) threadWithName.textContent = username;
-  
+  document.getElementById("threadWithName").textContent = username;
   currentThreadUser = uid;
+
+  const threadId = [currentUser.uid, uid].sort().join("_");
+  const area = document.getElementById("threadMessages");
+  if (!area) return;
+
   if (unsubscribeThread) unsubscribeThread();
 
-  unsubscribeThread = db.collection("threads").doc(threadId(currentUser.uid, uid)).collection("messages")
-    .orderBy("timestamp")
+  unsubscribeThread = db.collection("threads").doc(threadId).collection("messages")
+    .orderBy("timestamp", "asc")
     .onSnapshot(snapshot => {
-      const area = document.getElementById("threadMessages");
-      if (!area) return;
-      
-      area.innerHTML = snapshot.docs.map(doc => 
-        createThreadMessage(doc.data(), doc.data().from === currentUser.uid)
-      ).join("");
+      area.innerHTML = "";
+      snapshot.forEach(doc => {
+        const msg = doc.data();
+        const div = document.createElement("div");
+        div.className = msg.from === currentUser.uid ? "thread-msg mine" : "thread-msg theirs";
+        div.textContent = `${msg.fromName}: ${msg.text}`;
+        area.appendChild(div);
+      });
       area.scrollTop = area.scrollHeight;
-    }, error => console.error("Thread error:", error));
-}
-
-function createThreadMessage(msg, isMine) {
-  return `
-    <div class="thread-message ${isMine ? "sent" : "received"}">
-      <div class="message-content">${msg.text}</div>
-      <div class="message-time">${msg.timestamp?.toDate?.().toLocaleTimeString() || ""}</div>
-    </div>
-  `;
+    });
 }
 
 function sendThreadMessage() {
   const input = document.getElementById("threadInput");
-  const text = input?.value.trim();
+  const text = input.value.trim();
   if (!text || !currentThreadUser) return;
-  
-  const threadRef = db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser));
-  const fromName = document.getElementById("usernameDisplay")?.textContent || "Anonymous";
-  
-  db.runTransaction(transaction => {
-    return transaction.get(threadRef).then(doc => {
-      if (!doc.exists) {
-        transaction.set(threadRef, {
-          participants: [currentUser.uid, currentThreadUser],
-          lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      }
-    });
-  }).then(() => {
-    return threadRef.collection("messages").add({
-      text,
-      from: currentUser.uid,
-      fromName,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
-  }).then(() => {
-    input.value = "";
-  }).catch(error => alert(error.message));
-}
 
-function threadId(a, b) {
-  return [a, b].sort().join("_");
+  const threadId = [currentUser.uid, currentThreadUser].sort().join("_");
+
+  db.collection("threads").doc(threadId).collection("messages").add({
+    text,
+    from: currentUser.uid,
+    fromName: document.getElementById("usernameDisplay").textContent,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  input.value = "";
 }
 
 function closeThread() {
@@ -520,97 +452,65 @@ function closeThread() {
   if (unsubscribeThread) unsubscribeThread();
 }
 
-// ===== Search Functionality =====
+// ===== Search System =====
+function switchSearchView(type) {
+  document.getElementById("searchResultsUser").style.display = type === "user" ? "block" : "none";
+  document.getElementById("searchResultsGroup").style.display = type === "group" ? "block" : "none";
+}
+
 function runSearch() {
-  const query = document.getElementById("searchInput")?.value.trim().toLowerCase();
+  const query = document.getElementById("searchInput").value.trim().toLowerCase();
   if (!query) return;
 
-  // Search users
-  db.collection("users").where("username", ">=", query)
-    .where("username", "<=", query + "\uf8ff")
-    .limit(10)
+  const userResults = document.getElementById("searchResultsUser");
+  const groupResults = document.getElementById("searchResultsGroup");
+  userResults.innerHTML = "";
+  groupResults.innerHTML = "";
+
+  db.collection("users").where("username", ">=", query).where("username", "<=", query + "\uf8ff")
     .get().then(snapshot => {
-      const container = document.getElementById("searchResultsUser");
-      if (!container) return;
-      
-      container.innerHTML = snapshot.docs
-        .filter(doc => doc.data().uid !== currentUser.uid)
-        .map(doc => createUserSearchResult(doc))
-        .join("");
+      snapshot.forEach(doc => {
+        const user = doc.data();
+        const div = document.createElement("div");
+        div.className = "search-result";
+        div.textContent = `@${user.username} (${user.name || "No Name"})`;
+        if (user.username === "moneythepro") div.textContent += " 🛠️ Developer";
+        div.onclick = () => viewUserProfile(doc.id);
+        userResults.appendChild(div);
+      });
     });
 
-  // Search groups
-  db.collection("groups").where("name", ">=", query)
-    .where("name", "<=", query + "\uf8ff")
-    .limit(10)
+  db.collection("groups").where("name", ">=", query).where("name", "<=", query + "\uf8ff")
     .get().then(snapshot => {
-      const container = document.getElementById("searchResultsGroup");
-      if (!container) return;
-      
-      container.innerHTML = snapshot.docs.map(doc => createGroupSearchResult(doc)).join("");
+      snapshot.forEach(doc => {
+        const group = doc.data();
+        const div = document.createElement("div");
+        div.className = "search-result";
+        div.textContent = `#${group.name}`;
+        div.onclick = () => joinRoomPrompt(group.name);
+        groupResults.appendChild(div);
+      });
     });
 }
 
-function createUserSearchResult(doc) {
-  const user = doc.data();
-  return `
-    <div class="search-result">
-      <img src="${user.photoURL || 'default-avatar.png'}" class="search-avatar">
-      <span class="search-username">${user.username}</span>
-      <button onclick="sendFriendRequest('${doc.id}', '${user.username}')">Add Friend</button>
-    </div>
-  `;
-}
+// ===== View Profile Modal =====
+function viewUserProfile(uid) {
+  db.collection("users").doc(uid).get().then(doc => {
+    const data = doc.data();
+    if (!data) return;
 
-function createGroupSearchResult(doc) {
-  const group = doc.data();
-  return `
-    <div class="search-result">
-      <div class="group-name">${group.name}</div>
-      <div class="group-members">${Object.keys(group.members || {}).length} members</div>
-      <button onclick="joinGroupFromSearch('${doc.id}')">Join Group</button>
-    </div>
-  `;
-}
-
-function sendFriendRequest(uid, username) {
-  const fromName = document.getElementById("usernameDisplay")?.textContent;
-  if (!fromName) return;
-  
-  db.collection("inbox").add({
-    to: uid,
-    from: currentUser.uid,
-    fromName,
-    type: "Friend Request",
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(() => alert(`Friend request sent to ${username}`));
-}
-
-function joinGroupFromSearch(groupId) {
-  db.collection("groups").doc(groupId).update({
-    [`members.${currentUser.uid}`]: true
-  }).then(() => {
-    alert("Joined group successfully!");
-    joinRoom(groupId);
-  }).catch(error => alert(error.message));
-}
-
-function sendGroupMessage() {
-  const input = document.getElementById("groupMessageInput");
-  const text = input?.value.trim();
-  if (!text || !currentRoom) return;
-
-  db.collection("groups").doc(currentRoom).collection("messages").add({
-    text,
-    senderId: currentUser.uid,
-    senderName: document.getElementById("usernameDisplay").textContent,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    document.getElementById("viewProfilePic").src = data.photoURL || "default-avatar.png";
+    document.getElementById("viewProfileName").textContent = data.name || "Unnamed";
+    document.getElementById("viewProfileUsername").textContent = "@" + (data.username || "unknown");
+    document.getElementById("viewProfileBio").textContent = data.bio || "No bio";
+    document.getElementById("viewProfileEmail").textContent = data.email || "";
+    document.getElementById("viewProfileStatus").textContent = data.status || "";
+    
+    document.getElementById("viewProfileModal").style.display = "block";
   });
-
-  input.value = "";
 }
 
-// ===== Theme Management =====
+// ===== Theme =====
 function toggleTheme() {
   const isDark = document.body.classList.toggle("dark");
   localStorage.setItem("theme", isDark ? "dark" : "light");
@@ -621,12 +521,33 @@ function applySavedTheme() {
   if (theme === "dark") document.body.classList.add("dark");
 }
 
-// Initialize app
+// ===== Contact Support =====
+function contactSupport() {
+  const email = "mailto:moneythepro7@gmail.com?subject=Support%20Request%20from%20StringWasp%20User";
+  window.open(email, "_blank");
+}
+
+// ===== Typing Indicators (Basic Demo) =====
+// Future: Implement Firestore-based typing indicators
+
+// ===== Init on Load =====
 window.onload = () => {
   applySavedTheme();
-  const picPreview = document.getElementById("profilePicPreview");
-  const picInput = document.getElementById("profilePic");
-  if (picPreview && picInput) {
-    picPreview.onclick = () => picInput.click();
+
+  const msgInput = document.getElementById("messageInput");
+  if (msgInput) {
+    msgInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") sendMessage();
+    });
   }
+
+  const threadInput = document.getElementById("threadInput");
+  if (threadInput) {
+    threadInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") sendThreadMessage();
+    });
+  }
+
+  const preview = document.getElementById("profilePicPreview");
+  if (preview) preview.onclick = () => document.getElementById("profilePic").click();
 };
