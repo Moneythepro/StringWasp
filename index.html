@@ -33,7 +33,6 @@
 
   <!-- 💬 Main App Page -->
   <div id="appPage" class="tabContent">
-
     <!-- 🔘 Theme Switch -->
     <label class="theme-switch">
       <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()" />
@@ -84,8 +83,13 @@
 
       <div id="groupTypingIndicator" class="typing"></div>
       <div id="groupMessages" class="messages"></div>
-      <input id="groupMessageInput" placeholder="Type a message..." />
-      <button onclick="sendGroupMessage()">Send</button>
+
+      <!-- ✅ Group Input Bar -->
+      <div class="input-bar">
+        <button class="icon-btn">📎</button>
+        <input id="groupMessageInput" placeholder="Type a message..." />
+        <button onclick="sendGroupMessage()">➤</button>
+      </div>
     </div>
 
     <!-- 👫 Friends -->
@@ -137,26 +141,23 @@
       <button onclick="contactSupport()">Contact Us</button>
     </div>
 
-    <!-- Direct Thread View -->
-<div id="threadView" class="tab">
-  <div id="chatHeader" class="chat-header">
-    <img id="chatProfilePic" src="default-avatar.png" alt="Avatar" />
-    <div class="chat-info">
-      <h3 id="chatName">Chat Name</h3>
-      <p id="chatStatus">Last seen just now</p>
+    <!-- 💬 Thread View (DM) -->
+    <div id="threadView" class="tab">
+      <div id="chatHeader" class="chat-header">
+        <img id="chatProfilePic" src="default-avatar.png" alt="Avatar" />
+        <div class="chat-info">
+          <h3 id="chatName">Chat Name</h3>
+          <p id="chatStatus">Last seen just now</p>
+        </div>
+        <button onclick="openChatMenu()">⋮</button>
+      </div>
+      <div id="threadMessages" class="messages"></div>
+      <div class="input-bar">
+        <button class="icon-btn">📎</button>
+        <input id="threadInput" placeholder="Type a message..." />
+        <button onclick="sendThreadMessage()">➤</button>
+      </div>
     </div>
-    <button onclick="openChatMenu()">⋮</button>
-  </div>
-
-  <div id="threadMessages" class="messages"></div>
-
-  <!-- Input bar -->
-  <div class="input-bar">
-    <button class="icon-btn">📎</button>
-    <input id="threadInput" placeholder="Type a message..." />
-    <button onclick="sendThreadMessage()">➤</button>
-  </div>
-</div>
 
     <!-- 👁️ View Profile Modal -->
     <div id="viewProfileModal" class="modal">
@@ -187,19 +188,19 @@
     </div>
   </div>
 
-  <!-- 🔥 Firebase SDK -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
-  <!-- 🔐 Firebase Config -->
+  <!-- Firebase Config -->
   <script src="firebase.js"></script>
 
-  <!-- 💡 App Logic -->
+  <!-- Main App Logic -->
   <script src="app.js"></script>
 
-  <!-- ⚙️ Service Worker -->
+  <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
@@ -208,19 +209,11 @@
     }
   </script>
 
-  <!-- 🔐 Encryption -->
+  <!-- Extras -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-
-  <!-- 📦 Compression -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
-
-  <!-- 🧠 IndexedDB -->
   <script src="https://unpkg.com/idb@7/build/umd.js"></script>
-
-  <!-- 📷 QR Code -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
-
-  <!-- 🔌 Socket.IO -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </body>
 </html>
