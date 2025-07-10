@@ -1,81 +1,93 @@
-// Firebase config and init already in firebase.js
+// DOM Ready
+document.addEventListener('DOMContentLoaded', async () => {
+  const overlay = document.getElementById('init-overlay');
+  const themeSwitcher = document.getElementById('themeSwitcher');
+  const musicToggle = document.getElementById('musicToggle');
+  const emotionalToggle = document.getElementById('emotionalToggle');
+  const lastSeenToggle = document.getElementById('lastSeenToggle');
+  const roleBadge = document.getElementById('roleBadge');
 
-document.addEventListener("DOMContentLoaded", () => {
-  // Hide loading
-  document.getElementById("init-overlay").style.display = "none";
+  const userId = localStorage.getItem("uid");
 
-  // Tab switching
-  document.querySelectorAll("nav button").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".tab").forEach((tab) => tab.classList.remove("active"));
-      document.getElementById(btn.dataset.tab).classList.add("active");
-    });
-  });
-
-  // Theme switching
-  const themeSwitcher = document.getElementById("themeSwitcher");
-  themeSwitcher.addEventListener("change", (e) => {
-    document.body.className = `${e.target.value}-theme`;
-  });
-
-  // Panic button
-  document.getElementById("panicBtn").addEventListener("click", () => {
-    if (confirm("Clear chat data from this session?")) {
-      localStorage.clear();
-      location.reload();
+  function saveSetting(key, value) {
+    if (userId) {
+      db.collection('users').doc(userId).set({ [key]: value }, { merge: true });
     }
-  });
+  }
 
-  // Load groups
-  const groupSelect = document.getElementById("groupSelect");
-  db.collection("groups").onSnapshot((snapshot) => {
-    groupSelect.innerHTML = "";
-    snapshot.forEach((doc) => {
-      const opt = document.createElement("option");
-      opt.value = doc.id;
-      opt.textContent = doc.data().name || doc.id;
-      groupSelect.appendChild(opt);
+  function applyUserSettings(userData) {
+    if (userData.theme) {
+      document.body.className = `${userData.theme}-theme`;
+      themeSwitcher.value = userData.theme;
+    }
+    if (userData.music !== undefined) musicToggle.checked = userData.music;
+    if (userData.emotion !== undefined) emotionalToggle.checked = userData.emotion;
+    if (userData.lastSeen !== undefined) lastSeenToggle.checked = userData.lastSeen;
+    if (userData.role) roleBadge.textContent = userData.role;
+  }
+
+  // Tab System
+  document.querySelectorAll('[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.getAttribute('data-tab');
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
     });
   });
 
-  // Group chat send
-  document.getElementById("sendGroupMessage").addEventListener("click", async () => {
-    const groupId = groupSelect.value;
-    const message = document.getElementById("groupMessageInput").value.trim();
-    const anonymous = document.getElementById("anonGroupToggle").checked;
-    if (!groupId || !message) return;
-
-    const user = auth.currentUser;
-    const encoded = btoa(message);
-
-    await db.collection("groups").doc(groupId).collection("messages").add({
-      text: encoded,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      uid: user ? user.uid : "anon",
-      displayName: anonymous ? "Anonymous" : (user?.displayName || "Unknown"),
-      anonymous
-    });
-
-    document.getElementById("groupMessageInput").value = "";
+  // Theme
+  themeSwitcher.addEventListener('change', (e) => {
+    const theme = e.target.value;
+    document.body.className = `${theme}-theme`;
+    saveSetting("theme", theme);
   });
 
-  // Listen for messages
-  groupSelect.addEventListener("change", () => {
-    const groupId = groupSelect.value;
-    const messagesDiv = document.getElementById("groupMessages");
-    messagesDiv.innerHTML = "";
-    if (!groupId) return;
+  // Music Toggle
+  musicToggle.addEventListener('change', e => {
+    saveSetting("music", e.target.checked);
+  });
 
-    db.collection("groups").doc(groupId).collection("messages")
-      .orderBy("timestamp")
-      .onSnapshot((snapshot) => {
-        messagesDiv.innerHTML = "";
-        snapshot.forEach((doc) => {
-          const msg = doc.data();
-          const div = document.createElement("div");
-          div.textContent = `${msg.displayName}: ${atob(msg.text || "")}`;
-          messagesDiv.appendChild(div);
-        });
-      });
+  // Emotion Toggle
+  emotionalToggle.addEventListener('change', e => {
+    saveSetting("emotion", e.target.checked);
+  });
+
+  // Last Seen
+  lastSeenToggle.addEventListener('change', e => {
+    saveSetting("lastSeen", e.target.checked);
+  });
+
+  // Panic Button
+  document.getElementById('panicBtn').addEventListener('click', () => {
+    localStorage.clear();
+    firebase.auth().signOut().then(() => {
+      location.reload();
+    });
+  });
+
+  // Load user data
+  firebase.auth().onAuthStateChanged(async user => {
+    if (user) {
+      localStorage.setItem("uid", user.uid);
+      const userDoc = await db.collection('users').doc(user.uid).get();
+      if (userDoc.exists) {
+        applyUserSettings(userDoc.data());
+      }
+    } else {
+      localStorage.removeItem("uid");
+    }
+    overlay.style.display = "none";
+  });
+
+  // Explore Content Loader
+  const exploreContent = document.getElementById("exploreContent");
+  db.collection("groups").where("public", "==", true).onSnapshot(snapshot => {
+    exploreContent.innerHTML = '';
+    snapshot.forEach(doc => {
+      const group = doc.data();
+      const div = document.createElement("div");
+      div.textContent = `#${group.name}`;
+      exploreContent.appendChild(div);
+    });
   });
 });
