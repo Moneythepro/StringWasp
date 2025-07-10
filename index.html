@@ -116,8 +116,23 @@
       </div>
     </div>
 
-    <!-- Single FAB -->
-<button class="fab" onclick="handleFabClick()">+</button>
+    <!-- Bottom Nav Tabs (Relocated to bottom for mobile UI) -->
+    <div class="bottom-nav">
+      <button onclick="switchTab('chatTab')">Chats</button>
+      <button onclick="switchTab('inboxTab')">Inbox</button>
+      <button onclick="switchTab('groupsTab')">Groups</button>
+      <button onclick="switchTab('searchTab')">Search</button>
+      <button onclick="switchTab('profileTab')">Profile</button>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="fab-container">
+      <button class="fab" onclick="toggleFabMenu()">+</button>
+      <div id="fabMenu" class="fab-menu hidden">
+        <button onclick="createGroup()">New Group</button>
+        <button onclick="joinGroup()">Join Group</button>
+      </div>
+    </div>
   </div>
 
   <!-- Firebase SDK v8 -->
