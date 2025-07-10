@@ -289,13 +289,17 @@ function createInboxCard(doc) {
   const data = doc.data();
   let sender = "Unknown";
 
-  // Determine readable sender name
-  if (data.fromName) {
+  if (typeof data.fromName === "string" && data.fromName.trim()) {
     sender = data.fromName;
-  } else if (typeof data.from === "object" && data.from !== null) {
-    sender = data.from.username || data.from.name || data.from.email || "Unknown User";
-  } else if (typeof data.from === "string") {
+  } else if (typeof data.from === "string" && data.from.trim()) {
     sender = data.from;
+  } else if (typeof data.from === "object" && data.from !== null) {
+    sender =
+      data.from.username ||
+      data.from.name ||
+      data.from.email ||
+      data.from.uid ||
+      "[Unknown Sender]";
   }
 
   return `
