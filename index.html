@@ -31,15 +31,15 @@
     <button onclick="saveUsername()">Save</button>
   </div>
 
-  <!-- 💬 Main App Page -->
+  <!-- 💬 Main App -->
   <div id="appPage" class="tabContent">
-    <!-- 🔘 Theme Switch -->
+    <!-- 🔘 Theme Toggle -->
     <label class="theme-switch">
       <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()" />
       <span class="slider"></span>
     </label>
 
-    <!-- 👤 Username Display -->
+    <!-- 👤 Header -->
     <div class="header">
       <span id="usernameDisplay"></span>
       <span id="onlineStatus" class="status-indicator"></span>
@@ -58,65 +58,50 @@
     <!-- 💬 Chat List -->
     <div id="chatTab" class="tab">
       <div id="chatListHeader" class="chat-header">
-        <input id="globalSearch" placeholder="Search groups/friends..." />
+        <input id="globalSearch" placeholder="Search chats..." />
         <button onclick="searchChats()">🔍</button>
         <button onclick="loadChatList()">🔄</button>
       </div>
       <div id="chatList" class="chat-list"></div>
     </div>
 
+    <!-- 👥 Group Chat View -->
     <div id="groupsTab" class="tab">
+      <div class="header">
+        <button onclick="createGroup()">Create Group</button>
+        <button onclick="joinGroup()">Join Group</button>
+      </div>
 
-  <!-- 🔘 Create / Join Group -->
-  <div class="header">
-    <button onclick="createGroup()">Create Group</button>
-    <button onclick="joinGroup()">Join Group</button>
-  </div>
+      <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
 
-  <!-- 📂 Group Selector -->
-  <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
+      <div id="groupChatHeader" class="chat-header">
+        <img id="groupProfilePic" src="group-icon.png" alt="Group Icon" />
+        <div class="chat-info">
+          <h3 id="groupNameDisplay">Group Name</h3>
+          <p id="groupStatus">Loading...</p>
+        </div>
+        <button onclick="openGroupMenu()">⋮</button>
+      </div>
 
-  <!-- ✅ New Group Header UI -->
-  <div id="groupChatHeader" class="chat-header">
-    <img id="groupProfilePic" src="group-icon.png" alt="Group Icon" />
-    <div class="chat-info">
-      <h3 id="groupNameDisplay">Group Name</h3>
-      <p id="groupStatus">Loading...</p>
+      <div id="groupOptionsMenu" class="chat-menu" style="display:none;">
+        <button onclick="viewGroupMembers()">👥 View Members</button>
+        <button onclick="viewMedia()">📎 View Media</button>
+        <button onclick="leaveGroup()">🚪 Leave Group</button>
+      </div>
+
+      <div id="groupInfo" class="group-meta"></div>
+      <div id="groupTypingIndicator" class="typing"></div>
+      <div id="groupMessages" class="messages"></div>
+
+      <div class="input-bar">
+        <button class="icon-btn" onclick="triggerFileInput('group')">📎</button>
+        <input id="groupMessageInput" placeholder="Type a message..." oninput="handleTyping('group')" />
+        <button class="icon-btn" onclick="sendGroupMessage()">➤</button>
+        <input type="file" id="groupFile" style="display:none;" onchange="uploadFile('group')" />
+      </div>
     </div>
-    <button onclick="openGroupMenu()">⋮</button>
-  </div>
 
-  <!-- ⚙️ Group Menu -->
-  <div id="groupOptionsMenu" class="chat-menu" style="display:none;">
-    <button onclick="viewGroupMembers()">👥 View Members</button>
-    <button onclick="viewMedia()">📎 View Media</button>
-    <button onclick="leaveGroup()">🚪 Leave Group</button>
-  </div>
-
-  <!-- 📃 Group Info -->
-  <div id="groupInfo" class="group-meta">
-    <div><strong>Group Info</strong></div>
-    <div id="groupOwner"></div>
-    <div id="groupAdmins"></div>
-    <div id="groupMembers" class="member-list"></div>
-  </div>
-
-  <!-- 👀 Typing Indicator -->
-  <div id="groupTypingIndicator" class="typing"></div>
-
-  <!-- 💬 Messages -->
-  <div id="groupMessages" class="messages"></div>
-
-  <<!-- ✅ Updated Group Input Bar -->
-<div class="input-bar">
-  <button class="icon-btn" onclick="triggerFileInput('group')">📎</button>
-  <input id="groupMessageInput" placeholder="Type a message..." oninput="handleTyping('group')" />
-  <button class="icon-btn" onclick="sendGroupMessage()">➤</button>
-  <input type="file" id="groupFile" style="display:none;" onchange="uploadFile('group')" />
-</div>
-<div id="groupTypingIndicator" class="typing"></div>
-
-    <!-- 👫 Friends -->
+    <!-- 🧑 Friends -->
     <div id="friendsTab" class="tab">
       <h3>Your Friends</h3>
       <input id="friendSearchInput" placeholder="Search friends..." />
@@ -143,7 +128,7 @@
       <div id="searchResultsGroup" class="search-results" style="display:none;"></div>
     </div>
 
-    <!-- 🙍 Profile -->
+    <!-- 👤 Profile -->
     <div id="profileTab" class="tab">
       <h3>Your Profile</h3>
       <img id="profilePicPreview" src="default-avatar.png" alt="Avatar" />
@@ -165,45 +150,34 @@
       <button onclick="contactSupport()">Contact Us</button>
     </div>
 
-    <!-- 💬 Thread View (DM) -->
+    <!-- 💬 Thread View -->
     <div id="threadView" class="tab">
       <div id="chatHeader" class="chat-header">
-        <!-- ⋮ Chat Options Menu -->
-<div id="chatOptionsMenu" class="chat-menu" style="display:none;">
-  <button onclick="blockUser()">🛑 Block</button>
-  <button onclick="viewMedia()">📎 View Media</button>
-  <button onclick="exportChat()">📤 Export</button>
-  <button onclick="deleteThread()">🗑️ Delete Chat</button>
-</div>
         <img id="chatProfilePic" src="default-avatar.png" alt="Avatar" />
         <div class="chat-info">
           <h3 id="chatName">Chat Name</h3>
           <p id="chatStatus">Last seen just now</p>
         </div>
         <button onclick="openChatMenu()">⋮</button>
-        <!-- Chat Options Menu -->
-<div id="chatOptionsMenu" class="chat-options">
-  <button onclick="viewMedia()">📁 View Media</button>
-  <button onclick="exportChat()">📤 Export Chat</button>
-  <button onclick="blockUser()">🚫 Block User</button>
-  <button onclick="deleteThread()">🗑️ Delete Chat</button>
-</div>
       </div>
+
+      <div id="chatOptionsMenu" class="chat-menu" style="display:none;">
+        <button onclick="viewMedia()">📁 View Media</button>
+        <button onclick="exportChat()">📤 Export Chat</button>
+        <button onclick="blockUser()">🚫 Block User</button>
+        <button onclick="deleteThread()">🗑️ Delete Chat</button>
+      </div>
+
       <div id="threadMessages" class="messages"></div>
-     <!-- Messages -->
-<div id="threadMessages" class="messages"></div>
+      <div id="typingIndicator" class="typing"></div>
 
-<!-- ✅ Typing Indicator -->
-<div id="typingIndicator" class="typing"></div>
-
-<!-- ✅ Thread Input Bar with File Upload & Typing -->
-<div class="input-bar">
-  <button class="icon-btn" onclick="triggerFileInput('thread')">📎</button>
-  <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" />
-  <button class="icon-btn" onclick="sendThreadMessage()">➤</button>
-  <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
-</div>
-<div id="typingIndicator" class="typing"></div>
+      <div class="input-bar">
+        <button class="icon-btn" onclick="triggerFileInput('thread')">📎</button>
+        <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" />
+        <button class="icon-btn" onclick="sendThreadMessage()">➤</button>
+        <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
+      </div>
+    </div>
 
     <!-- 👁️ View Profile Modal -->
     <div id="viewProfileModal" class="modal">
@@ -222,7 +196,7 @@
       </div>
     </div>
 
-    <!-- ⚠️ Reusable Modal -->
+    <!-- ⚠️ Modal -->
     <div id="customModal" class="modal">
       <div class="modal-content">
         <p id="modalMessage">Are you sure?</p>
@@ -234,19 +208,16 @@
     </div>
   </div>
 
-  <!-- Firebase SDK -->
+  <!-- 🔥 Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
-  <!-- Firebase Config -->
   <script src="firebase.js"></script>
-
-  <!-- Main App Logic -->
   <script src="app.js"></script>
 
-  <!-- Service Worker -->
+  <!-- 🛡️ Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
@@ -255,7 +226,7 @@
     }
   </script>
 
-  <!-- Extras -->
+  <!-- 📦 Extras -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
   <script src="https://unpkg.com/idb@7/build/umd.js"></script>
