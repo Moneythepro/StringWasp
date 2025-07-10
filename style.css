@@ -71,27 +71,6 @@ button:hover {
 /* ===========================
    Header & Tabs
 =========================== */
-.group-header {
-  display: none;
-  align-items: center;
-  gap: 10px;
-  background: #ededed;
-  padding: 10px;
-  cursor: pointer;
-  border-bottom: 1px solid #ccc;
-}
-.group-header img {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-.group-header div {
-  display: flex;
-  flex-direction: column;
-  font-size: 14px;
-  font-weight: bold;
-}
 .header {
   display: flex;
   align-items: center;
@@ -324,24 +303,6 @@ button:hover {
 .fab:hover {
   background: #1ebc5c;
   transform: scale(1.1);
-}
-.fab-menu {
-  position: fixed;
-  bottom: 80px;
-  right: 20px;
-  display: none;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 999;
-}
-.fab-menu button {
-  background: #1a73e8;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-size: 14px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
 }
 
 /* ===========================
