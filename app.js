@@ -292,15 +292,20 @@ function createInboxCard(doc) {
   let sender = "Unknown";
 
   try {
-    if (data.fromName && typeof data.fromName === "string") {
-      sender = data.fromName;
-    } else if (typeof data.from === "string") {
+    if (typeof data.from === "string") {
       sender = data.from;
     } else if (typeof data.from === "object" && data.from !== null) {
-      sender = data.from.username || data.from.name || data.from.email || data.from.uid || "Unknown User";
+      sender =
+        data.from.username ||
+        data.from.name ||
+        data.from.email ||
+        data.from.uid ||
+        JSON.stringify(data.from); // fallback
+    } else if (typeof data.fromName === "string") {
+      sender = data.fromName;
     }
   } catch (e) {
-    console.error("⚠️ Error extracting sender name:", e);
+    console.warn("⚠️ Failed to parse sender field:", e);
   }
 
   return `
