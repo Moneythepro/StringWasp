@@ -155,10 +155,9 @@ function leaveGroup() {
 
 function joinRoom(roomName) {
   currentRoom = roomName;
-  const dropdown = document.getElementById("roomDropdown");
-  if (dropdown) dropdown.value = roomName;
-  if (unsubscribeMessages) unsubscribeMessages();
-  listenMessages();
+  if (unsubscribeMessages) unsubscribeMessages(); // If you use for global chats
+
+  listenGroupMessages(); // For group messages
 }
 
 function loadRooms() {
@@ -196,6 +195,25 @@ function listenMessages() {
       snapshot.forEach(doc => displayMessage(doc.data()));
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }, error => console.error("Messages error:", error));
+}
+
+function listenGroupMessages() {
+  const messagesDiv = document.getElementById("groupMessages");
+  if (!messagesDiv) return;
+
+  db.collection("groups").doc(currentRoom).collection("messages")
+    .orderBy("timestamp")
+    .onSnapshot(snapshot => {
+      messagesDiv.innerHTML = "";
+      snapshot.forEach(doc => {
+        const msg = doc.data();
+        const bubble = document.createElement("div");
+        bubble.className = "message-bubble left";
+        bubble.textContent = `${msg.senderName}: ${msg.text}`;
+        messagesDiv.appendChild(bubble);
+      });
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
 }
 
 function displayMessage(msg) {
