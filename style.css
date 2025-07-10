@@ -1,122 +1,163 @@
-/* RESET */
-* {
-  box-sizing: border-box;
+/* style.css */
+
+body {
+  font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-}
-
-/* THEMES */
-:root {
-  --primary-light: #ffffff;
-  --text-light: #000000;
-  --primary-dark: #121212;
-  --text-dark: #ffffff;
-  --accent: #6200ea;
+  transition: background 0.3s, color 0.3s;
 }
 
 body.light-theme {
-  background: var(--primary-light);
-  color: var(--text-light);
+  background: #ffffff;
+  color: #000000;
 }
 
 body.dark-theme {
-  background: var(--primary-dark);
-  color: var(--text-dark);
+  background: #121212;
+  color: #ffffff;
 }
 
-/* LOADING OVERLAY */
-#init-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.loader {
-  border: 6px solid #f3f3f3;
-  border-top: 6px solid var(--accent);
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  animation: spin 1s linear infinite;
-}
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* ORIGINAL STRUCTURE STYLES */
 #app {
-  max-width: 600px;
-  margin: auto;
   padding: 1rem;
-  font-family: sans-serif;
 }
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-}
-header h1 {
-  font-size: 1.5rem;
-}
-#panicBtn {
-  background: red;
-  color: white;
-  padding: 0.3rem 0.6rem;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-main {
-  min-height: 300px;
-  margin: 1rem 0;
-}
-.placeholder {
-  padding: 1rem;
-  background: rgba(255,255,255,0.05);
-  border: 1px dashed #ccc;
-  border-radius: 8px;
-}
+
 nav {
   display: flex;
   justify-content: space-around;
-  position: sticky;
-  bottom: 0;
-  background: var(--accent);
-  padding: 0.5rem 0;
-}
-nav button {
-  background: transparent;
-  border: none;
+  background-color: #282c34;
   color: white;
-  font-size: 1.3rem;
+}
+
+nav button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: none;
+  color: inherit;
+  font-size: 16px;
   cursor: pointer;
 }
 
-/* TAB SYSTEM */
+nav button:hover {
+  background-color: #3c4048;
+}
+
 .tab {
   display: none;
+  margin-top: 20px;
 }
+
 .tab.active {
   display: block;
 }
 
-/* MOBILE RESPONSIVENESS */
-@media (max-width: 768px) {
-  body {
-    font-size: 0.95rem;
+#chat-messages {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: #f8f8f8;
+}
+
+#chatInput {
+  width: calc(100% - 110px);
+  padding: 10px;
+}
+
+#sendChatBtn {
+  padding: 10px;
+}
+
+#profilePic {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin: 10px 0;
+}
+
+#exploreList li,
+#friendList li,
+#groupList li {
+  margin: 5px 0;
+  list-style: none;
+  padding: 8px;
+  background: #eee;
+  border-radius: 5px;
+}
+
+button {
+  padding: 8px 12px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+#controls {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+}
+
+#controls select,
+#controls button {
+  padding: 6px 10px;
+  margin-left: 5px;
+}
+
+/* Loading Overlay */
+#init-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
-  header h1 {
-    font-size: 1.2rem;
-  }
-  nav button {
-    font-size: 1.1rem;
-  }
+}
+
+/* Role badges */
+.badge {
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 5px;
+  background-color: #333;
+  color: #fff;
+}
+
+.badge.owner {
+  background-color: #ff6b6b;
+}
+
+.badge.admin {
+  background-color: #3498db;
+}
+
+.badge.member {
+  background-color: #2ecc71;
+}
+
+label {
+  display: block;
+  margin: 5px 0;
 }
