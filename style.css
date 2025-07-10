@@ -362,3 +362,9 @@ input:checked + .slider:before {
   border-top-right-radius: 0;
   margin-left: auto;
 }
+
+.typing {
+  font-size: 12px;
+  color: #888;
+  margin: 4px 12px;
+}
