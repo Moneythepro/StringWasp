@@ -54,14 +54,17 @@
       <button onclick="switchTab('profileTab')" id="tab-profile">🙍‍♂️<br><span>Profile</span></button>
     </div>
 
-    <!-- Personal Chats -->
-    <div id="chatTab" class="tab">
-      <h3>Chats</h3>
-      <div id="messages" class="messages"></div>
-      <div id="typingIndicator" class="typing"></div>
-      <input id="messageInput" placeholder="Type a message..." />
-      <button onclick="sendMessage()">Send</button>
-    </div>
+    <!-- inside <div id="chatTab" class="tab"> -->
+<div id="chatTab" class="tab">
+  <div id="chatListHeader" class="chat-header">
+    <input id="globalSearch" placeholder="Search groups/friends..." />
+    <button onclick="searchChats()">🔍</button>
+    <button onclick="loadChatList()">🔄</button>
+  </div>
+
+  <!-- 🧾 WhatsApp-style Chat Cards -->
+  <div id="chatList" class="chat-list"></div>
+</div>
 
     <!-- 👥 Group Chats -->
     <div id="groupsTab" class="tab">
