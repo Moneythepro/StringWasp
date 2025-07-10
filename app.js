@@ -186,6 +186,88 @@ function updateGroupHeader(groupName) {
   groupHeader.onclick = () => showGroupInfo(groupName);
 }
 
+function showGroupInfo(groupName) {
+  const modal = document.getElementById("groupInfoModal");
+  const nameEl = document.getElementById("groupModalName");
+  const imgEl = document.getElementById("groupModalImage");
+  const membersList = document.getElementById("groupMembersList");
+
+  nameEl.textContent = groupName;
+  imgEl.src = "group-avatar.png"; // optional, can be updated per group if needed
+  membersList.innerHTML = "Loading...";
+
+  db.collection("groups").doc(groupName).get().then(doc => {
+    const groupData = doc.data();
+    const createdBy = groupData?.createdBy;
+
+    db.collection("groups").doc(groupName).collection("members").get().then(snapshot => {
+      membersList.innerHTML = "";
+
+      snapshot.forEach(memberDoc => {
+        const memberId = memberDoc.id;
+
+        db.collection("users").doc(memberId).get().then(userDoc => {
+          const data = userDoc.data();
+          const div = document.createElement("div");
+          div.textContent = data?.username || "User";
+          div.className = "search-result";
+
+          if (currentUser.uid === createdBy && memberId !== currentUser.uid) {
+            div.onclick = () => {
+              const confirmKick = confirm("Kick " + (data?.username || "user") + "?");
+              if (confirmKick) {
+                db.collection("groups").doc(groupName).collection("members").doc(memberId).delete();
+                alert("User kicked");
+                div.remove();
+              }
+            };
+          }
+
+          membersList.appendChild(div);
+        });
+      });
+
+      // Show/hide admin buttons
+      document.getElementById("editGroupBtn").style.display =
+        currentUser.uid === createdBy ? "block" : "none";
+    });
+  });
+
+  modal.style.display = "block";
+}
+
+function closeGroupModal() {
+  document.getElementById("groupInfoModal").style.display = "none";
+}
+
+function leaveGroup() {
+  if (!currentRoom) return;
+  const confirmLeave = confirm("Are you sure you want to leave this group?");
+  if (!confirmLeave) return;
+
+  db.collection("groups").doc(currentRoom).collection("members").doc(currentUser.uid).delete().then(() => {
+    alert("You left the group");
+    loadRooms();
+    document.getElementById("groupInfoModal").style.display = "none";
+    document.querySelector(".group-header").style.display = "none";
+    switchTab("chatTab");
+  });
+}
+
+function editGroupSettings() {
+  const newName = prompt("Enter new group name:", currentRoom);
+  if (!newName || newName === currentRoom) return;
+
+  db.collection("groups").doc(currentRoom).update({
+    name: newName
+  }).then(() => {
+    alert("Group name updated");
+    document.getElementById("groupModalName").textContent = newName;
+    updateGroupHeader(newName);
+    currentRoom = newName;
+  });
+}
+
 function loadRooms() {
   const dropdown = document.getElementById("roomDropdown");
   dropdown.innerHTML = "";
