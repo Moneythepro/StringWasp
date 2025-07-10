@@ -62,23 +62,23 @@
       <button onclick="sendMessage()">Send</button>
     </div>
 
-    <!-- Group Chats -->
-    <div id="groupsTab" class="tab">
-      <div class="header">
-        <button onclick="createGroup()">Create Group</button>
-        <button onclick="joinGroup()">Join Group</button>
-      </div>
-      <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
-      <div id="groupInfo">
-        <p><strong>Owner:</strong> <span id="groupOwner">-</span></p>
-        <p><strong>Admins:</strong> <span id="groupAdmins">-</span></p>
-        <p><strong>Members:</strong> <span id="groupMembers">-</span></p>
-      </div>
-      <div id="groupTypingIndicator" class="typing"></div>
-      <div id="groupMessages" class="messages"></div>
-      <input id="groupMessageInput" placeholder="Type a message..." />
-      <button onclick="sendGroupMessage()">Send</button>
-    </div>
+    <!-- 👥 Group Chats -->
+<div id="groupsTab" class="tab">
+  <div class="header">
+    <button onclick="createGroup()">Create Group</button>
+    <button onclick="joinGroup()">Join Group</button>
+  </div>
+
+  <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
+
+  <!-- ✅ Add this -->
+  <div id="groupInfo"></div>
+
+  <!-- Group messages -->
+  <div id="groupMessages" class="messages"></div>
+  <input id="groupMessageInput" placeholder="Type a message..." />
+  <button onclick="sendGroupMessage()">Send</button>
+</div>
 
     <!-- Inbox -->
     <div id="inboxTab" class="tab">
