@@ -9,6 +9,10 @@ function uuidv4() {
 // Firebase Initialization (Firebase 8 CDN assumed)
 const auth = firebase.auth();
 const db = firebase.firestore();
+let currentGroup = null;
+let joinedGroups = [];
+let groupMembers = {};
+let isGroupOwner = false;
 let currentUser = null;
 let currentRoom = "global";
 let unsubscribeMessages = null;
