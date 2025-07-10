@@ -415,10 +415,11 @@ function applySavedTheme() {
   if (theme === "dark") document.body.classList.add("dark");
 }
 
-function ToggleFabMenu() {
-  const side = document.getElementById("sideMenu");
-  if (side) side.classList.toggle("show");
+function toggleFabMenu() {
+  const menu = document.getElementById("fabMenu");
+  if (menu) menu.classList.toggle("hidden");
 }
+
 function handleFabClick() {
   const choice = prompt(`Choose an option:
 1. Create or Join Group
