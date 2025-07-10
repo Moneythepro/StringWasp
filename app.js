@@ -276,20 +276,19 @@ function loadInbox() {
   if (unsubscribeInbox) unsubscribeInbox();
 
   db.collection("inbox")
-  .where("to", "==", auth.currentUser.uid)
-  .orderBy("timestamp", "desc")
-  .get()
-  .then(snapshot => {
-    if (snapshot.empty) {
-      console.log("📭 Inbox is empty");
-    } else {
-      snapshot.docs.forEach(doc => {
-        console.log("📨", doc.id, doc.data());
-      });
-    }
-  })
-  .catch(error => console.error("❌ Error fetching inbox:", error));
+    .where("to", "==", auth.currentUser.uid)
+    .orderBy("timestamp", "desc")
+    .get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        list.innerHTML = "<div class='empty'>No new messages</div>";
+      } else {
+        list.innerHTML = snapshot.docs.map(doc => createInboxCard(doc)).join(""); // ✅ Renders HTML
+      }
+    })
+    .catch(error => console.error("❌ Error fetching inbox:", error));
 }
+  
 function createInboxCard(doc) {
   const data = doc.data();
   let sender = "Unknown";
