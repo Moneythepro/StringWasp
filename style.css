@@ -197,10 +197,47 @@ button:hover {
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
+/* ===== Bottom Navigation Bar ===== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-top: 1px solid #ccc;
+  display: flex;
+  justify-content: space-around;
+  padding: 5px 0;
+  z-index: 1000;
+}
+
+.bottom-nav button {
+  flex: 1;
+  background: none;
+  border: none;
+  color: #333;
+  font-size: 14px;
+  padding: 8px;
+}
+
+.bottom-nav button:focus {
+  outline: none;
+  background: #e0f7da;
+}
+
+.dark .bottom-nav {
+  background: #1f1f1f;
+  border-top-color: #333;
+}
+
+.dark .bottom-nav button {
+  color: #ccc;
+}
+
 /* ===== FAB (Floating Action Button) ===== */
 .fab-container {
   position: fixed;
-  bottom: 20px;
+  bottom: 80px; /* Adjusted to account for bottom-nav */
   right: 20px;
   display: flex;
   flex-direction: column;
@@ -218,10 +255,21 @@ button:hover {
   border: none;
   margin-bottom: 8px;
   transition: transform 0.2s ease;
+  width: 56px;
+  height: 56px;
+  text-align: center;
+  line-height: 56px;
 }
 
 .fab:hover {
   transform: scale(1.05);
+  background: #128c7e;
+}
+
+.fab-menu {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
 }
 
 .fab-menu button {
@@ -231,6 +279,7 @@ button:hover {
   border-radius: 12px;
   color: white;
   font-size: 14px;
+  white-space: nowrap;
 }
 
 .fab-menu.hidden {
@@ -332,6 +381,14 @@ button:hover {
 
 /* ===== Responsive Fixes ===== */
 @media screen and (max-width: 600px) {
+  .tabs {
+    display: none; /* Hide top tabs on mobile */
+  }
+
+  .bottom-nav {
+    display: flex; /* Show bottom nav on mobile */
+  }
+
   .tabs button {
     font-size: 13px;
   }
@@ -347,5 +404,16 @@ button:hover {
   #profilePicPreview {
     width: 70px;
     height: 70px;
+  }
+
+  .fab-container {
+    bottom: 70px; /* Adjust FAB position for mobile */
+  }
+}
+
+/* Show bottom nav only on mobile */
+@media screen and (min-width: 601px) {
+  .bottom-nav {
+    display: none;
   }
 }
