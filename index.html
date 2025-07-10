@@ -2,97 +2,74 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#121212" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>StringWasp</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 </head>
 <body class="light-theme">
   <div id="init-overlay">Loading...</div>
+  <nav>
+    <button data-tab="chats">Chats</button>
+    <button data-tab="groups">Groups</button>
+    <button data-tab="friends">Friends</button>
+    <button data-tab="explore">Explore</button>
+    <button data-tab="profile">Profile</button>
+    <select id="themeToggle">
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+    </select>
+    <button id="panicBtn">Panic</button>
+  </nav>
 
-  <div id="app">
-    <!-- Header -->
-    <header>
-      <h1>StringWasp</h1>
-      <select id="themeSwitcher">
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-      </select>
-      <button id="panicBtn">🧨</button>
-    </header>
+  <main>
+    <div id="chats" class="tab active">
+      <div id="chatMessages" class="messages loading"></div>
+      <input id="chatInput" placeholder="Type a message" />
+      <label><input type="checkbox" id="anonToggle" /> Anonymous</label>
+      <button id="sendBtn">Send</button>
+    </div>
 
-    <!-- Tabs -->
-    <nav>
-      <button data-tab="chats">Chats</button>
-      <button data-tab="groups">Groups</button>
-      <button data-tab="friends">Friends</button>
-      <button data-tab="explore">Explore</button>
-      <button data-tab="profile">Profile</button>
-    </nav>
+    <div id="groups" class="tab">
+      <input id="groupName" placeholder="Group Name" />
+      <label><input type="checkbox" id="groupPrivate" /> Private</label>
+      <button id="createGroupBtn">Create Group</button>
 
-    <!-- Tab Content -->
-    <main>
-      <section id="chats" class="tab active">
-        <h2>Chats</h2>
-        <label><input type="checkbox" id="anonymousToggle"> Send Anonymously</label>
-        <div id="chatMessages"></div>
-        <input type="text" id="chatInput" placeholder="Type a message..." />
-        <button id="sendChat">Send</button>
-      </section>
+      <input id="groupId" placeholder="Group ID to join/view" />
+      <button id="joinGroupBtn">Join Group</button>
+      <div id="groupList"></div>
 
-      <section id="groups" class="tab">
-        <h2>Groups</h2>
-        <div>
-          <input type="text" id="groupName" placeholder="Group name" />
-          <select id="groupPrivacy">
-            <option value="public">Public</option>
-            <option value="private">Private</option>
-          </select>
-          <button id="createGroup">Create Group</button>
-        </div>
-        <input type="text" id="joinGroupId" placeholder="Group ID to join" />
-        <button id="joinGroup">Join</button>
-        <div id="groupList"></div>
-        <div id="groupChat">
-          <h3 id="activeGroupName">Select a Group</h3>
-          <div id="groupMessages"></div>
-          <label><input type="checkbox" id="groupAnonymousToggle"> Send Anonymously</label>
-          <input type="text" id="groupMessageInput" placeholder="Group message..." />
-          <button id="sendGroupMessage">Send</button>
-        </div>
-      </section>
+      <div id="groupMessages" class="messages loading"></div>
+      <input id="groupMsg" placeholder="Group message" />
+      <label><input type="checkbox" id="groupAnon" /> Anonymous</label>
+      <button id="sendGroupMsg">Send Group Message</button>
+    </div>
 
-      <section id="friends" class="tab">
-        <h2>Friends</h2>
-        <div id="friendRequests"></div>
-        <div id="friendList"></div>
-      </section>
+    <div id="friends" class="tab">
+      <div id="friendRequests"></div>
+      <div id="friendList"></div>
+    </div>
 
-      <section id="explore" class="tab">
-        <h2>Explore</h2>
-        <div id="userList"></div>
-      </section>
+    <div id="explore" class="tab">
+      <div id="userList"></div>
+    </div>
 
-      <section id="profile" class="tab">
-        <h2>Profile</h2>
-        <input type="file" id="profilePicInput" />
-        <input type="text" id="displayNameInput" placeholder="Display name" />
-        <label><input type="checkbox" id="profileMusicToggle"> Profile Music</label>
-        <label><input type="checkbox" id="emotionModeToggle"> Emotional Mode</label>
-        <label><input type="checkbox" id="lastSeenToggle"> Show Last Seen</label>
-        <button id="saveSettings">Save Settings</button>
-        <button id="logoutBtn">Logout</button>
-        <button id="deleteAccountBtn">Delete Account</button>
-      </section>
-    </main>
-  </div>
+    <div id="profile" class="tab">
+      <input id="displayName" placeholder="Display Name" />
+      <input type="file" id="profilePic" />
+      <img id="profilePicPreview" src="" alt="Profile Picture" width="100" />
+      <label><input type="checkbox" id="emotionToggle" /> Emotional Mode</label>
+      <label><input type="checkbox" id="musicToggle" /> Profile Music</label>
+      <label><input type="checkbox" id="lastSeenToggle" /> Hide Last Seen</label>
+      <button id="saveProfile">Save</button>
+    </div>
+  </main>
 
-  <!-- Scripts -->
+  <div id="toast" class="toast"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>
 </body>
