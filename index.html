@@ -9,10 +9,7 @@
   <link rel="icon" href="favicon.png" />
 </head>
 <body>
-  <!-- 🔊 Notification Sound -->
   <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
-
-  <!-- 🔃 Loading Overlay -->
   <div id="loadingOverlay"><div class="loader"></div></div>
 
   <!-- 🔐 Login/Register -->
@@ -31,25 +28,23 @@
     <button onclick="saveUsername()">Save</button>
   </div>
 
-  <!-- 💬 Main App -->
+  <!-- 💬 App Page -->
   <div id="appPage" class="tabContent">
-    <!-- 🔘 Theme Toggle -->
     <label class="theme-switch">
       <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()" />
       <span class="slider"></span>
     </label>
 
-    <!-- 👤 Header -->
+    <!-- Header -->
     <div class="header">
       <span id="usernameDisplay"></span>
       <span id="onlineStatus" class="status-indicator"></span>
     </div>
 
-    <!-- 🧭 Bottom Tabs -->
+    <!-- Bottom Navigation -->
     <div class="tabs">
       <button onclick="switchTab('chatTab')" id="tab-chat">💬<br><span>Chats</span></button>
       <button onclick="switchTab('friendsTab')" id="tab-friends">🧑‍🤝‍🧑<br><span>Friends</span></button>
-      <button onclick="switchTab('groupsTab')" id="tab-groups">👥<br><span>Groups</span></button>
       <button onclick="switchTab('inboxTab')" id="tab-inbox">🔔<br><span>Inbox</span><span id="inboxBadge" class="badge"></span></button>
       <button onclick="switchTab('searchTab')" id="tab-search">🔍<br><span>Search</span></button>
       <button onclick="switchTab('profileTab')" id="tab-profile">🙍‍♂️<br><span>Profile</span></button>
@@ -65,43 +60,7 @@
       <div id="chatList" class="chat-list"></div>
     </div>
 
-    <!-- 👥 Group Chat View -->
-    <div id="groupsTab" class="tab">
-      <div class="header">
-        <button onclick="createGroup()">Create Group</button>
-        <button onclick="joinGroup()">Join Group</button>
-      </div>
-
-      <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
-
-      <div id="groupChatHeader" class="chat-header">
-        <img id="groupProfilePic" src="group-icon.png" alt="Group Icon" />
-        <div class="chat-info">
-          <h3 id="groupNameDisplay">Group Name</h3>
-          <p id="groupStatus">Loading...</p>
-        </div>
-        <button onclick="openGroupMenu()">⋮</button>
-      </div>
-
-      <div id="groupOptionsMenu" class="chat-menu" style="display:none;">
-        <button onclick="viewGroupMembers()">👥 View Members</button>
-        <button onclick="viewMedia()">📎 View Media</button>
-        <button onclick="leaveGroup()">🚪 Leave Group</button>
-      </div>
-
-      <div id="groupInfo" class="group-meta"></div>
-      <div id="groupTypingIndicator" class="typing"></div>
-      <div id="groupMessages" class="messages"></div>
-
-      <div class="input-bar">
-        <button class="icon-btn" onclick="triggerFileInput('group')">📎</button>
-        <input id="groupMessageInput" placeholder="Type a message..." oninput="handleTyping('group')" />
-        <button class="icon-btn" onclick="sendGroupMessage()">➤</button>
-        <input type="file" id="groupFile" style="display:none;" onchange="uploadFile('group')" />
-      </div>
-    </div>
-
-    <!-- 🧑 Friends -->
+    <!-- 👫 Friends -->
     <div id="friendsTab" class="tab">
       <h3>Your Friends</h3>
       <input id="friendSearchInput" placeholder="Search friends..." />
@@ -128,7 +87,7 @@
       <div id="searchResultsGroup" class="search-results" style="display:none;"></div>
     </div>
 
-    <!-- 👤 Profile -->
+    <!-- 🙍 Profile -->
     <div id="profileTab" class="tab">
       <h3>Your Profile</h3>
       <img id="profilePicPreview" src="default-avatar.png" alt="Avatar" />
@@ -150,27 +109,33 @@
       <button onclick="contactSupport()">Contact Us</button>
     </div>
 
-    <!-- 💬 Thread View -->
+    <!-- 💬 Thread View (DM or Group) -->
     <div id="threadView" class="tab">
       <div id="chatHeader" class="chat-header">
         <img id="chatProfilePic" src="default-avatar.png" alt="Avatar" />
         <div class="chat-info">
           <h3 id="chatName">Chat Name</h3>
-          <p id="chatStatus">Last seen just now</p>
+          <p id="chatStatus">Loading...</p>
         </div>
         <button onclick="openChatMenu()">⋮</button>
+
+        <!-- 💡 Unified Chat Menu (Group or DM) -->
+        <div id="chatOptionsMenu" class="chat-options" style="display:none;">
+          <button onclick="viewGroupMembers()">👥 View Members</button>
+          <button onclick="inviteByLink()">🔗 Invite by Link</button>
+          <button onclick="leaveGroup()">🚪 Leave Group</button>
+          <button onclick="blockUser()">🚫 Block User</button>
+          <button onclick="viewMedia()">📎 View Media</button>
+          <button onclick="exportChat()">📤 Export Chat</button>
+          <button onclick="deleteThread()">🗑️ Delete Chat</button>
+        </div>
       </div>
 
-      <div id="chatOptionsMenu" class="chat-menu" style="display:none;">
-        <button onclick="viewMedia()">📁 View Media</button>
-        <button onclick="exportChat()">📤 Export Chat</button>
-        <button onclick="blockUser()">🚫 Block User</button>
-        <button onclick="deleteThread()">🗑️ Delete Chat</button>
-      </div>
-
+      <!-- 💬 Messages -->
       <div id="threadMessages" class="messages"></div>
       <div id="typingIndicator" class="typing"></div>
 
+      <!-- ✅ Input Bar -->
       <div class="input-bar">
         <button class="icon-btn" onclick="triggerFileInput('thread')">📎</button>
         <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" />
@@ -196,7 +161,7 @@
       </div>
     </div>
 
-    <!-- ⚠️ Modal -->
+    <!-- ⚠️ Reusable Modal -->
     <div id="customModal" class="modal">
       <div class="modal-content">
         <p id="modalMessage">Are you sure?</p>
@@ -217,7 +182,7 @@
   <script src="firebase.js"></script>
   <script src="app.js"></script>
 
-  <!-- 🛡️ Service Worker -->
+  <!-- ⚙️ Utilities -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
@@ -226,7 +191,6 @@
     }
   </script>
 
-  <!-- 📦 Extras -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
   <script src="https://unpkg.com/idb@7/build/umd.js"></script>
