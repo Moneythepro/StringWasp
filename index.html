@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>StringWasp</title>
   <link rel="stylesheet" href="style.css"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -13,15 +13,16 @@
 </head>
 <body class="light-theme">
 
-  <!-- Loading Overlay -->
+  <!-- Loading Animation -->
   <div id="init-overlay">
-    <div class="spinner"><i class="fas fa-spinner fa-spin"></i> Loading StringWasp...</div>
+    <div class="loader"></div>
+    <p>Initializing StringWasp...</p>
   </div>
 
-  <div id="app" style="display:none;">
+  <div id="app">
     <header>
       <h1>StringWasp</h1>
-      <button id="panicBtn" title="Wipe Data">🧨</button>
+      <button id="panicBtn">🧨</button>
     </header>
     <main>
       <section id="chats" class="tab active">
@@ -41,7 +42,8 @@
           <div>🧑 Profile Editor</div>
           <div>🎭 Role: <span id="roleBadge">Member</span></div>
           <div>
-            <label>🌗 Theme:
+            <label>
+              🌗 Theme:
               <select id="themeSwitcher">
                 <option value="light">Light</option>
                 <option value="dark">Dark</option>
@@ -49,17 +51,20 @@
             </label>
           </div>
           <div>
-            <label>🎵 Profile Music:
+            <label>
+              🎵 Profile Music:
               <input type="checkbox" id="musicToggle"/>
             </label>
           </div>
           <div>
-            <label>🧠 Emotional Mode:
+            <label>
+              🧠 Emotional Mode:
               <input type="checkbox" id="emotionalToggle"/>
             </label>
           </div>
           <div>
-            <label>⏰ Last Seen:
+            <label>
+              ⏰ Last Seen:
               <input type="checkbox" id="lastSeenToggle" checked/>
             </label>
           </div>
@@ -67,11 +72,11 @@
       </section>
     </main>
     <nav>
-      <button data-tab="chats">💬</button>
-      <button data-tab="groups">👥</button>
-      <button data-tab="friends">🤝</button>
-      <button data-tab="explore">🔍</button>
-      <button data-tab="profile">🧑</button>
+      <button data-tab="chats"><i class="fas fa-comments"></i></button>
+      <button data-tab="groups"><i class="fas fa-users"></i></button>
+      <button data-tab="friends"><i class="fas fa-user-friends"></i></button>
+      <button data-tab="explore"><i class="fas fa-search"></i></button>
+      <button data-tab="profile"><i class="fas fa-user"></i></button>
     </nav>
   </div>
 
