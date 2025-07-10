@@ -115,8 +115,8 @@ function createGroup() {
   });
   ref.collection("members").doc(currentUser.uid).set({ joinedAt: Date.now() });
 
-  loadRooms();
-  joinRoom(room);
+  loadRooms();          
+  joinRoom(room);       
 }
 
 function joinGroup() {
@@ -158,7 +158,7 @@ function loadGroupInfo(groupId) {
     db.collection("groups").doc(groupId).collection("members").get().then(membersSnap => {
       const members = membersSnap.docs.map(doc => doc.id);
 
-      const membersHTML = members.map(uid => {
+      let membersHTML = members.map(uid => {
         let badge = "";
         if (uid === owner) badge = " 👑";
         else if (adminList.includes(uid)) badge = " 🛠️";
