@@ -1,3 +1,5 @@
+// firebase.js
+
 var firebaseConfig = {
   apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
   authDomain: "stringwasp.firebaseapp.com",
@@ -13,4 +15,4 @@ if (!firebase.apps.length) {
 
 window.auth = firebase.auth();
 window.db = firebase.firestore();
-window.storage = firebase.storage();
+window.storage = firebase.storage(); // ✅ For profile pictures
