@@ -409,6 +409,20 @@ document.getElementById("groupMessageInput")?.addEventListener("input", () => {
   setTimeout(() => updateTypingStatus(false), 3000);
 });
 
+document.getElementById("threadInput").addEventListener("input", () => {
+  const inputVal = document.getElementById("threadInput").value;
+  const typingRef = db.collection("threads")
+    .doc(threadId(currentUser.uid, currentThreadUser))
+    .collection("typing")
+    .doc(currentUser.uid);
+
+  if (inputVal) {
+    typingRef.set({ typing: true });
+  } else {
+    typingRef.delete();
+  }
+});
+
 // ===== Inbox System =====
 
 function loadInbox() {
@@ -538,16 +552,21 @@ function threadId(a, b) {
   return [a, b].sort().join("_");
 }
 
+function threadId(a, b) {
+  return [a, b].sort().join("_");
+}
+
 function openThread(uid, username) {
   switchTab("threadView");
   currentThreadUser = uid;
 
-  // Set chat header with fallback values
+  // 🧠 Set default UI values
   document.getElementById("chatName").textContent = username;
   document.getElementById("chatStatus").textContent = "Loading...";
   document.getElementById("chatProfilePic").src = "default-avatar.png";
+  document.getElementById("typingIndicator").textContent = "";
 
-  // Load user's photo and last seen
+  // 🛰 Fetch profile info
   db.collection("users").doc(uid).get().then(doc => {
     if (doc.exists) {
       const user = doc.data();
@@ -561,7 +580,7 @@ function openThread(uid, username) {
     document.getElementById("chatStatus").textContent = "Error loading status";
   });
 
-  // Load messages in real-time
+  // 💬 Listen to messages
   if (unsubscribeThread) unsubscribeThread();
   unsubscribeThread = db.collection("threads")
     .doc(threadId(currentUser.uid, uid))
@@ -572,44 +591,35 @@ function openThread(uid, username) {
       area.innerHTML = "";
       snapshot.forEach(doc => {
         const msg = doc.data();
-
-        const bubble = document.createElement("div");
-        bubble.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
-
-        const name = document.createElement("div");
-        name.className = "sender-name";
-        name.textContent = msg.fromName || "Unknown";
-
-        const text = document.createElement("div");
-        text.textContent = msg.text;
-
-        bubble.appendChild(name);
-        bubble.appendChild(text);
-        area.appendChild(bubble);
+        const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+        const div = document.createElement("div");
+        div.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
+        div.textContent = `${msg.fromName}: ${decrypted}`;
+        area.appendChild(div);
       });
-
       area.scrollTop = area.scrollHeight;
     });
 
+  // ✅ Typing Indicator Listener
   db.collection("threads")
-  .doc(threadId(currentUser.uid, uid))
-  .collection("typing")
-  .onSnapshot(snapshot => {
-    const typingDiv = document.getElementById("typingIndicator");
-    const usersTyping = [];
+    .doc(threadId(currentUser.uid, uid))
+    .collection("typing")
+    .onSnapshot(snapshot => {
+      const typingDiv = document.getElementById("typingIndicator");
+      const usersTyping = [];
 
-    snapshot.forEach(doc => {
-      if (doc.id !== currentUser.uid) {
-        usersTyping.push(doc.id);
-      }
+      snapshot.forEach(doc => {
+        if (doc.id !== currentUser.uid) {
+          usersTyping.push(doc.id);
+        }
+      });
+
+      typingDiv.textContent = usersTyping.length
+        ? `${usersTyping.join(", ")} typing...`
+        : "";
     });
-
-    typingDiv.textContent = usersTyping.length
-      ? `${usersTyping.join(", ")} typing...`
-      : "";
-  });
 }
-
+  
 function sendThreadMessage() {
   const input = document.getElementById("threadInput");
   const text = input?.value.trim();
