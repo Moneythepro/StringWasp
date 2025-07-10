@@ -1,4 +1,5 @@
 // firebase.js
+
 var firebaseConfig = {
   apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
   authDomain: "stringwasp.firebaseapp.com",
