@@ -750,6 +750,50 @@ function closeThread() {
   if (unsubscribeThread) unsubscribeThread();
 }
 
+function triggerFileInput(type) {
+  const input = document.getElementById(type === "group" ? "groupFile" : "threadFile");
+  if (input) input.click();
+}
+
+function uploadFile(type) {
+  const input = document.getElementById(type === "group" ? "groupFile" : "threadFile");
+  const file = input?.files?.[0];
+  if (!file || !currentUser) return;
+
+  const path = type === "group" ? currentRoom : threadId(currentUser.uid, currentThreadUser);
+  const ref = storage.ref(`${type}s/${path}/${Date.now()}_${file.name}`);
+
+  ref.put(file).then(snapshot => snapshot.ref.getDownloadURL()).then(url => {
+    const msg = {
+      text: `📎 File: ${file.name}`,
+      fileUrl: url,
+      fromName: document.getElementById("usernameDisplay").textContent,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (type === "group") {
+      msg.senderId = currentUser.uid;
+      db.collection("groups").doc(currentRoom).collection("messages").add(msg);
+    } else {
+      msg.from = currentUser.uid;
+      db.collection("threads").doc(path).collection("messages").add(msg);
+    }
+  }).catch(console.error);
+}
+
+function handleTyping(type) {
+  const input = document.getElementById(type === "group" ? "groupMessageInput" : "threadInput")?.value;
+  const typingRef = db.collection(type === "group" ? "groups" : "threads")
+    .doc(type === "group" ? currentRoom : threadId(currentUser.uid, currentThreadUser))
+    .collection("typing").doc(currentUser.uid);
+
+  if (input) {
+    typingRef.set({ typing: true });
+  } else {
+    typingRef.delete();
+  }
+}
+
 function openChatMenu() {
   const menu = document.getElementById("chatOptionsMenu");
   menu.style.display = menu.style.display === "block" ? "none" : "block";
