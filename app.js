@@ -273,15 +273,14 @@ function loadInbox() {
   const list = document.getElementById("inboxList");
   if (!list) return;
 
-  if (window.unsubscribeInbox) unsubscribeInbox();
+  if (unsubscribeInbox) unsubscribeInbox();
 
-  unsubscribeInbox = db.collection("inbox")
-    .where("to", "==", currentUser.uid)
+  unsubscribeInbox = db.collection("inbox").where("to", "==", currentUser.uid)
     .orderBy("timestamp", "desc")
     .onSnapshot(snapshot => {
       list.innerHTML = snapshot.empty
         ? "<div class='empty'>No new messages</div>"
-        : snapshot.docs.map(doc => createInboxCard(doc)).join("");
+        : snapshot.docs.map(doc => createInboxCard(doc)).join(""); // JOIN IS IMPORTANT
     }, error => console.error("Inbox error:", error));
 }
 
@@ -290,24 +289,24 @@ function createInboxCard(doc) {
   let sender = "Unknown";
 
   try {
-    if (data.fromName) {
-      sender = data.fromName;
+    if (typeof data.from === "string") {
+      sender = data.from;
     } else if (typeof data.from === "object" && data.from !== null) {
       sender =
-        data.from.username ||
         data.from.name ||
+        data.from.username ||
         data.from.email ||
         JSON.stringify(data.from);
-    } else if (typeof data.from === "string") {
-      sender = data.from;
+    } else if (data.fromName) {
+      sender = data.fromName;
     }
   } catch (e) {
-    console.error("Error extracting sender info:", e);
+    console.error("Error parsing sender:", e);
   }
 
   return `
     <div class="inbox-card">
-      <div><strong>${data.type || "Request"}</strong> from: ${sender}</div>
+      <div><strong>${data.type || "Notification"}</strong>: ${sender}</div>
       <div class="btn-group">
         <button onclick="acceptRequest('${doc.id}')">✓</button>
         <button onclick="declineRequest('${doc.id}')">✕</button>
@@ -317,37 +316,42 @@ function createInboxCard(doc) {
 }
 
 function acceptRequest(requestId) {
-  if (!requestId) return console.warn("No request ID");
+  if (!requestId) return console.error("❌ Invalid request ID");
 
   db.collection("inbox").doc(requestId).get().then(doc => {
-    if (!doc.exists) return console.warn("Request not found");
+    if (!doc.exists) return console.error("❌ Request not found");
 
-    const data = doc.data();
-    const fromUID = typeof data.from === "string" ? data.from : null;
-    const fromName = data.fromName || "Unknown";
+    const request = doc.data();
+    const fromUID = typeof request.from === "string" ? request.from : null;
+    const fromName = request.fromName || "Unknown";
 
-    if (!fromUID) return console.warn("Missing sender UID");
+    if (!fromUID) {
+      console.error("❌ Missing or invalid sender UID in request:", request);
+      return;
+    }
 
-    if (data.type?.includes("Friend Request")) {
+    if (request.type && request.type.includes("Friend Request")) {
       db.collection("friends").doc(currentUser.uid).collection("list").doc(fromUID).set({
         uid: fromUID,
         username: fromName,
         addedAt: firebase.firestore.FieldValue.serverTimestamp()
       }).then(() => {
         doc.ref.delete();
+        console.log("✅ Friend request accepted.");
       });
     } else {
       doc.ref.delete();
     }
-  }).catch(err => {
-    console.error("Error accepting request:", err);
+  }).catch(error => {
+    console.error("❌ Error accepting request:", error);
   });
 }
 
 function declineRequest(requestId) {
-  if (!requestId) return;
+  if (!requestId) return console.error("❌ Invalid request ID");
   db.collection("inbox").doc(requestId).delete()
-    .catch(error => console.error("Error declining request:", error));
+    .then(() => console.log("✅ Request declined."))
+    .catch(error => console.error("❌ Error declining request:", error));
 }
 
 function markAllRead() {
@@ -355,7 +359,7 @@ function markAllRead() {
     const batch = db.batch();
     snapshot.forEach(doc => batch.delete(doc.ref));
     return batch.commit();
-  }).then(() => alert("Inbox cleared"));
+  }).then(() => alert("All messages marked as read"));
 }
 
 // ===== Friends System =====
