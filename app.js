@@ -211,15 +211,21 @@ function joinGroup() {
   });
 }
 
+// ===== Group Join and Info =====
+
 function joinRoom(roomName) {
   currentRoom = roomName;
+
+  // Unsubscribe from previous listeners
   if (unsubscribeMessages) unsubscribeMessages();
   if (unsubscribeTyping) unsubscribeTyping();
+
+  // Load new room
   listenMessages();
   loadGroupInfo(roomName);
+  updateGroupHeader(roomName); // ✅ WhatsApp-style top bar
 }
 
-function loadGroupInfo(groupId) {
 function loadGroupInfo(groupId) {
   const infoDiv = document.getElementById("groupInfo");
   if (!infoDiv) return;
@@ -259,6 +265,27 @@ function loadGroupInfo(groupId) {
         infoDiv.innerHTML += `<button onclick="deleteGroup('${groupId}')">🗑️ Delete Group</button>`;
       }
     });
+  });
+}
+
+// ===== Group Chat Header UI =====
+
+function updateGroupHeader(groupId) {
+  const nameEl = document.getElementById("groupNameDisplay");
+  const statusEl = document.getElementById("groupStatus");
+  const picEl = document.getElementById("groupProfilePic");
+
+  db.collection("groups").doc(groupId).get().then(doc => {
+    const group = doc.data();
+    if (!group) return;
+
+    nameEl.textContent = group.name || "Group";
+    picEl.src = "group-icon.png"; // 🔁 Replace with dynamic group image if added
+  });
+
+  db.collection("groups").doc(groupId).collection("members").get().then(snap => {
+    const count = snap.size;
+    statusEl.textContent = `${count} members`;
   });
 }
 
@@ -696,6 +723,21 @@ document.addEventListener("click", (e) => {
   }
 });
 
+function openGroupMenu() {
+  const menu = document.getElementById("groupOptionsMenu");
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+}
+
+function closeGroupMenu() {
+  document.getElementById("groupOptionsMenu").style.display = "none";
+}
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest("#groupOptionsMenu") && !e.target.closest("button[onclick='openGroupMenu()']")) {
+    closeGroupMenu();
+  }
+});
+
 // Menu Actions
 function blockUser() {
   alert("🛑 User blocked (demo)");
@@ -726,6 +768,30 @@ function deleteThread() {
     }).catch(console.error);
   }
   closeChatMenu();
+}
+
+function viewGroupMembers() {
+  alert("Group member view coming soon...");
+  closeGroupMenu();
+}
+
+function viewMedia() {
+  alert("📎 Media viewer (not yet implemented)");
+  closeGroupMenu();
+}
+
+function leaveGroup() {
+  if (!currentRoom) return;
+  const confirmed = confirm("Leave this group?");
+  if (confirmed) {
+    db.collection("groups").doc(currentRoom).collection("members").doc(currentUser.uid).delete()
+      .then(() => {
+        alert("You left the group.");
+        loadRooms();
+        switchTab('chatTab');
+      });
+  }
+  closeGroupMenu();
 }
 
 // ===== Profile =====
