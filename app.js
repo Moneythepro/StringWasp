@@ -290,7 +290,8 @@ function createInboxCard(doc) {
   let sender = "Unknown";
 
   try {
-    if (data.fromName) {
+    // Priority: fromName > string from > parsed object from
+    if (data.fromName && typeof data.fromName === "string") {
       sender = data.fromName;
     } else if (typeof data.from === "string") {
       sender = data.from;
@@ -363,6 +364,23 @@ function markAllRead() {
     snapshot.forEach(doc => batch.delete(doc.ref));
     return batch.commit();
   }).then(() => alert("✅ All messages marked as read"));
+}
+
+// ✅ OPTIONAL PATCH to fix existing broken inbox entries
+function patchInboxFromFields() {
+  db.collection("inbox").where("to", "==", currentUser.uid).get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (typeof data.from === "object" && data.from !== null) {
+        const senderName = data.from.username || data.from.name || data.from.email || "Unknown";
+        const senderUID = data.from.uid || "unknown";
+        doc.ref.update({
+          from: senderUID,
+          fromName: senderName
+        }).then(() => console.log(`🔧 Patched inbox entry: ${doc.id}`));
+      }
+    });
+  });
 }
 
 // ===== Friends System =====
