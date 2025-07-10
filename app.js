@@ -655,6 +655,7 @@ function leaveCurrentGroup() {
       listenMessages();
     });
 }
+
 // ===== Private Chat =====
 function promptPrivateChat() {
   const username = prompt("Enter username to chat:");
@@ -664,6 +665,15 @@ function promptPrivateChat() {
     const doc = snapshot.docs[0];
     openThread(doc.id, username);
   });
+}
+
+
+// Overwrite joinRoom:
+function joinRoom(name) {
+  currentRoom = name;
+  if (unsubscribeMessages) unsubscribeMessages();
+  listenMessages();
+  updateGroupHeader(name);
 }
 
 // ===== Init =====
