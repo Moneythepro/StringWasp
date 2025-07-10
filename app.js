@@ -286,25 +286,20 @@ function loadInbox() {
 }
 
 function createInboxCard(doc) {
-function createInboxCard(doc) {
   const data = doc.data();
   let sender = "Unknown";
 
   try {
-    if (data.fromName) {
-      sender = data.fromName;
-    } else if (typeof data.from === "string") {
+    if (typeof data.from === "string") {
       sender = data.from;
+    } else if (data.fromName) {
+      sender = data.fromName;
     } else if (typeof data.from === "object" && data.from !== null) {
-      sender =
-        data.from.username ||
-        data.from.name ||
-        data.from.email ||
-        data.from.uid || 
-        JSON.stringify(data.from); // Last resort fallback
+      // Safely extract useful info
+      sender = data.from.username || data.from.name || data.from.email || "Unknown";
     }
   } catch (e) {
-    console.error("⚠️ Error parsing sender:", e);
+    console.error("❌ Error parsing sender:", e);
   }
 
   return `
