@@ -419,9 +419,9 @@ function applySavedTheme() {
   if (theme === "dark") document.body.classList.add("dark");
 }
 
-function ToggleFabMenu() {
-  const side = document.getElementById("sideMenu");
-  if (side) side.classList.toggle("show");
+function toggleFabMenu() {
+  const menu = document.getElementById("fabMenu");
+  menu.style.display = menu.style.display === "flex" ? "none" : "flex";
 }
 function handleFabClick() {
   const choice = prompt(`Choose an option:
