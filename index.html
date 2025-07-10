@@ -38,7 +38,7 @@
       <span class="slider"></span>
     </label>
 
-    <!-- Header with Username -->
+    <!-- Header -->
     <div class="header">
       <span id="usernameDisplay"></span>
       <span id="onlineStatus" class="status-indicator"></span>
@@ -47,6 +47,7 @@
     <!-- Bottom Tabs -->
     <div class="tabs">
       <button onclick="switchTab('chatTab')" id="tab-chat">💬<br><span>Chats</span></button>
+      <button onclick="switchTab('friendsTab')" id="tab-friends">🧑‍🤝‍🧑<br><span>Friends</span></button>
       <button onclick="switchTab('groupsTab')" id="tab-groups">👥<br><span>Groups</span></button>
       <button onclick="switchTab('inboxTab')" id="tab-inbox">🔔<br><span>Inbox</span><span id="inboxBadge" class="badge"></span></button>
       <button onclick="switchTab('searchTab')" id="tab-search">🔍<br><span>Search</span></button>
@@ -63,31 +64,32 @@
     </div>
 
     <!-- 👥 Group Chats -->
-<div id="groupsTab" class="tab">
-  <div class="header">
-    <button onclick="createGroup()">Create Group</button>
-    <button onclick="joinGroup()">Join Group</button>
-  </div>
+    <div id="groupsTab" class="tab">
+      <div class="header">
+        <button onclick="createGroup()">Create Group</button>
+        <button onclick="joinGroup()">Join Group</button>
+      </div>
 
-  <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
+      <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
 
-  <div id="groupInfo" class="group-meta">
-  <div><strong>Group Info</strong></div>
-  <div id="groupOwner"></div>
-  <div id="groupAdmins"></div>
-  <div id="groupMembers" class="member-list"></div>
-  </div>
+      <div id="groupInfo" class="group-meta">
+        <div><strong>Group Info</strong></div>
+        <div id="groupOwner"></div>
+        <div id="groupAdmins"></div>
+        <div id="groupMembers" class="member-list"></div>
+      </div>
 
-  <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
-  
-  <!-- ✅ Add this -->
-  <div id="groupInfo"></div>
+      <div id="groupMessages" class="messages"></div>
+      <input id="groupMessageInput" placeholder="Type a message..." />
+      <button onclick="sendGroupMessage()">Send</button>
+    </div>
 
-  <!-- Group messages -->
-  <div id="groupMessages" class="messages"></div>
-  <input id="groupMessageInput" placeholder="Type a message..." />
-  <button onclick="sendGroupMessage()">Send</button>
-</div>
+    <!-- 👥 Friends Tab (NEW) -->
+    <div id="friendsTab" class="tab">
+      <h3>Your Friends</h3>
+      <input id="friendSearchInput" placeholder="Search friends..." />
+      <div id="friendsList"></div>
+    </div>
 
     <!-- Inbox -->
     <div id="inboxTab" class="tab">
@@ -157,7 +159,7 @@
       </div>
     </div>
 
-    <!-- Reusable Modal -->
+    <!-- Modal -->
     <div id="customModal" class="modal">
       <div class="modal-content">
         <p id="modalMessage">Are you sure?</p>
@@ -169,19 +171,16 @@
     </div>
   </div>
 
-  <!-- Firebase v8 -->
+  <!-- Firebase v8 SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
-  <!-- Config -->
   <script src="firebase.js"></script>
-
-  <!-- App -->
   <script src="app.js"></script>
 
-  <!-- Service Worker -->
+  <!-- Other Utilities -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
@@ -190,12 +189,10 @@
     }
   </script>
 
-  <!-- CryptoJS, Compression, IndexedDB, QR, Socket -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
   <script src="https://unpkg.com/idb@7/build/umd.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  
 </body>
 </html>
