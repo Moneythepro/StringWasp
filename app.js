@@ -1,25 +1,29 @@
-// Firebase Init
+// ✅ Firebase Config - replace placeholder with your actual config
 const firebaseConfig = {
-  // CONFIGURE YOUR FIREBASE APP HERE
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
+  authDomain: "stringwasp.firebaseapp.com",
+  projectId: "stringwasp",
+  storageBucket: "stringwasp.appspot.com",
+  messagingSenderId: "974718019508",
+  appId: "1:974718019508:web:59fabe6306517d10b374e1"
 };
 
-firebase.initializeApp(firebaseConfig);
+// ✅ Initialize Firebase only once
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
 const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-// DOM Ready
+// Wait for DOM
 document.addEventListener('DOMContentLoaded', () => {
-  const overlay = document.getElementById('init-overlay');
-  const appContainer = document.getElementById('app');
+  // Hide loader
+  const loader = document.getElementById('init-overlay');
+  if (loader) loader.style.display = 'none';
 
-  // Handle Tabs
+  // Tab Navigation
   document.querySelectorAll('[data-tab]').forEach(btn => {
     btn.addEventListener('click', () => {
       const tab = btn.getAttribute('data-tab');
@@ -30,41 +34,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Theme Switcher
   const themeSwitcher = document.getElementById('themeSwitcher');
-  themeSwitcher.addEventListener('change', (e) => {
-    document.body.className = `${e.target.value}-theme`;
-  });
+  if (themeSwitcher) {
+    themeSwitcher.addEventListener('change', (e) => {
+      document.body.className = `${e.target.value}-theme`;
+    });
+  }
 
   // Panic Button
-  document.getElementById('panicBtn').addEventListener('click', () => {
-    localStorage.clear();
-    alert("All local data wiped!");
-  });
+  const panicBtn = document.getElementById('panicBtn');
+  if (panicBtn) {
+    panicBtn.addEventListener('click', () => {
+      localStorage.clear();
+      alert("🧨 Local storage cleared!");
+    });
+  }
 
-  // Auth State
+  // Firebase Auth listener
   auth.onAuthStateChanged(user => {
     if (user) {
-      console.log("✅ Signed in:", user.uid);
-      overlay.style.display = 'none';
-      appContainer.style.display = 'flex';
+      console.log("✅ Logged in:", user.uid);
     } else {
-      console.log("🔄 Signing in anonymously...");
+      console.log("🔐 Signing in anonymously...");
       auth.signInAnonymously().catch(err => {
         console.error("❌ Auth error:", err);
-        alert("Authentication failed!");
       });
     }
-  });
-
-  // Plugin Toggles (placeholders)
-  document.getElementById('musicToggle').addEventListener('change', e => {
-    console.log("Profile Music:", e.target.checked);
-  });
-
-  document.getElementById('emotionalToggle').addEventListener('change', e => {
-    console.log("Emotional Mode:", e.target.checked);
-  });
-
-  document.getElementById('lastSeenToggle').addEventListener('change', e => {
-    console.log("Last Seen:", e.target.checked);
   });
 });
