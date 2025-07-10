@@ -314,6 +314,10 @@ function listenMessages() {
   });
 }
 
+function attachFile() {
+  alert("📎 Attachments coming soon!");
+}
+
 function sendGroupMessage() {
   const input = document.getElementById("groupMessageInput");
   const text = input?.value.trim();
