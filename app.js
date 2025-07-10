@@ -103,28 +103,32 @@ function loadMainUI() {
 // ===== Groups =====
 
 function createGroup() {
-  const room = prompt("Enter new group name:");
+  const room = prompt("Enter group name:");
   if (!room) return;
+
   const ref = db.collection("groups").doc(room);
   ref.set({
     name: room,
     createdBy: currentUser.uid,
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    autoJoin: true
+    admins: [currentUser.uid]
   });
   ref.collection("members").doc(currentUser.uid).set({ joinedAt: Date.now() });
-  joinRoom(room);
+
+  loadRooms();          // ✅ update dropdown
+  joinRoom(room);       // ✅ open immediately
 }
 
 function joinGroup() {
-  const room = prompt("Enter group name to join:");
+  const room = prompt("Enter group to join:");
   if (!room) return;
   db.collection("groups").doc(room).get().then(doc => {
     if (doc.exists) {
       db.collection("groups").doc(room).collection("members").doc(currentUser.uid).set({ joinedAt: Date.now() });
+      loadRooms();
       joinRoom(room);
     } else {
-      alert("Group not found");
+      alert("Group does not exist.");
     }
   });
 }
@@ -226,6 +230,20 @@ function listenMessages() {
         text.textContent = msg.text;
         bubble.appendChild(text);
         messagesDiv.appendChild(bubble);
+
+        const typingRef = db.collection("groups").doc(currentRoom).collection("typing");
+if (unsubscribeTyping) unsubscribeTyping();
+unsubscribeTyping = typingRef.onSnapshot(snapshot => {
+  let typingUsers = [];
+  snapshot.forEach(doc => {
+    if (doc.id !== currentUser.uid) typingUsers.push(doc.id);
+  });
+
+  const typingDiv = document.getElementById("groupTypingIndicator");
+  typingDiv.textContent = typingUsers.length
+    ? `${typingUsers.join(", ")} typing...`
+    : "";
+});
       });
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
@@ -243,9 +261,22 @@ function sendGroupMessage() {
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   });
 
+  // 🔄 clear typing
+  db.collection("groups").doc(currentRoom).collection("typing").doc(currentUser.uid).delete();
+
   input.value = "";
-  updateTypingStatus(false);
 }
+
+document.getElementById("groupMessageInput").addEventListener("input", () => {
+  const input = document.getElementById("groupMessageInput").value;
+  const typingRef = db.collection("groups").doc(currentRoom).collection("typing").doc(currentUser.uid);
+
+  if (input) {
+    typingRef.set({ typing: true });
+  } else {
+    typingRef.delete();
+  }
+});
 
 function sendMessage() {
   const input = document.getElementById("messageInput");
