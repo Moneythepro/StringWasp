@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>StringWasp</title>
   <link rel="stylesheet" href="style.css"/>
-  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="light-theme">
   <div id="init-overlay">Loading...</div>
@@ -23,15 +23,7 @@
         <div class="placeholder">🔐 Encrypted chats will appear here.</div>
       </section>
       <section id="groups" class="tab">
-        <div class="group-chat">
-          <select id="groupSelect"></select>
-          <div id="groupMessages" class="messages"></div>
-          <div class="input-area">
-            <input type="text" id="groupMessageInput" placeholder="Send a message..." />
-            <label><input type="checkbox" id="anonGroupToggle"/> Anonymous</label>
-            <button id="sendGroupMessage">Send</button>
-          </div>
-        </div>
+        <div class="placeholder">👥 Manage or discover groups (Owner/Admin/Member roles).</div>
       </section>
       <section id="friends" class="tab">
         <div class="placeholder">🤝 See your friends & requests here.</div>
@@ -44,7 +36,8 @@
           <div>🧑 Profile Editor</div>
           <div>🎭 Role: <span id="roleBadge">Member</span></div>
           <div>
-            <label>🌗 Theme:
+            <label>
+              🌗 Theme:
               <select id="themeSwitcher">
                 <option value="light">Light</option>
                 <option value="dark">Dark</option>
@@ -52,17 +45,22 @@
             </label>
           </div>
           <div>
-            <label>🎵 Profile Music:
+            <label>
+              🎵 Profile Music:
               <input type="checkbox" id="musicToggle"/>
+              <input type="file" id="musicUpload" accept="audio/*" />
             </label>
           </div>
+          <audio id="profileMusic" controls hidden></audio>
           <div>
-            <label>🧠 Emotional Mode:
+            <label>
+              🧠 Emotional Mode:
               <input type="checkbox" id="emotionalToggle"/>
             </label>
           </div>
           <div>
-            <label>⏰ Last Seen:
+            <label>
+              ⏰ Last Seen:
               <input type="checkbox" id="lastSeenToggle" checked/>
             </label>
           </div>
