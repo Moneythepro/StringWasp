@@ -166,8 +166,11 @@
 </div> 
       <div class="input-bar">
         <button class="icon-btn">📎</button>
-        <input id="threadInput" placeholder="Type a message..." />
-        <button onclick="sendThreadMessage()">➤</button>
+        <div class="input-bar">
+  <button class="icon-btn" onclick="attachFile()">📎</button>
+  <input id="threadInput" placeholder="Type a message..." />
+  <button class="icon-btn" onclick="sendThreadMessage()">➤</button>
+        </div>
         <div id="typingIndicator" class="typing"></div>
       </div>
     </div>
