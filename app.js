@@ -281,7 +281,7 @@ function loadInbox() {
     .onSnapshot(snapshot => {
       list.innerHTML = snapshot.empty
         ? "<div class='empty'>No new messages</div>"
-        : snapshot.docs.map(doc => createInboxCard(doc)).join(""); // JOIN IS IMPORTANT
+        : snapshot.docs.map(doc => createInboxCard(doc)).join("");
     }, error => console.error("❌ Inbox error:", error));
 }
 
@@ -290,21 +290,26 @@ function createInboxCard(doc) {
   let sender = "Unknown";
 
   try {
+    // Extract sender name
     if (typeof data.from === "string") {
       sender = data.from;
     } else if (data.fromName) {
       sender = data.fromName;
     } else if (typeof data.from === "object" && data.from !== null) {
-      // Safely extract useful info
-      sender = data.from.username || data.from.name || data.from.email || "Unknown";
+      sender =
+        data.from.username ||
+        data.from.name ||
+        data.from.email ||
+        data.from.uid ||
+        JSON.stringify(data.from);
     }
   } catch (e) {
-    console.error("❌ Error parsing sender:", e);
+    console.error("⚠️ Error parsing sender:", e);
   }
 
   return `
     <div class="inbox-card">
-      <div><strong>${data.type || "Notification"}</strong>: ${sender}</div>
+      <div><strong>${data.type || "Notification"}</strong><br>${sender}</div>
       <div class="btn-group">
         <button onclick="acceptRequest('${doc.id}')">✓</button>
         <button onclick="declineRequest('${doc.id}')">✕</button>
@@ -320,7 +325,7 @@ function acceptRequest(requestId) {
     if (!doc.exists) return console.error("❌ Request not found");
 
     const request = doc.data();
-    const fromUID = typeof request.from === "string" ? request.from : null;
+    const fromUID = typeof request.from === "string" ? request.from : (request.from?.uid || null);
     const fromName = request.fromName || "Unknown";
 
     if (!fromUID) {
@@ -354,28 +359,16 @@ function declineRequest(requestId) {
 }
 
 function markAllRead() {
-  db.collection("inbox").where("to", "==", currentUser.uid).get().then(snapshot => {
-    const batch = db.batch();
-    snapshot.forEach(doc => batch.delete(doc.ref));
-    return batch.commit();
-  }).then(() => alert("✅ All messages marked as read"));
-}
-
-// ✅ OPTIONAL PATCH to fix existing broken inbox entries
-function patchInboxFromFields() {
-  db.collection("inbox").where("to", "==", currentUser.uid).get().then(snapshot => {
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      if (typeof data.from === "object" && data.from !== null) {
-        const senderName = data.from.username || data.from.name || data.from.email || "Unknown";
-        const senderUID = data.from.uid || "unknown";
-        doc.ref.update({
-          from: senderUID,
-          fromName: senderName
-        }).then(() => console.log(`🔧 Patched inbox entry: ${doc.id}`));
-      }
-    });
-  });
+  db.collection("inbox")
+    .where("to", "==", currentUser.uid)
+    .get()
+    .then(snapshot => {
+      const batch = db.batch();
+      snapshot.forEach(doc => batch.delete(doc.ref));
+      return batch.commit();
+    })
+    .then(() => alert("✅ All messages marked as read"))
+    .catch(error => console.error("❌ Failed to mark all as read:", error));
 }
 
 // ===== Friends System =====
@@ -630,63 +623,3 @@ window.onload = () => {
     picPreview.onclick = () => picInput.click();
   }
 };
-// ===== TEMP PATCH to fix old inbox data (run once in console after login) =====
-function patchInboxFromFields() {
-  db.collection("inbox").where("to", "==", currentUser.uid).get().then(snapshot => {
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      if (typeof data.from === "object" && data.from !== null) {
-        const senderName = data.from.username || data.from.name || data.from.email || "Unknown";
-        const senderUID = data.from.uid || "unknown";
-        doc.ref.update({
-          from: senderUID,
-          fromName: senderName
-        }).then(() => console.log(`🔧 Patched inbox entry: ${doc.id}`));
-      }
-    });
-  });
-}
-// ===== TEMP PATCH FUNCTION: Fix inbox [object Object] issue =====
-function patchInboxFromFields() {
-  db.collection("inbox").where("to", "==", currentUser.uid).get().then(snapshot => {
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      if (typeof data.from === "object" && data.from !== null) {
-        const senderName = data.from.username || data.from.name || data.from.email || "Unknown";
-        const senderUID = data.from.uid || "unknown";
-
-        doc.ref.update({
-          from: senderUID,
-          fromName: senderName
-        }).then(() => console.log(`🔧 Patched inbox entry: ${doc.id}`));
-      }
-    });
-  }).catch(e => console.error("Patch failed:", e));
-}
-
-// ===== PATCH FUNCTION to fix [object Object] in Inbox =====
-function patchInboxFromFields() {
-  if (!currentUser) {
-    console.error("❌ User not logged in.");
-    return;
-  }
-
-  db.collection("inbox").where("to", "==", currentUser.uid).get()
-    .then(snapshot => {
-      snapshot.forEach(doc => {
-        const data = doc.data();
-
-        // Only patch if 'from' is an object and 'fromName' is missing
-        if (typeof data.from === "object" && data.from !== null && !data.fromName) {
-          const senderName = data.from.username || data.from.name || data.from.email || "Unknown";
-          const senderUID = data.from.uid || "unknown";
-
-          doc.ref.update({
-            from: senderUID,
-            fromName: senderName
-          }).then(() => console.log(`✅ Patched: ${doc.id}`));
-        }
-      });
-    })
-    .catch(error => console.error("❌ Patch failed:", error));
-}
