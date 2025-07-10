@@ -1,4 +1,4 @@
-// ✅ Firebase Config - replace placeholder with your actual config
+// Firebase Init
 const firebaseConfig = {
   apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
   authDomain: "stringwasp.firebaseapp.com",
@@ -8,7 +8,6 @@ const firebaseConfig = {
   appId: "1:974718019508:web:59fabe6306517d10b374e1"
 };
 
-// ✅ Initialize Firebase only once
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
@@ -17,47 +16,51 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-// Wait for DOM
-document.addEventListener('DOMContentLoaded', () => {
-  // Hide loader
-  const loader = document.getElementById('init-overlay');
-  if (loader) loader.style.display = 'none';
+window.addEventListener('DOMContentLoaded', () => {
+  // Hide loading overlay
+  document.getElementById('init-overlay').style.display = 'none';
 
-  // Tab Navigation
-  document.querySelectorAll('[data-tab]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tab = btn.getAttribute('data-tab');
+  // Tab switching
+  document.querySelectorAll('nav button').forEach(button => {
+    button.addEventListener('click', () => {
+      const tab = button.getAttribute('data-tab');
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.getElementById(tab).classList.add('active');
     });
   });
 
-  // Theme Switcher
+  // Theme switcher
   const themeSwitcher = document.getElementById('themeSwitcher');
-  if (themeSwitcher) {
-    themeSwitcher.addEventListener('change', (e) => {
-      document.body.className = `${e.target.value}-theme`;
-    });
-  }
+  themeSwitcher.addEventListener('change', (e) => {
+    document.body.className = `${e.target.value}-theme`;
+  });
 
-  // Panic Button
-  const panicBtn = document.getElementById('panicBtn');
-  if (panicBtn) {
-    panicBtn.addEventListener('click', () => {
-      localStorage.clear();
-      alert("🧨 Local storage cleared!");
-    });
-  }
+  // Panic button
+  document.getElementById('panicBtn').addEventListener('click', () => {
+    localStorage.clear();
+    alert('Local storage wiped!');
+  });
 
-  // Firebase Auth listener
+  // Firebase Auth
   auth.onAuthStateChanged(user => {
     if (user) {
-      console.log("✅ Logged in:", user.uid);
+      console.log("User signed in:", user.uid);
     } else {
-      console.log("🔐 Signing in anonymously...");
-      auth.signInAnonymously().catch(err => {
-        console.error("❌ Auth error:", err);
-      });
+      console.log("No user, signing in anonymously...");
+      auth.signInAnonymously().catch(console.error);
     }
   });
+
+  // Placeholder plugin logic
+  const plugins = {
+    profileMusic: true,
+    emotionalMode: true,
+    lastSeenToggle: true,
+    anonymousConfessions: true
+  };
+
+  // Fake message encryption simulation
+  window.simulateEncryptedMessage = function (msg) {
+    return btoa(unescape(encodeURIComponent(msg))); // fake encryption
+  };
 });
