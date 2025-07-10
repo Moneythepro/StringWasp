@@ -636,8 +636,6 @@ function sendThreadMessage() {
   if (!text || !currentThreadUser) return;
 
   const fromName = document.getElementById("usernameDisplay").textContent;
-
-  // 🔐 Encrypt the message text
   const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
 
   const messageData = {
@@ -652,12 +650,12 @@ function sendThreadMessage() {
     .collection("messages")
     .add(messageData)
     .then(() => {
-      // ✅ Clear input, refocus, scroll to bottom
       input.value = "";
-      input.focus();
-
-      const threadArea = document.getElementById("threadMessages");
-      threadArea.scrollTop = threadArea.scrollHeight;
+      db.collection("threads")
+        .doc(threadId(currentUser.uid, currentThreadUser))
+        .collection("typing")
+        .doc(currentUser.uid)
+        .delete();
     })
     .catch(console.error);
 }
@@ -845,6 +843,20 @@ function showCustomModal(message, onConfirm) {
 document.addEventListener("click", (e) => {
   if (!e.target.closest("#chatOptionsMenu") && !e.target.closest("button[onclick='openChatMenu()']")) {
     closeChatMenu();
+  }
+});
+
+document.getElementById("threadInput").addEventListener("input", () => {
+  const input = document.getElementById("threadInput").value;
+  const typingRef = db.collection("threads")
+    .doc(threadId(currentUser.uid, currentThreadUser))
+    .collection("typing")
+    .doc(currentUser.uid);
+
+  if (input) {
+    typingRef.set({ typing: true });
+  } else {
+    typingRef.delete();
   }
 });
 
