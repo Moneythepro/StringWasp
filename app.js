@@ -286,19 +286,15 @@ function loadInbox() {
 
 function createInboxCard(doc) {
   const data = doc.data();
+  console.log("Parsing sender:", data.from, data.fromName); // debug
 
   let sender = "Unknown";
 
-  // Handle fromName if it exists
   if (data.fromName) {
     sender = data.fromName;
-
-  // Handle `from` if it's an object (e.g., { username, name, email })
-  } else if (typeof data.from === "object" && data.from !== null) {
-    sender = data.from.username || data.from.name || data.from.email || "Unknown";
-
-  // Handle `from` if it's a string (e.g., UID)
-  } else if (typeof data.from === "string") {
+  } else if (data.from && typeof data.from === "object") {
+    sender = data.from.username || data.from.name || data.from.email || JSON.stringify(data.from) || "Unknown";
+  } else if (data.from) {
     sender = data.from;
   }
 
