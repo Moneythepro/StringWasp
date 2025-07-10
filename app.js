@@ -1,10 +1,15 @@
-// app.js
-
 document.addEventListener("DOMContentLoaded", () => {
   const tabs = document.querySelectorAll("nav button");
   const tabContents = document.querySelectorAll(".tab");
   const themeToggle = document.getElementById("themeToggle");
   const panicBtn = document.getElementById("panicBtn");
+
+  const toast = (msg) => {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    setTimeout(() => el.classList.remove("show"), 3000);
+  };
 
   const showTab = (tabId) => {
     tabContents.forEach((tab) => tab.classList.remove("active"));
@@ -15,7 +20,6 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.addEventListener("click", () => showTab(btn.dataset.tab))
   );
 
-  // Theme toggle
   const savedTheme = localStorage.getItem("theme") || "light";
   document.body.classList.add(`${savedTheme}-theme`);
   themeToggle.value = savedTheme;
@@ -27,12 +31,10 @@ document.addEventListener("DOMContentLoaded", () => {
     saveUserSetting("theme", themeToggle.value);
   });
 
-  // Panic Button
   panicBtn.addEventListener("click", () => {
     window.location.href = "https://google.com";
   });
 
-  // Authentication
   firebase.auth().onAuthStateChanged((user) => {
     if (user) {
       document.getElementById("init-overlay").style.display = "none";
@@ -74,7 +76,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }, { merge: true });
   }
 
-  // Profile settings
   document.getElementById("saveProfile").addEventListener("click", async () => {
     const user = firebase.auth().currentUser;
     const displayName = document.getElementById("displayName").value;
@@ -94,9 +95,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     await db.collection("users").doc(user.uid).set(updates, { merge: true });
+    toast("Profile Saved!");
   });
 
-  // Messaging
   const sendMessage = async () => {
     const user = firebase.auth().currentUser;
     const text = document.getElementById("chatInput").value;
@@ -113,12 +114,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.getElementById("chatInput").value = "";
+    toast("Message Sent!");
   };
 
   document.getElementById("sendBtn").addEventListener("click", sendMessage);
 
   db.collection("messages").orderBy("createdAt").onSnapshot(snapshot => {
     const container = document.getElementById("chatMessages");
+    container.classList.remove("loading");
     container.innerHTML = "";
     snapshot.forEach(doc => {
       const msg = doc.data();
@@ -133,12 +136,13 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       container.appendChild(div);
     });
+    container.scrollTop = container.scrollHeight;
   });
 
-  // Friends
   async function sendFriendRequest(targetUid) {
     const uid = firebase.auth().currentUser.uid;
     await db.collection("friendRequests").add({ from: uid, to: targetUid });
+    toast("Friend Request Sent!");
   }
 
   db.collection("friendRequests")
@@ -160,10 +164,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const uid = firebase.auth().currentUser.uid;
     await db.collection("friends").add({ uids: [uid, friendUid] });
     await db.collection("friendRequests").doc(requestId).delete();
+    toast("Friend Added!");
   };
 
   window.rejectFriend = async (requestId) => {
     await db.collection("friendRequests").doc(requestId).delete();
+    toast("Request Rejected");
   };
 
   db.collection("friends").onSnapshot(snapshot => {
@@ -181,7 +187,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Explore Tab
   db.collection("users").onSnapshot(snapshot => {
     const uid = firebase.auth().currentUser?.uid;
     const container = document.getElementById("userList");
@@ -198,7 +203,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Groups
   document.getElementById("createGroupBtn").addEventListener("click", async () => {
     const name = document.getElementById("groupName").value;
     const isPrivate = document.getElementById("groupPrivate").checked;
@@ -226,7 +230,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const data = doc.data();
     if (data.private && !data.members[uid]) return alert("Private group");
     await ref.update({ [`members.${uid}`]: "member" });
-    alert("Joined group");
+    toast("Joined group");
   });
 
   db.collection("groups").onSnapshot(snapshot => {
@@ -257,15 +261,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.getElementById("groupMsg").value = "";
+    toast("Group Message Sent!");
   });
 
   document.getElementById("groupId").addEventListener("input", (e) => {
     const groupId = e.target.value;
     if (!groupId) return;
+    const container = document.getElementById("groupMessages");
+    container.classList.add("loading");
     db.collection("groups").doc(groupId).collection("messages")
       .orderBy("createdAt")
       .onSnapshot(snapshot => {
-        const container = document.getElementById("groupMessages");
+        container.classList.remove("loading");
         container.innerHTML = "";
         snapshot.forEach(doc => {
           const msg = doc.data();
@@ -280,6 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }
           container.appendChild(div);
         });
+        container.scrollTop = container.scrollHeight;
       });
   });
 });
