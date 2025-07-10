@@ -286,12 +286,12 @@ function loadInbox() {
 }
 
 function createInboxCard(doc) {
+function createInboxCard(doc) {
   const data = doc.data();
   let sender = "Unknown";
 
   try {
-    // Priority: fromName > string from > parsed object from
-    if (data.fromName && typeof data.fromName === "string") {
+    if (data.fromName) {
       sender = data.fromName;
     } else if (typeof data.from === "string") {
       sender = data.from;
@@ -300,8 +300,8 @@ function createInboxCard(doc) {
         data.from.username ||
         data.from.name ||
         data.from.email ||
-        data.from.uid ||
-        JSON.stringify(data.from);
+        data.from.uid || 
+        JSON.stringify(data.from); // Last resort fallback
     }
   } catch (e) {
     console.error("⚠️ Error parsing sender:", e);
