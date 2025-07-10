@@ -281,7 +281,7 @@ function loadInbox() {
     .onSnapshot(snapshot => {
       list.innerHTML = snapshot.empty
         ? "<div class='empty'>No new messages</div>"
-        : snapshot.docs.map(doc => createInboxCard(doc)).join(""); // Join required
+        : snapshot.docs.map(doc => createInboxCard(doc)).join("");
     }, error => console.error("Inbox error:", error));
 }
 
@@ -289,17 +289,20 @@ function createInboxCard(doc) {
   const data = doc.data();
   let sender = "Unknown";
 
-  // Fallbacks for sender
-  if (data.fromName) {
-    sender = data.fromName;
-  } else if (typeof data.from === "object" && data.from !== null) {
-    sender =
-      data.from.username ||
-      data.from.name ||
-      data.from.email ||
-      JSON.stringify(data.from);
-  } else if (typeof data.from === "string") {
-    sender = data.from;
+  try {
+    if (data.fromName) {
+      sender = data.fromName;
+    } else if (typeof data.from === "object" && data.from !== null) {
+      sender =
+        data.from.username ||
+        data.from.name ||
+        data.from.email ||
+        JSON.stringify(data.from);
+    } else if (typeof data.from === "string") {
+      sender = data.from;
+    }
+  } catch (e) {
+    console.error("Error extracting sender info:", e);
   }
 
   return `
@@ -317,7 +320,7 @@ function acceptRequest(requestId) {
   if (!requestId) return console.warn("No request ID");
 
   db.collection("inbox").doc(requestId).get().then(doc => {
-    if (!doc.exists) return console.warn("Request does not exist.");
+    if (!doc.exists) return console.warn("Request not found");
 
     const data = doc.data();
     const fromUID = typeof data.from === "string" ? data.from : null;
@@ -343,7 +346,8 @@ function acceptRequest(requestId) {
 
 function declineRequest(requestId) {
   if (!requestId) return;
-  db.collection("inbox").doc(requestId).delete().catch(console.error);
+  db.collection("inbox").doc(requestId).delete()
+    .catch(error => console.error("Error declining request:", error));
 }
 
 function markAllRead() {
