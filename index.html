@@ -65,18 +65,20 @@
 
     <!-- 👥 Group Chats -->
     <div id="groupsTab" class="tab">
-      <h3>Groups</h3>
-      <div class="group-actions">
-        <button onclick="createGroup()">➕ Create Group</button>
-        <button onclick="joinGroup()">🔗 Join Group</button>
-      </div>
-      <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
-      <div id="groupMessages" class="messages"></div>
-      <div id="groupTypingIndicator" class="typing"></div>
-      <input id="groupMessageInput" placeholder="Type a group message..." />
-      <button onclick="sendGroupMessage()">Send</button>
-    </div>
+  <div class="header">
+    <button onclick="createGroup()">Create Group</button>
+    <button onclick="joinGroup()">Join Group</button>
+  </div>
 
+  <!-- Room selector -->
+  <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
+
+  <!-- Group messages -->
+  <div id="groupMessages" class="messages"></div>
+  <input id="groupMessageInput" placeholder="Type a message..." />
+  <button onclick="sendGroupMessage()">Send</button>
+    </div>
+  
     <!-- 🔔 Inbox -->
     <div id="inboxTab" class="tab">
       <h3>Inbox</h3>
