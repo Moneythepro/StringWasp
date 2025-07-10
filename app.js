@@ -546,8 +546,6 @@ function loadFriends() {
 }
 
 // ===== Threads (DMs) =====
-
-function threadId(a, b) {
 function threadId(a, b) {
   return [a, b].sort().join("_");
 }
