@@ -590,6 +590,24 @@ function openThread(uid, username) {
 
       area.scrollTop = area.scrollHeight;
     });
+
+  db.collection("threads")
+  .doc(threadId(currentUser.uid, uid))
+  .collection("typing")
+  .onSnapshot(snapshot => {
+    const typingDiv = document.getElementById("typingIndicator");
+    const usersTyping = [];
+
+    snapshot.forEach(doc => {
+      if (doc.id !== currentUser.uid) {
+        usersTyping.push(doc.id);
+      }
+    });
+
+    typingDiv.textContent = usersTyping.length
+      ? `${usersTyping.join(", ")} typing...`
+      : "";
+  });
 }
 
 function sendThreadMessage() {
@@ -599,15 +617,44 @@ function sendThreadMessage() {
 
   const fromName = document.getElementById("usernameDisplay").textContent;
 
-  db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser)).collection("messages").add({
-    text,
+  // 🔐 Encrypt the message text
+  const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
+
+  const messageData = {
+    text: encryptedText,
     from: currentUser.uid,
     fromName,
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  });
+  };
 
-  input.value = "";
+  db.collection("threads")
+    .doc(threadId(currentUser.uid, currentThreadUser))
+    .collection("messages")
+    .add(messageData)
+    .then(() => {
+      // ✅ Clear input, refocus, scroll to bottom
+      input.value = "";
+      input.focus();
+
+      const threadArea = document.getElementById("threadMessages");
+      threadArea.scrollTop = threadArea.scrollHeight;
+    })
+    .catch(console.error);
 }
+
+  document.getElementById("threadInput").addEventListener("input", () => {
+  const typingRef = db.collection("threads")
+    .doc(threadId(currentUser.uid, currentThreadUser))
+    .collection("typing")
+    .doc(currentUser.uid);
+
+  const text = document.getElementById("threadInput").value;
+  if (text.trim()) {
+    typingRef.set({ typing: true });
+  } else {
+    typingRef.delete();
+  }
+});
 
 function closeThread() {
   switchTab("friendsTab");
