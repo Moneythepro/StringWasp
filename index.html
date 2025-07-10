@@ -107,13 +107,14 @@
   <!-- 💬 Messages -->
   <div id="groupMessages" class="messages"></div>
 
-  <!-- 💬 Group Input Bar -->
-  <div class="input-bar">
-    <button class="icon-btn">📎</button>
-    <input id="groupMessageInput" placeholder="Type a message..." />
-    <button onclick="sendGroupMessage()">➤</button>
-  </div>
-    </div>
+  <<!-- ✅ Updated Group Input Bar -->
+<div class="input-bar">
+  <button class="icon-btn" onclick="triggerFileInput('group')">📎</button>
+  <input id="groupMessageInput" placeholder="Type a message..." oninput="handleTyping('group')" />
+  <button class="icon-btn" onclick="sendGroupMessage()">➤</button>
+  <input type="file" id="groupFile" style="display:none;" onchange="uploadFile('group')" />
+</div>
+<div id="groupTypingIndicator" class="typing"></div>
 
     <!-- 👫 Friends -->
     <div id="friendsTab" class="tab">
@@ -195,22 +196,14 @@
 <!-- ✅ Typing Indicator -->
 <div id="typingIndicator" class="typing"></div>
 
-<!-- Input bar -->
+<!-- ✅ Thread Input Bar with File Upload & Typing -->
 <div class="input-bar">
-  <button class="icon-btn">📎</button>
-  <input id="threadInput" placeholder="Type a message..." />
-  <button onclick="sendThreadMessage()">➤</button>
-</div> 
-      <div class="input-bar">
-        <button class="icon-btn">📎</button>
-        <div class="input-bar">
-  <button class="icon-btn" onclick="attachFile()">📎</button>
-  <input id="threadInput" placeholder="Type a message..." />
+  <button class="icon-btn" onclick="triggerFileInput('thread')">📎</button>
+  <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" />
   <button class="icon-btn" onclick="sendThreadMessage()">➤</button>
-        </div>
-        <div id="typingIndicator" class="typing"></div>
-      </div>
-    </div>
+  <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
+</div>
+<div id="typingIndicator" class="typing"></div>
 
     <!-- 👁️ View Profile Modal -->
     <div id="viewProfileModal" class="modal">
