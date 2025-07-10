@@ -679,6 +679,55 @@ function closeThread() {
   if (unsubscribeThread) unsubscribeThread();
 }
 
+function openChatMenu() {
+  const menu = document.getElementById("chatOptionsMenu");
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+}
+
+function closeChatMenu() {
+  const menu = document.getElementById("chatOptionsMenu");
+  menu.style.display = "none";
+}
+
+// Close menu if clicked outside
+document.addEventListener("click", (e) => {
+  if (!e.target.closest("#chatOptionsMenu") && !e.target.closest("button[onclick='openChatMenu()']")) {
+    closeChatMenu();
+  }
+});
+
+// Menu Actions
+function blockUser() {
+  alert("🛑 User blocked (demo)");
+  closeChatMenu();
+}
+
+function viewMedia() {
+  alert("📎 Media viewer not yet implemented");
+  closeChatMenu();
+}
+
+function exportChat() {
+  alert("📤 Chat exported (demo)");
+  closeChatMenu();
+}
+
+function deleteThread() {
+  const confirmed = confirm("🗑️ Are you sure you want to delete this chat?");
+  if (confirmed) {
+    const ref = db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser)).collection("messages");
+    ref.get().then(snapshot => {
+      const batch = db.batch();
+      snapshot.forEach(doc => batch.delete(doc.ref));
+      return batch.commit();
+    }).then(() => {
+      alert("Chat deleted");
+      closeThread();
+    }).catch(console.error);
+  }
+  closeChatMenu();
+}
+
 // ===== Profile =====
 
 function loadProfile() {
