@@ -651,3 +651,20 @@ function patchInboxFromFields() {
     });
   });
 }
+// ===== TEMP PATCH FUNCTION: Fix inbox [object Object] issue =====
+function patchInboxFromFields() {
+  db.collection("inbox").where("to", "==", currentUser.uid).get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (typeof data.from === "object" && data.from !== null) {
+        const senderName = data.from.username || data.from.name || data.from.email || "Unknown";
+        const senderUID = data.from.uid || "unknown";
+
+        doc.ref.update({
+          from: senderUID,
+          fromName: senderName
+        }).then(() => console.log(`🔧 Patched inbox entry: ${doc.id}`));
+      }
+    });
+  }).catch(e => console.error("Patch failed:", e));
+}
