@@ -137,21 +137,26 @@
       <button onclick="contactSupport()">Contact Us</button>
     </div>
 
-    <!-- 🧾 Thread Chat View -->
-    <div id="threadView" class="tab">
-      <div id="chatHeader" class="chat-header">
-        <img id="chatProfilePic" src="default-avatar.png" alt="Avatar" />
-        <div class="chat-info">
-          <h3 id="chatName">Friend Name</h3>
-          <p id="chatStatus">Last seen recently</p>
-        </div>
-        <button onclick="openChatMenu()">⋮</button>
-      </div>
-
-      <div id="threadMessages" class="messages"></div>
-      <input id="threadInput" placeholder="Type message..." />
-      <button onclick="sendThreadMessage()">Send</button>
+    <!-- Direct Thread View -->
+<div id="threadView" class="tab">
+  <div id="chatHeader" class="chat-header">
+    <img id="chatProfilePic" src="default-avatar.png" alt="Avatar" />
+    <div class="chat-info">
+      <h3 id="chatName">Chat Name</h3>
+      <p id="chatStatus">Last seen just now</p>
     </div>
+    <button onclick="openChatMenu()">⋮</button>
+  </div>
+
+  <div id="threadMessages" class="messages"></div>
+
+  <!-- Input bar -->
+  <div class="input-bar">
+    <button class="icon-btn">📎</button>
+    <input id="threadInput" placeholder="Type a message..." />
+    <button onclick="sendThreadMessage()">➤</button>
+  </div>
+</div>
 
     <!-- 👁️ View Profile Modal -->
     <div id="viewProfileModal" class="modal">
