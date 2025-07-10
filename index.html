@@ -5,18 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>StringWasp</title>
   <link rel="stylesheet" href="style.css"/>
-  <script src="https://kit.fontawesome.com/a2d04f79e1.js" crossorigin="anonymous"></script>
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 </head>
 <body class="light-theme">
-  <div id="init-overlay">
-    <div class="loader"></div>
-    <p>Initializing StringWasp...</p>
-  </div>
-
+  <div id="init-overlay">Loading...</div>
   <div id="app">
     <header>
       <h1>StringWasp</h1>
@@ -25,44 +21,27 @@
     <main>
       <section id="chats" class="tab active">
         <div class="placeholder">🔐 Encrypted chats will appear here.</div>
-        <div id="chatArea"></div>
-        <div class="chat-input">
-          <input type="text" id="chatInput" placeholder="Type a message..." />
-          <label><input type="checkbox" id="anonToggle" /> Anonymous</label>
-          <button id="sendBtn">Send</button>
-        </div>
       </section>
-
       <section id="groups" class="tab">
-        <div class="placeholder">👥 Manage or discover groups (Owner/Admin/Member roles).</div>
-        <div id="groupControls">
-          <input type="text" id="groupNameInput" placeholder="Group name"/>
-          <select id="groupPrivacy"><option value="public">Public</option><option value="private">Private</option></select>
-          <button id="createGroupBtn">Create Group</button>
+        <div class="group-chat">
+          <select id="groupSelect"></select>
+          <div id="groupMessages" class="messages"></div>
+          <div class="input-area">
+            <input type="text" id="groupMessageInput" placeholder="Send a message..." />
+            <label><input type="checkbox" id="anonGroupToggle"/> Anonymous</label>
+            <button id="sendGroupMessage">Send</button>
+          </div>
         </div>
-        <div id="groupList"></div>
       </section>
-
       <section id="friends" class="tab">
         <div class="placeholder">🤝 See your friends & requests here.</div>
-        <div id="friendControls">
-          <input type="text" id="friendEmailInput" placeholder="Friend email"/>
-          <button id="sendRequestBtn">Send Request</button>
-        </div>
-        <div id="friendList"></div>
       </section>
-
       <section id="explore" class="tab">
         <div class="placeholder">🔍 Explore public groups & users.</div>
-        <div id="exploreList"></div>
       </section>
-
       <section id="profile" class="tab">
         <div class="placeholder">
-          <input type="file" id="profilePicInput" />
-          <input type="text" id="displayNameInput" placeholder="Your display name" />
-          <button id="saveProfileBtn">Save Profile</button>
-
+          <div>🧑 Profile Editor</div>
           <div>🎭 Role: <span id="roleBadge">Member</span></div>
           <div>
             <label>🌗 Theme:
@@ -90,7 +69,6 @@
         </div>
       </section>
     </main>
-
     <nav>
       <button data-tab="chats">💬</button>
       <button data-tab="groups">👥</button>
@@ -99,7 +77,6 @@
       <button data-tab="profile">🧑</button>
     </nav>
   </div>
-
   <script src="firebase.js"></script>
   <script src="app.js"></script>
 </body>
