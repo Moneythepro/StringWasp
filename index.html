@@ -116,8 +116,33 @@
       </div>
     </div>
 
-    <!-- Single FAB -->
-<button class="fab" onclick="handleFabClick()">+</button>
+    <!-- Group Info Modal -->
+<div id="groupInfoModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeGroupModal()">&times;</span>
+    <img id="groupModalImage" src="" alt="Group" />
+    <h3 id="groupModalName">Group Name</h3>
+    <div id="groupMembersList"></div>
+
+    <div id="groupModalButtons">
+      <!-- Admin buttons -->
+      <button id="editGroupBtn" onclick="editGroupSettings()">Edit Group</button>
+      <button id="kickUserBtn" style="display:none;">Kick User</button>
+
+      <!-- User button -->
+      <button onclick="leaveGroup()">Leave Group</button>
+    </div>
+  </div>
+</div>
+
+    <!-- ✅ FAB Button -->
+<button class="fab" onclick="toggleFabMenu()">+</button>
+
+<!-- ✅ FAB Dropdown Menu -->
+<div id="fabMenu" class="fab-menu">
+  <button onclick="createGroup()">➕ Create Group</button>
+  <button onclick="joinGroup()">🔗 Join Group</button>
+</div>
   </div>
 
   <!-- Firebase SDK v8 -->
