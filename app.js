@@ -551,9 +551,6 @@ function loadFriends() {
 }
 
 // ===== Threads (DMs) =====
-function threadId(a, b) {
-  return [a, b].sort().join("_");
-}
 
 function threadId(a, b) {
   return [a, b].sort().join("_");
@@ -592,19 +589,29 @@ function openThread(uid, username) {
     .onSnapshot(snapshot => {
       const area = document.getElementById("threadMessages");
       area.innerHTML = "";
+
       snapshot.forEach(doc => {
         const msg = doc.data();
-        const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+        let text = msg.text;
+
+        try {
+          text = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+        } catch (e) {
+          text = "[Error decoding]";
+        }
+
         const div = document.createElement("div");
         div.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
-        div.textContent = `${msg.fromName}: ${decrypted}`;
+        div.textContent = `${msg.fromName}: ${text}`;
         area.appendChild(div);
       });
+
       area.scrollTop = area.scrollHeight;
     });
 
   // ✅ Typing Indicator Listener
-  db.collection("threads")
+  if (unsubscribeTyping) unsubscribeTyping();
+  unsubscribeTyping = db.collection("threads")
     .doc(threadId(currentUser.uid, uid))
     .collection("typing")
     .onSnapshot(snapshot => {
@@ -834,6 +841,12 @@ function showCustomModal(message, onConfirm) {
     modal.style.display = "none";
   };
 }
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest("#chatOptionsMenu") && !e.target.closest("button[onclick='openChatMenu()']")) {
+    closeChatMenu();
+  }
+});
 
 // ===== Init =====
 
