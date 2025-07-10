@@ -271,8 +271,10 @@ function listenMessages() {
     .orderBy("timestamp")
     .onSnapshot(snapshot => {
       messagesDiv.innerHTML = "";
+
       snapshot.forEach(doc => {
         const msg = doc.data();
+
         const bubble = document.createElement("div");
         bubble.className = "message-bubble " + (msg.senderId === currentUser.uid ? "right" : "left");
 
@@ -295,7 +297,7 @@ function listenMessages() {
 
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
-
+}
   // Typing Indicator
   const typingRef = db.collection("groups").doc(currentRoom).collection("typing");
   unsubscribeTyping = typingRef.onSnapshot(snapshot => {
@@ -532,20 +534,20 @@ function loadFriends() {
 // ===== Threads (DMs) =====
 
 function threadId(a, b) {
+function threadId(a, b) {
   return [a, b].sort().join("_");
 }
 
 function openThread(uid, username) {
-function openThread(uid, username) {
   switchTab("threadView");
   currentThreadUser = uid;
 
-  // 🧠 Set name & fallback image first
+  // Set chat header with fallback values
   document.getElementById("chatName").textContent = username;
   document.getElementById("chatStatus").textContent = "Loading...";
   document.getElementById("chatProfilePic").src = "default-avatar.png";
 
-  // 📡 Fetch user profile info
+  // Load user's photo and last seen
   db.collection("users").doc(uid).get().then(doc => {
     if (doc.exists) {
       const user = doc.data();
@@ -559,7 +561,7 @@ function openThread(uid, username) {
     document.getElementById("chatStatus").textContent = "Error loading status";
   });
 
-  // 🔄 Thread messages
+  // Load messages in real-time
   if (unsubscribeThread) unsubscribeThread();
   unsubscribeThread = db.collection("threads")
     .doc(threadId(currentUser.uid, uid))
@@ -570,11 +572,22 @@ function openThread(uid, username) {
       area.innerHTML = "";
       snapshot.forEach(doc => {
         const msg = doc.data();
-        const div = document.createElement("div");
-        div.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
-        div.textContent = `${msg.fromName}: ${msg.text}`;
-        area.appendChild(div);
+
+        const bubble = document.createElement("div");
+        bubble.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
+
+        const name = document.createElement("div");
+        name.className = "sender-name";
+        name.textContent = msg.fromName || "Unknown";
+
+        const text = document.createElement("div");
+        text.textContent = msg.text;
+
+        bubble.appendChild(name);
+        bubble.appendChild(text);
+        area.appendChild(bubble);
       });
+
       area.scrollTop = area.scrollHeight;
     });
 }
