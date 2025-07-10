@@ -71,6 +71,27 @@ button:hover {
 /* ===========================
    Header & Tabs
 =========================== */
+.group-header {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  background: #ededed;
+  padding: 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #ccc;
+}
+.group-header img {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.group-header div {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  font-weight: bold;
+}
 .header {
   display: flex;
   align-items: center;
