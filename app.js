@@ -283,11 +283,19 @@ function loadInbox() {
     }, error => console.error("Inbox error:", error));
 }
 
-function createInboxCard(doc) {
+async function createInboxCard(doc) {
   const data = doc.data();
-  const sender = 
-    data.fromName || 
-    (typeof data.from === "object" ? (data.from.username || data.from.name || data.from.email || "Unknown") : data.from);
+  let sender = data.fromName;
+
+  if (!sender && typeof data.from === "string") {
+    try {
+      const userDoc = await db.collection("users").doc(data.from).get();
+      const userData = userDoc.data();
+      sender = userData?.username || userData?.name || userData?.email || "Unknown";
+    } catch (e) {
+      sender = "Unknown";
+    }
+  }
 
   return `
     <div class="inbox-card">
