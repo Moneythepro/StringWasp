@@ -1,3 +1,4 @@
+let unsubscribeInbox = null;
 // UUID generator
 function uuidv4() {
   return ([1e7]+-1e3+-4e3+-8e3+-1e11)
@@ -14,7 +15,6 @@ let currentRoom = null;
 let unsubscribeMessages = null;
 let unsubscribeThread = null;
 let unsubscribeInbox = null; // Added missing unsubscribe
-let unsubscribeInbox = null;
 let currentThreadUser = null;
 
 // ===== UI Functions =====
