@@ -268,38 +268,43 @@ function sendMessage() {
 }
 
 // ===== Inbox System =====
+
 function loadInbox() {
   const list = document.getElementById("inboxList");
   if (!list) return;
-  
+
   if (unsubscribeInbox) unsubscribeInbox();
-  
+
   unsubscribeInbox = db.collection("inbox").where("to", "==", currentUser.uid)
     .orderBy("timestamp", "desc")
     .onSnapshot(snapshot => {
-      list.innerHTML = snapshot.empty 
+      list.innerHTML = snapshot.empty
         ? "<div class='empty'>No new messages</div>"
-        : snapshot.docs.map(doc => createInboxCard(doc)).join("");
+        : snapshot.docs.map(doc => createInboxCard(doc)).join(""); // JOIN IS IMPORTANT
     }, error => console.error("Inbox error:", error));
 }
 
-async function createInboxCard(doc) {
+function createInboxCard(doc) {
   const data = doc.data();
-  let sender = data.fromName;
 
-  if (!sender && typeof data.from === "string") {
-    try {
-      const userDoc = await db.collection("users").doc(data.from).get();
-      const userData = userDoc.data();
-      sender = userData?.username || userData?.name || userData?.email || "Unknown";
-    } catch (e) {
-      sender = "Unknown";
-    }
+  let sender = "Unknown";
+
+  // Handle fromName if it exists
+  if (data.fromName) {
+    sender = data.fromName;
+
+  // Handle `from` if it's an object (e.g., { username, name, email })
+  } else if (typeof data.from === "object" && data.from !== null) {
+    sender = data.from.username || data.from.name || data.from.email || "Unknown";
+
+  // Handle `from` if it's a string (e.g., UID)
+  } else if (typeof data.from === "string") {
+    sender = data.from;
   }
 
   return `
     <div class="inbox-card">
-      <div>${data.type || "Request"}: ${sender}</div>
+      <div><strong>${data.type || "Request"}</strong>: ${sender}</div>
       <div class="btn-group">
         <button onclick="acceptRequest('${doc.id}')">✓</button>
         <button onclick="declineRequest('${doc.id}')">✕</button>
