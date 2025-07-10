@@ -275,13 +275,14 @@ function loadInbox() {
 
   if (unsubscribeInbox) unsubscribeInbox();
 
-  unsubscribeInbox = db.collection("inbox").where("to", "==", currentUser.uid)
+  unsubscribeInbox = db.collection("inbox")
+    .where("to", "==", currentUser.uid)
     .orderBy("timestamp", "desc")
     .onSnapshot(snapshot => {
       list.innerHTML = snapshot.empty
         ? "<div class='empty'>No new messages</div>"
         : snapshot.docs.map(doc => createInboxCard(doc)).join(""); // JOIN IS IMPORTANT
-    }, error => console.error("Inbox error:", error));
+    }, error => console.error("❌ Inbox error:", error));
 }
 
 function createInboxCard(doc) {
@@ -289,19 +290,20 @@ function createInboxCard(doc) {
   let sender = "Unknown";
 
   try {
-    if (typeof data.from === "string") {
+    if (data.fromName) {
+      sender = data.fromName;
+    } else if (typeof data.from === "string") {
       sender = data.from;
     } else if (typeof data.from === "object" && data.from !== null) {
       sender =
-        data.from.name ||
         data.from.username ||
+        data.from.name ||
         data.from.email ||
+        data.from.uid ||
         JSON.stringify(data.from);
-    } else if (data.fromName) {
-      sender = data.fromName;
     }
   } catch (e) {
-    console.error("Error parsing sender:", e);
+    console.error("⚠️ Error parsing sender:", e);
   }
 
   return `
@@ -349,6 +351,7 @@ function acceptRequest(requestId) {
 
 function declineRequest(requestId) {
   if (!requestId) return console.error("❌ Invalid request ID");
+
   db.collection("inbox").doc(requestId).delete()
     .then(() => console.log("✅ Request declined."))
     .catch(error => console.error("❌ Error declining request:", error));
@@ -359,7 +362,7 @@ function markAllRead() {
     const batch = db.batch();
     snapshot.forEach(doc => batch.delete(doc.ref));
     return batch.commit();
-  }).then(() => alert("All messages marked as read"));
+  }).then(() => alert("✅ All messages marked as read"));
 }
 
 // ===== Friends System =====
