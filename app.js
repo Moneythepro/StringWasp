@@ -284,14 +284,17 @@ function loadInbox() {
 }
 
 function createInboxCard(doc) {
-  const item = doc.data();
+  const data = doc.data();
+  const sender = 
+    data.fromName || 
+    (typeof data.from === "object" ? (data.from.username || data.from.name || data.from.email || "Unknown") : data.from);
+
   return `
     <div class="inbox-card">
-      <div class="inbox-type">${item.type}</div>
-      <div class="inbox-from">From: ${item.fromName}</div>
-      <div class="inbox-actions">
-        <button onclick="acceptRequest('${doc.id}')">✓ Accept</button>
-        <button onclick="declineRequest('${doc.id}')">✕ Decline</button>
+      <div>${data.type || "Request"}: ${sender}</div>
+      <div class="btn-group">
+        <button onclick="acceptRequest('${doc.id}')">✓</button>
+        <button onclick="declineRequest('${doc.id}')">✕</button>
       </div>
     </div>
   `;
