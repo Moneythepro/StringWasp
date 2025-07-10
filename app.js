@@ -8,59 +8,82 @@ const firebaseConfig = {
   appId: "1:974718019508:web:59fabe6306517d10b374e1"
 };
 
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
-
+firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-window.addEventListener('DOMContentLoaded', () => {
-  // Hide loading overlay
-  document.getElementById('init-overlay').style.display = 'none';
+let currentUserId = null;
 
-  // Tab switching
-  document.querySelectorAll('nav button').forEach(button => {
-    button.addEventListener('click', () => {
-      const tab = button.getAttribute('data-tab');
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.getElementById(tab).classList.add('active');
-    });
+// Tab Switching
+document.querySelectorAll('nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.getAttribute('data-tab');
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
   });
-
-  // Theme switcher
-  const themeSwitcher = document.getElementById('themeSwitcher');
-  themeSwitcher.addEventListener('change', (e) => {
-    document.body.className = `${e.target.value}-theme`;
-  });
-
-  // Panic button
-  document.getElementById('panicBtn').addEventListener('click', () => {
-    localStorage.clear();
-    alert('Local storage wiped!');
-  });
-
-  // Firebase Auth
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      console.log("User signed in:", user.uid);
-    } else {
-      console.log("No user, signing in anonymously...");
-      auth.signInAnonymously().catch(console.error);
-    }
-  });
-
-  // Placeholder plugin logic
-  const plugins = {
-    profileMusic: true,
-    emotionalMode: true,
-    lastSeenToggle: true,
-    anonymousConfessions: true
-  };
-
-  // Fake message encryption simulation
-  window.simulateEncryptedMessage = function (msg) {
-    return btoa(unescape(encodeURIComponent(msg))); // fake encryption
-  };
 });
+
+// Theme Toggle
+document.getElementById('themeSwitcher').addEventListener('change', (e) => {
+  document.body.className = `${e.target.value}-theme`;
+});
+
+// Panic Button
+document.getElementById('panicBtn').addEventListener('click', () => {
+  localStorage.clear();
+  alert("Local storage wiped!");
+});
+
+// Fake encryption (Base64)
+function simulateEncryptedMessage(msg) {
+  return btoa(unescape(encodeURIComponent(msg)));
+}
+function simulateDecryption(encoded) {
+  return decodeURIComponent(escape(atob(encoded)));
+}
+
+// Auth State
+auth.onAuthStateChanged(user => {
+  if (user) {
+    currentUserId = user.uid;
+    listenForMessages();
+  } else {
+    auth.signInAnonymously();
+  }
+});
+
+// Send Message
+document.getElementById('sendBtn').addEventListener('click', () => {
+  const input = document.getElementById('chatMessage');
+  const text = input.value.trim();
+  if (text) {
+    const encrypted = simulateEncryptedMessage(text);
+    db.collection('messages').add({
+      uid: currentUserId,
+      message: encrypted,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    input.value = '';
+  }
+});
+
+// Real-time message display
+function listenForMessages() {
+  const chatWindow = document.getElementById('chatWindow');
+  db.collection('messages')
+    .orderBy('timestamp')
+    .limit(50)
+    .onSnapshot(snapshot => {
+      chatWindow.innerHTML = '';
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const msg = simulateDecryption(data.message || '');
+        const div = document.createElement('div');
+        div.className = 'chat-message';
+        div.textContent = msg;
+        chatWindow.appendChild(div);
+      });
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    });
+}
