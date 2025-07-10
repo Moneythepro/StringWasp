@@ -281,25 +281,26 @@ function loadInbox() {
     .onSnapshot(snapshot => {
       list.innerHTML = snapshot.empty
         ? "<div class='empty'>No new messages</div>"
-        : snapshot.docs.map(doc => createInboxCard(doc)).join(""); // JOIN IS IMPORTANT
-    }, error => console.error("❌ Inbox error:", error));
+        : snapshot.docs.map(doc => createInboxCard(doc)).join("");
+    }, error => {
+      console.error("❌ Inbox error:", error.message || error);
+    });
 }
 
 function createInboxCard(doc) {
   const data = doc.data();
   let sender = "Unknown";
 
-  if (typeof data.fromName === "string" && data.fromName.trim()) {
-    sender = data.fromName;
-  } else if (typeof data.from === "string" && data.from.trim()) {
-    sender = data.from;
-  } else if (typeof data.from === "object" && data.from !== null) {
-    sender =
-      data.from.username ||
-      data.from.name ||
-      data.from.email ||
-      data.from.uid ||
-      "[Unknown Sender]";
+  try {
+    if (data.fromName && typeof data.fromName === "string") {
+      sender = data.fromName;
+    } else if (typeof data.from === "string") {
+      sender = data.from;
+    } else if (typeof data.from === "object" && data.from !== null) {
+      sender = data.from.username || data.from.name || data.from.email || data.from.uid || "Unknown User";
+    }
+  } catch (e) {
+    console.error("⚠️ Error extracting sender name:", e);
   }
 
   return `
@@ -320,11 +321,11 @@ function acceptRequest(requestId) {
     if (!doc.exists) return console.error("❌ Request not found");
 
     const request = doc.data();
-    const fromUID = typeof request.from === "string" ? request.from : request.from?.uid;
-    const fromName = request.fromName || request.from?.username || "Unknown";
+    const fromUID = typeof request.from === "string" ? request.from : request.from?.uid || null;
+    const fromName = request.fromName || "Unknown";
 
     if (!fromUID) {
-      console.error("❌ Missing or invalid sender UID:", request);
+      console.error("❌ Missing sender UID in request:", request);
       return;
     }
 
@@ -336,9 +337,9 @@ function acceptRequest(requestId) {
       }).then(() => {
         doc.ref.delete();
         console.log("✅ Friend request accepted.");
-      });
+      }).catch(console.error);
     } else {
-      doc.ref.delete(); // Delete other types
+      doc.ref.delete();
     }
   }).catch(error => {
     console.error("❌ Error accepting request:", error);
@@ -347,7 +348,6 @@ function acceptRequest(requestId) {
 
 function declineRequest(requestId) {
   if (!requestId) return console.error("❌ Invalid request ID");
-
   db.collection("inbox").doc(requestId).delete()
     .then(() => console.log("✅ Request declined."))
     .catch(error => console.error("❌ Error declining request:", error));
