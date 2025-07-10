@@ -107,6 +107,10 @@ function searchChats() {
   });
 }
 
+function openChatMenu() {
+  alert("More options coming soon...");
+}
+
 // ===== Loading Spinner =====
 function showLoading(state) {
   const overlay = document.getElementById("loadingOverlay");
@@ -532,14 +536,36 @@ function threadId(a, b) {
 }
 
 function openThread(uid, username) {
+function openThread(uid, username) {
   switchTab("threadView");
-  document.getElementById("threadWithName").textContent = username;
   currentThreadUser = uid;
 
-  if (unsubscribeThread) unsubscribeThread();
+  // 🧠 Set name & fallback image first
+  document.getElementById("chatName").textContent = username;
+  document.getElementById("chatStatus").textContent = "Loading...";
+  document.getElementById("chatProfilePic").src = "default-avatar.png";
 
-  unsubscribeThread = db.collection("threads").doc(threadId(currentUser.uid, uid)).collection("messages")
-    .orderBy("timestamp").onSnapshot(snapshot => {
+  // 📡 Fetch user profile info
+  db.collection("users").doc(uid).get().then(doc => {
+    if (doc.exists) {
+      const user = doc.data();
+      const lastSeen = user.lastSeen?.toDate().toLocaleString() || "Online recently";
+      document.getElementById("chatProfilePic").src = user.photoURL || "default-avatar.png";
+      document.getElementById("chatStatus").textContent = lastSeen;
+    } else {
+      document.getElementById("chatStatus").textContent = "User not found";
+    }
+  }).catch(() => {
+    document.getElementById("chatStatus").textContent = "Error loading status";
+  });
+
+  // 🔄 Thread messages
+  if (unsubscribeThread) unsubscribeThread();
+  unsubscribeThread = db.collection("threads")
+    .doc(threadId(currentUser.uid, uid))
+    .collection("messages")
+    .orderBy("timestamp")
+    .onSnapshot(snapshot => {
       const area = document.getElementById("threadMessages");
       area.innerHTML = "";
       snapshot.forEach(doc => {
@@ -754,3 +780,11 @@ window.onload = () => {
   const preview = document.getElementById("profilePicPreview");
   if (preview) preview.onclick = () => document.getElementById("profilePic").click();
 };
+
+window.addEventListener("beforeunload", () => {
+  if (auth.currentUser) {
+    db.collection("users").doc(auth.currentUser.uid).update({
+      lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
+});
