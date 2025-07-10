@@ -5,20 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>StringWasp</title>
   <link rel="stylesheet" href="style.css"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 </head>
 <body class="light-theme">
-
-  <!-- Loading Animation -->
-  <div id="init-overlay">
-    <div class="loader"></div>
-    <p>Initializing StringWasp...</p>
-  </div>
-
   <div id="app">
     <header>
       <h1>StringWasp</h1>
@@ -26,7 +18,11 @@
     </header>
     <main>
       <section id="chats" class="tab active">
-        <div class="placeholder">🔐 Encrypted chats will appear here.</div>
+        <div id="chatWindow" class="chat-window"></div>
+        <div class="chat-input">
+          <input type="text" id="chatMessage" placeholder="Type your message..." />
+          <button id="sendBtn">Send</button>
+        </div>
       </section>
       <section id="groups" class="tab">
         <div class="placeholder">👥 Manage or discover groups (Owner/Admin/Member roles).</div>
@@ -72,14 +68,13 @@
       </section>
     </main>
     <nav>
-      <button data-tab="chats"><i class="fas fa-comments"></i></button>
-      <button data-tab="groups"><i class="fas fa-users"></i></button>
-      <button data-tab="friends"><i class="fas fa-user-friends"></i></button>
-      <button data-tab="explore"><i class="fas fa-search"></i></button>
-      <button data-tab="profile"><i class="fas fa-user"></i></button>
+      <button data-tab="chats">💬</button>
+      <button data-tab="groups">👥</button>
+      <button data-tab="friends">🤝</button>
+      <button data-tab="explore">🔍</button>
+      <button data-tab="profile">🧑</button>
     </nav>
   </div>
-
   <script src="app.js"></script>
 </body>
 </html>
