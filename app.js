@@ -271,22 +271,32 @@ function sendMessage() {
 
 function loadInbox() {
   const list = document.getElementById("inboxList");
-  if (!list) return;
+  const badge = document.getElementById("inboxBadge");
+  if (!list || !badge) return;
 
   if (unsubscribeInbox) unsubscribeInbox();
 
-  db.collection("inbox")
+  let firstLoad = true;
+  unsubscribeInbox = db.collection("inbox")
     .where("to", "==", auth.currentUser.uid)
     .orderBy("timestamp", "desc")
-    .get()
-    .then(snapshot => {
-      if (snapshot.empty) {
-        list.innerHTML = "<div class='empty'>No new messages</div>";
-      } else {
-        list.innerHTML = snapshot.docs.map(doc => createInboxCard(doc)).join(""); // ✅ Renders HTML
+    .onSnapshot(snapshot => {
+      if (!firstLoad && !snapshot.empty) {
+        const sound = document.getElementById("notifSound");
+        if (sound) sound.play(); // 🔔 New notification
       }
-    })
-    .catch(error => console.error("❌ Error fetching inbox:", error));
+      firstLoad = false;
+
+      list.innerHTML = snapshot.empty
+        ? "<div class='empty'>No new messages</div>"
+        : snapshot.docs.map(doc => createInboxCard(doc)).join("");
+
+      // 🔴 Update badge count
+      badge.textContent = snapshot.size || "";
+      badge.style.display = snapshot.size ? "inline-block" : "none";
+    }, error => {
+      console.error("❌ Inbox error:", error.message || error);
+    });
 }
   
 function createInboxCard(doc) {
