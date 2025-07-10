@@ -31,6 +31,80 @@ function switchTab(id) {
     loadRooms();
     if (currentRoom) listenMessages();
   }
+  if (id === "chatTab") {
+    loadChatList(); // ✅ Add this line
+  }
+}
+
+// ===== Unified Chat List =====
+function loadChatList() {
+  const list = document.getElementById("chatList");
+  if (!list || !currentUser) return;
+
+  list.innerHTML = "<div>Loading chats...</div>";
+  const chats = [];
+
+  db.collection("friends").doc(currentUser.uid).collection("list").get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      chats.push({
+        id: data.uid,
+        name: data.username,
+        type: "friend",
+        img: "default-avatar.png",
+      });
+    });
+
+    return db.collection("groups").get();
+  }).then(snapshot => {
+    snapshot.forEach(doc => {
+      chats.push({
+        id: doc.id,
+        name: doc.data().name,
+        type: "group",
+        img: "group-icon.png"
+      });
+    });
+
+    renderChatList(chats);
+  }).catch(console.error);
+}
+
+function renderChatList(chats) {
+  const list = document.getElementById("chatList");
+  list.innerHTML = "";
+
+  chats.forEach(chat => {
+    const card = document.createElement("div");
+    card.className = "chat-card";
+    card.onclick = () => {
+      if (chat.type === "group") joinRoom(chat.id);
+      else openThread(chat.id, chat.name);
+    };
+
+    card.innerHTML = `
+      <img src="${chat.img}" alt="avatar" />
+      <div class="details">
+        <div class="name">${chat.name}</div>
+        <div class="last-message">Last message preview...</div>
+      </div>
+      <div class="meta">
+        <div class="time">12:45 PM</div>
+        <div class="badge">1</div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function searchChats() {
+  const keyword = document.getElementById("globalSearch").value.toLowerCase();
+  const cards = document.querySelectorAll(".chat-card");
+
+  cards.forEach(card => {
+    const name = card.querySelector(".name").textContent.toLowerCase();
+    card.style.display = name.includes(keyword) ? "flex" : "none";
+  });
 }
 
 // ===== Loading Spinner =====
