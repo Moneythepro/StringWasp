@@ -1,89 +1,88 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StringWasp</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
-  <script src="https://kit.fontawesome.com/a2e0e6fa0b.js" crossorigin="anonymous"></script>
-</head>
-<body class="light-theme">
+// firebase.js configuration must be imported separately
+// Make sure this is loaded before app.js runs
 
-  <!-- Loading Overlay -->
-  <div id="init-overlay">
-    <div class="spinner"></div>
-  </div>
+document.addEventListener('DOMContentLoaded', () => {
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const storage = firebase.storage();
 
-  <!-- Theme & Panic Controls -->
-  <div id="controls">
-    <select id="themeSwitcher">
-      <option value="light">☀️ Light</option>
-      <option value="dark">🌙 Dark</option>
-    </select>
-    <button id="panicBtn">Panic</button>
-  </div>
+  const appContainer = document.getElementById('app');
+  const tabs = document.querySelectorAll('[data-tab]');
+  const tabContents = document.querySelectorAll('.tab');
+  const themeSwitcher = document.getElementById('themeSwitcher');
+  const panicBtn = document.getElementById('panicBtn');
+  const loadingOverlay = document.getElementById('init-overlay');
 
-  <!-- Main App -->
-  <div id="app">
-    <nav>
-      <button data-tab="chats">Chats</button>
-      <button data-tab="groups">Groups</button>
-      <button data-tab="friends">Friends</button>
-      <button data-tab="explore">Explore</button>
-      <button data-tab="profile">Profile</button>
-    </nav>
+  // Remove loading overlay
+  window.addEventListener('load', () => {
+    loadingOverlay.style.display = 'none';
+  });
 
-    <!-- Tabs -->
-    <div id="tabs">
-      <div class="tab" id="tab-chats">
-        <h2>Chats</h2>
-        <div id="chat-messages"></div>
-        <input id="chatInput" placeholder="Type a message" />
-        <label><input type="checkbox" id="anonymousToggle" /> Send Anonymously</label>
-        <button id="sendChatBtn">Send</button>
-      </div>
+  // Tab Switching
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.getAttribute('data-tab');
+      tabContents.forEach(c => c.classList.remove('active'));
+      document.getElementById(target).classList.add('active');
+    });
+  });
 
-      <div class="tab" id="tab-groups">
-        <h2>Groups</h2>
-        <div id="groupList"></div>
-        <input id="newGroupName" placeholder="New Group Name" />
-        <label><input type="checkbox" id="groupPrivate" /> Private</label>
-        <button id="createGroupBtn">Create Group</button>
-      </div>
+  // Theme Switcher
+  if (themeSwitcher) {
+    themeSwitcher.addEventListener('change', (e) => {
+      const selectedTheme = e.target.value;
+      document.body.classList.remove('light-theme', 'dark-theme');
+      document.body.classList.add(`${selectedTheme}-theme`);
+      localStorage.setItem('theme', selectedTheme);
+    });
 
-      <div class="tab" id="tab-friends">
-        <h2>Friends</h2>
-        <input id="friendEmail" placeholder="Add friend by email" />
-        <button id="addFriendBtn">Add Friend</button>
-        <ul id="friendList"></ul>
-      </div>
+    // Load persisted theme
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.body.classList.add(`${savedTheme}-theme`);
+    themeSwitcher.value = savedTheme;
+  }
 
-      <div class="tab" id="tab-explore">
-        <h2>Explore Users</h2>
-        <ul id="exploreList"></ul>
-      </div>
+  // Panic Button
+  if (panicBtn) {
+    panicBtn.addEventListener('click', () => {
+      if (confirm("Are you sure you want to clear all data and logout?")) {
+        localStorage.clear();
+        sessionStorage.clear();
+        if (auth.currentUser) {
+          auth.signOut().then(() => {
+            location.reload();
+          });
+        } else {
+          location.reload();
+        }
+      }
+    });
+  }
 
-      <div class="tab" id="tab-profile">
-        <h2>Your Profile</h2>
-        <input id="displayName" placeholder="Display Name" />
-        <input type="file" id="profilePicInput" />
-        <img id="profilePic" src="" alt="Profile Picture" />
-        <label><input type="checkbox" id="musicToggle" /> Profile Music</label>
-        <label><input type="checkbox" id="emotionToggle" /> Emotional Mode</label>
-        <label><input type="checkbox" id="lastSeenToggle" /> Show Last Seen</label>
-        <button id="saveProfileBtn">Save Profile</button>
-        <audio id="profileMusic" controls style="display:none;" loop>
-          <source src="https://www.bensound.com/bensound-music/bensound-goinghigher.mp3" type="audio/mp3">
-        </audio>
-      </div>
-    </div>
-  </div>
+  // Check auth state
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      console.log("User signed in:", user.email);
+      loadUserProfile(user);
+    } else {
+      console.log("No user signed in.");
+      // Optional: Show login UI or redirect
+    }
+  });
 
-  <script src="firebase.js"></script>
-  <script src="app.js"></script>
-</body>
-</html>
+  // Load user profile (example for future feature usage)
+  function loadUserProfile(user) {
+    db.collection('users').doc(user.uid).get().then(doc => {
+      if (doc.exists) {
+        const data = doc.data();
+        document.getElementById('userDisplayName').textContent = data.displayName || user.email;
+        if (data.theme) {
+          document.body.classList.add(`${data.theme}-theme`);
+          themeSwitcher.value = data.theme;
+        }
+      }
+    });
+  }
+
+  // OPTIONAL: Additional initialization code goes here
+});
