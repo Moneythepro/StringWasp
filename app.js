@@ -14,6 +14,7 @@ let currentRoom = null;
 let unsubscribeMessages = null;
 let unsubscribeThread = null;
 let unsubscribeInbox = null; // Added missing unsubscribe
+let unsubscribeInbox = null;
 let currentThreadUser = null;
 
 // ===== UI Functions =====
@@ -281,7 +282,7 @@ function loadInbox() {
     .onSnapshot(snapshot => {
       list.innerHTML = snapshot.empty
         ? "<div class='empty'>No new messages</div>"
-        : snapshot.docs.map(doc => createInboxCard(doc)).join("");
+        : snapshot.docs.map(doc => createInboxCard(doc)).join(""); // JOIN IS IMPORTANT
     }, error => console.error("❌ Inbox error:", error));
 }
 
@@ -289,27 +290,18 @@ function createInboxCard(doc) {
   const data = doc.data();
   let sender = "Unknown";
 
-  try {
-    // Extract sender name
-    if (typeof data.from === "string") {
-      sender = data.from;
-    } else if (data.fromName) {
-      sender = data.fromName;
-    } else if (typeof data.from === "object" && data.from !== null) {
-      sender =
-        data.from.username ||
-        data.from.name ||
-        data.from.email ||
-        data.from.uid ||
-        JSON.stringify(data.from);
-    }
-  } catch (e) {
-    console.error("⚠️ Error parsing sender:", e);
+  // Determine readable sender name
+  if (data.fromName) {
+    sender = data.fromName;
+  } else if (typeof data.from === "object" && data.from !== null) {
+    sender = data.from.username || data.from.name || data.from.email || "Unknown User";
+  } else if (typeof data.from === "string") {
+    sender = data.from;
   }
 
   return `
     <div class="inbox-card">
-      <div><strong>${data.type || "Notification"}</strong><br>${sender}</div>
+      <div><strong>${data.type || "Notification"}</strong>: ${sender}</div>
       <div class="btn-group">
         <button onclick="acceptRequest('${doc.id}')">✓</button>
         <button onclick="declineRequest('${doc.id}')">✕</button>
@@ -325,15 +317,15 @@ function acceptRequest(requestId) {
     if (!doc.exists) return console.error("❌ Request not found");
 
     const request = doc.data();
-    const fromUID = typeof request.from === "string" ? request.from : (request.from?.uid || null);
-    const fromName = request.fromName || "Unknown";
+    const fromUID = typeof request.from === "string" ? request.from : request.from?.uid;
+    const fromName = request.fromName || request.from?.username || "Unknown";
 
     if (!fromUID) {
-      console.error("❌ Missing or invalid sender UID in request:", request);
+      console.error("❌ Missing or invalid sender UID:", request);
       return;
     }
 
-    if (request.type && request.type.includes("Friend Request")) {
+    if (request.type?.includes("Friend Request")) {
       db.collection("friends").doc(currentUser.uid).collection("list").doc(fromUID).set({
         uid: fromUID,
         username: fromName,
@@ -343,7 +335,7 @@ function acceptRequest(requestId) {
         console.log("✅ Friend request accepted.");
       });
     } else {
-      doc.ref.delete();
+      doc.ref.delete(); // Delete other types
     }
   }).catch(error => {
     console.error("❌ Error accepting request:", error);
@@ -359,16 +351,11 @@ function declineRequest(requestId) {
 }
 
 function markAllRead() {
-  db.collection("inbox")
-    .where("to", "==", currentUser.uid)
-    .get()
-    .then(snapshot => {
-      const batch = db.batch();
-      snapshot.forEach(doc => batch.delete(doc.ref));
-      return batch.commit();
-    })
-    .then(() => alert("✅ All messages marked as read"))
-    .catch(error => console.error("❌ Failed to mark all as read:", error));
+  db.collection("inbox").where("to", "==", currentUser.uid).get().then(snapshot => {
+    const batch = db.batch();
+    snapshot.forEach(doc => batch.delete(doc.ref));
+    return batch.commit();
+  }).then(() => alert("✅ All messages marked as read"));
 }
 
 // ===== Friends System =====
