@@ -429,18 +429,24 @@ function markAllRead() {
 // ===== Friends =====
 
 function loadFriends() {
-  const container = document.getElementById("friendsList");
-  if (!container) return;
+  const list = document.getElementById("friendsList");
+  if (!list) return;
 
   db.collection("friends").doc(currentUser.uid).collection("list").onSnapshot(snapshot => {
-    container.innerHTML = "";
+    list.innerHTML = snapshot.empty ? "<div class='empty'>No friends yet</div>" : "";
+
     snapshot.forEach(doc => {
       const friend = doc.data();
       const div = document.createElement("div");
       div.className = "friend-entry";
-      div.textContent = friend.username;
-      div.onclick = () => openThread(friend.uid, friend.username);
-      container.appendChild(div);
+      div.innerHTML = `
+        <strong>${friend.username || "Unknown"}</strong>
+        <div class="btn-group">
+          <button onclick="openThread('${friend.uid}', '${friend.username || "Friend"}')">💬 Message</button>
+          <button onclick="showUserProfile('${friend.uid}')">👁️ View</button>
+        </div>
+      `;
+      list.appendChild(div);
     });
   });
 }
