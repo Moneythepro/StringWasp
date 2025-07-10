@@ -65,31 +65,54 @@
       <div id="chatList" class="chat-list"></div>
     </div>
 
-    <!-- 👥 Group Chats -->
     <div id="groupsTab" class="tab">
-      <div class="header">
-        <button onclick="createGroup()">Create Group</button>
-        <button onclick="joinGroup()">Join Group</button>
-      </div>
 
-      <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
+  <!-- 🔘 Create / Join Group -->
+  <div class="header">
+    <button onclick="createGroup()">Create Group</button>
+    <button onclick="joinGroup()">Join Group</button>
+  </div>
 
-      <div id="groupInfo" class="group-meta">
-        <div><strong>Group Info</strong></div>
-        <div id="groupOwner"></div>
-        <div id="groupAdmins"></div>
-        <div id="groupMembers" class="member-list"></div>
-      </div>
+  <!-- 📂 Group Selector -->
+  <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
 
-      <div id="groupTypingIndicator" class="typing"></div>
-      <div id="groupMessages" class="messages"></div>
+  <!-- ✅ New Group Header UI -->
+  <div id="groupChatHeader" class="chat-header">
+    <img id="groupProfilePic" src="group-icon.png" alt="Group Icon" />
+    <div class="chat-info">
+      <h3 id="groupNameDisplay">Group Name</h3>
+      <p id="groupStatus">Loading...</p>
+    </div>
+    <button onclick="openGroupMenu()">⋮</button>
+  </div>
 
-      <!-- ✅ Group Input Bar -->
-      <div class="input-bar">
-        <button class="icon-btn">📎</button>
-        <input id="groupMessageInput" placeholder="Type a message..." />
-        <button onclick="sendGroupMessage()">➤</button>
-      </div>
+  <!-- ⚙️ Group Menu -->
+  <div id="groupOptionsMenu" class="chat-menu" style="display:none;">
+    <button onclick="viewGroupMembers()">👥 View Members</button>
+    <button onclick="viewMedia()">📎 View Media</button>
+    <button onclick="leaveGroup()">🚪 Leave Group</button>
+  </div>
+
+  <!-- 📃 Group Info -->
+  <div id="groupInfo" class="group-meta">
+    <div><strong>Group Info</strong></div>
+    <div id="groupOwner"></div>
+    <div id="groupAdmins"></div>
+    <div id="groupMembers" class="member-list"></div>
+  </div>
+
+  <!-- 👀 Typing Indicator -->
+  <div id="groupTypingIndicator" class="typing"></div>
+
+  <!-- 💬 Messages -->
+  <div id="groupMessages" class="messages"></div>
+
+  <!-- 💬 Group Input Bar -->
+  <div class="input-bar">
+    <button class="icon-btn">📎</button>
+    <input id="groupMessageInput" placeholder="Type a message..." />
+    <button onclick="sendGroupMessage()">➤</button>
+  </div>
     </div>
 
     <!-- 👫 Friends -->
