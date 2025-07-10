@@ -2,30 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="description" content="StringWasp - Secure, Anonymous & Encrypted Chat App"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#121212" />
   <title>StringWasp</title>
   <link rel="stylesheet" href="style.css" />
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 </head>
 <body class="light-theme">
   <div id="init-overlay">Loading...</div>
+
   <div id="app">
+    <!-- Header -->
     <header>
       <h1>StringWasp</h1>
       <select id="themeSwitcher">
         <option value="light">Light</option>
         <option value="dark">Dark</option>
       </select>
-      <button id="panicBtn">🚨 Panic</button>
-      <button id="logoutBtn">Logout</button>
-      <button id="deleteAccountBtn">Delete Account</button>
+      <button id="panicBtn">🧨</button>
     </header>
-    
+
+    <!-- Tabs -->
     <nav>
       <button data-tab="chats">Chats</button>
       <button data-tab="groups">Groups</button>
@@ -33,49 +34,65 @@
       <button data-tab="explore">Explore</button>
       <button data-tab="profile">Profile</button>
     </nav>
-    
+
+    <!-- Tab Content -->
     <main>
-      <div id="chats" class="tab">
+      <section id="chats" class="tab active">
         <h2>Chats</h2>
+        <label><input type="checkbox" id="anonymousToggle"> Send Anonymously</label>
         <div id="chatMessages"></div>
         <input type="text" id="chatInput" placeholder="Type a message..." />
-        <label><input type="checkbox" id="anonymousToggle" /> Send Anonymously</label>
-        <button id="sendChatBtn">Send</button>
-      </div>
+        <button id="sendChat">Send</button>
+      </section>
 
-      <div id="groups" class="tab">
+      <section id="groups" class="tab">
         <h2>Groups</h2>
-        <div id="groupMessages"></div>
-        <input type="text" id="groupInput" placeholder="Group message..." />
-        <label><input type="checkbox" id="groupAnonToggle" /> Anonymous</label>
-        <button id="sendGroupBtn">Send</button>
-        <button id="createGroupBtn">Create Group</button>
-        <input type="text" id="joinGroupId" placeholder="Group ID" />
-        <button id="joinGroupBtn">Join</button>
-      </div>
+        <div>
+          <input type="text" id="groupName" placeholder="Group name" />
+          <select id="groupPrivacy">
+            <option value="public">Public</option>
+            <option value="private">Private</option>
+          </select>
+          <button id="createGroup">Create Group</button>
+        </div>
+        <input type="text" id="joinGroupId" placeholder="Group ID to join" />
+        <button id="joinGroup">Join</button>
+        <div id="groupList"></div>
+        <div id="groupChat">
+          <h3 id="activeGroupName">Select a Group</h3>
+          <div id="groupMessages"></div>
+          <label><input type="checkbox" id="groupAnonymousToggle"> Send Anonymously</label>
+          <input type="text" id="groupMessageInput" placeholder="Group message..." />
+          <button id="sendGroupMessage">Send</button>
+        </div>
+      </section>
 
-      <div id="friends" class="tab">
+      <section id="friends" class="tab">
         <h2>Friends</h2>
+        <div id="friendRequests"></div>
         <div id="friendList"></div>
-      </div>
+      </section>
 
-      <div id="explore" class="tab">
+      <section id="explore" class="tab">
         <h2>Explore</h2>
         <div id="userList"></div>
-      </div>
+      </section>
 
-      <div id="profile" class="tab">
+      <section id="profile" class="tab">
         <h2>Profile</h2>
         <input type="file" id="profilePicInput" />
-        <input type="text" id="displayNameInput" placeholder="Display Name" />
-        <label><input type="checkbox" id="musicToggle" /> Profile Music</label>
-        <label><input type="checkbox" id="emotionToggle" /> Emotional Mode</label>
-        <label><input type="checkbox" id="lastSeenToggle" /> Show Last Seen</label>
-        <button id="saveProfileBtn">Save Profile</button>
-      </div>
+        <input type="text" id="displayNameInput" placeholder="Display name" />
+        <label><input type="checkbox" id="profileMusicToggle"> Profile Music</label>
+        <label><input type="checkbox" id="emotionModeToggle"> Emotional Mode</label>
+        <label><input type="checkbox" id="lastSeenToggle"> Show Last Seen</label>
+        <button id="saveSettings">Save Settings</button>
+        <button id="logoutBtn">Logout</button>
+        <button id="deleteAccountBtn">Delete Account</button>
+      </section>
     </main>
   </div>
 
+  <!-- Scripts -->
   <script src="firebase.js"></script>
   <script src="app.js"></script>
 </body>
