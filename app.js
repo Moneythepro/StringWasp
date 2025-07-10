@@ -285,22 +285,29 @@ function loadInbox() {
 }
 
 function createInboxCard(doc) {
+function createInboxCard(doc) {
   const data = doc.data();
-  console.log("Parsing sender:", data.from, data.fromName); // debug
-
   let sender = "Unknown";
 
-  if (data.fromName) {
-    sender = data.fromName;
-  } else if (data.from && typeof data.from === "object") {
-    sender = data.from.username || data.from.name || data.from.email || JSON.stringify(data.from) || "Unknown";
-  } else if (data.from) {
-    sender = data.from;
+  try {
+    if (typeof data.from === "string") {
+      sender = data.from;
+    } else if (typeof data.from === "object" && data.from !== null) {
+      sender =
+        data.from.name ||
+        data.from.username ||
+        data.from.email ||
+        JSON.stringify(data.from);
+    } else if (data.fromName) {
+      sender = data.fromName;
+    }
+  } catch (e) {
+    console.error("Error parsing sender:", e);
   }
 
   return `
     <div class="inbox-card">
-      <div><strong>${data.type || "Request"}</strong>: ${sender}</div>
+      <div><strong>${data.type || "Notification"}</strong>: ${sender}</div>
       <div class="btn-group">
         <button onclick="acceptRequest('${doc.id}')">✓</button>
         <button onclick="declineRequest('${doc.id}')">✕</button>
@@ -310,21 +317,42 @@ function createInboxCard(doc) {
 }
 
 function acceptRequest(requestId) {
+  if (!requestId) return console.error("❌ Invalid request ID");
+
   db.collection("inbox").doc(requestId).get().then(doc => {
+    if (!doc.exists) return console.error("❌ Request not found");
+    
     const request = doc.data();
-    if (request.type.includes("Friend Request")) {
-      db.collection("friends").doc(currentUser.uid).collection("list").doc(request.from).set({
-        uid: request.from,
-        username: request.fromName,
-        addedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+    const fromUID = typeof request.from === "string" ? request.from : null;
+    const fromName = request.fromName || "Unknown";
+
+    if (!fromUID) {
+      console.error("❌ Missing or invalid sender UID in request:", request);
+      return;
     }
-    doc.ref.delete();
+
+    if (request.type && request.type.includes("Friend Request")) {
+      db.collection("friends").doc(currentUser.uid).collection("list").doc(fromUID).set({
+        uid: fromUID,
+        username: fromName,
+        addedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        doc.ref.delete();
+        console.log("✅ Friend request accepted.");
+      });
+    } else {
+      doc.ref.delete();
+    }
+  }).catch(error => {
+    console.error("❌ Error accepting request:", error);
   });
 }
 
 function declineRequest(requestId) {
-  db.collection("inbox").doc(requestId).delete();
+  if (!requestId) return console.error("❌ Invalid request ID");
+  db.collection("inbox").doc(requestId).delete()
+    .then(() => console.log("✅ Request declined."))
+    .catch(error => console.error("❌ Error declining request:", error));
 }
 
 function markAllRead() {
