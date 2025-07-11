@@ -627,6 +627,7 @@ function markAllRead() {
     });
 }
 
+// Properly close showModal()
 function showModal(message, yesCallback) {
   const modal = document.getElementById("customModal");
   document.getElementById("modalMessage").textContent = message;
@@ -642,7 +643,11 @@ function showModal(message, yesCallback) {
     modal.style.display = "none";
   };
 
-  modal.style.display = "flex";
+  modal.style.display = "flex";  // ✅ Fixed string
+}  // ✅ Added missing closing brace
+
+// Define blockUser() separately
+function blockUser() {
   showModal("Block this user?", () => {
     alert("Blocked (stub)");
   });
