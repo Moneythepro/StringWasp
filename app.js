@@ -97,10 +97,10 @@ function saveUsername() {
 function checkUsername() {
   db.collection("users").doc(currentUser.uid).get().then(doc => {
     if (!doc.exists || !doc.data().username) {
-      switchTab("usernameDialog");
+      switchTab("usernameDialog"); // 👤 Ask user to pick a username
     } else {
       document.getElementById("usernameDisplay").textContent = doc.data().username;
-      loadMainUI(); // ✅ Load after username confirmed
+      loadMainUI(); // ✅ Load main UI only after username is confirmed
     }
   });
 }
@@ -647,19 +647,45 @@ function searchChats() {
 }
 
 function runSearch() {
-  const view = currentSearchView; // 'user' or 'group'
-  const query = document.getElementById("searchInput").value.toLowerCase();
+  const term = document.getElementById("searchInput").value.toLowerCase();
+  if (!term) return;
 
-  if (view === "user") {
-    document.getElementById("searchResultsUser").innerHTML = "Searching users...";
-    // simulate or call actual Firestore search here
-  } else {
-    document.getElementById("searchResultsGroup").innerHTML = "Searching groups...";
-    // simulate or call actual Firestore search here
-  }
+  const userResults = document.getElementById("searchResultsUser");
+  const groupResults = document.getElementById("searchResultsGroup");
+  userResults.innerHTML = "";
+  groupResults.innerHTML = "";
+
+  db.collection("users").get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const user = doc.data();
+      if ((user.username || "").toLowerCase().includes(term)) {
+        const div = document.createElement("div");
+        div.className = "search-result";
+        div.innerHTML = `
+          <img src="${user.photoURL || 'default-avatar.png'}" class="search-avatar" />
+          <div class="search-username">${user.username || user.email}</div>
+          <button onclick="sendFriendRequest('${doc.id}')">➕ Add Friend</button>
+        `;
+        userResults.appendChild(div);
+      }
+    });
+  });
+
+  db.collection("groups").get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const group = doc.data();
+      if ((group.name || "").toLowerCase().includes(term)) {
+        const div = document.createElement("div");
+        div.className = "search-result";
+        div.innerHTML = `
+          <div class="search-username">👥 ${group.name}</div>
+          <button onclick="joinGroupById('${doc.id}')">Join</button>
+        `;
+        groupResults.appendChild(div);
+      }
+    });
+  });
 }
-
-let currentSearchView = "user";
 
 function switchSearchView(view) {
   currentSearchView = view;
@@ -779,3 +805,87 @@ function runSearch() {
   });
 }
 
+function loadMainUI() {
+  document.getElementById("appPage").style.display = "block";
+  switchTab("chatTab"); // Start on Chat tab
+  loadInbox();
+  loadFriends();
+  loadProfile();
+  loadGroups();     // Ensure groups dropdown is loaded
+  loadChatList();   // Load both group and DM chats
+}
+
+function loadProfile() {
+  db.collection("users").doc(currentUser.uid).get().then(doc => {
+    if (!doc.exists) return;
+    const data = doc.data();
+    document.getElementById("profilePicPreview").src = data.photoURL || "default-avatar.png";
+    document.getElementById("profileName").value = data.name || "";
+    document.getElementById("profileBio").value = data.bio || "";
+    document.getElementById("profileGender").value = data.gender || "";
+    document.getElementById("profilePhone").value = data.phone || "";
+    document.getElementById("profileEmail").value = data.email || "";
+    document.getElementById("profileUsername").value = data.username || "";
+    document.getElementById("usernameDisplay").textContent = data.username || "";
+  });
+}
+
+function loadFriends() {
+  const list = document.getElementById("friendsList");
+  if (!list) return;
+  db.collection("users").doc(currentUser.uid).collection("friends").onSnapshot(snapshot => {
+    list.innerHTML = "";
+    snapshot.forEach(doc => {
+      const friendId = doc.id;
+      db.collection("users").doc(friendId).get().then(userDoc => {
+        const user = userDoc.data();
+        const div = document.createElement("div");
+        div.className = "friend-entry";
+        div.innerHTML = `
+          <img class="friend-avatar" src="${user.photoURL || 'default-avatar.png'}" />
+          <div class="friend-name">${user.username || user.email}</div>
+          <button onclick="openThread('${friendId}', '${user.username || user.email}')">💬</button>
+        `;
+        list.appendChild(div);
+      });
+    });
+  });
+}
+
+function loadGroups() {
+  const dropdown = document.getElementById("roomDropdown");
+  if (!dropdown || !currentUser) return;
+
+  db.collection("groups").where("members", "array-contains", currentUser.uid).get()
+    .then(snapshot => {
+      dropdown.innerHTML = "";
+      snapshot.forEach(doc => {
+        const group = doc.data();
+        const option = document.createElement("option");
+        option.value = doc.id;
+        option.textContent = group.name || doc.id;
+        dropdown.appendChild(option);
+      });
+    });
+}
+
+function sendFriendRequest(uid) {
+  db.collection("inbox").doc(uid).collection("items").add({
+    type: "friend",
+    from: currentUser.uid,
+    fromName: document.getElementById("usernameDisplay").textContent,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    read: false
+  }).then(() => {
+    alert("Friend request sent!");
+  });
+}
+
+function joinGroupById(groupId) {
+  db.collection("groups").doc(groupId).update({
+    members: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+  }).then(() => {
+    alert("Joined group!");
+    loadGroups(); // refresh dropdown
+  });
+}
