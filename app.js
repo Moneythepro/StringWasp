@@ -1079,3 +1079,30 @@ if (localStorage.getItem("theme") === "dark") {
   const toggle = document.getElementById("darkModeToggle");
   if (toggle) toggle.checked = true;
       }
+
+document.getElementById("profilePic").addEventListener("change", uploadProfilePic);
+
+function uploadProfilePic(e) {
+  const file = e.target.files[0];
+  if (!file || !currentUser) return;
+
+  const ref = storage.ref().child(`avatars/${currentUser.uid}`);
+  showLoading(true);
+
+  ref.put(file).then(snapshot => {
+    return snapshot.ref.getDownloadURL();
+  }).then(url => {
+    return db.collection("users").doc(currentUser.uid).update({
+      photoURL: url
+    });
+  }).then(() => {
+    document.getElementById("profilePicPreview").src = URL.createObjectURL(file);
+    alert("Profile picture updated!");
+  }).catch(err => {
+    console.error("Upload error:", err);
+    alert("Failed to upload profile picture.");
+  }).finally(() => {
+    showLoading(false);
+  });
+}
+
