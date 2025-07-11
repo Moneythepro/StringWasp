@@ -100,6 +100,82 @@ function loadMainUI() {
   loadProfile();
 }
 
+// ==== Combined Chat Loader (DMs + Groups) ====
+
+async function loadChatList() {
+  const list = document.getElementById("chatList");
+  list.innerHTML = "";
+
+  if (!currentUser) return;
+
+  try {
+    const threadsSnap = await db.collection("threads")
+      .where("participants", "array-contains", currentUser.uid)
+      .get();
+
+    const groupsSnap = await db.collection("groups")
+      .where("members", "array-contains", currentUser.uid)
+      .get();
+
+    const combinedChats = [];
+
+    // 💬 Direct threads
+    threadsSnap.forEach(doc => {
+      const data = doc.data();
+      const lastMsg = data.lastMessage || {};
+      const otherUID = data.participants.find(uid => uid !== currentUser.uid);
+
+      combinedChats.push({
+        type: "dm",
+        id: otherUID,
+        name: data.names?.[otherUID] || "User",
+        lastText: lastMsg.text || "",
+        timestamp: lastMsg.timestamp?.toMillis() || 0
+      });
+    });
+
+    // 👥 Group chats
+    groupsSnap.forEach(doc => {
+      const data = doc.data();
+      combinedChats.push({
+        type: "group",
+        id: doc.id,
+        name: data.name || "Group",
+        lastText: data.lastMessage?.text || "",
+        timestamp: data.lastMessage?.timestamp?.toMillis() || 0
+      });
+    });
+
+    // ⏱️ Sort by latest
+    combinedChats.sort((a, b) => b.timestamp - a.timestamp);
+
+    // 🖼️ Render list
+    combinedChats.forEach(chat => {
+      const div = document.createElement("div");
+      div.className = "chat-card";
+      div.innerHTML = `
+        <img src="${chat.type === 'group' ? 'group-icon.png' : 'default-avatar.png'}" />
+        <div class="details">
+          <div class="name">${chat.name}</div>
+          <div class="last-message">${chat.lastText}</div>
+        </div>
+      `;
+      div.onclick = () => {
+        if (chat.type === "group") {
+          joinRoom(chat.id);
+        } else {
+          openThread(chat.id, chat.name);
+        }
+      };
+      list.appendChild(div);
+    });
+
+  } catch (err) {
+    console.error("Error loading chat list:", err);
+    list.innerHTML = "<div class='empty'>Failed to load chats.</div>";
+  }
+}
+
 // ===== Groups =====
 
 function createGroup() {
