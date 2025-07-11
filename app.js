@@ -91,6 +91,15 @@ function saveUsername() {
   });
 }
 
+function loadMainUI() {
+  document.getElementById("appPage").style.display = "block";
+  switchTab("groupsTab");
+  loadInbox();
+  loadFriends();
+  loadProfile();
+  loadChatList(); // <-- Add here if missing
+}
+
 function scrollToBottom(divId) {
   const div = document.getElementById(divId);
   if (div) div.scrollTop = div.scrollHeight;
