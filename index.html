@@ -8,9 +8,9 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="favicon.png" />
   <script>
-  if (localStorage.getItem("theme") === "dark") {
-    document.documentElement.classList.add("dark");
-  }
+    if (localStorage.getItem("theme") === "dark") {
+      document.documentElement.classList.add("dark");
+    }
   </script>
 </head>
 <body>
@@ -124,6 +124,7 @@
           <h3 id="chatName">Chat Name</h3>
           <p id="chatStatus">Loading...</p>
         </div>
+        <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
         <button onclick="openChatMenu()">⋮</button>
         <div id="chatOptionsMenu" class="chat-options" style="display:none;">
           <button onclick="viewGroupMembers()">👥 View Members</button>
@@ -135,6 +136,15 @@
           <button onclick="deleteThread()">🗑️ Delete</button>
         </div>
       </div>
+
+      <!-- Group Info Panel -->
+      <div class="group-info">
+        <p id="groupOwner">Owner: </p>
+        <p id="groupAdmins">Admins: </p>
+        <div id="groupMembers" class="member-list"></div>
+      </div>
+
+      <!-- Messages -->
       <div id="threadMessages" class="messages"></div>
       <div id="typingIndicator" class="typing"></div>
       <div class="input-bar">
@@ -143,6 +153,9 @@
         <button class="icon-btn" onclick="sendThreadMessage()">➤</button>
         <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
       </div>
+
+      <!-- Group Upload -->
+      <input type="file" id="groupFile" style="display:none;" onchange="uploadFile('group')" />
     </div>
 
     <!-- 👁️ View Profile Modal -->
