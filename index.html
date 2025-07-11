@@ -65,6 +65,7 @@
         <button onclick="loadChatList()">🔄</button>
       </div>
       <div id="chatList" class="chat-list"></div>
+      <button class="floating-btn" onclick="switchTab('searchTab')">➕</button>
     </div>
 
     <!-- 🧑‍🤝‍🧑 Friends Tab -->
@@ -123,6 +124,7 @@
         <div class="chat-info">
           <h3 id="chatName">Chat Name</h3>
           <p id="chatStatus">Loading...</p>
+          <span id="threadWithName" style="font-size: 12px;"></span>
         </div>
         <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
         <button onclick="openChatMenu()">⋮</button>
@@ -148,17 +150,14 @@
       <div id="threadMessages" class="messages"></div>
       <div id="typingIndicator" class="typing"></div>
       <div class="input-bar">
-        <div class="input-bar">
-  <button class="icon-btn" onclick="triggerFileInput('thread')">📎</button>
-  <button class="icon-btn" onclick="shareFileViaTorrent('dm')">🌐</button>
-  <button class="icon-btn" onclick="shareFileViaTorrent('group')">🌍</button>
-  <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" />
-  <button class="icon-btn" onclick="sendThreadMessage()">➤</button>
-  <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
-        </div>
-
-      <!-- Group Upload -->
-      <input type="file" id="groupFile" style="display:none;" onchange="uploadFile('group')" />
+        <button class="icon-btn" onclick="triggerFileInput('thread')">📎</button>
+        <button class="icon-btn" onclick="shareFileViaTorrent('dm')">🌐</button>
+        <button class="icon-btn" onclick="shareFileViaTorrent('group')">🌍</button>
+        <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" />
+        <button class="icon-btn" onclick="sendThreadMessage()">➤</button>
+        <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
+        <input type="file" id="groupFile" style="display:none;" onchange="uploadFile('group')" />
+      </div>
     </div>
 
     <!-- 👁️ View Profile Modal -->
@@ -213,6 +212,5 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/webtorrent/webtorrent.min.js"></script>
-    
 </body>
-</html>
+      </html>
