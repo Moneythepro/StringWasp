@@ -179,14 +179,18 @@ function uploadProfilePic(e) {
   showLoading(true);
 
   ref.put(file).then(snapshot => snapshot.ref.getDownloadURL())
-    .then(url => db.collection("users").doc(currentUser.uid).update({ photoURL: url }))
+    .then(url => {
+      return db.collection("users").doc(currentUser.uid).update({ photoURL: url });
+    })
     .then(() => {
       document.getElementById("profilePicPreview").src = URL.createObjectURL(file);
-      alert("✅ Profile picture updated!");
-    }).catch(err => {
+      alert("Profile picture updated!");
+    })
+    .catch(err => {
       console.error("Upload error:", err);
       alert("Failed to upload profile picture.");
-    }).finally(() => showLoading(false));
+    })
+    .finally(() => showLoading(false));
 }
 
 // ===== Contact Support Shortcut =====
@@ -216,6 +220,15 @@ function loadGroups() {
         dropdown.appendChild(option);
       });
     });
+}
+
+function loadChatList() {
+  // Code for loading threads and groups
+  // You already have this earlier in app.js
+}
+function openChatMenu() {
+  const menu = document.getElementById("chatOptionsMenu");
+  menu.style.display = (menu.style.display === "block") ? "none" : "block";
 }
 
 // ===== Escape HTML Utility =====
@@ -287,6 +300,17 @@ function acceptInbox(id, type, from) {
 // ===== Decline Inbox Item =====
 function declineInbox(id) {
   db.collection("inbox").doc(currentUser.uid).collection("items").doc(id).delete();
+}
+
+function markAllRead() {
+  const ref = db.collection("inbox").doc(currentUser.uid).collection("items");
+  ref.get().then(snapshot => {
+    snapshot.forEach(doc => {
+      if (!doc.data().read) {
+        ref.doc(doc.id).update({ read: true });
+      }
+    });
+  });
 }
 
 // ===== Friend List =====
@@ -508,6 +532,15 @@ function runSearch() {
   });
 }
 
+function searchChats() {
+  const query = document.getElementById("globalSearch").value.toLowerCase();
+  const cards = document.querySelectorAll(".chat-card");
+  cards.forEach(card => {
+    const name = card.querySelector(".name").textContent.toLowerCase();
+    card.style.display = name.includes(query) ? "flex" : "none";
+  });
+}
+
 // ===== Search Tab Switcher =====
 function switchSearchView(view) {
   document.getElementById("searchResultsUser").style.display = view === "user" ? "block" : "none";
@@ -664,6 +697,78 @@ function detectMagnetAndRender(text) {
     const match = text.match(/magnet:\?[^"]+/);
     if (match) handleMagnetDownload(match[0]);
   }
+}
+
+function isFriend(uid) {
+  return db.collection("users").doc(currentUser.uid)
+    .collection("friends").doc(uid).get().then(doc => doc.exists);
+}
+
+function shareFileViaTorrent(type) {
+  if (!client) client = new WebTorrent();
+
+  const input = document.createElement("input");
+  input.type = "file";
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+
+    client.seed(file, torrent => {
+      const magnet = torrent.magnetURI;
+      const msg = `📎 File: <a href="${magnet}" target="_blank">${file.name}</a>`;
+
+      if (type === "dm" && currentThreadUser) {
+        isFriend(currentThreadUser).then(ok => {
+          if (!ok) return alert("❌ Only friends can share P2P files.");
+          document.getElementById("threadInput").value = msg;
+          sendThreadMessage();
+        });
+      } else if (type === "group" && currentRoom) {
+        document.getElementById("groupMessageInput").value = msg;
+        sendGroupMessage();
+      } else {
+        alert("⚠️ Sharing not allowed in this context.");
+      }
+    });
+  };
+  input.click();
+}
+
+function autoDownloadMagnet(magnetURI) {
+  if (!client) client = new WebTorrent();
+
+  const torrent = client.add(magnetURI);
+
+  torrent.on('ready', () => {
+    torrent.files.forEach(file => {
+      file.getBlobURL((err, url) => {
+        if (err) return console.error("Download error:", err);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => a.remove(), 100);
+      });
+    });
+  });
+
+  torrent.on('error', err => console.error("Torrent error:", err));
+}
+
+function renderWithMagnetSupport(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const links = container.querySelectorAll("a[href^='magnet:']");
+  links.forEach(link => {
+    link.onclick = e => {
+      e.preventDefault();
+      const confirmed = confirm(`Download file: ${link.textContent}?`);
+      if (confirmed) autoDownloadMagnet(link.href);
+    };
+  });
 }
 
 // ===== Search Result Click: View Profile Modal =====
