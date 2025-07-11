@@ -704,13 +704,13 @@ function runSearch() {
       const user = doc.data();
       if ((user.username || "").toLowerCase().includes(term)) {
         const div = document.createElement("div");
-        div.className = "search-result";
-        div.innerHTML = `
-          <img src="${user.photoURL || 'default-avatar.png'}" class="search-avatar" />
-          <div class="search-username">${user.username || user.email}</div>
-          <button onclick="sendFriendRequest('${doc.id}')">➕ Add Friend</button>
-        `;
-        userResults.appendChild(div);
+div.className = "search-result";
+div.innerHTML = `
+  <img src="${user.photoURL || 'default-avatar.png'}" class="search-avatar" />
+  <div class="search-username">${user.username || user.email}</div>
+  <button onclick="sendFriendRequest('${doc.id}')">➕ Add Friend</button>
+`;
+userResults.appendChild(div);
       }
     });
   });
