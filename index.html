@@ -1,165 +1,135 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>StringWasp</title>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="logo.png" />
 </head>
 <body>
 
-  <!-- Panic Button -->
-  <button id="panicButton" title="Emergency Panic Mode">🆘</button>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="app-title">StringWasp</div>
+    <div class="action-buttons">
+      <button id="themeToggle">🌙</button>
+      <button id="panicBtn" title="Panic Button">🚨</button>
+    </div>
+  </header>
 
-  <!-- Top Navigation Tabs -->
-  <div class="tabs">
-    <button class="tabButton active" data-tab="chats">Chats</button>
-    <button class="tabButton" data-tab="friends">Friends</button>
-    <button class="tabButton" data-tab="groups">Groups</button>
-    <button class="tabButton" data-tab="explore">Explore</button>
-    <button class="tabButton" data-tab="settings">Settings</button>
-  </div>
+  <!-- Main Layout -->
+  <div class="app-container">
+    
+    <!-- Sidebar Tabs -->
+    <aside class="sidebar">
+      <div class="tab active" data-tab="chats">💬 Chats</div>
+      <div class="tab" data-tab="groups">👥 Groups</div>
+      <div class="tab" data-tab="friends">🧑 Friends</div>
+      <div class="tab" data-tab="explore">🌐 Explore</div>
+      <div class="tab" data-tab="settings">⚙️ Settings</div>
+    </aside>
 
-  <!-- Main Container -->
-  <div id="appLayout">
+    <!-- Main Content -->
+    <main class="main-panel">
 
-    <!-- Chats Tab -->
-    <div id="chats" class="tabContent active">
-      <div class="leftPanel">
-        <div class="searchBar">
-          <input type="text" id="globalSearchInput" placeholder="Search..." />
-          <button id="globalSearchBtn">🔍</button>
+      <!-- Chats Section -->
+      <section id="chats" class="tab-content active">
+        <div class="chat-header">
+          <div class="chat-title">Private Chats</div>
+          <div id="selectedFriendInfo"></div>
         </div>
-        <div id="chatList" class="chatList"></div>
-      </div>
-      <div class="rightPanel">
-        <div id="chatWindow" class="chatWindow hidden">
-          <div class="chatHeader">
-            <img id="chatHeaderImage" src="" alt="Avatar" />
-            <div>
-              <div id="chatHeaderName">Username</div>
-              <div id="chatHeaderSubtext">Status / Role</div>
-            </div>
-            <button id="chatSettingsBtn">⚙️</button>
-          </div>
-
-          <div id="messagesContainer" class="messagesContainer"></div>
-
-          <div id="typingIndicator" class="typingIndicator hidden">Typing...</div>
-
-          <div class="chatInputArea">
-            <input type="text" id="messageInput" placeholder="Type a message..." />
-            <button id="sendMessageBtn">➤</button>
-            <label class="anonToggle" title="Send Anonymously">
-              <input type="checkbox" id="anonymousToggle" /> Anonymous
-            </label>
-          </div>
+        <div id="chatBox" class="chat-thread"></div>
+        <div class="chat-input-area">
+          <input type="text" id="chatInput" placeholder="Type a message..." />
+          <label>
+            <input type="checkbox" id="anonymousToggle" />
+            Anonymous
+          </label>
+          <button id="sendChatBtn">Send</button>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <!-- Friends Tab -->
-    <div id="friends" class="tabContent">
-      <h2>Friends</h2>
-      <div id="friendList" class="friendList"></div>
+      <!-- Groups Section -->
+      <section id="groups" class="tab-content">
+        <div class="group-header">
+          <div class="chat-title">Group Chat</div>
+          <div id="selectedGroupInfo"></div>
+        </div>
+        <div id="groupChatBox" class="chat-thread"></div>
+        <div class="chat-input-area">
+          <input type="text" id="groupChatInput" placeholder="Type a message..." />
+          <label>
+            <input type="checkbox" id="groupAnonymousToggle" />
+            Anonymous
+          </label>
+          <button id="sendGroupChatBtn">Send</button>
+        </div>
+        <div class="group-controls">
+          <input type="text" id="newGroupName" placeholder="New Group Name" />
+          <label>
+            <input type="checkbox" id="newGroupPrivate" />
+            Private
+          </label>
+          <button id="createGroupBtn">Create Group</button>
+          <input type="text" id="joinGroupId" placeholder="Group ID to Join" />
+          <button id="joinGroupBtn">Join Group</button>
+        </div>
+      </section>
 
-      <h3>Incoming Requests</h3>
-      <div id="friendRequests" class="requestList"></div>
+      <!-- Friends Section -->
+      <section id="friends" class="tab-content">
+        <h2>Your Friends</h2>
+        <ul id="friendsList"></ul>
+        <h3>Friend Requests</h3>
+        <ul id="friendRequests"></ul>
+      </section>
 
-      <h3>Sent Requests</h3>
-      <div id="sentRequests" class="requestList"></div>
-    </div>
+      <!-- Explore Section -->
+      <section id="explore" class="tab-content">
+        <h2>Explore Users</h2>
+        <ul id="exploreUsers"></ul>
+      </section>
 
-    <!-- Groups Tab -->
-    <div id="groups" class="tabContent">
-      <h2>Groups</h2>
-      <div class="groupControls">
-        <button id="createGroupBtn">➕ Create Group</button>
-        <input type="text" id="joinGroupIdInput" placeholder="Enter Group ID" />
-        <button id="joinGroupBtn">Join</button>
-      </div>
-      <div id="groupList" class="groupList"></div>
-    </div>
+      <!-- Settings Section -->
+      <section id="settings" class="tab-content">
+        <h2>Settings</h2>
+        <label>
+          Display Name:
+          <input type="text" id="displayNameInput" placeholder="Your name" />
+        </label>
+        <label>
+          Profile Picture:
+          <input type="file" id="profilePicInput" accept="image/*" />
+        </label>
+        <label>
+          Emotion Mode:
+          <select id="emotionMode">
+            <option value="happy">😊 Happy</option>
+            <option value="sad">😢 Sad</option>
+            <option value="angry">😠 Angry</option>
+            <option value="chill">😎 Chill</option>
+          </select>
+        </label>
+        <label>
+          Profile Music URL:
+          <input type="url" id="musicUrlInput" placeholder="YouTube embed URL" />
+        </label>
+        <button id="saveSettingsBtn">Save Settings</button>
+        <button id="logoutBtn">Logout</button>
+        <button id="deleteAccountBtn" class="danger">Delete Account</button>
+      </section>
 
-    <!-- Explore Tab -->
-    <div id="explore" class="tabContent">
-      <h2>Explore Users</h2>
-      <div id="exploreList" class="exploreList"></div>
-    </div>
-
-    <!-- Settings Tab -->
-    <div id="settings" class="tabContent">
-      <h2>Settings</h2>
-
-      <label>Display Name:
-        <input type="text" id="displayNameInput" placeholder="Your name" />
-      </label>
-
-      <label>Theme:
-        <select id="themeSelect">
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
-        </select>
-      </label>
-
-      <label>Emotion:
-        <select id="emotionSelect">
-          <option value="😊">😊 Happy</option>
-          <option value="😐">😐 Neutral</option>
-          <option value="😢">😢 Sad</option>
-          <option value="😠">😠 Angry</option>
-        </select>
-      </label>
-
-      <label>Profile Picture:
-        <input type="file" id="profilePicUpload" accept="image/*" />
-      </label>
-
-      <label>Profile Music:
-        <input type="file" id="musicUpload" accept="audio/*" />
-      </label>
-
-      <button id="logoutBtn">🚪 Log Out</button>
-      <button id="deleteAccountBtn">❌ Delete Account</button>
-    </div>
+    </main>
   </div>
 
-  <!-- Create Group Modal -->
-  <div id="createGroupModal" class="modal hidden">
-    <div class="modalContent">
-      <h2>Create Group</h2>
-      <input type="text" id="groupNameInput" placeholder="Group name" />
-      <select id="groupPrivacySelect">
-        <option value="public">Public</option>
-        <option value="private">Private</option>
-      </select>
-      <button id="confirmCreateGroupBtn">Create</button>
-      <button onclick="closeModal('createGroupModal')">Cancel</button>
-    </div>
-  </div>
-
-  <!-- Thread Modal -->
-  <div id="threadModal" class="modal hidden">
-    <div class="modalContent">
-      <h2>Thread</h2>
-      <div id="threadMessages" class="threadMessages"></div>
-      <input type="text" id="threadReplyInput" placeholder="Reply..." />
-      <button id="sendThreadReplyBtn">Send</button>
-      <button onclick="closeModal('threadModal')">Close</button>
-    </div>
-  </div>
+  <!-- Profile Music -->
+  <div id="musicPlayer" class="music-player"></div>
 
   <!-- Toast Notification -->
-  <div id="toast" class="toast hidden">Toast Message</div>
+  <div id="toast" class="toast">This is a toast message</div>
 
-  <!-- Spinner Loader -->
-  <div id="loadingSpinner" class="spinner hidden">⏳ Loading...</div>
-
-  <!-- Music Audio Player -->
-  <audio id="profileMusic" controls class="hidden"></audio>
-
-  <!-- Firebase and Main Script -->
-  <script src="firebase.js"></script>
-  <script src="app.js"></script>
+  <!-- Scripts -->
+  <script type="module" src="app.js"></script>
 </body>
 </html>
