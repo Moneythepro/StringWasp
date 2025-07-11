@@ -562,7 +562,6 @@ function threadId(a, b) {
 }
 
 function openThread(uid, username) {
-function openThread(uid, username) {
   switchTab("threadView");
   document.getElementById("chatName").textContent = username;
   document.getElementById("chatStatus").textContent = "Loading...";
@@ -570,7 +569,7 @@ function openThread(uid, username) {
   document.getElementById("typingIndicator").textContent = "";
   currentThreadUser = uid;
 
-  // Load profile photo and last seen
+  // Load user info
   db.collection("users").doc(uid).get().then(doc => {
     if (doc.exists) {
       const user = doc.data();
@@ -580,12 +579,14 @@ function openThread(uid, username) {
     } else {
       document.getElementById("chatStatus").textContent = "User not found";
     }
+  }).catch(() => {
+    document.getElementById("chatStatus").textContent = "Error loading user";
   });
 
-  // Unsubscribe from any previous thread
+  // Unsubscribe from previous thread
   if (unsubscribeThread) unsubscribeThread();
 
-  // 🔄 Live message listener
+  // Message listener
   unsubscribeThread = db.collection("threads")
     .doc(threadId(currentUser.uid, uid))
     .collection("messages")
@@ -599,12 +600,11 @@ function openThread(uid, username) {
         const div = document.createElement("div");
         div.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
 
-        // Decrypt text safely
-        let decrypted = "";
+        let decrypted;
         try {
           decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
         } catch (e) {
-          decrypted = "[Decryption error]";
+          decrypted = "[Encrypted]";
         }
 
         const displayText = typeof decrypted === "string" ? decrypted : JSON.stringify(decrypted);
@@ -617,7 +617,6 @@ function openThread(uid, username) {
 
   // Typing indicator
   const typingRef = db.collection("threads").doc(threadId(currentUser.uid, uid)).collection("typing");
-
   if (unsubscribeTyping) unsubscribeTyping();
 
   unsubscribeTyping = typingRef.onSnapshot(snapshot => {
