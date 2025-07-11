@@ -245,7 +245,7 @@ function sendThreadMessage() {
     .catch(console.error);
 }
 
-function handleTyping(type) {
+function handleThreadTyping(type) {
   const path = type === "thread"
     ? `threads/${threadId(currentUser.uid, currentThreadUser)}/typing`
     : `groups/${currentRoom}/typing`;
@@ -324,7 +324,7 @@ function markAllRead() {
 
 // ===== Typing Indicator (both DM & Group) =====
 
-function handleTyping(type) {
+function handleGroupTyping(type) {
   const typingRef = type === "group"
     ? db.collection("groups").doc(currentRoom).collection("typing").doc(currentUser.uid)
     : db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser)).collection("typing").doc(currentUser.uid);
