@@ -985,7 +985,7 @@ function viewUserProfile(uid) {
     document.getElementById("viewProfileUsername").textContent = "@" + (data.username || "unknown");
     document.getElementById("viewProfileName").textContent = data.name || "";
     document.getElementById("viewProfileBio").textContent = data.bio || "No bio";
-    document.getElementById("viewProfileAvatar").src = data.photoURL || "default-avatar.png";
+    document.getElementById("viewProfilePic").src = data.photoURL || "default-avatar.png";
     currentThreadUser = uid;
 
     document.getElementById("viewProfileModal").style.display = "flex";
