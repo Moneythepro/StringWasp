@@ -250,9 +250,9 @@ function listenInbox() {
         div.className = "inbox-card";
         div.innerHTML = `
           <div>
-            <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
-            From: ${data.fromName || sender}
-          </div>
+  <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
+  From: ${senderName}
+</div>
           <div class="btn-group">
             <button onclick="acceptInbox('${doc.id}', '${data.type}', '${data.from}')">✔</button>
             <button onclick="declineInbox('${doc.id}')">✖</button>
