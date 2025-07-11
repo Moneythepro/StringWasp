@@ -1219,7 +1219,7 @@ if (localStorage.getItem("theme") === "dark") {
   document.body.classList.add("dark");
   const toggle = document.getElementById("darkModeToggle");
   if (toggle) toggle.checked = true;
-      }
+}
 
 document.getElementById("profilePic").addEventListener("change", uploadProfilePic);
 
