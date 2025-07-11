@@ -825,7 +825,6 @@ function showToast(msg) {
 }
 
 // ====== WebTorrent (P2P File Share) ======
-let client = null;
 
 // ✅ Only friends or group members can share
 function isFriend(uid) {
