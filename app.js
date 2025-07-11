@@ -828,61 +828,60 @@ function isFriend(uid) {
 }
 
 function shareFileViaTorrent(type) {
-  if (!client) client = new WebTorrent(); // ✅ Initialize once
-
   const input = document.createElement("input");
   input.type = "file";
-  input.onchange = () => {
+  
+  input.onchange = async () => {
     const file = input.files[0];
     if (!file) return;
 
-    client.seed(file, torrent => {
-      const magnet = torrent.magnetURI;
-      const msg = `📎 File: <a href="${magnet}" target="_blank">${file.name}</a>`;
-
-      if (type === "dm" && currentThreadUser) {
-        isFriend(currentThreadUser).then(ok => {
-          if (!ok) return alert("Only friends can share P2P files.");
-          document.getElementById("threadInput").value = msg;
-          sendThreadMessage();
-        });
-      } else if (type === "group" && currentRoom) {
-        document.getElementById("groupMessageInput").value = msg;
-        sendGroupMessage();
-      } else {
-        alert("Sharing not allowed in this context.");
+    try {
+      // Validate sharing context
+      if (type === "dm") {
+        const isAllowed = await isFriend(currentThreadUser);
+        if (!isAllowed) throw new Error("Only friends can share files");
+      } else if (!currentRoom) {
+        throw new Error("No active chat");
       }
-    });
+
+      // Start seeding
+      client.seed(file, torrent => {
+        torrent.on('error', console.error);
+        
+        const magnet = torrent.magnetURI;
+        const safeName = escapeHtml(file.name);
+        const targetInput = type === "dm" ? 
+          document.getElementById("threadInput") : 
+          document.getElementById("groupMessageInput");
+          
+        targetInput.value = `📎 File: <a href="${magnet}">${safeName}</a>`;
+      });
+    } catch (err) {
+      alert(err.message);
+    }
   };
+  
   input.click();
 }
 
-// ====== Download Magnet Link File (Auto trigger) ======
+// ✅ Safer magnet downloads with progress
 function autoDownloadMagnet(magnetURI) {
-  client.add(magnetURI, torrent => {
+  const torrent = client.add(magnetURI);
+  
+  torrent.on('ready', () => {
     torrent.files.forEach(file => {
       file.getBlobURL((err, url) => {
-        if (err) return console.error("Download error:", err);
+        if (err) return console.error(err);
+        
         const a = document.createElement("a");
         a.href = url;
         a.download = file.name;
+        document.body.appendChild(a);
         a.click();
+        setTimeout(() => a.remove(), 100);
       });
     });
   });
-}
-
-// ====== Detect & Replace Magnet Link in Messages ======
-function renderWithMagnetSupport(containerId) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-
-  const links = container.querySelectorAll("a[href^='magnet:']");
-  links.forEach(link => {
-    link.onclick = e => {
-      e.preventDefault();
-      const confirmed = confirm(`Download file: ${link.textContent}?`);
-      if (confirmed) autoDownloadMagnet(link.href);
-    };
-  });
+  
+  torrent.on('error', console.error);
 }
