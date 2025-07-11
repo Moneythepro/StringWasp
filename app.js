@@ -820,7 +820,6 @@ function showToast(msg) {
 }
 
 // ====== WebTorrent Setup ======
-const client = new WebTorrent();
 
 // ✅ Only friends or group members can share
 function isFriend(uid) {
