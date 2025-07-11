@@ -258,49 +258,75 @@ function loadChatList() {
   const list = document.getElementById("chatList");
   if (!list || !currentUser) return;
 
-  list.innerHTML = "<em>Loading chats...</em>";
+  list.innerHTML = `<div class="loader"></div>`;
+  const chats = [];
 
-  const groupsRef = db.collection("groups").where("members", "array-contains", currentUser.uid);
-  const friendsRef = db.collection("users").doc(currentUser.uid).collection("friends");
+  // 🔹 Load Direct Messages
+  db.collection("threads")
+    .where("participants", "array-contains", currentUser.uid)
+    .orderBy("updatedAt", "desc")
+    .get()
+    .then(snapshot => {
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const otherUid = data.participants.find(uid => uid !== currentUser.uid);
+        const name = typeof data.names?.[otherUid] === "string" ? data.names[otherUid] : "Unknown";
+        const last = typeof data.lastMessage === "string" ? data.lastMessage : "";
+        const time = data.updatedAt?.toDate().toLocaleTimeString() || "";
 
-  Promise.all([groupsRef.get(), friendsRef.get()]).then(([groupsSnap, friendsSnap]) => {
-    list.innerHTML = "";
+        chats.push({
+          type: "dm",
+          id: otherUid,
+          name,
+          last,
+          time
+        });
+      });
 
-    groupsSnap.forEach(doc => {
-      const group = doc.data();
-      const div = document.createElement("div");
-      div.className = "chat-card";
-      div.innerHTML = `
-        <img src="group-icon.png" />
-        <div class="details">
-          <div class="name">${group.name}</div>
-          <div class="last-message">Group chat</div>
-        </div>
-      `;
-      div.onclick = () => {
-        currentRoom = doc.id;
-        listenMessages();
-        switchTab("groupsTab");
-        joinRoom(doc.id);
-      };
-      list.appendChild(div);
+      // 🔹 Load Group Chats
+      db.collection("groups")
+        .where("members", "array-contains", currentUser.uid)
+        .get()
+        .then(groupSnap => {
+          groupSnap.forEach(doc => {
+            const group = doc.data();
+            chats.push({
+              type: "group",
+              id: doc.id,
+              name: typeof group.name === "string" ? group.name : "Group",
+              last: typeof group.lastMessage === "string" ? group.lastMessage : "",
+              time: group.updatedAt?.toDate().toLocaleTimeString() || ""
+            });
+          });
+
+          // ✅ Sort all chats by latest
+          chats.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+          // ✅ Render
+          list.innerHTML = "";
+          chats.forEach(chat => {
+            const div = document.createElement("div");
+            div.className = "chat-card";
+            div.onclick = () => {
+              if (chat.type === "dm") openThread(chat.id, chat.name);
+              else joinRoom(chat.id);
+            };
+            div.innerHTML = `
+              <div class="chat-avatar">${chat.type === "group" ? "👥" : "👤"}</div>
+              <div class="details">
+                <div class="name">${chat.name}</div>
+                <div class="last-message">${chat.last}</div>
+              </div>
+              <div class="meta">${chat.time}</div>
+            `;
+            list.appendChild(div);
+          });
+
+          if (chats.length === 0) {
+            list.innerHTML = `<div style="padding:10px;">No chats yet</div>`;
+          }
+        });
     });
-
-    friendsSnap.forEach(doc => {
-      const data = doc.data();
-      const div = document.createElement("div");
-      div.className = "chat-card";
-      div.innerHTML = `
-        <img src="${data.photoURL || 'default-avatar.png'}" />
-        <div class="details">
-          <div class="name">${data.username || data.email}</div>
-          <div class="last-message">Friend</div>
-        </div>
-      `;
-      div.onclick = () => openThread(doc.id, data.username || data.email);
-      list.appendChild(div);
-    });
-  });
 }
 
 // ===== Group Create / Join =====
@@ -684,7 +710,7 @@ function searchChats() {
 }
 
 function runSearch() {
-  const term = document.getElementById("searchInput").value.toLowerCase();
+  const term = document.getElementById("searchInput")?.value.toLowerCase();
   if (!term) return;
 
   const userResults = document.getElementById("searchResultsUser");
@@ -692,30 +718,37 @@ function runSearch() {
   userResults.innerHTML = "";
   groupResults.innerHTML = "";
 
+  // 🔍 Search Users
   db.collection("users").get().then(snapshot => {
     snapshot.forEach(doc => {
       const user = doc.data();
-      if ((user.username || "").toLowerCase().includes(term)) {
+      const username = typeof user.username === "string" ? user.username : user.email;
+      const photo = user.photoURL || "default-avatar.png";
+
+      if ((username || "").toLowerCase().includes(term)) {
         const div = document.createElement("div");
-div.className = "search-result";
-div.innerHTML = `
-  <img src="${user.photoURL || 'default-avatar.png'}" class="search-avatar" />
-  <div class="search-username">${user.username || user.email}</div>
-  <button onclick="sendFriendRequest('${doc.id}')">➕ Add Friend</button>
-`;
-userResults.appendChild(div);
+        div.className = "search-result";
+        div.innerHTML = `
+          <img src="${photo}" class="search-avatar" />
+          <div class="search-username">${username}</div>
+          <button onclick="sendFriendRequest('${doc.id}')">➕ Add Friend</button>
+        `;
+        userResults.appendChild(div);
       }
     });
   });
 
+  // 🔍 Search Groups
   db.collection("groups").get().then(snapshot => {
     snapshot.forEach(doc => {
       const group = doc.data();
-      if ((group.name || "").toLowerCase().includes(term)) {
+      const groupName = typeof group.name === "string" ? group.name : "Unnamed Group";
+
+      if ((groupName || "").toLowerCase().includes(term)) {
         const div = document.createElement("div");
         div.className = "search-result";
         div.innerHTML = `
-          <div class="search-username">👥 ${group.name}</div>
+          <div class="search-username">👥 ${groupName}</div>
           <button onclick="joinGroupById('${doc.id}')">Join</button>
         `;
         groupResults.appendChild(div);
