@@ -642,6 +642,7 @@ function showModal(message, yesCallback) {
     modal.style.display = "none";
   };
 
+  function openModal() {
   modal.style.display = "flex";
 }
 
