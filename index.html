@@ -10,9 +10,11 @@
 </head>
 <body>
   <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
+
+  <!-- Loading Overlay -->
   <div id="loadingOverlay"><div class="loader"></div></div>
 
-  <!-- 🔐 Login/Register -->
+  <!-- Login/Register -->
   <div id="loginPage" class="tab">
     <h2>Login</h2>
     <input type="email" id="email" placeholder="Email" />
@@ -21,20 +23,22 @@
     <button onclick="register()">Register</button>
   </div>
 
-  <!-- 👤 Username Setup -->
+  <!-- Username Setup -->
   <div id="usernameDialog" class="tab" style="display:none;">
     <h3>Pick a Username</h3>
     <input id="newUsername" placeholder="Username" />
     <button onclick="saveUsername()">Save</button>
   </div>
 
-  <!-- 💬 Main App -->
-  <div id="appPage" class="tabContent" style="display:none;">
+  <!-- Main App -->
+  <div id="appPage" class="tabContent">
+    <!-- Theme Switch -->
     <label class="theme-switch">
       <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()" />
       <span class="slider"></span>
     </label>
 
+    <!-- Header -->
     <div class="header">
       <span id="usernameDisplay"></span>
       <span id="onlineStatus" class="status-indicator"></span>
@@ -44,36 +48,57 @@
     <div class="tabs">
       <button onclick="switchTab('chatTab')" id="tab-chat">💬<br><span>Chats</span></button>
       <button onclick="switchTab('friendsTab')" id="tab-friends">🧑‍🤝‍🧑<br><span>Friends</span></button>
+      <button onclick="switchTab('groupsTab')" id="tab-groups">👥<br><span>Groups</span></button>
       <button onclick="switchTab('inboxTab')" id="tab-inbox">🔔<br><span>Inbox</span><span id="inboxBadge" class="badge"></span></button>
       <button onclick="switchTab('searchTab')" id="tab-search">🔍<br><span>Search</span></button>
       <button onclick="switchTab('profileTab')" id="tab-profile">🙍‍♂️<br><span>Profile</span></button>
     </div>
 
-    <!-- 💬 Chat List -->
+    <!-- Personal Chats -->
     <div id="chatTab" class="tab">
-      <div id="chatListHeader" class="chat-header">
-        <input id="globalSearch" placeholder="Search chats..." />
-        <button onclick="searchChats()">🔍</button>
-        <button onclick="loadChatList()">🔄</button>
-      </div>
-      <div id="chatList" class="chat-list"></div>
+      <h3>Chats</h3>
+      <div id="messages" class="messages"></div>
+      <div id="typingIndicator" class="typing"></div>
+      <input id="messageInput" placeholder="Type a message..." />
+      <button onclick="sendMessage()">Send</button>
     </div>
 
-    <!-- 🧑‍🤝‍🧑 Friends -->
+    <!-- 👥 Group Chats -->
+    <div id="groupsTab" class="tab">
+      <div class="header">
+        <button onclick="createGroup()">Create Group</button>
+        <button onclick="joinGroup()">Join Group</button>
+      </div>
+
+      <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
+
+      <div id="groupInfo" class="group-meta">
+        <div><strong>Group Info</strong></div>
+        <div id="groupOwner"></div>
+        <div id="groupAdmins"></div>
+        <div id="groupMembers" class="member-list"></div>
+      </div>
+
+      <div id="groupMessages" class="messages"></div>
+      <input id="groupMessageInput" placeholder="Type a message..." />
+      <button onclick="sendGroupMessage()">Send</button>
+    </div>
+
+    <!-- 👥 Friends Tab (NEW) -->
     <div id="friendsTab" class="tab">
       <h3>Your Friends</h3>
       <input id="friendSearchInput" placeholder="Search friends..." />
       <div id="friendsList"></div>
     </div>
 
-    <!-- 🔔 Inbox -->
+    <!-- Inbox -->
     <div id="inboxTab" class="tab">
       <h3>Inbox</h3>
       <button onclick="markAllRead()">Mark All as Read</button>
       <div id="inboxList"></div>
     </div>
 
-    <!-- 🔍 Search -->
+    <!-- Search -->
     <div id="searchTab" class="tab">
       <h3>Search</h3>
       <input id="searchInput" placeholder="Search users or groups..." />
@@ -86,11 +111,11 @@
       <div id="searchResultsGroup" class="search-results" style="display:none;"></div>
     </div>
 
-    <!-- 🙍 Profile -->
+    <!-- Profile -->
     <div id="profileTab" class="tab">
       <h3>Your Profile</h3>
-      <img id="profilePicPreview" src="default-avatar.png" alt="Avatar" />
-      <label class="profile-edit-label" for="profilePic">Tap to upload</label>
+      <img id="profilePicPreview" src="default-avatar.png" alt="Avatar" onerror="this.src='default-avatar.png'" />
+      <label class="profile-edit-label">Tap to upload</label>
       <input type="file" id="profilePic" accept="image/*" style="display:none;" />
       <input id="profileName" placeholder="Your Name" />
       <textarea id="profileBio" placeholder="Your Bio"></textarea>
@@ -108,40 +133,20 @@
       <button onclick="contactSupport()">Contact Us</button>
     </div>
 
-    <!-- 💬 Thread View -->
+    <!-- Direct Thread View -->
     <div id="threadView" class="tab">
-      <div id="chatHeader" class="chat-header">
-        <img id="chatProfilePic" src="default-avatar.png" alt="Avatar" />
-        <div class="chat-info">
-          <h3 id="chatName">Chat Name</h3>
-          <p id="chatStatus">Loading...</p>
-        </div>
-        <button onclick="openChatMenu()">\u22EE</button>
-        <div id="chatOptionsMenu" class="chat-options" style="display:none;">
-          <button onclick="viewGroupMembers()">👥 View Members</button>
-          <button onclick="inviteByLink()">🔗 Invite by Link</button>
-          <button onclick="leaveGroup()">🚪 Leave Group</button>
-          <button onclick="blockUser()">🚫 Block User</button>
-          <button onclick="viewMedia()">📎 View Media</button>
-          <button onclick="exportChat()">📤 Export Chat</button>
-          <button onclick="deleteThread()">🗑️ Delete Chat</button>
-        </div>
-      </div>
+      <button onclick="closeThread()">← Back</button>
+      <h3 id="threadWithName"></h3>
       <div id="threadMessages" class="messages"></div>
-      <div id="typingIndicator" class="typing"></div>
-      <div class="input-bar">
-        <button class="icon-btn" onclick="triggerFileInput('thread')">📎</button>
-        <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" />
-        <button class="icon-btn" onclick="sendThreadMessage()">➤</button>
-        <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
-      </div>
+      <input id="threadInput" placeholder="Type message..." />
+      <button onclick="sendThreadMessage()">Send</button>
     </div>
 
-    <!-- 👁️ View Profile Modal -->
+    <!-- View Profile Modal -->
     <div id="viewProfileModal" class="modal">
       <div class="modal-content">
         <span class="close" onclick="document.getElementById('viewProfileModal').style.display='none'">×</span>
-        <img id="viewProfilePic" src="default-avatar.png" alt="Avatar" />
+        <img id="viewProfilePic" src="default-avatar.png" alt="Avatar" onerror="this.src='default-avatar.png'" />
         <h3 id="viewProfileName">Name</h3>
         <p id="viewProfileUsername">@username</p>
         <p id="viewProfileBio">No bio</p>
@@ -154,7 +159,7 @@
       </div>
     </div>
 
-    <!-- ⚠️ Confirm Modal -->
+    <!-- Modal -->
     <div id="customModal" class="modal">
       <div class="modal-content">
         <p id="modalMessage">Are you sure?</p>
@@ -166,7 +171,7 @@
     </div>
   </div>
 
-  <!-- 🔥 Firebase SDK -->
+  <!-- Firebase v8 SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
@@ -175,7 +180,7 @@
   <script src="firebase.js"></script>
   <script src="app.js"></script>
 
-  <!-- 🧠 Background Workers -->
+  <!-- Other Utilities -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
@@ -184,7 +189,6 @@
     }
   </script>
 
-  <!-- 🔐 E2E + Compression + Extras -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
   <script src="https://unpkg.com/idb@7/build/umd.js"></script>
