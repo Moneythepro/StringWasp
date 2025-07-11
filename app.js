@@ -642,7 +642,7 @@ function showModal(message, yesCallback) {
     modal.style.display = "none";
   };
 
-  modal.style.display = \"flex\";function blockUser() {
+  modal.style.display = "flex";
   showModal("Block this user?", () => {
     alert("Blocked (stub)");
   });
