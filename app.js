@@ -156,16 +156,18 @@ function openThread(uid, username) {
   switchTab("threadView");
   currentThreadUser = uid;
 
+  // Set default UI
   document.getElementById("chatName").textContent = username;
   document.getElementById("chatStatus").textContent = "Loading...";
   document.getElementById("chatProfilePic").src = "default-avatar.png";
   document.getElementById("typingIndicator").textContent = "";
 
+  // Load profile
   db.collection("users").doc(uid).get().then(doc => {
     if (doc.exists) {
       const user = doc.data();
-      document.getElementById("chatProfilePic").src = user.photoURL || "default-avatar.png";
       const lastSeen = user.lastSeen?.toDate().toLocaleString() || "Online recently";
+      document.getElementById("chatProfilePic").src = user.photoURL || "default-avatar.png";
       document.getElementById("chatStatus").textContent = lastSeen;
     } else {
       document.getElementById("chatStatus").textContent = "User not found";
@@ -174,6 +176,7 @@ function openThread(uid, username) {
     document.getElementById("chatStatus").textContent = "Error loading status";
   });
 
+  // Listen to thread messages
   if (unsubscribeThread) unsubscribeThread();
   unsubscribeThread = db.collection("threads")
     .doc(threadId(currentUser.uid, uid))
@@ -192,7 +195,7 @@ function openThread(uid, username) {
 
         const sender = document.createElement("div");
         sender.className = "sender-info";
-        sender.innerHTML = `<strong>${msg.fromName}</strong>`;
+        sender.innerHTML = `<strong>${msg.fromName || "Unknown"}</strong>`;
         bubble.appendChild(sender);
 
         const textDiv = document.createElement("div");
@@ -204,20 +207,17 @@ function openThread(uid, username) {
       area.scrollTop = area.scrollHeight;
     });
 
+  // Typing Indicator
   db.collection("threads")
     .doc(threadId(currentUser.uid, uid))
     .collection("typing")
     .onSnapshot(snapshot => {
       const typingDiv = document.getElementById("typingIndicator");
       const usersTyping = [];
-
       snapshot.forEach(doc => {
         if (doc.id !== currentUser.uid) usersTyping.push(doc.id);
       });
-
-      typingDiv.textContent = usersTyping.length
-        ? `${usersTyping.join(", ")} typing...`
-        : "";
+      typingDiv.textContent = usersTyping.length ? `${usersTyping.join(", ")} typing...` : "";
     });
 }
 
@@ -332,7 +332,7 @@ function listenMessages() {
 
         const sender = document.createElement("div");
         sender.className = "sender-info";
-        sender.innerHTML = `<strong>${msg.senderName}</strong>`;
+        sender.innerHTML = `<strong>${msg.senderName || "Unknown"}</strong>`;
         bubble.appendChild(sender);
 
         const textDiv = document.createElement("div");
@@ -394,7 +394,6 @@ function joinRoom(roomName) {
   if (unsubscribeMessages) unsubscribeMessages();
   if (unsubscribeTyping) unsubscribeTyping();
   listenMessages();
-  listenGroupTyping();
   loadGroupInfo(roomName);
 }
 
