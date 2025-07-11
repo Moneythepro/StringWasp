@@ -259,8 +259,14 @@ function markAllRead() {
   const inboxRef = db.collection("inbox").doc(currentUser.uid).collection("items");
   inboxRef.get().then(snapshot => {
     const batch = db.batch();
-    snapshot.forEach(doc => batch.update(doc.ref, { read: true }));
+    snapshot.forEach(doc => {
+      batch.update(doc.ref, { read: true });
+    });
     return batch.commit();
+  }).then(() => {
+    console.log("All messages marked as read");
+  }).catch(error => {
+    console.error("Error marking messages as read: ", error);
   });
 }
 
@@ -324,33 +330,35 @@ function openThread(uid, username) {
     .onSnapshot(snapshot => {
       const area = document.getElementById("threadMessages");
       area.innerHTML = "";
-      // ✅ Fixed version
-snapshot.forEach(doc => {
-  const msg = doc.data();
-  const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
-  const displayText = typeof decrypted === "string" ? decrypted : JSON.stringify(decrypted);
-  
-  // Create message bubble element
-  const bubble = document.createElement("div");
-  bubble.className = "message-bubble";
-  bubble.textContent = `${msg.fromName}: ${displayText}`;
-  
-  area.appendChild(bubble);
-  area.scrollTop = area.scrollHeight;
-});
+      
+      snapshot.forEach(doc => {
+        const msg = doc.data();
+        const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+        const displayText = typeof decrypted === "string" ? decrypted : JSON.stringify(decrypted);
+        
+        // Create message bubble element
+        const bubble = document.createElement("div");
+        bubble.className = "message-bubble";
+        bubble.textContent = `${msg.fromName}: ${displayText}`;
+        
+        area.appendChild(bubble);
+      });
+      
+      area.scrollTop = area.scrollHeight;
+    });
 
-  // Typing
+  // Typing indicator
   db.collection("threads").doc(threadId(currentUser.uid, uid)).collection("typing")
     .onSnapshot(snapshot => {
       const typingDiv = document.getElementById("typingIndicator");
       const usersTyping = [];
-
+      
       snapshot.forEach(doc => {
         if (doc.id !== currentUser.uid) {
           usersTyping.push(doc.id);
         }
       });
-
+      
       typingDiv.textContent = usersTyping.length ? `${usersTyping.join(", ")} typing...` : "";
     });
 }
