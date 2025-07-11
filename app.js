@@ -245,7 +245,7 @@ function sendThreadMessage() {
     .catch(console.error);
 }
 
-function handleThreadTyping(type) {
+function handleTyping(type) {
   const path = type === "thread"
     ? `threads/${threadId(currentUser.uid, currentThreadUser)}/typing`
     : `groups/${currentRoom}/typing`;
