@@ -992,3 +992,62 @@ function messageUser() {
   document.getElementById("viewProfileModal").style.display = "none";
 }
 
+function displayUserSearchResults(users) {
+  const container = document.getElementById("searchResultsUser");
+  container.innerHTML = "";
+
+  users.forEach(user => {
+    const div = document.createElement("div");
+    div.className = "search-result";
+
+    div.innerHTML = `
+      <img class="search-avatar" src="${user.photoURL || 'default-avatar.png'}" alt="Avatar" />
+      <div class="search-info">
+        <div class="username">@${user.username}</div>
+        <div class="bio">${user.bio || "No bio yet"}</div>
+      </div>
+      <button onclick="addFriend('${user.uid}')">Add</button>
+    `;
+
+    div.onclick = () => viewUserProfile(user.uid); // Optional profile preview
+    container.appendChild(div);
+  });
+}
+
+function displayGroupSearchResults(groups) {
+  const container = document.getElementById("searchResultsGroup");
+  container.innerHTML = "";
+
+  groups.forEach(group => {
+    const div = document.createElement("div");
+    div.className = "search-result";
+
+    div.innerHTML = `
+      <img class="search-avatar" src="${group.photoURL || 'default-avatar.png'}" alt="Group" />
+      <div class="search-info">
+        <div class="username">${group.name}</div>
+        <div class="bio">${group.description || "No description"}</div>
+      </div>
+      <button onclick="joinGroupById('${group.id}')">Join</button>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+function addFriend(uid) {
+  // Example logic — adjust as needed
+  db.collection("inbox").doc(uid).collection("items").add({
+    type: "friend",
+    from: currentUser.uid,
+    fromName: currentUser.displayName || currentUser.email,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    read: false
+  }).then(() => showToast("Friend request sent!"));
+}
+
+function joinGroupById(groupId) {
+  db.collection("groups").doc(groupId).update({
+    members: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+  }).then(() => showToast("Joined group!"));
+}
