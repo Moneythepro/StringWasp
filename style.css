@@ -98,7 +98,6 @@ body.dark .tabs button {
   max-width: 75%;
   font-size: 14px;
   word-wrap: break-word;
-  display: inline-block;
 }
 .left {
   background: #e2ffc7;
@@ -109,7 +108,7 @@ body.dark .tabs button {
   align-self: flex-end;
 }
 body.dark .left {
-  background: #1d2b1f;
+  background: #1e2b1f;
 }
 body.dark .right {
   background: #1f2a35;
@@ -167,7 +166,7 @@ body.dark .input-bar input {
   padding-left: 10px;
 }
 
-/* ===== Chat List Cards ===== */
+/* ===== Chat List ===== */
 .chat-list {
   padding: 10px;
 }
@@ -192,8 +191,18 @@ body.dark .input-bar input {
   font-weight: bold;
 }
 .chat-card .last-message {
+  font-size: 13px;
+  color: #666;
+}
+.chat-card .meta {
   font-size: 12px;
-  color: #888;
+  color: #999;
+}
+.chat-card img.friend-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 body.dark .chat-card {
   background: #1f1f1f;
@@ -231,7 +240,7 @@ body.dark .btn-group button {
   color: #eee;
 }
 
-/* ===== Profile View ===== */
+/* ===== Profile ===== */
 .profile-edit-label {
   font-size: 12px;
   text-align: center;
@@ -252,15 +261,62 @@ body.dark .btn-group button {
 .search-results {
   margin-top: 10px;
 }
-.search-results div {
+.search-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   background: #fff;
-  padding: 10px;
-  border-radius: 10px;
-  margin: 6px 0;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 8px 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
-body.dark .search-results div {
+.search-result:hover {
+  background: #f0f0f0;
+}
+body.dark .search-result {
   background: #1f1f1f;
+}
+body.dark .search-result:hover {
+  background: #2a2a2a;
+}
+.search-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 12px;
+}
+.search-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.search-info .username {
+  font-weight: bold;
+  font-size: 14px;
+}
+.search-info .bio {
+  font-size: 12px;
+  color: #666;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+body.dark .search-info .bio {
+  color: #aaa;
+}
+.search-result button {
+  background: #128C7E;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.search-result button:hover {
+  background: #0b6c60;
 }
 
 /* ===== Modal ===== */
@@ -294,7 +350,7 @@ body.dark .modal-content {
   padding: 8px;
 }
 
-/* ===== Theme Switch ===== */
+/* ===== Theme Toggle ===== */
 .theme-switch {
   position: absolute;
   top: 10px;
@@ -350,106 +406,4 @@ body.dark #loadingOverlay {
 }
 @keyframes spin {
   to { transform: rotate(360deg); }
-}
-
-/* ===== Enhanced Search Result Cards ===== */
-.search-result {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #fff;
-  border-radius: 12px;
-  padding: 10px 14px;
-  margin: 8px 0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  transition: background 0.2s ease;
-}
-.search-result:hover {
-  background: #f0f0f0;
-}
-body.dark .search-result {
-  background: #1f1f1f;
-}
-body.dark .search-result:hover {
-  background: #2a2a2a;
-}
-
-/* Avatar inside search result */
-.search-avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-right: 12px;
-}
-
-/* Info block next to avatar */
-.search-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-.search-info .username {
-  font-weight: bold;
-  font-size: 14px;
-}
-.search-info .bio {
-  font-size: 12px;
-  color: #666;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 180px;
-}
-body.dark .search-info .bio {
-  color: #aaa;
-}
-
-/* Call-to-action button */
-.search-result button {
-  background: #128C7E;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  font-size: 13px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.search-result button:hover {
-  background: #0b6b60;
-}
-
-.friend-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-.chat-card {
-  display: flex;
-  align-items: center;
-  background: #fff;
-  padding: 10px;
-  border-radius: 12px;
-  margin-bottom: 8px;
-  gap: 10px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  cursor: pointer;
-}
-.chat-card .details {
-  flex: 1;
-}
-.chat-card .name {
-  font-weight: bold;
-}
-.chat-card .last-message {
-  font-size: 13px;
-  color: #666;
-}
-.chat-card .meta {
-  font-size: 12px;
-  color: #999;
-}
-body.dark .chat-card {
-  background: #1e1e1e;
 }
