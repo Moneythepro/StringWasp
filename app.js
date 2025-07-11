@@ -748,29 +748,6 @@ function toggleTheme() {
   localStorage.setItem("theme", isDark ? "dark" : "light");
 }
 
-function loadFriends() {
-  const container = document.getElementById("friendsList");
-  if (!container) return;
-  db.collection("users").doc(currentUser.uid).collection("friends")
-    .onSnapshot(snapshot => {
-      container.innerHTML = "";
-      snapshot.forEach(doc => {
-        const friendId = doc.id;
-        db.collection("users").doc(friendId).get().then(friendDoc => {
-          const data = friendDoc.data();
-          const div = document.createElement("div");
-          div.className = "friend-entry";
-          div.innerHTML = `
-            <img src="${data.photoURL || 'default-avatar.png'}" class="friend-avatar" />
-            <span class="friend-name">${data.username || 'Unknown'}</span>
-            <button onclick="openThread('${friendId}', '${data.username || 'Unknown'}')">Message</button>
-          `;
-          container.appendChild(div);
-        });
-      });
-    });
-}
-
 function loadChatList() {
   const list = document.getElementById("chatList");
   if (!list || !currentUser) return;
@@ -912,25 +889,63 @@ function loadProfile() {
 }
 
 function loadFriends() {
-  const list = document.getElementById("friendsList");
-  if (!list) return;
-  db.collection("users").doc(currentUser.uid).collection("friends").onSnapshot(snapshot => {
-    list.innerHTML = "";
-    snapshot.forEach(doc => {
-      const friendId = doc.id;
-      db.collection("users").doc(friendId).get().then(userDoc => {
-        const user = userDoc.data();
-        const div = document.createElement("div");
-        div.className = "friend-entry";
-        div.innerHTML = `
-          <img class="friend-avatar" src="${user.photoURL || 'default-avatar.png'}" />
-          <div class="friend-name">${user.username || user.email}</div>
-          <button onclick="openThread('${friendId}', '${user.username || user.email}')">💬</button>
-        `;
-        list.appendChild(div);
+  const friendsList = document.getElementById("friendsList");
+  if (!friendsList || !currentUser) return;
+
+  // Unsubscribe any existing listener to prevent duplicates
+  if (window.friendsListener) window.friendsListener(); 
+  
+  window.friendsListener = db.collection("users")
+    .doc(currentUser.uid)
+    .collection("friends")
+    .onSnapshot(async (snapshot) => {
+      friendsList.innerHTML = ""; // Clear previous entries
+      
+      // Process friends in parallel for better performance
+      const friendPromises = snapshot.docs.map(async (doc) => {
+        const friendId = doc.id;
+        try {
+          const friendDoc = await db.collection("users").doc(friendId).get();
+          const friend = friendDoc.data();
+          
+          const div = document.createElement("div");
+          div.className = "friend-entry";
+          div.innerHTML = `
+            <img src="${friend.photoURL || 'default-avatar.png'}" 
+                 class="friend-avatar" 
+                 alt="${friend.username || 'Friend'} avatar" />
+            <div class="friend-info">
+              <span class="friend-name">${friend.username || friend.email || 'Unknown'}</span>
+              <button onclick="openThread('${friendId}', '${escapeHtml(friend.username || friend.email || 'Friend')}')">
+                💬 Message
+              </button>
+            </div>
+          `;
+          return div;
+        } catch (error) {
+          console.error("Error loading friend:", friendId, error);
+          return null;
+        }
       });
+
+      // Append all valid friends to the list
+      const friendElements = await Promise.all(friendPromises);
+      friendElements.forEach(element => {
+        if (element) friendsList.appendChild(element);
+      });
+    }, (error) => {
+      console.error("Friends listener error:", error);
     });
-  });
+}
+
+// Helper to prevent XSS in dynamic HTML
+function escapeHtml(unsafe) {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function loadGroups() {
