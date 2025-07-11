@@ -737,15 +737,6 @@ function searchChats() {
   });
 }
 
-function runSearch() {
-  const term = document.getElementById("searchInput")?.value.toLowerCase();
-  if (!term) return;
-
-  const userResults = document.getElementById("searchResultsUser");
-  const groupResults = document.getElementById("searchResultsGroup");
-  userResults.innerHTML = "";
-  groupResults.innerHTML = "";
-
   // 🔍 Search Users
   db.collection("users").get().then(snapshot => {
     snapshot.forEach(doc => {
