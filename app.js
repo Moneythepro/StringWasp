@@ -803,7 +803,6 @@ function loadFriends() {
 }
 
 function loadChatList() {
-function loadChatList() {
   const list = document.getElementById("chatList");
   if (!list || !currentUser) return;
 
