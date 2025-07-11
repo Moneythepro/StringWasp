@@ -753,74 +753,84 @@ function loadChatList() {
   if (!list || !currentUser) return;
 
   list.innerHTML = `<div class="loader"></div>`;
-
   const chats = [];
 
-  // 🔹 Load Direct Messages
+  // 🔹 Load DMs
   db.collection("threads")
     .where("participants", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
     .get()
     .then(snapshot => {
+      const dmPromises = [];
+
       snapshot.forEach(doc => {
         const data = doc.data();
         const otherUid = data.participants.find(uid => uid !== currentUser.uid);
-        const name = data.names?.[otherUid] || "Unknown";
         const last = data.lastMessage || "";
-        const time = data.updatedAt?.toDate().toLocaleTimeString() || "";
+        const time = data.updatedAt?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || "";
 
-        chats.push({
-          type: "dm",
-          id: otherUid,
-          name,
-          last,
-          time
+        // 🔄 Fetch user data (for photo + username fallback)
+        const p = db.collection("users").doc(otherUid).get().then(userDoc => {
+          const user = userDoc.data() || {};
+          chats.push({
+            type: "dm",
+            id: otherUid,
+            name: user.username || data.names?.[otherUid] || "Unknown",
+            photoURL: user.photoURL || "default-avatar.png",
+            last,
+            time
+          });
         });
+
+        dmPromises.push(p);
       });
 
-      // 🔹 Load Group Chats
-      db.collection("groups")
-        .where("members", "array-contains", currentUser.uid)
-        .get()
-        .then(groupSnap => {
-          groupSnap.forEach(doc => {
-            const group = doc.data();
-            chats.push({
-              type: "group",
-              id: doc.id,
-              name: group.name,
-              last: group.lastMessage || "",
-              time: group.updatedAt?.toDate().toLocaleTimeString() || ""
+      // Once all DMs loaded, fetch groups
+      Promise.all(dmPromises).then(() => {
+        db.collection("groups")
+          .where("members", "array-contains", currentUser.uid)
+          .get()
+          .then(groupSnap => {
+            groupSnap.forEach(doc => {
+              const group = doc.data();
+              chats.push({
+                type: "group",
+                id: doc.id,
+                name: group.name,
+                photoURL: group.photoURL || "default-avatar.png",
+                last: group.lastMessage || "",
+                time: group.updatedAt?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || ""
+              });
+            });
+
+            // ✅ Sort and render
+            chats.sort((a, b) => b.time.localeCompare(a.time));
+
+            list.innerHTML = "";
+            if (chats.length === 0) {
+              list.innerHTML = `<div style="padding:10px;">No chats yet</div>`;
+              return;
+            }
+
+            chats.forEach(chat => {
+              const div = document.createElement("div");
+              div.className = "chat-card";
+              div.onclick = () => {
+                if (chat.type === "dm") openThread(chat.id, chat.name);
+                else joinRoom(chat.id);
+              };
+              div.innerHTML = `
+                <img src="${chat.photoURL}" class="friend-avatar" />
+                <div class="details">
+                  <div class="name">${chat.name}</div>
+                  <div class="last-message">${chat.last}</div>
+                </div>
+                <div class="meta">${chat.time}</div>
+              `;
+              list.appendChild(div);
             });
           });
-
-          // ✅ Sort all chats by latest
-          chats.sort((a, b) => new Date(b.time) - new Date(a.time));
-
-          // ✅ Render
-          list.innerHTML = "";
-          chats.forEach(chat => {
-            const div = document.createElement("div");
-            div.className = "chat-card";
-            div.onclick = () => {
-              if (chat.type === "dm") openThread(chat.id, chat.name);
-              else joinRoom(chat.id);
-            };
-            div.innerHTML = `
-              <div class="chat-avatar">${chat.type === "group" ? "👥" : "👤"}</div>
-              <div class="details">
-                <div class="name">${chat.name}</div>
-                <div class="last-message">${chat.last}</div>
-              </div>
-              <div class="meta">${chat.time}</div>
-            `;
-            list.appendChild(div);
-          });
-
-          if (chats.length === 0) {
-            list.innerHTML = `<div style="padding:10px;">No chats yet</div>`;
-          }
-        });
+      });
     });
 }
 
