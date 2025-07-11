@@ -1,18 +1,76 @@
 // firebase.js
 
-var firebaseConfig = {
-  apiKey: "AIzaSyAynlob2NhiLZZ0Xh2JPXgAnYNef_gTzs4",
-  authDomain: "stringwasp.firebaseapp.com",
-  projectId: "stringwasp",
-  storageBucket: "stringwasp.appspot.com",
-  messagingSenderId: "974718019508",
-  appId: "1:974718019508:web:59fabe6306517d10b374e1"
+// Import required Firebase functions
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signInWithPopup,
+  GoogleAuthProvider
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  doc,
+  setDoc,
+  getDoc,
+  getDocs,
+  addDoc,
+  deleteDoc,
+  updateDoc,
+  onSnapshot,
+  query,
+  where,
+  orderBy,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+// Firebase config
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_BUCKET.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
-window.auth = firebase.auth();
-window.db = firebase.firestore();
-window.storage = firebase.storage(); // ✅ For profile pictures
+// Export Firebase services
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+export {
+  auth,
+  provider,
+  db,
+  storage,
+  collection,
+  doc,
+  setDoc,
+  getDoc,
+  getDocs,
+  addDoc,
+  deleteDoc,
+  updateDoc,
+  onSnapshot,
+  query,
+  where,
+  orderBy,
+  serverTimestamp,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  onAuthStateChanged,
+  signInWithPopup
+};
