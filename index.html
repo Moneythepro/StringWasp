@@ -38,6 +38,16 @@
       <span class="slider"></span>
     </label>
 
+    <!-- 💬 Chat List -->
+<div id="chatTab" class="tab">
+  <div id="chatListHeader" class="chat-header">
+    <input id="globalSearch" placeholder="Search chats..." />
+    <button onclick="searchChats()">🔍</button>
+    <button onclick="loadChatList()">🔄</button> <!-- ✅ Make sure this is here -->
+  </div>
+  <div id="chatList" class="chat-list"></div> <!-- ✅ Used by the function -->
+</div>
+    
     <!-- Header -->
     <div class="header">
       <span id="usernameDisplay"></span>
