@@ -91,15 +91,14 @@ function logout() {
 
 function saveUsername() {
   const username = document.getElementById("newUsername").value.trim();
-  if (!username || username.length > 15) return;
-  db.collection("users").doc(currentUser.uid).set({
-    username,
-    email: currentUser.email,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true }).then(() => {
-    document.getElementById("usernameDisplay").textContent = username;
-    loadMainUI();
-  });
+  if (!username) return alert("Username cannot be empty");
+
+  db.collection("users").doc(currentUser.uid).update({ username })
+    .then(() => {
+      document.getElementById("usernameDisplay").textContent = username;
+      loadMainUI(); // ✅ Load app after username is saved
+    })
+    .catch(console.error);
 }
 
 function loadMainUI() {
