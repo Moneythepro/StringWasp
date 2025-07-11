@@ -31,11 +31,9 @@ body.dark input, body.dark textarea, body.dark select {
   color: #eee;
 }
 
-/* ===== Tabs ===== */
+/* ===== Tabs & Navigation ===== */
 .tabContent { display: none; }
 .tab { display: none; padding-bottom: 60px; }
-
-/* ===== Bottom Navigation ===== */
 .tabs {
   position: fixed;
   bottom: 0;
@@ -166,7 +164,7 @@ body.dark .input-bar input {
   padding-left: 10px;
 }
 
-/* ===== Chat List ===== */
+/* ===== Chat Cards ===== */
 .chat-list {
   padding: 10px;
 }
