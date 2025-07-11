@@ -328,10 +328,7 @@ function openThread(uid, username) {
         const msg = doc.data();
         const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
         const displayText = typeof decrypted === "string" ? decrypted : JSON.stringify(decrypted);
-
-        const bubble = document.createElement("div");
-        bubble.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
-        bubble.textContent = `${msg.fromName}: ${displayText}`;
+bubble.textContent = `${msg.fromName}: ${displayText}`;
         area.appendChild(bubble);
       });
       area.scrollTop = area.scrollHeight;
@@ -541,24 +538,40 @@ function sendGroupMessage() {
 
 // 🔄 Group Message Listener
 function listenMessages() {
-  const area = document.getElementById("threadMessages");
   const groupArea = document.getElementById("groupMessages");
+  if (!groupArea || !currentRoom) return;
 
-  unsubscribeMessages = db.collection("groups").doc(currentRoom).collection("messages")
+  if (unsubscribeMessages) unsubscribeMessages();
+
+  unsubscribeMessages = db.collection("groups")
+    .doc(currentRoom)
+    .collection("messages")
     .orderBy("timestamp")
     .onSnapshot(snapshot => {
       groupArea.innerHTML = "";
+
       snapshot.forEach(doc => {
         const msg = doc.data();
-        const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
-        const displayText = typeof decrypted === "string" ? decrypted : JSON.stringify(decrypted);
 
+        // 🔐 Decrypt safely
+        let decrypted;
+        try {
+          decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+        } catch (e) {
+          decrypted = "[Unable to decrypt]";
+        }
+
+        const displayText = typeof decrypted === "string" && decrypted
+          ? decrypted
+          : JSON.stringify(decrypted || msg.text || "");
+
+        // 💬 Create message bubble
         const bubble = document.createElement("div");
         bubble.className = "message-bubble " + (msg.senderId === currentUser.uid ? "right" : "left");
 
         const sender = document.createElement("div");
         sender.className = "sender-info";
-        sender.innerHTML = `<strong>${msg.senderName}</strong>`;
+        sender.innerHTML = `<strong>${msg.senderName || "Unknown"}</strong>`;
         bubble.appendChild(sender);
 
         const textDiv = document.createElement("div");
@@ -567,6 +580,7 @@ function listenMessages() {
 
         groupArea.appendChild(bubble);
       });
+
       groupArea.scrollTop = groupArea.scrollHeight;
     });
 }
