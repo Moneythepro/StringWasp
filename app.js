@@ -287,8 +287,6 @@ function loadFriends() {
 }
 
 // ===== Direct Threads (DM) =====
-let unsubscribeThread = null;
-let currentThreadUser = null;
 
 function threadId(a, b) {
   return [a, b].sort().join("_");
