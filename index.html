@@ -28,20 +28,19 @@
     <button onclick="saveUsername()">Save</button>
   </div>
 
-  <!-- 💬 App Page -->
+  <!-- 💬 Main App -->
   <div id="appPage" class="tabContent">
     <label class="theme-switch">
       <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()" />
       <span class="slider"></span>
     </label>
 
-    <!-- Header -->
     <div class="header">
       <span id="usernameDisplay"></span>
       <span id="onlineStatus" class="status-indicator"></span>
     </div>
 
-    <!-- Bottom Navigation -->
+    <!-- Bottom Tabs -->
     <div class="tabs">
       <button onclick="switchTab('chatTab')" id="tab-chat">💬<br><span>Chats</span></button>
       <button onclick="switchTab('friendsTab')" id="tab-friends">🧑‍🤝‍🧑<br><span>Friends</span></button>
@@ -60,7 +59,7 @@
       <div id="chatList" class="chat-list"></div>
     </div>
 
-    <!-- 👫 Friends -->
+    <!-- 🧑‍🤝‍🧑 Friends -->
     <div id="friendsTab" class="tab">
       <h3>Your Friends</h3>
       <input id="friendSearchInput" placeholder="Search friends..." />
@@ -109,7 +108,7 @@
       <button onclick="contactSupport()">Contact Us</button>
     </div>
 
-    <!-- 💬 Thread View (DM or Group) -->
+    <!-- 💬 Thread View -->
     <div id="threadView" class="tab">
       <div id="chatHeader" class="chat-header">
         <img id="chatProfilePic" src="default-avatar.png" alt="Avatar" />
@@ -118,8 +117,6 @@
           <p id="chatStatus">Loading...</p>
         </div>
         <button onclick="openChatMenu()">⋮</button>
-
-        <!-- 💡 Unified Chat Menu (Group or DM) -->
         <div id="chatOptionsMenu" class="chat-options" style="display:none;">
           <button onclick="viewGroupMembers()">👥 View Members</button>
           <button onclick="inviteByLink()">🔗 Invite by Link</button>
@@ -130,12 +127,8 @@
           <button onclick="deleteThread()">🗑️ Delete Chat</button>
         </div>
       </div>
-
-      <!-- 💬 Messages -->
       <div id="threadMessages" class="messages"></div>
       <div id="typingIndicator" class="typing"></div>
-
-      <!-- ✅ Input Bar -->
       <div class="input-bar">
         <button class="icon-btn" onclick="triggerFileInput('thread')">📎</button>
         <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" />
@@ -161,7 +154,7 @@
       </div>
     </div>
 
-    <!-- ⚠️ Reusable Modal -->
+    <!-- ⚠️ Confirm Modal -->
     <div id="customModal" class="modal">
       <div class="modal-content">
         <p id="modalMessage">Are you sure?</p>
@@ -182,7 +175,7 @@
   <script src="firebase.js"></script>
   <script src="app.js"></script>
 
-  <!-- ⚙️ Utilities -->
+  <!-- 🧠 Background Workers -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
@@ -191,6 +184,7 @@
     }
   </script>
 
+  <!-- 🔐 E2E + Compression + Extras -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
   <script src="https://unpkg.com/idb@7/build/umd.js"></script>
