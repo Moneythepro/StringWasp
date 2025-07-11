@@ -29,7 +29,7 @@
   </div>
 
   <!-- 💬 Main App -->
-  <div id="appPage" class="tabContent">
+  <div id="appPage" class="tabContent" style="display:none;">
     <label class="theme-switch">
       <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()" />
       <span class="slider"></span>
@@ -90,7 +90,7 @@
     <div id="profileTab" class="tab">
       <h3>Your Profile</h3>
       <img id="profilePicPreview" src="default-avatar.png" alt="Avatar" />
-      <label class="profile-edit-label">Tap to upload</label>
+      <label class="profile-edit-label" for="profilePic">Tap to upload</label>
       <input type="file" id="profilePic" accept="image/*" style="display:none;" />
       <input id="profileName" placeholder="Your Name" />
       <textarea id="profileBio" placeholder="Your Bio"></textarea>
@@ -116,7 +116,7 @@
           <h3 id="chatName">Chat Name</h3>
           <p id="chatStatus">Loading...</p>
         </div>
-        <button onclick="openChatMenu()">⋮</button>
+        <button onclick="openChatMenu()">\u22EE</button>
         <div id="chatOptionsMenu" class="chat-options" style="display:none;">
           <button onclick="viewGroupMembers()">👥 View Members</button>
           <button onclick="inviteByLink()">🔗 Invite by Link</button>
