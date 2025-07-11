@@ -642,11 +642,7 @@ function showModal(message, yesCallback) {
     modal.style.display = "none";
   };
 
-  function openModal() {
-  modal.style.display = "flex";
-}
-
-function blockUser() {
+  modal.style.display = \"flex\";function blockUser() {
   showModal("Block this user?", () => {
     alert("Blocked (stub)");
   });
@@ -1078,4 +1074,4 @@ if (localStorage.getItem("theme") === "dark") {
   document.body.classList.add("dark");
   const toggle = document.getElementById("darkModeToggle");
   if (toggle) toggle.checked = true;
-}
+      }
