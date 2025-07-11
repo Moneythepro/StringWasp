@@ -653,30 +653,48 @@ function runSearch() {
   userResults.innerHTML = "";
   groupResults.innerHTML = "";
 
+  // 👤 Search Users
   db.collection("users").where("username", ">=", input).limit(10).get().then(snapshot => {
     snapshot.forEach(doc => {
       const data = doc.data();
       const div = document.createElement("div");
       div.className = "search-result";
+
       div.innerHTML = `
         <img src="${data.photoURL || 'default-avatar.png'}" class="search-avatar" />
-        <div class="search-username">@${data.username || "Unknown"}</div>
+        <div class="search-info">
+          <div class="username">@${data.username || "unknown"}</div>
+          <div class="bio">${data.bio || "No bio available"}</div>
+        </div>
         <button onclick="messageUser('${doc.id}', '${data.username}')">Message</button>
       `;
+
+      // ✅ Click anywhere opens full profile
+      div.onclick = () => viewUserProfile(doc.id);
+
       userResults.appendChild(div);
     });
   });
 
+  // 👥 Search Groups
   db.collection("groups").where("name", ">=", input).limit(10).get().then(snapshot => {
     snapshot.forEach(doc => {
       const data = doc.data();
       const div = document.createElement("div");
       div.className = "search-result";
+
       div.innerHTML = `
         <img src="${data.icon || 'group-icon.png'}" class="search-avatar" />
-        <div class="search-username">${data.name}</div>
+        <div class="search-info">
+          <div class="username">${data.name}</div>
+          <div class="bio">${data.description || "No description"}</div>
+        </div>
         <button onclick="joinGroupById('${doc.id}')">Join</button>
       `;
+
+      // ✅ Click anywhere opens group info
+      div.onclick = () => viewGroupInfo(doc.id);
+
       groupResults.appendChild(div);
     });
   });
