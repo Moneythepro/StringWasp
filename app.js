@@ -158,9 +158,11 @@ function saveProfile() {
 
 // ===== Load Profile UI =====
 function loadProfile() {
-  if (!currentUser) return;
+function loadProfile() {
+  const uid = currentUser?.uid;
+  if (!uid) return;
 
-  db.collection("users").doc(currentUser.uid).get().then(doc => {
+  db.collection("users").doc(uid).get().then(doc => {
     const data = doc.data();
     if (!data) return;
 
@@ -169,11 +171,32 @@ function loadProfile() {
     document.getElementById("profileBio").value = data.bio || "";
     document.getElementById("profileGender").value = data.gender || "";
     document.getElementById("profilePhone").value = data.phone || "";
-    document.getElementById("profileEmail").value = data.email || "";
+    document.getElementById("profileEmail").value = data.publicEmail || "";
     document.getElementById("profileUsername").value = data.username || "";
-    document.getElementById("usernameDisplay").textContent = data.username || "";
   });
 }
+
+  function saveProfile() {
+  const updates = {
+    name: document.getElementById("profileName").value.trim(),
+    bio: document.getElementById("profileBio").value.trim(),
+    gender: document.getElementById("profileGender").value,
+    phone: document.getElementById("profilePhone").value.trim(),
+    publicEmail: document.getElementById("profileEmail").value.trim(),
+    username: document.getElementById("profileUsername").value.trim()
+  };
+
+  db.collection("users").doc(currentUser.uid).update(updates).then(() => {
+    alert("Profile updated!");
+    document.getElementById("usernameDisplay").textContent = updates.username;
+  }).catch(err => {
+    console.error("Profile save error:", err);
+    alert("Failed to save profile");
+  });
+  }
+
+function uploadProfilePic(e) {
+document.getElementById("profilePic").addEventListener("change", uploadProfilePic);
 
 function uploadProfilePic(e) {
   const file = e.target.files[0];
@@ -184,19 +207,20 @@ function uploadProfilePic(e) {
 
   ref.put(file).then(snapshot => snapshot.ref.getDownloadURL())
     .then(url => {
-      return db.collection("users").doc(currentUser.uid).update({ photoURL: url });
-    })
-    .then(() => {
+      return db.collection("users").doc(currentUser.uid).update({
+        photoURL: url
+      });
+    }).then(() => {
       document.getElementById("profilePicPreview").src = URL.createObjectURL(file);
       alert("Profile picture updated!");
-    })
-    .catch(err => {
+    }).catch(err => {
       console.error("Upload error:", err);
       alert("Failed to upload profile picture.");
-    })
-    .finally(() => showLoading(false));
+    }).finally(() => {
+      showLoading(false);
+    });
 }
-
+  
 let currentProfileUID = null;
 
 function viewUserProfile(uid) {
