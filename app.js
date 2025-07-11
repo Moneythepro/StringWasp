@@ -226,22 +226,11 @@ function openThread(uid, username) {
   switchTab("threadView");
   document.getElementById("threadWithName").textContent = username;
 
-  // Set thread document metadata (ensures future chat list shows it)
-  const threadRef = db.collection("threads").doc(threadId(currentUser.uid, uid));
-  threadRef.set({
-    participants: [currentUser.uid, uid],
-    names: {
-      [currentUser.uid]: document.getElementById("usernameDisplay").textContent || "You",
-      [uid]: username
-    },
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true });
-
-  // Unsubscribe previous if needed
   if (unsubscribeThread) unsubscribeThread();
 
-  // Start listening to thread messages
-  unsubscribeThread = threadRef.collection("messages")
+  unsubscribeThread = db.collection("threads")
+    .doc(threadId(currentUser.uid, uid))
+    .collection("messages")
     .orderBy("timestamp")
     .onSnapshot(snapshot => {
       const area = document.getElementById("threadMessages");
@@ -250,13 +239,13 @@ function openThread(uid, username) {
       snapshot.forEach(doc => {
         const msg = doc.data();
         const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+
         const bubble = document.createElement("div");
         bubble.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
 
         const textDiv = document.createElement("div");
         textDiv.textContent = `${msg.fromName}: ${decrypted}`;
         bubble.appendChild(textDiv);
-
         area.appendChild(bubble);
       });
 
