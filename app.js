@@ -12,8 +12,9 @@ function uuidv4() {
 const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
+
+// ✅ WebTorrent Init
 let client = null;
-if (!client) client = new WebTorrent();
 
 let currentUser = null;
 let currentRoom = null;
@@ -636,8 +637,8 @@ function sendTorrentFile(file) {
 }
 
 // Download magnet file
-function handleMagnetDownload(magnetURI) {
-  startTorrentClient();
+function autoDownloadMagnet(magnetURI) {
+  if (!client) client = new WebTorrent();
 
   client.add(magnetURI, torrent => {
     torrent.files.forEach(file => {
@@ -647,10 +648,14 @@ function handleMagnetDownload(magnetURI) {
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
         link.download = file.name;
+        document.body.appendChild(link);
         link.click();
+        setTimeout(() => link.remove(), 100);
       });
     });
   });
+
+  client.on('error', err => console.error("WebTorrent error:", err));
 }
 
 // Automatically parse incoming magnet links
@@ -819,7 +824,8 @@ function showToast(msg) {
   setTimeout(() => toast.remove(), 3000);
 }
 
-// ====== WebTorrent Setup ======
+// ====== WebTorrent (P2P File Share) ======
+let client = null;
 
 // ✅ Only friends or group members can share
 function isFriend(uid) {
@@ -828,7 +834,7 @@ function isFriend(uid) {
 }
 
 function shareFileViaTorrent(type) {
-  if (!client) client = new WebTorrent();  // ✅ Safe init
+  if (!client) client = new WebTorrent();  // ✅ Lazy init
 
   const input = document.createElement("input");
   input.type = "file";
@@ -839,22 +845,35 @@ function shareFileViaTorrent(type) {
     client.seed(file, torrent => {
       const magnet = torrent.magnetURI;
       const msg = `📎 File: <a href="${magnet}" target="_blank">${file.name}</a>`;
-      
-      // Continue sending based on type...
+
+      if (type === "dm" && currentThreadUser) {
+        isFriend(currentThreadUser).then(ok => {
+          if (!ok) return alert("❌ Only friends can share P2P files.");
+          document.getElementById("threadInput").value = msg;
+          sendThreadMessage();
+        });
+      } else if (type === "group" && currentRoom) {
+        document.getElementById("groupMessageInput").value = msg;
+        sendGroupMessage();
+      } else {
+        alert("⚠️ Sharing not allowed in this context.");
+      }
     });
   };
   input.click();
 }
 
-// ✅ Safer magnet downloads with progress
+// ✅ Auto download magnet link with confirmation
 function autoDownloadMagnet(magnetURI) {
+  if (!client) client = new WebTorrent();
+
   const torrent = client.add(magnetURI);
-  
+
   torrent.on('ready', () => {
     torrent.files.forEach(file => {
       file.getBlobURL((err, url) => {
-        if (err) return console.error(err);
-        
+        if (err) return console.error("Download error:", err);
+
         const a = document.createElement("a");
         a.href = url;
         a.download = file.name;
@@ -864,6 +883,21 @@ function autoDownloadMagnet(magnetURI) {
       });
     });
   });
-  
-  torrent.on('error', console.error);
+
+  torrent.on('error', err => console.error("Torrent error:", err));
+}
+
+// ✅ Scan chat for magnet links and bind download
+function renderWithMagnetSupport(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const links = container.querySelectorAll("a[href^='magnet:']");
+  links.forEach(link => {
+    link.onclick = e => {
+      e.preventDefault();
+      const confirmed = confirm(`Download file: ${link.textContent}?`);
+      if (confirmed) autoDownloadMagnet(link.href);
+    };
+  });
 }
