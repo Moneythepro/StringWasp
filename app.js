@@ -215,10 +215,8 @@ function listenInbox() {
 
         // ✅ Fix sender name
         const sender = typeof data.from === "object"
-          ? (data.from.username || data.from.email || "Unknown")
-          : data.from;
-
-        const fromUid = typeof data.from === "object" ? data.from.uid || "" : data.from;
+  ? (data.from.username || data.from.email || data.from.uid || JSON.stringify(data.from))
+  : data.from;
 
         div.innerHTML = `
           <div>
