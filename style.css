@@ -246,6 +246,16 @@ body.dark .btn-group button {
   margin-top: -6px;
   display: block;
 }
+
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 10px auto;
+  display: block;
+}
+
 #profilePicPreview, #viewProfilePic {
   width: 80px;
   height: 80px;
@@ -405,3 +415,4 @@ body.dark #loadingOverlay {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
