@@ -385,6 +385,8 @@ function openThread(uid, username) {
   currentThreadUser = uid;
   switchTab("threadView");
   document.getElementById("threadWithName").textContent = username;
+  document.getElementById("roomDropdown").style.display = "none";
+  document.querySelector(".group-info").style.display = "none";
 
   if (unsubscribeThread) unsubscribeThread();
 
@@ -612,6 +614,9 @@ function joinGroupById(groupId) {
 
 function joinRoom(roomId) {
   currentRoom = roomId;
+  document.getElementById("roomDropdown").style.display = "block";
+  document.querySelector(".group-info").style.display = "block";
+  
   if (unsubscribeMessages) unsubscribeMessages();
   if (unsubscribeTyping) unsubscribeTyping();
   listenMessages(); // ✅ Real-time group chat
