@@ -401,15 +401,15 @@ function listenInbox() {
           : data.from;
 
         div.innerHTML = `
-          <div>
-            <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
-            const senderName = data.fromName || (data.from?.username || data.from?.email || data.from || "Unknown");
-          </div>
-          <div class="btn-group">
-            <button onclick="acceptInbox('${doc.id}', '${data.type}', '${data.from}')">✔</button>
-            <button onclick="declineInbox('${doc.id}')">✖</button>
-          </div>
-        `;
+  <div>
+    <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
+    From: ${senderName}
+  </div>
+  <div class="btn-group">
+    <button onclick="acceptInbox('${doc.id}', '${data.type}', '${typeof data.from === "object" ? data.from.uid : data.from}')">✔</button>
+    <button onclick="declineInbox('${doc.id}')">✖</button>
+  </div>
+`;
         list.appendChild(div);
       });
 
