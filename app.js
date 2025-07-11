@@ -743,19 +743,35 @@ function toggleTheme() {
   localStorage.setItem("theme", isDark ? "dark" : "light");
 }
 
-function loadProfile() {
-  db.collection("users").doc(currentUser.uid).get().then(doc => {
+async function loadProfile() {
+  if (!currentUser) return;
+  
+  try {
+    const doc = await db.collection("users").doc(currentUser.uid).get();
+    if (!doc.exists) return;
+
     const user = doc.data();
-    if (!user) return;
-    document.getElementById("profileName").value = user.name || "";
-    document.getElementById("profileBio").value = user.bio || "";
-    document.getElementById("profileUsername").value = user.username || "";
-    document.getElementById("profilePhone").value = user.phone || "";
-    document.getElementById("profileEmail").value = user.email || "";
+    const fields = {
+      profileName: user.name || "",
+      profileBio: user.bio || "",
+      profileUsername: user.username || "",
+      profilePhone: user.phone || "",
+      profileEmail: user.email || ""
+    };
+
+    Object.entries(fields).forEach(([id, value]) => {
+      const el = document.getElementById(id);
+      if (el) el.value = value;
+    });
+
     if (user.photoURL) {
-      document.getElementById("profilePicPreview").src = user.photoURL;
+      const img = document.getElementById("profilePicPreview");
+      if (img) img.src = user.photoURL;
     }
-  });
+  } catch (error) {
+    console.error("Profile load error:", error);
+    // showToast("Failed to load profile");
+  }
 }
 
 function loadFriends() {
