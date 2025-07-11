@@ -91,6 +91,11 @@ function saveUsername() {
   });
 }
 
+function scrollToBottom(divId) {
+  const div = document.getElementById(divId);
+  if (div) div.scrollTop = div.scrollHeight;
+}
+
 // ===== Init App Page =====
 function loadMainUI() {
   document.getElementById("appPage").style.display = "block";
@@ -265,28 +270,41 @@ function listenMessages() {
   const messagesDiv = document.getElementById("groupMessages");
   if (!messagesDiv || !currentRoom) return;
 
+  // Unsubscribe old listener if exists
+  if (unsubscribeMessages) unsubscribeMessages();
+
   unsubscribeMessages = db.collection("groups").doc(currentRoom).collection("messages")
     .orderBy("timestamp")
     .onSnapshot(snapshot => {
       messagesDiv.innerHTML = "";
+
       snapshot.forEach(doc => {
         const msg = doc.data();
+
         const bubble = document.createElement("div");
         bubble.className = "message-bubble " + (msg.senderId === currentUser.uid ? "right" : "left");
 
+        // Sender Info
         const senderInfo = document.createElement("div");
         senderInfo.className = "sender-info";
 
         const name = document.createElement("div");
         name.className = "sender-name";
         name.textContent = msg.senderName || "Unknown";
-
         senderInfo.appendChild(name);
         bubble.appendChild(senderInfo);
 
-        const text = document.createElement("div");
-        text.textContent = msg.text;
-        bubble.appendChild(text);
+        // Decrypt message text
+        let decrypted = "";
+        try {
+          decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+        } catch (e) {
+          decrypted = "[Decryption error]";
+        }
+
+        const textDiv = document.createElement("div");
+        textDiv.textContent = typeof decrypted === "string" ? decrypted : JSON.stringify(decrypted);
+        bubble.appendChild(textDiv);
 
         messagesDiv.appendChild(bubble);
       });
@@ -296,8 +314,11 @@ function listenMessages() {
 
   // Typing Indicator
   const typingRef = db.collection("groups").doc(currentRoom).collection("typing");
+
+  if (unsubscribeTyping) unsubscribeTyping();
+
   unsubscribeTyping = typingRef.onSnapshot(snapshot => {
-    let typingUsers = [];
+    const typingUsers = [];
     snapshot.forEach(doc => {
       if (doc.id !== currentUser.uid) typingUsers.push(doc.id);
     });
@@ -312,19 +333,26 @@ function listenMessages() {
 function sendGroupMessage() {
   const input = document.getElementById("groupMessageInput");
   const text = input?.value.trim();
-  if (!text || !currentRoom) return;
+  if (!text || !currentRoom || !currentUser) return;
 
-  db.collection("groups").doc(currentRoom).collection("messages").add({
-    text,
+  const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
+
+  const messageData = {
+    text: encryptedText,
     senderId: currentUser.uid,
-    senderName: document.getElementById("usernameDisplay").textContent,
+    senderName: document.getElementById("usernameDisplay")?.textContent || "Anonymous",
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  });
+  };
 
-  // 🔄 clear typing
-  db.collection("groups").doc(currentRoom).collection("typing").doc(currentUser.uid).delete();
-
-  input.value = "";
+  db.collection("groups")
+    .doc(currentRoom)
+    .collection("messages")
+    .add(messageData)
+    .then(() => {
+      input.value = "";
+      scrollToBottom("groupMessages");
+    })
+    .catch(console.error);
 }
 
 // Typing input handler
@@ -534,42 +562,100 @@ function threadId(a, b) {
 }
 
 function openThread(uid, username) {
+function openThread(uid, username) {
   switchTab("threadView");
-  document.getElementById("threadWithName").textContent = username;
+  document.getElementById("chatName").textContent = username;
+  document.getElementById("chatStatus").textContent = "Loading...";
+  document.getElementById("chatProfilePic").src = "default-avatar.png";
+  document.getElementById("typingIndicator").textContent = "";
   currentThreadUser = uid;
 
+  // Load profile photo and last seen
+  db.collection("users").doc(uid).get().then(doc => {
+    if (doc.exists) {
+      const user = doc.data();
+      const lastSeen = user.lastSeen?.toDate().toLocaleString() || "Online recently";
+      document.getElementById("chatProfilePic").src = user.photoURL || "default-avatar.png";
+      document.getElementById("chatStatus").textContent = lastSeen;
+    } else {
+      document.getElementById("chatStatus").textContent = "User not found";
+    }
+  });
+
+  // Unsubscribe from any previous thread
   if (unsubscribeThread) unsubscribeThread();
 
-  unsubscribeThread = db.collection("threads").doc(threadId(currentUser.uid, uid)).collection("messages")
-    .orderBy("timestamp").onSnapshot(snapshot => {
+  // 🔄 Live message listener
+  unsubscribeThread = db.collection("threads")
+    .doc(threadId(currentUser.uid, uid))
+    .collection("messages")
+    .orderBy("timestamp")
+    .onSnapshot(snapshot => {
       const area = document.getElementById("threadMessages");
       area.innerHTML = "";
+
       snapshot.forEach(doc => {
         const msg = doc.data();
         const div = document.createElement("div");
         div.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
-        div.textContent = `${msg.fromName}: ${msg.text}`;
+
+        // Decrypt text safely
+        let decrypted = "";
+        try {
+          decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+        } catch (e) {
+          decrypted = "[Decryption error]";
+        }
+
+        const displayText = typeof decrypted === "string" ? decrypted : JSON.stringify(decrypted);
+        div.textContent = `${msg.fromName || "Unknown"}: ${displayText}`;
         area.appendChild(div);
       });
+
       area.scrollTop = area.scrollHeight;
     });
+
+  // Typing indicator
+  const typingRef = db.collection("threads").doc(threadId(currentUser.uid, uid)).collection("typing");
+
+  if (unsubscribeTyping) unsubscribeTyping();
+
+  unsubscribeTyping = typingRef.onSnapshot(snapshot => {
+    const usersTyping = [];
+    snapshot.forEach(doc => {
+      if (doc.id !== currentUser.uid) usersTyping.push(doc.id);
+    });
+
+    const typingDiv = document.getElementById("typingIndicator");
+    typingDiv.textContent = usersTyping.length
+      ? `${usersTyping.join(", ")} typing...`
+      : "";
+  });
 }
 
 function sendThreadMessage() {
   const input = document.getElementById("threadInput");
   const text = input?.value.trim();
-  if (!text || !currentThreadUser) return;
+  if (!text || !currentThreadUser || !currentUser) return;
 
-  const fromName = document.getElementById("usernameDisplay").textContent;
+  const fromName = document.getElementById("usernameDisplay")?.textContent || "Anonymous";
+  const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
 
-  db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser)).collection("messages").add({
-    text,
+  const messageData = {
+    text: encryptedText,
     from: currentUser.uid,
     fromName,
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  });
+  };
 
-  input.value = "";
+  db.collection("threads")
+    .doc(threadId(currentUser.uid, currentThreadUser))
+    .collection("messages")
+    .add(messageData)
+    .then(() => {
+      input.value = "";
+      scrollToBottom("threadMessages");
+    }).catch(console.error);
 }
 
 function closeThread() {
