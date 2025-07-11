@@ -748,37 +748,6 @@ function toggleTheme() {
   localStorage.setItem("theme", isDark ? "dark" : "light");
 }
 
-async function loadProfile() {
-  if (!currentUser) return;
-  
-  try {
-    const doc = await db.collection("users").doc(currentUser.uid).get();
-    if (!doc.exists) return;
-
-    const user = doc.data();
-    const fields = {
-      profileName: user.name || "",
-      profileBio: user.bio || "",
-      profileUsername: user.username || "",
-      profilePhone: user.phone || "",
-      profileEmail: user.email || ""
-    };
-
-    Object.entries(fields).forEach(([id, value]) => {
-      const el = document.getElementById(id);
-      if (el) el.value = value;
-    });
-
-    if (user.photoURL) {
-      const img = document.getElementById("profilePicPreview");
-      if (img) img.src = user.photoURL;
-    }
-  } catch (error) {
-    console.error("Profile load error:", error);
-    // showToast("Failed to load profile");
-  }
-}
-
 function loadFriends() {
   const container = document.getElementById("friendsList");
   if (!container) return;
