@@ -710,9 +710,6 @@ function saveProfile() {
   }
 }
 
-function logout() {
-  auth.signOut().then(() => location.reload());
-}
 
 function contactSupport() {
   alert("📧 Contact us at: moneythepro7@gmail.com");
