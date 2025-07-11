@@ -153,23 +153,22 @@ function saveProfile() {
 
 // ===== Load Profile UI =====
 function loadProfile() {
+  if (!currentUser) return;
+
   db.collection("users").doc(currentUser.uid).get().then(doc => {
     const data = doc.data();
     if (!data) return;
 
+    document.getElementById("profilePicPreview").src = data.photoURL || "default-avatar.png";
     document.getElementById("profileName").value = data.name || "";
     document.getElementById("profileBio").value = data.bio || "";
     document.getElementById("profileGender").value = data.gender || "";
     document.getElementById("profilePhone").value = data.phone || "";
     document.getElementById("profileEmail").value = data.email || "";
     document.getElementById("profileUsername").value = data.username || "";
-    document.getElementById("profilePicPreview").src = data.photoURL || "default-avatar.png";
     document.getElementById("usernameDisplay").textContent = data.username || "";
   });
 }
-
-// ===== Upload Profile Picture =====
-document.getElementById("profilePic").addEventListener("change", uploadProfilePic);
 
 function uploadProfilePic(e) {
   const file = e.target.files[0];
