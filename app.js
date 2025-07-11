@@ -218,16 +218,18 @@ function listenInbox() {
   ? (data.from.username || data.from.email || data.from.uid || JSON.stringify(data.from))
   : data.from;
 
-        div.innerHTML = `
-          <div>
-            <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
-            From: ${data.fromName || sender}
-          </div>
-          <div class="btn-group">
-            <button onclick="acceptInbox('${doc.id}', '${data.type}', '${fromUid}')">✔</button>
-            <button onclick="declineInbox('${doc.id}')">✖</button>
-          </div>
-        `;
+        const fromUid = typeof data.from === 'object' ? data.from.uid : data.from;
+
+div.innerHTML = `
+  <div>
+    <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
+    From: ${data.fromName || sender}
+  </div>
+  <div class="btn-group">
+    <button onclick="acceptInbox('${doc.id}', '${data.type}', '${fromUid}')">✔</button>
+    <button onclick="declineInbox('${doc.id}')">✖</button>
+  </div>
+`;
 
         list.appendChild(div);
       });
