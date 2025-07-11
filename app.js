@@ -443,6 +443,10 @@ function addFriend(uid) {
   }).then(() => alert("Friend request sent"));
 }
 
+function sendFriendRequest(uid) {
+  addFriend(uid);
+}
+
 function acceptInbox(id, type, from) {
   if (type === "friend") {
     const myRef = db.collection("users").doc(currentUser.uid).collection("friends").doc(from);
@@ -1161,3 +1165,6 @@ function uploadProfilePic(e) {
   });
 }
 
+function messageUser(uid, username) {
+  openThread(uid, username || "Friend");
+}
