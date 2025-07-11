@@ -351,3 +351,70 @@ body.dark #loadingOverlay {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ===== Enhanced Search Result Cards ===== */
+.search-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 8px 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  transition: background 0.2s ease;
+}
+.search-result:hover {
+  background: #f0f0f0;
+}
+body.dark .search-result {
+  background: #1f1f1f;
+}
+body.dark .search-result:hover {
+  background: #2a2a2a;
+}
+
+/* Avatar inside search result */
+.search-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 12px;
+}
+
+/* Info block next to avatar */
+.search-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.search-info .username {
+  font-weight: bold;
+  font-size: 14px;
+}
+.search-info .bio {
+  font-size: 12px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
+}
+body.dark .search-info .bio {
+  color: #aaa;
+}
+
+/* Call-to-action button */
+.search-result button {
+  background: #128C7E;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.search-result button:hover {
+  background: #0b6b60;
+}
