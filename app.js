@@ -632,6 +632,48 @@ function generateUUID() {
     (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
 }
 
+if (localStorage.getItem("theme") === "dark") {
+  document.body.classList.add("dark");
+  document.getElementById("darkModeToggle").checked = true;
+}
+
+function searchChats() {
+  const query = document.getElementById("globalSearch").value.toLowerCase();
+  const cards = document.querySelectorAll(".chat-card");
+  cards.forEach(card => {
+    const name = card.querySelector(".name").textContent.toLowerCase();
+    card.style.display = name.includes(query) ? "flex" : "none";
+  });
+}
+
+function runSearch() {
+  const view = currentSearchView; // 'user' or 'group'
+  const query = document.getElementById("searchInput").value.toLowerCase();
+
+  if (view === "user") {
+    document.getElementById("searchResultsUser").innerHTML = "Searching users...";
+    // simulate or call actual Firestore search here
+  } else {
+    document.getElementById("searchResultsGroup").innerHTML = "Searching groups...";
+    // simulate or call actual Firestore search here
+  }
+}
+
+let currentSearchView = "user";
+
+function switchSearchView(view) {
+  currentSearchView = view;
+  document.getElementById("searchResultsUser").style.display = view === "user" ? "block" : "none";
+  document.getElementById("searchResultsGroup").style.display = view === "group" ? "block" : "none";
+}
+
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text).then(() => alert("Copied to clipboard"));
+}
+
+function toggleTheme() {
+  const body = document.body;
+  body.classList.toggle("dark");
+  const isDark = body.classList.contains("dark");
+  localStorage.setItem("theme", isDark ? "dark" : "light");
 }
