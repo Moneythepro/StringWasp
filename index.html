@@ -148,11 +148,14 @@
       <div id="threadMessages" class="messages"></div>
       <div id="typingIndicator" class="typing"></div>
       <div class="input-bar">
-        <button class="icon-btn" onclick="triggerFileInput('thread')">📎</button>
-        <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" />
-        <button class="icon-btn" onclick="sendThreadMessage()">➤</button>
-        <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
-      </div>
+        <div class="input-bar">
+  <button class="icon-btn" onclick="triggerFileInput('thread')">📎</button>
+  <button class="icon-btn" onclick="shareFileViaTorrent('dm')">🌐</button>
+  <button class="icon-btn" onclick="shareFileViaTorrent('group')">🌍</button>
+  <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" />
+  <button class="icon-btn" onclick="sendThreadMessage()">➤</button>
+  <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
+        </div>
 
       <!-- Group Upload -->
       <input type="file" id="groupFile" style="display:none;" onchange="uploadFile('group')" />
