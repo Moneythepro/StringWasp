@@ -158,7 +158,6 @@ function saveProfile() {
 
 // ===== Load Profile UI =====
 function loadProfile() {
-function loadProfile() {
   const uid = currentUser?.uid;
   if (!uid) return;
 
@@ -195,7 +194,6 @@ function loadProfile() {
   });
   }
 
-function uploadProfilePic(e) {
 document.getElementById("profilePic").addEventListener("change", uploadProfilePic);
 
 function uploadProfilePic(e) {
