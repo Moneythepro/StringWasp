@@ -244,9 +244,7 @@ function listenInbox() {
         const data = doc.data();
         if (!data.read) unreadCount++;
 
-        const sender = typeof data.from === "object"
-          ? (data.from.username || data.from.email || "Unknown")
-          : data.from;
+        const senderName = data.fromName || "Unknown";
 
         const div = document.createElement("div");
         div.className = "inbox-card";
@@ -387,6 +385,8 @@ function openThread(uid, username) {
       });
 
       area.scrollTop = area.scrollHeight;
+
+      // ✅ Handle WebTorrent magnet links
       renderWithMagnetSupport("threadMessages");
     });
 }
