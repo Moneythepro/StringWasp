@@ -55,6 +55,17 @@ auth.onAuthStateChanged(async user => {
   }
 });
 
+function checkUsername() {
+  db.collection("users").doc(currentUser.uid).get().then(doc => {
+    if (!doc.exists || !doc.data().username) {
+      switchTab("usernameDialog");
+    } else {
+      document.getElementById("usernameDisplay").textContent = doc.data().username;
+      loadMainUI(); // ✅ Main UI loaded after username is confirmed
+    }
+  });
+}
+
 function login() {
   const email = document.getElementById("email").value.trim();
   const pass = document.getElementById("password").value;
