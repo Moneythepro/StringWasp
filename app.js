@@ -208,10 +208,24 @@ function openThread(uid, username) {
   switchTab("threadView");
   document.getElementById("threadWithName").textContent = username;
 
+  // Set thread document metadata (ensures future chat list shows it)
+  const threadRef = db.collection("threads").doc(threadId(currentUser.uid, uid));
+  threadRef.set({
+    participants: [currentUser.uid, uid],
+    names: {
+      [currentUser.uid]: document.getElementById("usernameDisplay").textContent || "You",
+      [uid]: username
+    },
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+
+  // Unsubscribe previous if needed
   if (unsubscribeThread) unsubscribeThread();
 
-  unsubscribeThread = db.collection("threads").doc(threadId(currentUser.uid, uid)).collection("messages")
-    .orderBy("timestamp").onSnapshot(snapshot => {
+  // Start listening to thread messages
+  unsubscribeThread = threadRef.collection("messages")
+    .orderBy("timestamp")
+    .onSnapshot(snapshot => {
       const area = document.getElementById("threadMessages");
       area.innerHTML = "";
 
@@ -224,6 +238,7 @@ function openThread(uid, username) {
         const textDiv = document.createElement("div");
         textDiv.textContent = `${msg.fromName}: ${decrypted}`;
         bubble.appendChild(textDiv);
+
         area.appendChild(bubble);
       });
 
@@ -452,7 +467,8 @@ function loadGroupInfo(groupId) {
 }
 
 function saveProfile() {
-  const profile = {
+  const file = document.getElementById("profilePic").files[0];
+  const data = {
     name: document.getElementById("profileName").value,
     bio: document.getElementById("profileBio").value,
     gender: document.getElementById("profileGender").value,
@@ -461,10 +477,22 @@ function saveProfile() {
     username: document.getElementById("profileUsername").value
   };
 
-  db.collection("users").doc(currentUser.uid).update(profile).then(() => {
-    alert("Profile updated");
-  });
-}
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      data.photoURL = e.target.result;
+      db.collection("users").doc(currentUser.uid).set(data, { merge: true }).then(() => {
+        document.getElementById("profilePicPreview").src = e.target.result;
+        alert("✅ Profile updated.");
+      });
+    };
+    reader.readAsDataURL(file);
+  } else {
+    db.collection("users").doc(currentUser.uid).set(data, { merge: true }).then(() => {
+      alert("✅ Profile updated.");
+    });
+  }
+      }
 
 function loadProfile() {
   db.collection("users").doc(currentUser.uid).get().then(doc => {
@@ -889,3 +917,11 @@ function joinGroupById(groupId) {
     loadGroups(); // refresh dropdown
   });
 }
+
+function messageUser() {
+  if (!currentThreadUser) return;
+  const username = document.getElementById("viewProfileUsername").textContent.replace("@", "");
+  openThread(currentThreadUser, username);
+  document.getElementById("viewProfileModal").style.display = "none";
+}
+
