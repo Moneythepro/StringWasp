@@ -485,16 +485,37 @@ function loadGroupInfo(groupId) {
     if (!doc.exists) return;
 
     const data = doc.data();
-    document.getElementById("groupOwner").textContent = "Owner: " + data.createdBy;
-    document.getElementById("groupAdmins").textContent = "Admins: " + (data.admins || []).join(", ");
+
+    // Show owner ID or label
+    const ownerText = typeof data.createdBy === "string"
+      ? data.createdBy
+      : JSON.stringify(data.createdBy);
+    document.getElementById("groupOwner").textContent = "Owner: " + ownerText;
+
+    // Show admins
+    const adminList = (data.admins || []).map(a => typeof a === "string" ? a : JSON.stringify(a));
+    document.getElementById("groupAdmins").textContent = "Admins: " + adminList.join(", ");
+
+    // Show members (and fetch usernames)
     const memberList = document.getElementById("groupMembers");
     memberList.innerHTML = "";
 
-    (data.members || []).forEach(uid => {
+    const memberUids = data.members || [];
+
+    memberUids.forEach(uid => {
       const div = document.createElement("div");
       div.className = "member-entry";
-      div.textContent = uid;
-      memberList.appendChild(div);
+
+      // Fetch user info
+      db.collection("users").doc(uid).get().then(userDoc => {
+        const userData = userDoc.data();
+        const username = userData?.username || uid;
+        div.textContent = username;
+        memberList.appendChild(div);
+      }).catch(() => {
+        div.textContent = uid;
+        memberList.appendChild(div);
+      });
     });
   });
 }
