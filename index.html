@@ -189,6 +189,22 @@
     </div>
   </div>
 
+  <!-- 👤 Full User Profile -->
+<div id="userFullProfile" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="userFullProfile.style.display='none'">×</span>
+    <img id="fullUserAvatar" src="default-avatar.png" class="profile-avatar" />
+    <h3 id="fullUserName">Username</h3>
+    <p id="fullUserBio">No bio provided</p>
+    <p id="fullUserEmail"></p>
+    <p id="fullUserPhone"></p>
+    <div class="btn-group">
+      <button onclick="addFriend(currentProfileUID)">Add Friend</button>
+      <button onclick="messageUser(currentProfileUID)">Message</button>
+    </div>
+  </div>
+</div>
+  
   <!-- 🔥 Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
