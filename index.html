@@ -2,197 +2,164 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>StringWasp</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="favicon.png" />
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
-  <!-- Loading Overlay -->
-  <div id="loadingOverlay"><div class="loader"></div></div>
+  <!-- Panic Button -->
+  <button id="panicButton" title="Emergency Panic Mode">🆘</button>
 
-  <!-- Login/Register -->
-  <div id="loginPage" class="tab">
-    <h2>Login</h2>
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
-    <button onclick="login()">Login</button>
-    <button onclick="register()">Register</button>
+  <!-- Top Navigation Tabs -->
+  <div class="tabs">
+    <button class="tabButton active" data-tab="chats">Chats</button>
+    <button class="tabButton" data-tab="friends">Friends</button>
+    <button class="tabButton" data-tab="groups">Groups</button>
+    <button class="tabButton" data-tab="explore">Explore</button>
+    <button class="tabButton" data-tab="settings">Settings</button>
   </div>
 
-  <!-- Username Setup -->
-  <div id="usernameDialog" class="tab" style="display:none;">
-    <h3>Pick a Username</h3>
-    <input id="newUsername" placeholder="Username" />
-    <button onclick="saveUsername()">Save</button>
+  <!-- Main Container -->
+  <div id="appLayout">
+
+    <!-- Chats Tab -->
+    <div id="chats" class="tabContent active">
+      <div class="leftPanel">
+        <div class="searchBar">
+          <input type="text" id="globalSearchInput" placeholder="Search..." />
+          <button id="globalSearchBtn">🔍</button>
+        </div>
+        <div id="chatList" class="chatList"></div>
+      </div>
+      <div class="rightPanel">
+        <div id="chatWindow" class="chatWindow hidden">
+          <div class="chatHeader">
+            <img id="chatHeaderImage" src="" alt="Avatar" />
+            <div>
+              <div id="chatHeaderName">Username</div>
+              <div id="chatHeaderSubtext">Status / Role</div>
+            </div>
+            <button id="chatSettingsBtn">⚙️</button>
+          </div>
+
+          <div id="messagesContainer" class="messagesContainer"></div>
+
+          <div id="typingIndicator" class="typingIndicator hidden">Typing...</div>
+
+          <div class="chatInputArea">
+            <input type="text" id="messageInput" placeholder="Type a message..." />
+            <button id="sendMessageBtn">➤</button>
+            <label class="anonToggle" title="Send Anonymously">
+              <input type="checkbox" id="anonymousToggle" /> Anonymous
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Friends Tab -->
+    <div id="friends" class="tabContent">
+      <h2>Friends</h2>
+      <div id="friendList" class="friendList"></div>
+
+      <h3>Incoming Requests</h3>
+      <div id="friendRequests" class="requestList"></div>
+
+      <h3>Sent Requests</h3>
+      <div id="sentRequests" class="requestList"></div>
+    </div>
+
+    <!-- Groups Tab -->
+    <div id="groups" class="tabContent">
+      <h2>Groups</h2>
+      <div class="groupControls">
+        <button id="createGroupBtn">➕ Create Group</button>
+        <input type="text" id="joinGroupIdInput" placeholder="Enter Group ID" />
+        <button id="joinGroupBtn">Join</button>
+      </div>
+      <div id="groupList" class="groupList"></div>
+    </div>
+
+    <!-- Explore Tab -->
+    <div id="explore" class="tabContent">
+      <h2>Explore Users</h2>
+      <div id="exploreList" class="exploreList"></div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div id="settings" class="tabContent">
+      <h2>Settings</h2>
+
+      <label>Display Name:
+        <input type="text" id="displayNameInput" placeholder="Your name" />
+      </label>
+
+      <label>Theme:
+        <select id="themeSelect">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </label>
+
+      <label>Emotion:
+        <select id="emotionSelect">
+          <option value="😊">😊 Happy</option>
+          <option value="😐">😐 Neutral</option>
+          <option value="😢">😢 Sad</option>
+          <option value="😠">😠 Angry</option>
+        </select>
+      </label>
+
+      <label>Profile Picture:
+        <input type="file" id="profilePicUpload" accept="image/*" />
+      </label>
+
+      <label>Profile Music:
+        <input type="file" id="musicUpload" accept="audio/*" />
+      </label>
+
+      <button id="logoutBtn">🚪 Log Out</button>
+      <button id="deleteAccountBtn">❌ Delete Account</button>
+    </div>
   </div>
 
-  <!-- Main App -->
-  <div id="appPage" class="tabContent">
-    <!-- Theme Switch -->
-    <label class="theme-switch">
-      <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()" />
-      <span class="slider"></span>
-    </label>
-
-    <!-- Header -->
-    <div class="header">
-      <span id="usernameDisplay"></span>
-      <span id="onlineStatus" class="status-indicator"></span>
-    </div>
-
-    <!-- Bottom Tabs -->
-    <div class="tabs">
-      <button onclick="switchTab('chatTab')" id="tab-chat">💬<br><span>Chats</span></button>
-      <button onclick="switchTab('friendsTab')" id="tab-friends">🧑‍🤝‍🧑<br><span>Friends</span></button>
-      <button onclick="switchTab('groupsTab')" id="tab-groups">👥<br><span>Groups</span></button>
-      <button onclick="switchTab('inboxTab')" id="tab-inbox">🔔<br><span>Inbox</span><span id="inboxBadge" class="badge"></span></button>
-      <button onclick="switchTab('searchTab')" id="tab-search">🔍<br><span>Search</span></button>
-      <button onclick="switchTab('profileTab')" id="tab-profile">🙍‍♂️<br><span>Profile</span></button>
-    </div>
-
-    <!-- Personal Chats -->
-    <div id="chatTab" class="tab">
-      <h3>Chats</h3>
-      <div id="messages" class="messages"></div>
-      <div id="typingIndicator" class="typing"></div>
-      <input id="messageInput" placeholder="Type a message..." />
-      <button onclick="sendMessage()">Send</button>
-    </div>
-
-    <!-- 👥 Group Chats -->
-    <div id="groupsTab" class="tab">
-      <div class="header">
-        <button onclick="createGroup()">Create Group</button>
-        <button onclick="joinGroup()">Join Group</button>
-      </div>
-
-      <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
-
-      <div id="groupInfo" class="group-meta">
-        <div><strong>Group Info</strong></div>
-        <div id="groupOwner"></div>
-        <div id="groupAdmins"></div>
-        <div id="groupMembers" class="member-list"></div>
-      </div>
-
-      <div id="groupMessages" class="messages"></div>
-      <input id="groupMessageInput" placeholder="Type a message..." />
-      <button onclick="sendGroupMessage()">Send</button>
-    </div>
-
-    <!-- 👥 Friends Tab (NEW) -->
-    <div id="friendsTab" class="tab">
-      <h3>Your Friends</h3>
-      <input id="friendSearchInput" placeholder="Search friends..." />
-      <div id="friendsList"></div>
-    </div>
-
-    <!-- Inbox -->
-    <div id="inboxTab" class="tab">
-      <h3>Inbox</h3>
-      <button onclick="markAllRead()">Mark All as Read</button>
-      <div id="inboxList"></div>
-    </div>
-
-    <!-- Search -->
-    <div id="searchTab" class="tab">
-      <h3>Search</h3>
-      <input id="searchInput" placeholder="Search users or groups..." />
-      <div class="search-buttons">
-        <button onclick="switchSearchView('user')">Users</button>
-        <button onclick="switchSearchView('group')">Groups</button>
-        <button onclick="runSearch()">Search</button>
-      </div>
-      <div id="searchResultsUser" class="search-results"></div>
-      <div id="searchResultsGroup" class="search-results" style="display:none;"></div>
-    </div>
-
-    <!-- Profile -->
-    <div id="profileTab" class="tab">
-      <h3>Your Profile</h3>
-      <img id="profilePicPreview" src="default-avatar.png" alt="Avatar" onerror="this.src='default-avatar.png'" />
-      <label class="profile-edit-label">Tap to upload</label>
-      <input type="file" id="profilePic" accept="image/*" style="display:none;" />
-      <input id="profileName" placeholder="Your Name" />
-      <textarea id="profileBio" placeholder="Your Bio"></textarea>
-      <select id="profileGender">
-        <option value="">Select Gender</option>
-        <option>Male</option>
-        <option>Female</option>
-        <option>Other</option>
+  <!-- Create Group Modal -->
+  <div id="createGroupModal" class="modal hidden">
+    <div class="modalContent">
+      <h2>Create Group</h2>
+      <input type="text" id="groupNameInput" placeholder="Group name" />
+      <select id="groupPrivacySelect">
+        <option value="public">Public</option>
+        <option value="private">Private</option>
       </select>
-      <input id="profilePhone" placeholder="Phone Number" />
-      <input id="profileEmail" placeholder="Public Email" />
-      <input id="profileUsername" placeholder="Edit Username" />
-      <button onclick="saveProfile()">Save</button>
-      <button onclick="logout()">Logout</button>
-      <button onclick="contactSupport()">Contact Us</button>
-    </div>
-
-    <!-- Direct Thread View -->
-    <div id="threadView" class="tab">
-      <button onclick="closeThread()">← Back</button>
-      <h3 id="threadWithName"></h3>
-      <div id="threadMessages" class="messages"></div>
-      <input id="threadInput" placeholder="Type message..." />
-      <button onclick="sendThreadMessage()">Send</button>
-    </div>
-
-    <!-- View Profile Modal -->
-    <div id="viewProfileModal" class="modal">
-      <div class="modal-content">
-        <span class="close" onclick="document.getElementById('viewProfileModal').style.display='none'">×</span>
-        <img id="viewProfilePic" src="default-avatar.png" alt="Avatar" onerror="this.src='default-avatar.png'" />
-        <h3 id="viewProfileName">Name</h3>
-        <p id="viewProfileUsername">@username</p>
-        <p id="viewProfileBio">No bio</p>
-        <p id="viewProfileEmail"></p>
-        <p id="viewProfileStatus"></p>
-        <div class="btn-group">
-          <button onclick="addFriend()">Add Friend</button>
-          <button onclick="messageUser()">Message</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal -->
-    <div id="customModal" class="modal">
-      <div class="modal-content">
-        <p id="modalMessage">Are you sure?</p>
-        <div class="modal-buttons">
-          <button id="modalYes">Yes</button>
-          <button id="modalNo">Cancel</button>
-        </div>
-      </div>
+      <button id="confirmCreateGroupBtn">Create</button>
+      <button onclick="closeModal('createGroupModal')">Cancel</button>
     </div>
   </div>
 
-  <!-- Firebase v8 SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+  <!-- Thread Modal -->
+  <div id="threadModal" class="modal hidden">
+    <div class="modalContent">
+      <h2>Thread</h2>
+      <div id="threadMessages" class="threadMessages"></div>
+      <input type="text" id="threadReplyInput" placeholder="Reply..." />
+      <button id="sendThreadReplyBtn">Send</button>
+      <button onclick="closeModal('threadModal')">Close</button>
+    </div>
+  </div>
 
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden">Toast Message</div>
+
+  <!-- Spinner Loader -->
+  <div id="loadingSpinner" class="spinner hidden">⏳ Loading...</div>
+
+  <!-- Music Audio Player -->
+  <audio id="profileMusic" controls class="hidden"></audio>
+
+  <!-- Firebase and Main Script -->
   <script src="firebase.js"></script>
   <script src="app.js"></script>
-
-  <!-- Other Utilities -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js')
-        .then(() => console.log("✔ Service Worker Registered"))
-        .catch(console.error);
-    }
-  </script>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
-  <script src="https://unpkg.com/idb@7/build/umd.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </body>
 </html>
