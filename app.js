@@ -12,6 +12,7 @@ function uuidv4() {
 const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
+const client = new WebTorrent();
 
 let currentUser = null;
 let currentRoom = null;
@@ -384,6 +385,7 @@ function openThread(uid, username) {
       });
 
       area.scrollTop = area.scrollHeight;
+      renderWithMagnetSupport("threadMessages");
     });
 }
 
@@ -418,6 +420,41 @@ function sendThreadMessage() {
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
   });
+}
+
+function listenMessages() {
+  const messagesDiv = document.getElementById("groupMessages");
+  if (!messagesDiv || !currentRoom) return;
+
+  if (unsubscribeMessages) unsubscribeMessages();
+
+  unsubscribeMessages = db.collection("groups").doc(currentRoom).collection("messages")
+    .orderBy("timestamp")
+    .onSnapshot(snapshot => {
+      messagesDiv.innerHTML = "";
+      snapshot.forEach(doc => {
+        const msg = doc.data();
+        const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+        const bubble = document.createElement("div");
+        bubble.className = "message-bubble " + (msg.senderId === currentUser.uid ? "right" : "left");
+
+        const sender = document.createElement("div");
+        sender.className = "sender-info";
+        sender.innerHTML = `<strong>${msg.senderName || "Unknown"}</strong>`;
+        bubble.appendChild(sender);
+
+        const textDiv = document.createElement("div");
+        textDiv.innerHTML = decrypted;
+        bubble.appendChild(textDiv);
+
+        messagesDiv.appendChild(bubble);
+      });
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      renderWithMagnetSupport("groupMessages");
+
+      // 👇 Add magnet download handler
+      renderWithMagnetSupport("groupMessages");
+    });
 }
 
 // ===== Typing Indicator =====
