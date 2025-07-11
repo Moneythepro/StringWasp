@@ -112,14 +112,19 @@ function checkUsername() {
 
 // ===== Main App Load UI =====
 function loadMainUI() {
+  showLoading(true); // Optional: Show loading spinner
+
   document.getElementById("appPage").style.display = "block";
   switchTab("chatTab");
 
-  loadInbox();
-  loadFriends();
-  loadProfile();
-  loadGroups?.();
-  loadChatList();
+  // Safe calls with error catching
+  try { loadInbox(); } catch (e) { console.warn("Inbox failed", e); }
+  try { loadFriends(); } catch (e) { console.warn("Friends failed", e); }
+  try { loadProfile(); } catch (e) { console.warn("Profile failed", e); }
+  try { loadGroups?.(); } catch (e) { console.warn("Groups load skipped", e); }
+  try { loadChatList(); } catch (e) { console.warn("Chats failed", e); }
+
+  setTimeout(() => showLoading(false), 300); // Slight delay for smoother transition
 }
 
 // ===== Save Profile Data =====
