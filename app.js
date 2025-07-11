@@ -120,12 +120,6 @@ function threadId(a, b) {
   return [a, b].sort().join("_");
 }
 
-function switchTab(tabId) {
-  document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
-  const tab = document.getElementById(tabId);
-  if (tab) tab.style.display = "block";
-}
-
 // ===== Send Message (Group) =====
 function sendGroupMessage() {
   const input = document.getElementById("groupMessageInput");
@@ -409,7 +403,7 @@ function listenInbox() {
         div.innerHTML = `
           <div>
             <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
-            From: ${data.fromName || sender}
+            const senderName = data.fromName || (data.from?.username || data.from?.email || data.from || "Unknown");
           </div>
           <div class="btn-group">
             <button onclick="acceptInbox('${doc.id}', '${data.type}', '${data.from}')">✔</button>
