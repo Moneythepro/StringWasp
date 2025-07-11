@@ -273,86 +273,55 @@ function loadGroups() {
 }
 
 function loadChatList() {
-  const list = document.getElementById("chatList");
-  if (!list || !currentUser) return;
+  if (!currentUser) return;
 
-  list.innerHTML = `<div class="loader"></div>`;
-  const chats = [];
+  const chatList = document.getElementById("chatList");
+  chatList.innerHTML = "";
 
-  // 🔹 Load DMs
+  // 🔁 1. Load DM Threads
   db.collection("threads")
     .where("participants", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
     .get()
     .then(snapshot => {
-      const dmPromises = [];
-
       snapshot.forEach(doc => {
         const data = doc.data();
-        const otherUid = data.participants.find(uid => uid !== currentUser.uid);
-        const last = data.lastMessage || "";
-        const time = data.updatedAt?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || "";
+        const otherId = data.participants.find(uid => uid !== currentUser.uid);
+        const otherName = data.names?.[otherId] || "Friend";
 
-        const p = db.collection("users").doc(otherUid).get().then(userDoc => {
-          const user = userDoc.data() || {};
-          chats.push({
-            type: "dm",
-            id: otherUid,
-            name: user.username || data.names?.[otherUid] || "Unknown",
-            photoURL: user.photoURL || "default-avatar.png",
-            last,
-            time
-          });
-        });
-
-        dmPromises.push(p);
+        const card = document.createElement("div");
+        card.className = "chat-card";
+        card.innerHTML = `
+          <img src="default-avatar.png" class="friend-avatar" />
+          <div class="details">
+            <div class="name">${otherName}</div>
+            <div class="last-message">${data.lastMessage || ""}</div>
+          </div>
+        `;
+        card.onclick = () => openThread(otherId, otherName);
+        chatList.appendChild(card);
       });
+    });
 
-      // 🔸 After DMs, load groups
-      Promise.all(dmPromises).then(() => {
-        db.collection("groups")
-          .where("members", "array-contains", currentUser.uid)
-          .get()
-          .then(groupSnap => {
-            groupSnap.forEach(doc => {
-              const group = doc.data();
-              chats.push({
-                type: "group",
-                id: doc.id,
-                name: group.name || "Unnamed Group",
-                photoURL: group.photoURL || "group-icon.png",
-                last: group.lastMessage || "",
-                time: group.updatedAt?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || ""
-              });
-            });
+  // 🔁 2. Load Groups where user is a member
+  db.collection("groups")
+    .where("members", "array-contains", currentUser.uid)
+    .get()
+    .then(snapshot => {
+      snapshot.forEach(doc => {
+        const data = doc.data();
 
-            // ✅ Sort and render
-            chats.sort((a, b) => b.time.localeCompare(a.time));
-            list.innerHTML = "";
-
-            if (chats.length === 0) {
-              list.innerHTML = `<div style="padding:10px;">No chats yet</div>`;
-              return;
-            }
-
-            chats.forEach(chat => {
-              const div = document.createElement("div");
-              div.className = "chat-card";
-              div.onclick = () => {
-                if (chat.type === "dm") openThread(chat.id, chat.name);
-                else joinRoom(chat.id);
-              };
-              div.innerHTML = `
-                <img src="${chat.photoURL}" class="friend-avatar" />
-                <div class="details">
-                  <div class="name">${chat.name}</div>
-                  <div class="last-message">${chat.last}</div>
-                </div>
-                <div class="meta">${chat.time}</div>
-              `;
-              list.appendChild(div);
-            });
-          });
+        const card = document.createElement("div");
+        card.className = "chat-card";
+        card.innerHTML = `
+          <img src="${data.icon || 'group-icon.png'}" class="friend-avatar" />
+          <div class="details">
+            <div class="name">${data.name}</div>
+            <div class="last-message">${data.lastMessage || "Group chat"}</div>
+          </div>
+        `;
+        card.onclick = () => joinRoom(doc.id);
+        chatList.appendChild(card);
       });
     });
 }
