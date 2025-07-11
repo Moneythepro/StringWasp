@@ -672,7 +672,89 @@ function listenInbox() {
 function markAllRead() {
   db.collection("inbox").doc(currentUser.uid).collection("items")
     .get().then(snapshot => {
+      snaps// ===== Upload File (Thread or Group) =====
+function triggerFileInput(type) {
+  const input = type === "thread" ? document.getElementById("threadFile") : document.getElementById("groupFile");
+  input.click();
+}
+
+function uploadFile(type) {
+  const input = type === "thread" ? document.getElementById("threadFile") : document.getElementById("groupFile");
+  const file = input.files[0];
+  if (!file || !currentUser) return;
+
+  const storageRef = firebase.storage().ref(`${type}_uploads/${currentUser.uid}/${Date.now()}_${file.name}`);
+  showLoading(true);
+
+  storageRef.put(file).then(snapshot => {
+    return snapshot.ref.getDownloadURL();
+  }).then(url => {
+    const msg = `📎 File: <a href="${url}" target="_blank">${file.name}</a>`;
+    if (type === "thread") {
+      document.getElementById("threadInput").value = msg;
+      sendThreadMessage();
+    } else {
+      document.getElementById("groupMessageInput").value = msg;
+      sendGroupMessage();
+    }
+  }).catch(console.error).finally(() => {
+    showLoading(false);
+  });
+}
+
+function handleTyping(type) {
+  const typingRef = type === "group"
+    ? db.collection("groups").doc(currentRoom).collection("typing").doc(currentUser.uid)
+    : db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser)).collection("typing").doc(currentUser.uid);
+
+  typingRef.set({ typing: true });
+
+  setTimeout(() => typingRef.delete(), 2000); // Clear after 2s
+}
+
+function listenInbox() {
+  const list = document.getElementById("inboxList");
+  if (!list || !currentUser) return;
+
+  if (unsubscribeInbox) unsubscribeInbox();
+  unsubscribeInbox = db.collection("inbox").doc(currentUser.uid).collection("items")
+    .orderBy("timestamp", "desc")
+    .onSnapshot(snapshot => {
+      list.innerHTML = "";
+      let unreadCount = 0;
+
       snapshot.forEach(doc => {
+        const data = doc.data();
+        if (!data.read) unreadCount++;
+
+        const div = document.createElement("div");
+        div.className = "inbox-card";
+        const sender = typeof data.from === "object"
+          ? (data.from.username || data.from.email || "Unknown")
+          : data.from;
+
+        div.innerHTML = `
+          <div>
+            <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
+            From: ${data.fromName || sender}
+          </div>
+          <div class="btn-group">
+            <button onclick="acceptInbox('${doc.id}', '${data.type}', '${data.from}')">✔</button>
+            <button onclick="declineInbox('${doc.id}')">✖</button>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+
+      document.getElementById("inboxBadge").textContent = unreadCount || "";
+    });
+}
+
+function markAllRead() {
+  db.collection("inbox").doc(currentUser.uid).collection("items")
+    .get().then(snapshot => {
+      snapshot.forEach(doc => {
+hot.forEach(doc => {
         doc.ref.update({ read: true });
       });
     });
