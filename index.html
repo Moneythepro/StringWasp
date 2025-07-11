@@ -204,6 +204,22 @@
     </div>
   </div>
 </div>
+
+  <!-- 👥 Group Info Modal -->
+<div id="groupFullInfo" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="groupFullInfo.style.display='none'">×</span>
+    <img id="groupAvatar" src="group-icon.png" class="profile-avatar" />
+    <h3 id="groupName">Group Name</h3>
+    <p id="groupDescription">No description</p>
+    <p id="groupOwnerInfo">Owner: loading...</p>
+    <div id="groupMembersList"></div>
+    <div class="btn-group">
+      <button onclick="joinGroupById(currentGroupID)">Join</button>
+      <button onclick="inviteByLink()">Invite</button>
+    </div>
+  </div>
+</div>
   
   <!-- 🔥 Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
