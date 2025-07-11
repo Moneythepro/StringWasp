@@ -455,9 +455,6 @@ function deleteThread() {
 }
 
 // ===== Group System =====
-let currentRoom = null;
-let unsubscribeMessages = null;
-let unsubscribeTyping = null;
 
 // 🔁 Join Room
 function joinRoom(roomName) {
