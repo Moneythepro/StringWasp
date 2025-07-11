@@ -1053,8 +1053,7 @@ function joinGroupById(groupId) {
   }).then(() => showToast("Joined group!"));
 }
 
-  modal.style.display = "flex";
-}
+// ✅ These are NOT already in app.js, safe to add at bottom
 
 function blockUser() {
   showModal("Block this user?", () => {
@@ -1066,94 +1065,17 @@ function exportChat() {
   alert("Export coming soon!");
 }
 
-function deleteThread() {
-  showModal("Delete this chat?", () => {
-    const ref = db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser)).collection("messages");
-    ref.get().then(snapshot => {
-      snapshot.forEach(doc => doc.ref.delete());
-      alert("Chat deleted");
-    });
-  });
-}
-
-function viewMedia() {
-  alert("Media viewer coming soon");
-}
-
 function generateUUID() {
   return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
     (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
-}
-
-if (localStorage.getItem("theme") === "dark") {
-  document.body.classList.add("dark");
-  const toggle = document.getElementById("darkModeToggle");
-  if (toggle) toggle.checked = true;
-}
-
-function searchChats() {
-  const query = document.getElementById("globalSearch")?.value.toLowerCase();
-  const cards = document.querySelectorAll(".chat-card");
-  cards.forEach(card => {
-    const name = card.querySelector(".name").textContent.toLowerCase();
-    card.style.display = name.includes(query) ? "flex" : "none";
-  });
-}
-
-function runSearch() {
-  const term = document.getElementById("searchInput")?.value.toLowerCase();
-  if (!term) return;
-
-  const userResults = document.getElementById("searchResultsUser");
-  const groupResults = document.getElementById("searchResultsGroup");
-  userResults.innerHTML = "";
-  groupResults.innerHTML = "";
-
-  db.collection("users").get().then(snapshot => {
-    snapshot.forEach(doc => {
-      const user = doc.data();
-      if ((user.username || "").toLowerCase().includes(term)) {
-        const div = document.createElement("div");
-        div.className = "search-result";
-        div.innerHTML = `
-          <img src="${user.photoURL || 'default-avatar.png'}" class="search-avatar" />
-          <div class="search-username">${user.username || user.email}</div>
-          <button onclick="sendFriendRequest('${doc.id}')">➕ Add Friend</button>
-        `;
-        userResults.appendChild(div);
-      }
-    });
-  });
-
-  db.collection("groups").get().then(snapshot => {
-    snapshot.forEach(doc => {
-      const group = doc.data();
-      if ((group.name || "").toLowerCase().includes(term)) {
-        const div = document.createElement("div");
-        div.className = "search-result";
-        div.innerHTML = `
-          <div class="search-username">👥 ${group.name}</div>
-          <button onclick="joinGroupById('${doc.id}')">Join</button>
-        `;
-        groupResults.appendChild(div);
-      }
-    });
-  });
-}
-
-function switchSearchView(view) {
-  currentSearchView = view;
-  document.getElementById("searchResultsUser").style.display = view === "user" ? "block" : "none";
-  document.getElementById("searchResultsGroup").style.display = view === "group" ? "block" : "none";
 }
 
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text).then(() => alert("Copied to clipboard"));
 }
 
-function toggleTheme() {
-  const body = document.body;
-  body.classList.toggle("dark");
-  const isDark = body.classList.contains("dark");
-  localStorage.setItem("theme", isDark ? "dark" : "light");
+if (localStorage.getItem("theme") === "dark") {
+  document.body.classList.add("dark");
+  const toggle = document.getElementById("darkModeToggle");
+  if (toggle) toggle.checked = true;
 }
