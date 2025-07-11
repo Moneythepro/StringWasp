@@ -192,6 +192,57 @@ function uploadProfilePic(e) {
     .finally(() => showLoading(false));
 }
 
+let currentProfileUID = null;
+
+function viewUserProfile(uid) {
+  currentProfileUID = uid;
+
+  db.collection("users").doc(uid).get().then(doc => {
+    const u = doc.data();
+    if (!u) return alert("User not found");
+
+    document.getElementById("fullUserAvatar").src = u.photoURL || "default-avatar.png";
+    document.getElementById("fullUserName").textContent = "@" + (u.username || "unknown");
+    document.getElementById("fullUserBio").textContent = u.bio || "No bio";
+    document.getElementById("fullUserEmail").textContent = u.email || "";
+    document.getElementById("fullUserPhone").textContent = u.phone || "";
+
+    document.getElementById("userFullProfile").style.display = "flex";
+  });
+}
+
+let currentGroupID = null;
+
+function viewGroupInfo(groupId) {
+  currentGroupID = groupId;
+
+  db.collection("groups").doc(groupId).get().then(doc => {
+    const g = doc.data();
+    if (!g) return alert("Group not found");
+
+    document.getElementById("groupAvatar").src = g.photoURL || "group-icon.png";
+    document.getElementById("groupName").textContent = g.name || "Group";
+    document.getElementById("groupDescription").textContent = g.description || "No description";
+    document.getElementById("groupOwnerInfo").textContent = "Owner: @" + (g.ownerUsername || g.owner || "unknown");
+
+    const memberList = document.getElementById("groupMembersList");
+    memberList.innerHTML = "<b>Members:</b>";
+
+    const promises = (g.members || []).map(uid =>
+      db.collection("users").doc(uid).get().then(d => {
+        const user = d.data();
+        const div = document.createElement("div");
+        div.textContent = "@" + (user?.username || uid);
+        memberList.appendChild(div);
+      })
+    );
+
+    Promise.all(promises).then(() => {
+      document.getElementById("groupFullInfo").style.display = "flex";
+    });
+  });
+}
+
 // ===== Contact Support Shortcut =====
 function contactSupport() {
   alert("Contact us at: support@stringwasp.com");
