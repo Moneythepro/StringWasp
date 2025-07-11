@@ -1,183 +1,239 @@
-/* === UNIQUE STRINGWASP THEME COLORS === */
-:root {
-  --primary: #3d5afe;   /* Indigo A400 */
-  --primary-dark: #304ffe;
-  --bg-light: #f4f6fb;
-  --bg-dark: #1a1c2c;
-  --accent: #00c853;    /* Green A700 */
-  --danger: #ff5252;
-  --gray: #b0bec5;
-}
-
-body {
-  background: var(--bg-light);
-  color: #333;
-}
-body.dark {
-  background: var(--bg-dark);
-  color: #f0f0f0;
-}
-
-button {
-  background: var(--primary);
-  color: white;
-  border-radius: 12px;
-  padding: 10px 14px;
-  font-size: 14px;
-  transition: background 0.3s;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.12);
-}
-button:hover {
-  background: var(--primary-dark);
-}
-
-/* === Tabs === */
-.tabs {
-  background: white;
-  border-top: 1px solid var(--gray);
-  display: flex;
-  justify-content: space-around;
-}
-body.dark .tabs {
-  background: #2b2b2b;
-  border-top: 1px solid #444;
-}
-.tabs button {
-  font-size: 13px;
-  flex: 1;
-  text-align: center;
-}
-
-/* === Message Bubbles === */
-.message-bubble {
-  padding: 10px 14px;
-  border-radius: 20px;
-  margin: 4px 0;
-  font-size: 14px;
-  max-width: 70%;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
-.left {
-  background: #e3f2fd;
-  align-self: flex-start;
-}
-.right {
-  background: #c8e6c9;
-  align-self: flex-end;
-}
-body.dark .left {
-  background: #2c3e50;
-}
-body.dark .right {
-  background: #388e3c;
-  color: #fff;
-}
-
-/* === Cards and UI Blocks === */
-.inbox-card,
-.friend-entry,
-.search-result,
-.group-meta {
-  border-radius: 12px;
-  background: white;
-  padding: 10px;
-  margin-bottom: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-body.dark .inbox-card,
-body.dark .friend-entry,
-body.dark .search-result,
-body.dark .group-meta {
-  background: #2a2a2a;
-  color: #f0f0f0;
-}
-
-/* === Typing Indicator === */
-.typing {
-  font-size: 12px;
-  font-style: italic;
-  color: #777;
-  padding: 6px 10px;
-}
-
-/* === Input Bar === */
-.input-bar {
-  display: flex;
-  align-items: center;
-  padding: 8px;
-  background: #fff;
-  border-top: 1px solid #ddd;
-}
-.input-bar input {
-  flex: 1;
-  padding: 10px 14px;
-  border-radius: 20px;
-  border: 1px solid #ccc;
-  margin: 0 10px;
-  font-size: 14px;
-}
-.input-bar button {
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
+/* ===== Base Layout Reset ===== */
+* {
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+  margin: 0;
   padding: 0;
 }
-
-/* === Profile Picture Preview === */
-#profilePicPreview, #viewProfilePic {
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin: 10px auto;
-  display: block;
-  border: 2px solid var(--primary);
+body {
+  background: #f0f0f0;
+  color: #222;
+}
+body.dark {
+  background: #111;
+  color: #eee;
 }
 
-/* === Chat Header === */
-.chat-header {
-  background: var(--primary);
+/* ===== Tabs & Header ===== */
+.tabs {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: #ffffff;
+  display: flex;
+  justify-content: space-around;
+  border-top: 1px solid #ccc;
+  z-index: 10;
+}
+.tabs button {
+  flex: 1;
+  background: none;
+  border: none;
+  font-size: 13px;
+  padding: 8px 0;
+  color: #444;
+}
+.tabs button span {
+  font-size: 11px;
+  display: block;
+}
+body.dark .tabs {
+  background: #1a1a1a;
+  border-color: #333;
+}
+
+/* ===== Header Bar ===== */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #128c7e;
   color: white;
-  padding: 10px;
+  padding: 12px 16px;
+}
+.chat-header {
   display: flex;
   align-items: center;
-}
-.chat-header h3 {
-  font-size: 16px;
-  margin: 0;
+  background: #ffffff;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
 }
 .chat-header img {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  margin-right: 10px;
+  margin-right: 12px;
+}
+.chat-header h3 {
+  font-size: 16px;
+  margin: 0;
 }
 
-/* === Dark Mode Tweaks === */
+/* ===== Message Bubble ===== */
+.messages {
+  padding: 12px;
+  overflow-y: auto;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.message-bubble {
+  padding: 10px 14px;
+  border-radius: 20px;
+  max-width: 70%;
+  font-size: 14px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  display: inline-block;
+}
+.left {
+  background: #e5e5ea;
+  align-self: flex-start;
+  border-top-left-radius: 0;
+}
+.right {
+  background: #dcf8c6;
+  align-self: flex-end;
+  border-top-right-radius: 0;
+  margin-left: auto;
+}
+body.dark .left {
+  background: #2a2a2a;
+}
+body.dark .right {
+  background: #075e54;
+  color: white;
+}
+
+/* ===== Input Bar ===== */
+.input-bar {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  padding: 8px;
+  border-top: 1px solid #ccc;
+}
+.input-bar input {
+  flex: 1;
+  padding: 10px 14px;
+  margin: 0 10px;
+  border-radius: 30px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+.input-bar button {
+  background: #128c7e;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 body.dark .input-bar {
-  background: #1c1c1c;
+  background: #181818;
   border-color: #333;
 }
 body.dark .input-bar input {
   background: #2c2c2c;
-  color: #fff;
+  color: white;
   border-color: #444;
 }
-body.dark .chat-header {
-  background: #222;
+
+/* ===== Chat List (Inbox Style) ===== */
+.chat-card {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
 }
-body.dark .message-bubble {
-  box-shadow: none;
+.chat-card img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  margin-right: 12px;
+}
+.chat-card .details {
+  flex: 1;
+}
+.chat-card .name {
+  font-weight: bold;
+  font-size: 15px;
+}
+.chat-card .last-message {
+  font-size: 13px;
+  color: #666;
+}
+body.dark .chat-card {
+  background: #1c1c1c;
+  border-color: #333;
 }
 
-/* === Buttons Group === */
-.btn-group button {
-  background: var(--gray);
-  color: black;
-  border-radius: 8px;
-  padding: 6px 10px;
+/* ===== Typing Indicator ===== */
+.typing {
+  font-size: 12px;
+  font-style: italic;
+  padding: 4px 12px;
+  color: #888;
 }
-body.dark .btn-group button {
-  background: #444;
+
+/* ===== Profile, Search & Inbox ===== */
+.inbox-card, .friend-entry, .search-result {
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px;
+  margin: 8px 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+body.dark .inbox-card, body.dark .friend-entry, body.dark .search-result {
+  background: #1e1e1e;
+}
+
+/* ===== Floating Action Button (New Chat) ===== */
+#fab {
+  position: fixed;
+  bottom: 70px;
+  right: 20px;
+  background: #128c7e;
   color: white;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
+/* ===== Loader ===== */
+#loadingOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+body.dark #loadingOverlay {
+  background: rgba(0,0,0,0.6);
+}
+.loader {
+  border: 4px solid #ddd;
+  border-top: 4px solid #128c7e;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
