@@ -150,7 +150,6 @@ function threadId(a, b) {
   return [a, b].sort().join("_");
 }
 
-let unsubscribeThread;
 
 function openThread(uid, username) {
   switchTab("threadView");
