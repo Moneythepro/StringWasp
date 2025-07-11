@@ -142,6 +142,10 @@ function sendGroupMessage() {
 
   db.collection("groups").doc(currentRoom).collection("messages").add(message).then(() => {
     input.value = "";
+    db.collection("groups").doc(currentRoom).update({
+      lastMessage: text,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
   });
 }
 
