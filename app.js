@@ -619,7 +619,6 @@ function exportChat() {
 }
 
 // ===== WebTorrent (P2P File Share) =====
-let client = null;
 
 function startTorrentClient() {
   if (!client) client = new WebTorrent();
