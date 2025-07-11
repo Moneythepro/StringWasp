@@ -322,15 +322,20 @@ function openThread(uid, username) {
     .onSnapshot(snapshot => {
       const area = document.getElementById("threadMessages");
       area.innerHTML = "";
-      snapshot.forEach(doc => {
-        const msg = doc.data();
-        const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
-        const displayText = typeof decrypted === "string" ? decrypted : JSON.stringify(decrypted);
-bubble.textContent = `${msg.fromName}: ${displayText}`;
-        area.appendChild(bubble);
-      });
-      area.scrollTop = area.scrollHeight;
-    });
+      // ✅ Fixed version
+snapshot.forEach(doc => {
+  const msg = doc.data();
+  const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+  const displayText = typeof decrypted === "string" ? decrypted : JSON.stringify(decrypted);
+  
+  // Create message bubble element
+  const bubble = document.createElement("div");
+  bubble.className = "message-bubble";
+  bubble.textContent = `${msg.fromName}: ${displayText}`;
+  
+  area.appendChild(bubble);
+  area.scrollTop = area.scrollHeight;
+});
 
   // Typing
   db.collection("threads").doc(threadId(currentUser.uid, uid)).collection("typing")
