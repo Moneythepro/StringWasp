@@ -677,3 +677,105 @@ function toggleTheme() {
   const isDark = body.classList.contains("dark");
   localStorage.setItem("theme", isDark ? "dark" : "light");
 }
+
+function loadProfile() {
+  db.collection("users").doc(currentUser.uid).get().then(doc => {
+    const user = doc.data();
+    if (!user) return;
+    document.getElementById("profileName").value = user.name || "";
+    document.getElementById("profileBio").value = user.bio || "";
+    document.getElementById("profileUsername").value = user.username || "";
+    document.getElementById("profilePhone").value = user.phone || "";
+    document.getElementById("profileEmail").value = user.email || "";
+    if (user.photoURL) {
+      document.getElementById("profilePicPreview").src = user.photoURL;
+    }
+  });
+}
+
+function loadFriends() {
+  const container = document.getElementById("friendsList");
+  if (!container) return;
+  db.collection("users").doc(currentUser.uid).collection("friends")
+    .onSnapshot(snapshot => {
+      container.innerHTML = "";
+      snapshot.forEach(doc => {
+        const friendId = doc.id;
+        db.collection("users").doc(friendId).get().then(friendDoc => {
+          const data = friendDoc.data();
+          const div = document.createElement("div");
+          div.className = "friend-entry";
+          div.innerHTML = `
+            <img src="${data.photoURL || 'default-avatar.png'}" class="friend-avatar" />
+            <span class="friend-name">${data.username || 'Unknown'}</span>
+            <button onclick="openThread('${friendId}', '${data.username || 'Unknown'}')">Message</button>
+          `;
+          container.appendChild(div);
+        });
+      });
+    });
+}
+
+function loadChatList() {
+  const chatList = document.getElementById("chatList");
+  if (!chatList) return;
+
+  db.collection("groups").where("members", "array-contains", currentUser.uid)
+    .get().then(snapshot => {
+      chatList.innerHTML = "";
+      snapshot.forEach(doc => {
+        const group = doc.data();
+        const div = document.createElement("div");
+        div.className = "chat-card";
+        div.innerHTML = `
+          <img src="${group.icon || 'group-icon.png'}" />
+          <div class="details">
+            <div class="name">${group.name}</div>
+            <div class="last-message">${group.lastMessage || "No messages yet"}</div>
+          </div>
+        `;
+        div.onclick = () => joinRoom(doc.id);
+        chatList.appendChild(div);
+      });
+    });
+}
+
+function runSearch() {
+  const input = document.getElementById("searchInput").value.toLowerCase();
+  const userResults = document.getElementById("searchResultsUser");
+  const groupResults = document.getElementById("searchResultsGroup");
+
+  userResults.innerHTML = "";
+  groupResults.innerHTML = "";
+
+  // Users
+  db.collection("users").where("username", ">=", input).limit(10).get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const div = document.createElement("div");
+      div.className = "search-result";
+      div.innerHTML = `
+        <img src="${data.photoURL || 'default-avatar.png'}" class="search-avatar" />
+        <div class="search-username">@${data.username || "Unknown"}</div>
+        <button onclick="messageUser('${doc.id}', '${data.username}')">Message</button>
+      `;
+      userResults.appendChild(div);
+    });
+  });
+
+  // Groups
+  db.collection("groups").where("name", ">=", input).limit(10).get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const div = document.createElement("div");
+      div.className = "search-result";
+      div.innerHTML = `
+        <img src="${data.icon || 'group-icon.png'}" class="search-avatar" />
+        <div class="search-username">${data.name}</div>
+        <button onclick="joinRoom('${doc.id}')">Join</button>
+      `;
+      groupResults.appendChild(div);
+    });
+  });
+}
+
