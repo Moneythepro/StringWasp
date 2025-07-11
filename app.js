@@ -186,6 +186,9 @@ function sendThreadMessage() {
   const fromName = document.getElementById("usernameDisplay").textContent;
   const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
 
+  const threadDocId = threadId(currentUser.uid, currentThreadUser);
+  const threadRef = db.collection("threads").doc(threadDocId);
+
   const messageData = {
     text: encryptedText,
     from: currentUser.uid,
@@ -193,13 +196,24 @@ function sendThreadMessage() {
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
 
-  db.collection("threads")
-    .doc(threadId(currentUser.uid, currentThreadUser))
-    .collection("messages")
-    .add(messageData)
+  // Add message to thread
+  threadRef.collection("messages").add(messageData)
     .then(() => {
       input.value = "";
-    });
+
+      // Update the thread root doc with metadata for chat list
+      threadRef.set({
+        participants: [currentUser.uid, currentThreadUser],
+        names: {
+          [currentUser.uid]: fromName,
+          [currentThreadUser]: document.getElementById("threadWithName").textContent || "Friend"
+        },
+        lastMessage: text,
+        lastSender: fromName,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+    }).catch(console.error);
 }
 
 // ===== Open Thread Chat =====
