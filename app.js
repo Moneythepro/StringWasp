@@ -387,8 +387,10 @@ function openThread(uid, username) {
 
   if (unsubscribeThread) unsubscribeThread();
 
+  const docId = threadId(currentUser.uid, uid);
+
   unsubscribeThread = db.collection("threads")
-    .doc(threadId(currentUser.uid, uid))
+    .doc(docId)
     .collection("messages")
     .orderBy("timestamp")
     .onSnapshot(snapshot => {
@@ -403,19 +405,34 @@ function openThread(uid, username) {
         bubble.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
 
         const textDiv = document.createElement("div");
-        textDiv.textContent = `${msg.fromName || "User"}: ${decrypted}`;
+        textDiv.innerHTML = `${msg.fromName || "User"}: ${decrypted}`;
         bubble.appendChild(textDiv);
+
         area.appendChild(bubble);
       });
 
       area.scrollTop = area.scrollHeight;
-
-      // ✅ Handle WebTorrent magnet links
       renderWithMagnetSupport("threadMessages");
     });
 }
 
+function deleteThread() {
+  showModal("Delete this chat?", () => {
+    const docId = threadId(currentUser.uid, currentThreadUser);
+    const ref = db.collection("threads").doc(docId).collection("messages");
+
+    ref.get().then(snapshot => {
+      snapshot.forEach(doc => doc.ref.delete());
+      alert("✅ Chat deleted");
+    });
+  });
+}
+
 // ===== DM: Send Thread Message with AES Encryption =====
+function threadId(a, b) {
+  return [a, b].sort().join("_");
+}
+
 function sendThreadMessage() {
   const input = document.getElementById("threadInput");
   const text = input?.value.trim();
@@ -423,18 +440,17 @@ function sendThreadMessage() {
 
   const fromName = document.getElementById("usernameDisplay").textContent;
   const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
+  const docId = threadId(currentUser.uid, currentThreadUser);
+  const threadRef = db.collection("threads").doc(docId);
 
-  const threadDocId = threadId(currentUser.uid, currentThreadUser);
-  const threadRef = db.collection("threads").doc(threadDocId);
-
-  const messageData = {
+  const message = {
     text: encryptedText,
     from: currentUser.uid,
     fromName,
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
 
-  threadRef.collection("messages").add(messageData).then(() => {
+  threadRef.collection("messages").add(message).then(() => {
     input.value = "";
     threadRef.set({
       participants: [currentUser.uid, currentThreadUser],
@@ -490,7 +506,6 @@ function handleTyping(type) {
     : db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser)).collection("typing").doc(currentUser.uid);
 
   typingRef.set({ typing: true });
-
   setTimeout(() => typingRef.delete(), 2000);
 }
 
