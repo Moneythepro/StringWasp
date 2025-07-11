@@ -245,17 +245,20 @@ function sendThreadMessage() {
     .catch(console.error);
 }
 
-function handleTyping(type) {
+function handleTypingStatus(type) {
   const path = type === "thread"
     ? `threads/${threadId(currentUser.uid, currentThreadUser)}/typing`
     : `groups/${currentRoom}/typing`;
-  db.collection(path.split("/")[0]).doc(path.split("/")[1])
-    .collection("typing").doc(currentUser.uid)
-    .set({ active: true });
+  
+  const typingRef = db.collection(path.split("/")[0])
+    .doc(path.split("/")[1])
+    .collection("typing")
+    .doc(currentUser.uid);
+
+  typingRef.set({ active: true });
+  
   setTimeout(() => {
-    db.collection(path.split("/")[0]).doc(path.split("/")[1])
-      .collection("typing").doc(currentUser.uid)
-      .delete().catch(() => {});
+    typingRef.delete().catch(() => {});
   }, 3000);
 }
 
