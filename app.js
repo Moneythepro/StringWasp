@@ -197,7 +197,10 @@ function listenInbox() {
   if (!list || !currentUser) return;
 
   if (unsubscribeInbox) unsubscribeInbox();
-  unsubscribeInbox = db.collection("inbox").doc(currentUser.uid).collection("items")
+
+  unsubscribeInbox = db.collection("inbox")
+    .doc(currentUser.uid)
+    .collection("items")
     .orderBy("timestamp", "desc")
     .onSnapshot(snapshot => {
       list.innerHTML = "";
@@ -209,9 +212,13 @@ function listenInbox() {
 
         const div = document.createElement("div");
         div.className = "inbox-card";
+
+        // ✅ Fix sender name
         const sender = typeof data.from === "object"
           ? (data.from.username || data.from.email || "Unknown")
           : data.from;
+
+        const fromUid = typeof data.from === "object" ? data.from.uid || "" : data.from;
 
         div.innerHTML = `
           <div>
@@ -219,13 +226,15 @@ function listenInbox() {
             From: ${data.fromName || sender}
           </div>
           <div class="btn-group">
-            <button onclick="acceptInbox('${doc.id}', '${data.type}', '${data.from}')">✔</button>
+            <button onclick="acceptInbox('${doc.id}', '${data.type}', '${fromUid}')">✔</button>
             <button onclick="declineInbox('${doc.id}')">✖</button>
           </div>
         `;
+
         list.appendChild(div);
       });
 
+      // ✅ Update badge count
       document.getElementById("inboxBadge").textContent = unreadCount || "";
     });
 }
@@ -358,9 +367,11 @@ function handleTyping(type) {
 function sendThreadMessage() {
   const input = document.getElementById("threadInput");
   const text = input?.value.trim();
-  if (!text || !currentThreadUser) return;
+  if (!text || !currentThreadUser || !currentUser) return;
 
-  const fromName = document.getElementById("usernameDisplay").textContent;
+  const fromName = document.getElementById("usernameDisplay").textContent || "Unknown";
+
+  // 🔒 AES Encryption
   const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
 
   const messageData = {
@@ -370,13 +381,19 @@ function sendThreadMessage() {
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
 
+  // 🔄 Send to thread collection
   db.collection("threads")
     .doc(threadId(currentUser.uid, currentThreadUser))
     .collection("messages")
     .add(messageData)
     .then(() => {
       input.value = "";
-    }).catch(console.error);
+      input.focus();
+    })
+    .catch(error => {
+      console.error("Failed to send message:", error);
+      alert("Message failed to send. Please try again.");
+    });
 }
 
 // ===== File Uploads =====
