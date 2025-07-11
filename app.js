@@ -12,6 +12,7 @@ function uuidv4() {
 const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
+
 const client = new WebTorrent();
 
 let currentUser = null;
@@ -828,6 +829,8 @@ function isFriend(uid) {
 }
 
 function shareFileViaTorrent(type) {
+  if (!client) client = new WebTorrent(); // ✅ Initialize once
+
   const input = document.createElement("input");
   input.type = "file";
   input.onchange = () => {
