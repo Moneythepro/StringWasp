@@ -231,6 +231,8 @@ function openChatMenu() {
   menu.style.display = (menu.style.display === "block") ? "none" : "block";
 }
 
+
+
 // ===== Escape HTML Utility =====
 function escapeHtml(unsafe) {
   return unsafe
@@ -553,6 +555,42 @@ function searchChats() {
   cards.forEach(card => {
     const name = card.querySelector(".name").textContent.toLowerCase();
     card.style.display = name.includes(query) ? "flex" : "none";
+  });
+}
+
+// ==== For Group Setting ====
+function viewGroupMembers() {
+  switchTab("profileTab"); // Reuse profile tab to show group info for now
+  alert("👥 Group members shown here (UI upgrade coming)");
+}
+
+function inviteByLink() {
+  if (!currentRoom) return alert("❌ No group selected.");
+  const link = `${window.location.origin}?join=${currentRoom}`;
+  copyToClipboard(link);
+  alert("🔗 Invite link copied:\n" + link);
+}
+
+function blockUser() {
+  showModal("Block this user?", () => {
+    alert("🚫 User blocked (placeholder)");
+  });
+}
+
+function viewMedia() {
+  alert("📎 Media viewer coming soon");
+}
+
+function leaveGroup() {
+  if (!currentRoom) return;
+  const ref = db.collection("groups").doc(currentRoom);
+  ref.update({
+    members: firebase.firestore.FieldValue.arrayRemove(currentUser.uid)
+  }).then(() => {
+    alert("🚪 You left the group.");
+    currentRoom = null;
+    loadChatList();
+    switchTab("chatTab");
   });
 }
 
