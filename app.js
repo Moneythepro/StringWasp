@@ -523,6 +523,14 @@ function joinGroupById(groupId) {
   }).catch(() => alert("Group not found or join failed."));
 }
 
+function joinRoom(roomId) {
+  currentRoom = roomId;
+  if (unsubscribeMessages) unsubscribeMessages();
+  if (unsubscribeTyping) unsubscribeTyping();
+  listenMessages(); // ✅ Real-time group chat
+  loadGroupInfo(roomId); // ✅ Load group metadata
+}
+
 // ===== Message User Shortcut =====
 function messageUser(uid, username) {
   openThread(uid, username || "Friend");
