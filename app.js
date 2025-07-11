@@ -274,27 +274,23 @@ function loadChatList() {
         const data = doc.data();
         const otherUid = data.participants.find(uid => uid !== currentUser.uid);
         const last = typeof data.lastMessage === "string" ? data.lastMessage : "";
-        const time = data.updatedAt?.toDate().toLocaleTimeString() || "";
+        const rawTime = data.updatedAt?.toDate() || new Date(0);
 
-        // 🔍 Fetch username from Firestore
         const p = db.collection("users").doc(otherUid).get().then(userDoc => {
           const name = userDoc.exists ? userDoc.data().username || "Unknown" : "Unknown";
-
           chats.push({
             type: "dm",
             id: otherUid,
             name,
             last,
-            time: data.updatedAt?.toDate() || new Date(0) // use real Date for sorting
+            time: rawTime
           });
         });
 
         threadPromises.push(p);
       });
 
-      // Once DMs are loaded
       Promise.all(threadPromises).then(() => {
-
         // 🔹 Load Group Chats
         db.collection("groups")
           .where("members", "array-contains", currentUser.uid)
@@ -302,19 +298,23 @@ function loadChatList() {
           .then(groupSnap => {
             groupSnap.forEach(doc => {
               const group = doc.data();
+              const name = group.name || "Unnamed Group";
+              const last = typeof group.lastMessage === "string" ? group.lastMessage : "";
+              const rawTime = group.updatedAt?.toDate() || new Date(0);
+
               chats.push({
                 type: "group",
                 id: doc.id,
-                name: group.name || "Unnamed Group",
-                last: typeof group.lastMessage === "string" ? group.lastMessage : "",
-                time: group.updatedAt?.toDate() || new Date(0)
+                name,
+                last,
+                time: rawTime
               });
             });
 
-            // ✅ Sort all chats by latest
+            // ✅ Sort by most recent
             chats.sort((a, b) => b.time - a.time);
 
-            // ✅ Render
+            // ✅ Render Cards
             list.innerHTML = "";
             chats.forEach(chat => {
               const div = document.createElement("div");
