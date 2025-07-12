@@ -238,6 +238,11 @@ function viewUserProfile(uid) {
   });
 }
 
+window.onclick = e => {
+  if (e.target.id === "userFullProfile") {
+    e.target.style.display = "none";
+  }
+};
 let currentGroupID = null;
 
 function viewGroupInfo(groupId) {
@@ -559,6 +564,13 @@ function deleteThread() {
       alert("✅ Chat deleted");
     });
   });
+}
+
+function messageUser(uid, username) {
+  if (!uid) return;
+  openThread(uid, username || "Friend");
+  document.getElementById("userFullProfile").style.display = "none";
+  document.getElementById("viewProfileModal").style.display = "none";
 }
 
 // ===== DM: Send Thread Message with AES Encryption =====
