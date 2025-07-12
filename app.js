@@ -561,6 +561,7 @@ function listenInbox() {
     }, (err) => {
       const msg = err?.message || JSON.stringify(err) || String(err);
       console.error("❌ Inbox snapshot error:", msg);
+      console.error("🔥 Full error object:", err);
       alert("❌ Inbox listener failed: " + msg);
     });
 }
