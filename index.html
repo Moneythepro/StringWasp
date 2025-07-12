@@ -189,14 +189,16 @@
     </div>
   </div>
 
-<!-- Crop Modal -->
-<div id="cropModal" class="modal">
-  <div class="modal-content">
-    <h3>Crop Image</h3>
-    <img id="cropImage" style="max-width: 100%; max-height: 300px;" />
-    <div class="btn-group" style="margin-top: 10px;">
-      <button onclick="confirmCrop()">Crop & Upload</button>
-      <button onclick="closeCropModal()">Cancel</button>
+<!-- 📸 Crop Modal -->
+<div id="cropModal" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width: 90%; padding: 10px;">
+    <h3 style="margin: 0 0 10px; font-size: 18px;">Crop Profile Picture</h3>
+    <div style="max-height: 300px; overflow: auto; text-align: center;">
+      <img id="cropImage" style="max-width: 100%; max-height: 280px; border-radius: 6px;" />
+    </div>
+    <div class="btn-group" style="margin-top: 12px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+      <button onclick="confirmCrop()" style="flex: 1; min-width: 100px;">Crop & Upload</button>
+      <button onclick="closeCropModal()" style="flex: 1; min-width: 100px;">Cancel</button>
     </div>
   </div>
 </div>
