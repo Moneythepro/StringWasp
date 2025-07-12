@@ -857,6 +857,24 @@ function openThread(uid, username) {
       const docId = threadId(currentUser.uid, uid);
       const area = document.getElementById("threadMessages");
 
+      // 🔄 Listen for typing status
+      const typingArea = document.getElementById("threadTypingStatus");
+      typingArea.textContent = "";
+
+      db.collection("threads")
+        .doc(docId)
+        .collection("typing")
+        .onSnapshot(snapshot => {
+          const others = snapshot.docs.filter(doc => doc.id !== currentUser.uid);
+          typingArea.textContent = others.length ? "✍️ Typing..." : "";
+        });
+
+      // ✅ Reset unread count
+      db.collection("threads").doc(docId).set({
+        unread: { [currentUser.uid]: 0 }
+      }, { merge: true });
+
+      // 🔁 Listen for messages
       unsubscribeThread = db.collection("threads")
         .doc(docId)
         .collection("messages")
@@ -864,27 +882,11 @@ function openThread(uid, username) {
         .onSnapshot(async snapshot => {
           area.innerHTML = "";
 
-          const typingArea = document.getElementById("threadTypingStatus");
-typingArea.textContent = "";
-
-db.collection("threads")
-  .doc(threadId(currentUser.uid, uid))
-  .collection("typing")
-  .onSnapshot(snapshot => {
-    const others = snapshot.docs.filter(doc => doc.id !== currentUser.uid);
-    typingArea.textContent = others.length ? "✍️ Typing..." : "";
-  });
-
-          // Mark messages as read
-const threadMetaRef = db.collection("threads").doc(docId);
-threadMetaRef.set({
-  unread: { [currentUser.uid]: 0 }
-}, { merge: true });
-
           for (const doc of snapshot.docs) {
             const msg = doc.data();
             if (!msg?.text) continue;
 
+            // 🔐 Decrypt message
             let decrypted = "";
             try {
               decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
@@ -893,7 +895,7 @@ threadMetaRef.set({
               decrypted = "[Failed to decrypt]";
             }
 
-            // 🔄 Fetch sender avatar
+            // 👤 Fetch sender avatar
             let avatar = "default-avatar.png";
             try {
               const userDoc = await db.collection("users").doc(msg.from).get();
@@ -905,8 +907,9 @@ threadMetaRef.set({
               console.warn("⚠️ Avatar fetch failed:", e.message);
             }
 
-            const bubble = document.createElement("div");
+            // 🧾 Message bubble
             const isSelf = msg.from === currentUser.uid;
+            const bubble = document.createElement("div");
             bubble.className = "message-bubble " + (isSelf ? "right" : "left");
 
             bubble.innerHTML = `
