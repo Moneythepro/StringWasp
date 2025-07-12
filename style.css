@@ -415,4 +415,9 @@ body.dark #loadingOverlay {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
-
+.last-message {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
