@@ -8,22 +8,26 @@ function uuidv4() {
     );
 }
 
-// 🔥 Firebase Init
+// ===== Firebase & Storage Init =====
 const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-// ✅ WebTorrent Init
+// ===== WebTorrent Init =====
 let client = null;
 
+// ===== Global State =====
 let currentUser = null;
 let currentRoom = null;
 let currentThreadUser = null;
-
 let unsubscribeMessages = null;
 let unsubscribeThread = null;
 let unsubscribeInbox = null;
 let unsubscribeTyping = null;
+
+// ===== Auto Join from Invite Link =====
+const urlParams = new URLSearchParams(window.location.search);
+const joinId = urlParams.get("join");
 
 // ===== UI Tab Switcher =====
 function switchTab(id) {
@@ -32,7 +36,7 @@ function switchTab(id) {
   if (target) target.style.display = "block";
 
   if (id === "groupsTab") {
-    loadRooms?.(); // optional
+    loadGroups?.(); // optional, to refresh dropdown or info
     if (currentRoom) listenMessages();
   }
 }
@@ -50,10 +54,18 @@ auth.onAuthStateChanged(async user => {
     const userDoc = await db.collection("users").doc(user.uid).get();
 
     if (!userDoc.exists || !userDoc.data().username) {
-      switchTab("usernameDialog"); // Prompt for username
+      switchTab("usernameDialog"); // Username setup
     } else {
       document.getElementById("usernameDisplay").textContent = userDoc.data().username;
-      loadMainUI(); // Load chat, inbox, profile
+      loadMainUI(); // Load app tabs & content
+
+      // 🔗 Auto Join Group from Invite
+      if (joinId) {
+        db.collection("groups").doc(joinId).get().then(doc => {
+          if (!doc.exists) return alert("⚠️ Group not found or invite expired.");
+          joinGroupById(joinId); // Custom join function
+        });
+      }
     }
   } else {
     switchTab("loginPage");
@@ -801,9 +813,11 @@ function uploadFile(type) {
   }).finally(() => showLoading(false));
 }
 
-// ===== Clipboard Copy =====
 function copyToClipboard(text) {
-  navigator.clipboard.writeText(text).then(() => alert("Copied to clipboard"));
+  navigator.clipboard.writeText(text).then(() => {
+    alert("Copied to clipboard");
+    showToast("🔗 Invite link copied!");
+  });
 }
 
 // ===== Theme Toggle =====
