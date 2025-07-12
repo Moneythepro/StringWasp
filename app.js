@@ -502,7 +502,7 @@ function listenInbox() {
 
         for (const doc of snapshot.docs) {
           const data = doc.data();
-          if (!data || typeof data !== "object") continue;
+          if (!data) continue;
           if (!data.read) unreadCount++;
 
           let senderName = "Unknown";
@@ -517,7 +517,7 @@ function listenInbox() {
                 senderName = senderData.username || senderData.name || "Unknown";
               }
             } catch (e) {
-              console.warn("⚠️ Sender lookup failed:", e.message);
+              console.warn("⚠️ Sender fetch failed:", e.message);
             }
           } else if (typeof data.from === "object") {
             fromUID = data.from.uid || "";
@@ -553,15 +553,21 @@ function listenInbox() {
           badge.style.display = unreadCount ? "inline-block" : "none";
         }
 
-        }, (err) => {
+      } catch (err) {
+        const msg = err?.message || JSON.stringify(err) || String(err);
+        console.error("❌ Inbox render failed:", msg);
+        alert("❌ Inbox failed: " + msg);
+        document.body.innerHTML += `<pre style="color:red;font-size:12px;background:#000;padding:10px;overflow:auto;">
+🔥 RENDER ERROR: ${escapeHtml(JSON.stringify(err, null, 2))}
+</pre>`;
+      }
+    }, (err) => {
       const msg = err?.message || JSON.stringify(err) || String(err);
       console.error("❌ Inbox snapshot error:", msg);
       console.error("🔥 Full error object:", err);
       alert("❌ Inbox listener failed: " + msg);
-
-      // 👇 Show full error in page (for mobile debugging)
       document.body.innerHTML += `<pre style="color:red;font-size:12px;background:#000;padding:10px;overflow:auto;">
-🔥 SNAPSHOT ERROR: ${JSON.stringify(err, null, 2)}
+🔥 SNAPSHOT ERROR: ${escapeHtml(JSON.stringify(err, null, 2))}
 </pre>`;
     });
 }
