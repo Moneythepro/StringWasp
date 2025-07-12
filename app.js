@@ -749,44 +749,36 @@ function openThread(uid, username) {
       const docId = threadId(currentUser.uid, uid);
 
       unsubscribeThread = db.collection("threads")
-        .doc(docId)
-        .collection("messages")
-        .orderBy("timestamp")
-        .onSnapshot(
-          snapshot => {
-            const area = document.getElementById("threadMessages");
-            area.innerHTML = "";
+  .doc(docId)
+  .collection("messages")
+  .orderBy("timestamp")
+  .onSnapshot(
+    snapshot => {
+      const area = document.getElementById("threadMessages");
+      area.innerHTML = "";
 
-            snapshot.forEach(doc => {
-              const msg = doc.data();
-              const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+      snapshot.forEach(doc => {
+        const msg = doc.data();
+        const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
 
-              const bubble = document.createElement("div");
-              bubble.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
+        const bubble = document.createElement("div");
+        bubble.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
 
-              const textDiv = document.createElement("div");
-              textDiv.innerHTML = `${msg.fromName || "User"}: ${decrypted}`;
-              bubble.appendChild(textDiv);
+        const textDiv = document.createElement("div");
+        textDiv.innerHTML = `${msg.fromName || "User"}: ${decrypted}`;
+        bubble.appendChild(textDiv);
 
-              area.appendChild(bubble);
-            });
+        area.appendChild(bubble);
+      });
 
-            area.scrollTop = area.scrollHeight;
-            renderWithMagnetSupport("threadMessages");
-          },
-          err => {
-            const msg = err.message || JSON.stringify(err) || err;
-            console.error("❌ Error in thread snapshot listener:", msg);
-            alert("❌ Failed to load thread messages: " + msg);
-          }
-        );
-    })
-    .catch(err => {
-      const msg = err.message || JSON.stringify(err) || err;
-      console.error("❌ Error opening thread:", msg);
-      alert("❌ Failed to open thread: " + msg);
-    });
-}
+      area.scrollTop = area.scrollHeight;
+      renderWithMagnetSupport("threadMessages");
+    },
+    err => {
+      console.error("❌ Error loading thread messages:", err.message || err);
+      alert("❌ Could not load messages: " + (err.message || err));
+    }
+  );
 
 function deleteThread() {
   showModal("Delete this chat?", () => {
