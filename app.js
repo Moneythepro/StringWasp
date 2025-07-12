@@ -142,22 +142,16 @@ function checkUsername() {
 function loadMainUI() {
   showLoading(true);
   document.getElementById("appPage").style.display = "block";
-  switchTab("chatTab");
-
-  // Real-time avatar update
-  db.collection("users").doc(currentUser.uid).onSnapshot(doc => {
-    const data = doc.data();
-    const avatar = data.avatarBase64 || "default-avatar.png";
-    document.getElementById("profilePicPreview").src = avatar;
+  
+  // Load user profile first
+  loadProfile(() => {
+    switchTab("chatTab");
+    try { loadInbox(); } catch (e) { console.warn("Inbox failed", e); }
+    try { loadFriends(); } catch (e) { console.warn("Friends failed", e); }
+    try { loadGroups?.(); } catch (e) { console.warn("Groups skipped", e); }
+    try { loadChatList(); } catch (e) { console.warn("Chats failed", e); }
+    setTimeout(() => showLoading(false), 300);
   });
-
-  try { loadInbox(); } catch (e) { console.warn("Inbox failed", e); }
-  try { loadFriends(); } catch (e) { console.warn("Friends failed", e); }
-  try { loadProfile(); } catch (e) { console.warn("Profile failed", e); }
-  try { loadGroups?.(); } catch (e) { console.warn("Groups skipped", e); }
-  try { loadChatList(); } catch (e) { console.warn("Chats failed", e); }
-
-  setTimeout(() => showLoading(false), 300);
 }
 
 // ===== Save Profile Data =====
@@ -580,23 +574,24 @@ function listenInbox() {
           let avatar = "default-avatar.png";
 
           if (typeof data.from === "string") {
-            fromUID = data.from;
-            try {
-              const senderDoc = await db.collection("users").doc(fromUID).get();
-              if (senderDoc.exists) {
-                const senderData = senderDoc.data();
-                senderName = senderData.username || senderData.name || "Unknown";
-                avatar = senderData.avatarBase64 || avatar;
-              }
-            } catch (e) {
-              console.warn("⚠️ Sender fetch failed:", e.message);
-            }
-          } else if (typeof data.from === "object") {
-            fromUID = data.from.uid || "";
-            senderName = data.from.name || "Unknown";
-            avatar = data.from.avatar || avatar;
-          } else if (data.fromName) {
-            senderName = data.fromName;
+  fromUID = data.from;
+  try {
+    const senderDoc = await db.collection("users").doc(data.from).get();
+    if (senderDoc.exists) {
+      const senderData = senderDoc.data();
+      senderName = senderData.username || senderData.name || "Unknown";
+    }
+  } catch (e) {
+    console.warn("⚠️ Sender fetch failed:", e.message);
+  }
+} else if (typeof data.from === "object" && data.from.uid) {
+  fromUID = data.from.uid;
+  senderName = data.from.name || "Unknown";
+} else if (data.fromName) {
+  senderName = data.fromName;
+} else {
+  console.warn("⚠️ Malformed inbox entry:", data);
+  continue; // skip invalid item
           }
 
           const typeText = data.type === "friend"
