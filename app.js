@@ -594,28 +594,30 @@ function listenInbox() {
 }
 
 // ===== Accept Inbox Item =====
-function acceptInbox(id, type, from) {
-  if (!from || !currentUser?.uid) return;
+function acceptInbox(id, type, fromUID) {
+  if (!currentUser) return;
+
+  const inboxRef = db.collection("inbox").doc(currentUser.uid).collection("items").doc(id);
 
   if (type === "friend") {
-    const myRef = db.collection("users").doc(currentUser.uid).collection("friends").doc(from);
-    const theirRef = db.collection("users").doc(from).collection("friends").doc(currentUser.uid);
-    Promise.all([
-      myRef.set({ added: true }),
-      theirRef.set({ added: true })
-    ]);
+    // Accept friend request
+    db.collection("users").doc(currentUser.uid).collection("friends").doc(fromUID).set({ accepted: true });
+    db.collection("users").doc(fromUID).collection("friends").doc(currentUser.uid).set({ accepted: true });
   } else if (type === "group") {
-    db.collection("groups").doc(from).update({
-      members: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
-    });
+    // Accept group invite
+    joinGroupById(fromUID); // fromUID is actually groupId
   }
 
-  db.collection("inbox").doc(currentUser.uid).collection("items").doc(id).delete();
+  // Remove the inbox item after accepting
+  inboxRef.delete().catch(err => {
+    console.error("❌ Failed to remove inbox item:", err.message || err);
+  });
 }
 
 // ===== Decline Inbox Item =====
 function declineInbox(id) {
-  db.collection("inbox").doc(currentUser.uid).collection("items").doc(id).delete();
+  db.collection("inbox").doc(currentUser.uid).collection("items").doc(id).delete()
+    .catch(err => console.error("❌ Failed to decline:", err.message || err));
 }
 
 // ===== Mark All as Read =====
@@ -668,17 +670,24 @@ function loadFriends() {
     });
 }
 
-// ===== Add Friend Shortcut =====
+// ==== Add Friend Shortcut ====
 function addFriend(uid) {
   if (!uid || uid === currentUser.uid) return;
+
+  const fromName = currentUserData?.username || currentUserData?.name || currentUser.email || "Unknown";
 
   db.collection("inbox").doc(uid).collection("items").add({
     type: "friend",
     from: currentUser.uid,
-    fromName: document.getElementById("usernameDisplay").textContent,
+    fromName, // ✅ Always send a clean sender name
     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
     read: false
-  }).then(() => alert("Friend request sent!"));
+  })
+  .then(() => alert("✅ Friend request sent!"))
+  .catch(err => {
+    console.error("❌ Failed to send friend request:", err.message || err);
+    alert("❌ Could not send friend request.");
+  });
 }
 
 // ===== Group Info Loader =====
@@ -955,13 +964,20 @@ function switchSearchView(view) {
 
 // ===== Join Group by ID (Used in search results) =====
 function joinGroupById(groupId) {
+  if (!currentUser || !groupId) return alert("⚠️ Invalid group or user.");
+
   db.collection("groups").doc(groupId).update({
     members: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
-  }).then(() => {
-    alert("Joined group!");
-    loadChatList(); // refresh chat list
-    loadGroups();   // refresh dropdown
-  }).catch(() => alert("Group not found or join failed."));
+  })
+  .then(() => {
+    alert("✅ Joined group!");
+    loadChatList?.(); // refresh chats
+    loadGroups?.();   // refresh group dropdown
+  })
+  .catch(err => {
+    console.error("❌ Failed to join group:", err.message || err);
+    alert("❌ Group not found or join failed.");
+  });
 }
 
 function joinRoom(roomId) {
@@ -1251,6 +1267,22 @@ function copyRoomId() {
   if (!currentRoom) return;
   copyToClipboard(currentRoom);
   alert("Group ID copied!");
+}
+
+// === Invite user to group ===
+function inviteToGroup(uid, groupId) {
+  db.collection("inbox").doc(uid).collection("items").add({
+    type: "group",
+    from: groupId, // the group ID is stored as 'from'
+    fromName: "Group Invite", // visible in inbox card
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    read: false
+  }).then(() => {
+    alert("✅ Group invite sent!");
+  }).catch(err => {
+    console.error("❌ Failed to send group invite:", err.message || err);
+    alert("❌ Error sending group invite.");
+  });
 }
 
 // ===== Helper to Show Toast (if not modal) =====
