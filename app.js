@@ -667,11 +667,12 @@ function loadGroupInfo(groupId) {
   });
 }
 
-// ===== DM: Open Thread Chat =====
+// ===== DM Utilities =====
 function threadId(a, b) {
   return [a, b].sort().join("_");
 }
 
+// ===== DM: Open Thread Chat =====
 function openThread(uid, username) {
   if (!currentUser || !uid) return;
 
@@ -736,10 +737,6 @@ function deleteThread() {
 
 
 // ===== DM: Send Thread Message with AES Encryption =====
-function threadId(a, b) {
-  return [a, b].sort().join("_");
-}
-
 function sendThreadMessage() {
   const input = document.getElementById("threadInput");
   const text = input?.value.trim();
