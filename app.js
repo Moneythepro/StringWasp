@@ -235,45 +235,58 @@ function loadProfile() {
 
 document.getElementById("profilePic").addEventListener("change", uploadProfilePic);
 
+let cropper = null;
+
+function triggerProfileUpload() {
+  document.getElementById("profilePic").click();
+}
+
 function uploadProfilePic(e) {
   const file = e.target.files[0];
-  if (!file || !currentUser) return;
+  if (!file) return;
 
   const reader = new FileReader();
   reader.onload = function (event) {
-    const img = new Image();
-    img.onload = function () {
-      const size = 200;
-      const canvas = document.createElement("canvas");
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext("2d");
+    const image = document.getElementById("cropImage");
+    image.src = event.target.result;
 
-      // Auto-crop to square (center)
-      const min = Math.min(img.width, img.height);
-      const sx = (img.width - min) / 2;
-      const sy = (img.height - min) / 2;
+    document.getElementById("cropModal").style.display = "block";
 
-      ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
-      canvas.toBlob(async (blob) => {
-        try {
-          const ref = storage.ref(`avatars/${currentUser.uid}`);
-          await ref.put(blob);
-          const url = await ref.getDownloadURL();
-
-          document.getElementById("profilePicPreview").src = url;
-          await db.collection("users").doc(currentUser.uid).update({ avatar: url });
-
-          console.log("✔ Profile picture updated");
-        } catch (err) {
-          console.error("❌ Upload failed:", err.message || err);
-          alert("❌ Failed to upload picture.");
-        }
-      }, "image/jpeg", 0.8); // JPEG compression
-    };
-    img.src = event.target.result;
+    if (cropper) cropper.destroy();
+    cropper = new Cropper(image, {
+      aspectRatio: 1,
+      viewMode: 1
+    });
   };
   reader.readAsDataURL(file);
+}
+
+function closeCropModal() {
+  if (cropper) cropper.destroy();
+  cropper = null;
+  document.getElementById("cropModal").style.display = "none";
+}
+
+function confirmCrop() {
+  if (!cropper || !currentUser) return;
+
+  const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
+  canvas.toBlob(async (blob) => {
+    try {
+      const ref = storage.ref(`avatars/${currentUser.uid}`);
+      await ref.put(blob);
+      const url = await ref.getDownloadURL();
+
+      document.getElementById("profilePicPreview").src = url;
+      await db.collection("users").doc(currentUser.uid).update({ avatar: url });
+
+      closeCropModal();
+      alert("✔ Profile picture updated");
+    } catch (err) {
+      console.error("❌ Upload failed:", err.message || err);
+      alert("❌ Failed to upload profile picture.");
+    }
+  }, "image/jpeg", 0.8);
 }
   
 let currentProfileUID = null;
