@@ -427,8 +427,9 @@ function listenInbox() {
 }
 
 function loadChatList() {
-  loadRealtimeGroups(); // Loads group chats
-  listenInbox();        // Loads inbox notifications
+  loadRealtimeGroups();   // ✅ Group chats
+  loadFriendThreads();    // ✅ DM chats
+  listenInbox();          // ✅ Inbox updates
 }
 
   // === Realtime Groups ===
@@ -480,6 +481,38 @@ function loadRealtimeGroups() {
       });
     }, err => {
       console.error("📛 Error in groups snapshot:", err.message || err);
+    });
+}
+
+function loadFriendThreads() {
+  const list = document.getElementById("chatList");
+  if (!list || !currentUser) return;
+
+  db.collection("threads")
+    .where("participants", "array-contains", currentUser.uid)
+    .orderBy("updatedAt", "desc")
+    .onSnapshot(snapshot => {
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const otherId = data.participants.find(p => p !== currentUser.uid);
+        const otherName = data.names?.[otherId] || "Friend";
+        const last = data.lastMessage || "[No message]";
+        const timeAgo = data.updatedAt?.toDate ? timeSince(data.updatedAt.toDate().getTime()) : "";
+
+        const card = document.createElement("div");
+        card.className = "chat-card";
+        card.onclick = () => openThread(otherId, otherName);
+        card.innerHTML = `
+          <div class="details">
+            <div class="name">@${escapeHtml(otherName)}</div>
+            <div class="last-message">${escapeHtml(last)}</div>
+            <div class="last-time">${timeAgo}</div>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }, err => {
+      console.error("❌ DM list load failed:", err.message || err);
     });
 }
 
@@ -980,7 +1013,7 @@ function joinRoom(roomId) {
 
   switchTab("roomView");
   document.getElementById("roomDropdown").style.display = "block";
-  document.querySelector(".group-info").style.display = "block";
+  document.querySelector(".group-info").style.display = "flex";
 
   if (unsubscribeMessages) unsubscribeMessages();
   if (unsubscribeTyping) unsubscribeTyping();
