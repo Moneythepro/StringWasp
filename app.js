@@ -344,18 +344,30 @@ function loadChatList() {
         const t = doc.data();
         const otherUID = t.participants.find(p => p !== currentUser.uid);
         const name = t.names?.[otherUID] || "Friend";
-        const last = t.lastMessage || "";
+
+        // ✅ Fix: Handle lastMessage format
+        let lastMsg = "";
+        if (typeof t.lastMessage === "string") {
+          lastMsg = t.lastMessage;
+        } else if (typeof t.lastMessage === "object" && t.lastMessage.text) {
+          lastMsg = t.lastMessage.text;
+        } else {
+          lastMsg = "[No message]";
+        }
+
+        // Optional: avatar placeholder
+        const avatar = "https://ui-avatars.com/api/?name=" + encodeURIComponent(name);
 
         const card = document.createElement("div");
         card.className = "chat-card";
         card.onclick = () => openThread(otherUID, name);
-        div.innerHTML = `
-  <img src="${avatar}" class="friend-avatar" />
-  <div class="details">
-    <div class="name">@${name}</div>
-    <div class="last-message">${last}</div>
-  </div>
-`;
+        card.innerHTML = `
+          <img src="${avatar}" class="friend-avatar" />
+          <div class="details">
+            <div class="name">@${name}</div>
+            <div class="last-message">${lastMsg}</div>
+          </div>
+        `;
         list.appendChild(card);
       });
     });
@@ -368,13 +380,23 @@ function loadChatList() {
       snapshot.forEach(doc => {
         const g = doc.data();
 
+        // ✅ Fix: Optional preview from last message field
+        let groupLast = "";
+        if (typeof g.lastMessage === "string") {
+          groupLast = g.lastMessage;
+        } else if (typeof g.lastMessage === "object" && g.lastMessage.text) {
+          groupLast = g.lastMessage.text;
+        } else {
+          groupLast = g.description || "[No recent message]";
+        }
+
         const card = document.createElement("div");
         card.className = "chat-card";
         card.onclick = () => joinRoom(doc.id);
         card.innerHTML = `
           <div class="details">
-            <div class="name">${g.name}</div>
-            <div class="last-message">${g.description || ""}</div>
+            <div class="name">#${g.name}</div>
+            <div class="last-message">${groupLast}</div>
           </div>
         `;
         list.appendChild(card);
