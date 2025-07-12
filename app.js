@@ -422,8 +422,9 @@ function listenInbox() {
           }
         },
         (outerErr) => {
-          console.error("❌ Snapshot listener error in inbox:", outerErr);
-          alert("❌ Inbox snapshot error: " + (outerErr.message || outerErr));
+  const msg = outerErr.message || JSON.stringify(outerErr) || outerErr;
+  console.error("❌ Snapshot listener error in inbox:", msg);
+  alert("❌ Inbox snapshot error: " + msg);
         }
       );
   } catch (catchErr) {
@@ -751,27 +752,39 @@ function openThread(uid, username) {
         .doc(docId)
         .collection("messages")
         .orderBy("timestamp")
-        .onSnapshot(snapshot => {
-          const area = document.getElementById("threadMessages");
-          area.innerHTML = "";
+        .onSnapshot(
+          snapshot => {
+            const area = document.getElementById("threadMessages");
+            area.innerHTML = "";
 
-          snapshot.forEach(doc => {
-            const msg = doc.data();
-            const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+            snapshot.forEach(doc => {
+              const msg = doc.data();
+              const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
 
-            const bubble = document.createElement("div");
-            bubble.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
+              const bubble = document.createElement("div");
+              bubble.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
 
-            const textDiv = document.createElement("div");
-            textDiv.innerHTML = `${msg.fromName || "User"}: ${decrypted}`;
-            bubble.appendChild(textDiv);
+              const textDiv = document.createElement("div");
+              textDiv.innerHTML = `${msg.fromName || "User"}: ${decrypted}`;
+              bubble.appendChild(textDiv);
 
-            area.appendChild(bubble);
-          });
+              area.appendChild(bubble);
+            });
 
-          area.scrollTop = area.scrollHeight;
-          renderWithMagnetSupport("threadMessages");
-        });
+            area.scrollTop = area.scrollHeight;
+            renderWithMagnetSupport("threadMessages");
+          },
+          err => {
+            const msg = err.message || JSON.stringify(err) || err;
+            console.error("❌ Error in thread snapshot listener:", msg);
+            alert("❌ Failed to load thread messages: " + msg);
+          }
+        );
+    })
+    .catch(err => {
+      const msg = err.message || JSON.stringify(err) || err;
+      console.error("❌ Error opening thread:", msg);
+      alert("❌ Failed to open thread: " + msg);
     });
 }
 
