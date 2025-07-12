@@ -396,15 +396,19 @@ function loadChatList() {
   // === Realtime Groups ===
 function loadRealtimeGroups() {
   const list = document.getElementById("chatList");
-  if (!list) return;
+  if (!list || !currentUser) return;
+
+  if (unsubscribeGroups) unsubscribeGroups();
 
   unsubscribeGroups = db.collection("groups")
     .where("members", "array-contains", currentUser.uid)
     .onSnapshot(snapshot => {
+      list.innerHTML = "";
+
       snapshot.forEach(doc => {
         const g = doc.data();
         const groupName = g.name || "Group";
-        const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(groupName)}`;
+        const avatar = g.icon || `https://ui-avatars.com/api/?name=${encodeURIComponent(groupName)}`;
 
         let msgText = "[No message]";
         let isMedia = false;
@@ -456,11 +460,26 @@ function loadFriendThreads() {
   unsubscribeThreads = db.collection("threads")
     .where("participants", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
-    .onSnapshot(snapshot => {
-      snapshot.forEach(doc => {
+    .onSnapshot(async snapshot => {
+      list.innerHTML = "";
+
+      for (const doc of snapshot.docs) {
         const t = doc.data();
         const otherUID = t.participants.find(p => p !== currentUser.uid);
-        const name = t.names?.[otherUID] || "Friend";
+
+        let name = "Friend";
+        let avatar = "default-avatar.png";
+
+        try {
+          const userDoc = await db.collection("users").doc(otherUID).get();
+          if (userDoc.exists) {
+            const user = userDoc.data();
+            name = user.username || user.name || "Friend";
+            avatar = user.avatarBase64 || avatar;
+          }
+        } catch (e) {
+          console.warn("⚠️ Failed to fetch user avatar:", e.message);
+        }
 
         let msgText = "[No message]";
         let fromSelf = false;
@@ -481,7 +500,6 @@ function loadFriendThreads() {
         const preview = isMedia ? "📎 Media File" : `${fromSelf ? "You: " : ""}${escapeHtml(msgText)}`;
         const unread = t.unread?.[currentUser.uid] || 0;
         const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
-        const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`;
 
         const card = document.createElement("div");
         card.className = "chat-card";
@@ -499,7 +517,7 @@ function loadFriendThreads() {
           </div>
         `;
         list.appendChild(card);
-      });
+      }
     }, err => {
       console.error("❌ Error loading friend threads:", err.message || err);
       alert("❌ Chat threads failed: " + (err.message || err));
@@ -559,14 +577,16 @@ function listenInbox() {
 
           let senderName = "Unknown";
           let fromUID = "";
+          let avatar = "default-avatar.png";
 
           if (typeof data.from === "string") {
             fromUID = data.from;
             try {
-              const senderDoc = await db.collection("users").doc(data.from).get();
+              const senderDoc = await db.collection("users").doc(fromUID).get();
               if (senderDoc.exists) {
                 const senderData = senderDoc.data();
                 senderName = senderData.username || senderData.name || "Unknown";
+                avatar = senderData.avatarBase64 || avatar;
               }
             } catch (e) {
               console.warn("⚠️ Sender fetch failed:", e.message);
@@ -574,6 +594,7 @@ function listenInbox() {
           } else if (typeof data.from === "object") {
             fromUID = data.from.uid || "";
             senderName = data.from.name || "Unknown";
+            avatar = data.from.avatar || avatar;
           } else if (data.fromName) {
             senderName = data.fromName;
           }
@@ -587,8 +608,9 @@ function listenInbox() {
           const card = document.createElement("div");
           card.className = "inbox-card";
           card.innerHTML = `
+            <img src="${avatar}" class="friend-avatar" />
             <div>
-              <strong>${typeText}</strong><br>
+              <strong>${escapeHtml(typeText)}</strong><br>
               From: ${escapeHtml(senderName)}
             </div>
             <div class="btn-group">
@@ -812,7 +834,10 @@ function threadId(a, b) {
 function openThread(uid, username) {
   if (!currentUser || !uid) return;
 
-  db.collection("users").doc(currentUser.uid).collection("friends").doc(uid)
+  db.collection("users")
+    .doc(currentUser.uid)
+    .collection("friends")
+    .doc(uid)
     .get()
     .then(friendDoc => {
       if (!friendDoc.exists) {
@@ -830,32 +855,68 @@ function openThread(uid, username) {
       if (unsubscribeThread) unsubscribeThread();
 
       const docId = threadId(currentUser.uid, uid);
+      const area = document.getElementById("threadMessages");
 
       unsubscribeThread = db.collection("threads")
         .doc(docId)
         .collection("messages")
         .orderBy("timestamp")
-        .onSnapshot(snapshot => {
-          const area = document.getElementById("threadMessages");
+        .onSnapshot(async snapshot => {
           area.innerHTML = "";
 
-          snapshot.forEach(doc => {
+          for (const doc of snapshot.docs) {
             const msg = doc.data();
-            const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+            if (!msg.text) continue;
+
+            let decrypted = "";
+            try {
+              decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+              if (!decrypted) decrypted = "[Encrypted]";
+            } catch (e) {
+              decrypted = "[Failed to decrypt]";
+            }
+
+            // Get avatar if available
+            let avatar = "default-avatar.png";
+            try {
+              const userDoc = await db.collection("users").doc(msg.from).get();
+              if (userDoc.exists) {
+                const userData = userDoc.data();
+                avatar = userData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.username || "User")}`;
+              }
+            } catch (e) {
+              console.warn("⚠️ Avatar fetch failed:", e.message);
+            }
 
             const bubble = document.createElement("div");
             bubble.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
 
-            const textDiv = document.createElement("div");
-            textDiv.innerHTML = `${msg.fromName || "User"}: ${decrypted}`;
-            bubble.appendChild(textDiv);
+            bubble.innerHTML = `
+              <div class="msg-avatar">
+                <img src="${avatar}" alt="avatar" />
+              </div>
+              <div class="msg-content">
+                <div class="msg-text">
+                  <strong>${escapeHtml(msg.fromName || "User")}</strong><br>
+                  ${escapeHtml(decrypted)}
+                </div>
+                <div class="message-time">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</div>
+              </div>
+            `;
 
             area.appendChild(bubble);
-          });
+          }
 
           area.scrollTop = area.scrollHeight;
-          renderWithMagnetSupport("threadMessages");
+          renderWithMagnetSupport?.("threadMessages");
+        }, err => {
+          console.error("❌ Thread snapshot error:", err.message || err);
+          alert("❌ Failed to load messages: " + (err.message || err));
         });
+    })
+    .catch(err => {
+      console.error("❌ Friend check failed:", err.message || err);
+      alert("❌ Failed to verify friendship.");
     });
 }
 
@@ -892,15 +953,24 @@ function sendThreadMessage() {
 
   threadRef.collection("messages").add(message).then(() => {
     input.value = "";
+
     threadRef.set({
       participants: [currentUser.uid, currentThreadUser],
       names: {
         [currentUser.uid]: fromName,
         [currentThreadUser]: document.getElementById("threadWithName").textContent || "Friend"
       },
-      lastMessage: text,
+      lastMessage: {
+        text: encryptedText,
+        from: currentUser.uid,
+        fromName,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      },
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
+  }).catch(err => {
+    console.error("❌ Message send failed:", err.message || err);
+    alert("❌ Failed to send message: " + (err.message || err));
   });
 }
 
@@ -958,7 +1028,7 @@ function runSearch() {
   userResults.innerHTML = "<p>Loading...</p>";
   groupResults.innerHTML = "<p>Loading...</p>";
 
-  // 🔍 Search users
+  // 🔍 Search Users
   db.collection("users")
     .where("username", ">=", term)
     .where("username", "<=", term + "\uf8ff")
@@ -976,10 +1046,18 @@ function runSearch() {
         const data = doc.data();
         const uid = doc.id;
 
+        const username = data.username || "unknown";
+        const displayName = data.name || username;
+        const avatar = data.avatarBase64 || "default-avatar.png";
+
         const card = document.createElement("div");
         card.className = "search-card";
         card.innerHTML = `
-          <div class="username">@${data.username || "unknown"}</div>
+          <img src="${avatar}" class="friend-avatar" />
+          <div class="details">
+            <div class="username">@${escapeHtml(username)}</div>
+            <div class="name">${escapeHtml(displayName)}</div>
+          </div>
           <div class="btn-group">
             <button onclick="viewUserProfile('${uid}')">👁 View</button>
             <button onclick="addFriend('${uid}')">➕ Add</button>
@@ -989,15 +1067,14 @@ function runSearch() {
         userResults.appendChild(card);
       });
 
-      // Show user results by default
-      switchSearchView("user");
+      switchSearchView("user"); // Show user tab by default
     })
     .catch(err => {
       console.error("❌ User search failed:", err);
       userResults.innerHTML = "<p>Search failed.</p>";
     });
 
-  // 🔍 Search groups
+  // 🔍 Search Groups
   db.collection("groups")
     .where("name", ">=", term)
     .where("name", "<=", term + "\uf8ff")
@@ -1014,14 +1091,19 @@ function runSearch() {
       snapshot.forEach(doc => {
         const data = doc.data();
         const groupId = doc.id;
+        const groupName = data.name || "Group";
+        const avatar = data.avatarBase64 || `https://ui-avatars.com/api/?name=${encodeURIComponent(groupName)}`;
 
         const card = document.createElement("div");
         card.className = "search-card";
         card.innerHTML = `
-          <div class="groupname">#${data.name || "Group"}</div>
-          <div class="btn-group">
-            <button onclick="viewGroupProfile('${groupId}')">👁 View</button>
-            <button onclick="joinGroupById('${groupId}')">➕ Join</button>
+          <img src="${avatar}" class="friend-avatar" />
+          <div class="details">
+            <div class="groupname">#${escapeHtml(groupName)}</div>
+            <div class="btn-group">
+              <button onclick="viewGroupProfile('${groupId}')">👁 View</button>
+              <button onclick="joinGroupById('${groupId}')">➕ Join</button>
+            </div>
           </div>
         `;
         groupResults.appendChild(card);
@@ -1031,15 +1113,6 @@ function runSearch() {
       console.error("❌ Group search failed:", err);
       groupResults.innerHTML = "<p>Search failed.</p>";
     });
-}
-
-function searchChats() {
-  const query = document.getElementById("globalSearch").value.toLowerCase();
-  const cards = document.querySelectorAll(".chat-card");
-  cards.forEach(card => {
-    const name = card.querySelector(".name").textContent.toLowerCase();
-    card.style.display = name.includes(query) ? "flex" : "none";
-  });
 }
 
 // ==== For Group Setting ====
