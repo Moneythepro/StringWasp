@@ -41,6 +41,11 @@ function loadMainUI() {
   if (joinGroupId && auth.currentUser) {
     showModal("Join this group?", () => {
       joinGroupById(joinGroupId);
+
+      if (list.innerHTML === "") {
+  list.innerHTML = "<p>No chats yet. Start a conversation!</p>";
+      }
+      
     });
   }
 }
