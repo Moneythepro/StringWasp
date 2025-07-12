@@ -25,16 +25,29 @@ let unsubscribeThread = null;
 let unsubscribeInbox = null;
 let unsubscribeTyping = null;
 
-// ===== Main UI Load (after auth success) =====
+// ===== Loading Overlay =====
+function showLoading(state) {
+  const overlay = document.getElementById("loadingOverlay");
+  if (overlay) overlay.style.display = state ? "flex" : "none";
+}
+
+// ===== Switch UI Tabs =====
+function switchTab(id) {
+  document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
+  const tab = document.getElementById(id);
+  if (tab) tab.style.display = "block";
+}
+
+// ===== Load App After Login =====
 function loadMainUI() {
   document.getElementById("appPage").style.display = "block";
   switchTab("chatTab");
 
-  loadInbox();
-  loadFriends();
-  loadProfile();
+  loadInbox?.();
+  loadFriends?.();
+  loadProfile?.();
   loadGroups?.();
-  loadChatList().then(() => {
+  loadChatList?.().then(() => {
     const list = document.getElementById("chatList");
     if (list && list.innerHTML.trim() === "") {
       list.innerHTML = "<p>No chats yet. Start a conversation!</p>";
@@ -42,25 +55,24 @@ function loadMainUI() {
   });
 }
 
-// ===== Loading Overlay =====
-function showLoading(state) {
-  const overlay = document.getElementById("loadingOverlay");
-  if (overlay) overlay.style.display = state ? "flex" : "none";
-}
-
-// ===== Auth + Invite Handler =====
+// ===== Invite Link via URL =====
 const urlParams = new URLSearchParams(window.location.search);
 const joinGroupId = urlParams.get("join");
 
+// ===== Auth Listener =====
 auth.onAuthStateChanged(async user => {
-  if (user) {
-    currentUser = user;
+  if (!user) {
+    switchTab("loginPage");
+    return;
+  }
 
+  currentUser = user;
+
+  try {
     const userDoc = await db.collection("users").doc(user.uid).get();
     const userData = userDoc.data();
 
     if (!userData?.username) {
-      console.warn("No username found, redirecting...");
       switchTab("usernameDialog");
       return;
     }
@@ -70,25 +82,21 @@ auth.onAuthStateChanged(async user => {
 
     loadMainUI();
 
-    // ✅ Handle Group Invite after load
+    // ✅ If user arrived via group link
     if (joinGroupId) {
-      try {
-        const doc = await db.collection("groups").doc(joinGroupId).get();
-        if (!doc.exists) return alert("⚠️ Group not found or invite expired.");
-        
-        const group = doc.data();
-        showModal(`Join group "${group.name}"?`, () => {
-          joinGroupById(joinGroupId);
-          history.replaceState({}, document.title, window.location.pathname); // clean URL
-        });
-      } catch (err) {
-        console.error("Error joining group:", err);
-        alert("⚠️ Could not join group.");
-      }
+      const doc = await db.collection("groups").doc(joinGroupId).get();
+      if (!doc.exists) return alert("⚠️ Group not found or invite expired.");
+
+      const group = doc.data();
+      showModal(`Join group "${group.name}"?`, () => {
+        joinGroupById(joinGroupId);
+        history.replaceState({}, document.title, window.location.pathname); // Clean URL
+      });
     }
 
-  } else {
-    switchTab("loginPage");
+  } catch (err) {
+    console.error("🔥 Auth Init Error:", err);
+    alert("Failed to load user info.");
   }
 });
 
