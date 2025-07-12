@@ -25,19 +25,23 @@ let unsubscribeThread = null;
 let unsubscribeInbox = null;
 let unsubscribeTyping = null;
 
-// ===== Auto Join from Invite Link =====
-const urlParams = new URLSearchParams(window.location.search);
-const joinId = urlParams.get("join");
+function loadMainUI() {
+  document.getElementById("appPage").style.display = "block";
+  switchTab("chatTab");
 
-// ===== UI Tab Switcher =====
-function switchTab(id) {
-  document.querySelectorAll(".tab").forEach(tab => tab.style.display = "none");
-  const target = document.getElementById(id);
-  if (target) target.style.display = "block";
+  loadInbox();
+  loadFriends();
+  loadProfile();
+  loadGroups?.();
+  loadChatList();
 
-  if (id === "groupsTab") {
-    loadGroups?.(); // optional, to refresh dropdown or info
-    if (currentRoom) listenMessages();
+  const urlParams = new URLSearchParams(window.location.search);
+  const joinGroupId = urlParams.get("join");
+
+  if (joinGroupId && auth.currentUser) {
+    showModal("Join this group?", () => {
+      joinGroupById(joinGroupId);
+    });
   }
 }
 
