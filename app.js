@@ -331,85 +331,11 @@ function loadGroups() {
     );
 }
 
+// ===== Load All Chats (DMs + Groups) =====
 function loadChatList() {
   loadRealtimeGroups();   // ✅ Loads group chats
   loadFriendThreads();    // ✅ Loads direct messages
   listenInbox();          // ✅ Loads inbox notifications
-}
-
-// ===== Load All Chats (DMs + Groups) =====
-function listenInbox() {
-  const list = document.getElementById("inboxList");
-  if (!list || !currentUser) {
-    console.warn("⚠️ listenInbox skipped – UI or user missing");
-    return;
-  }
-
-  if (unsubscribeInbox) unsubscribeInbox();
-
-  unsubscribeInbox = db.collection("inbox")
-    .doc(currentUser.uid)
-    .collection("items")
-    .orderBy("timestamp", "desc")
-    .onSnapshot(async snapshot => {
-      try {
-        list.innerHTML = "";
-        let unreadCount = 0;
-
-        for (const doc of snapshot.docs) {
-          const data = doc.data();
-          if (!data) continue;
-          if (!data.read) unreadCount++;
-
-          let senderName = "Unknown";
-          let fromUID = "";
-
-          if (typeof data.from === "string") {
-            fromUID = data.from;
-            try {
-              const senderDoc = await db.collection("users").doc(data.from).get();
-              if (senderDoc.exists) {
-                const senderData = senderDoc.data();
-                senderName = senderData.username || senderData.name || "Unknown";
-              }
-            } catch (e) {
-              console.warn("⚠️ Sender fetch failed:", e.message);
-            }
-          } else if (typeof data.from === "object") {
-            fromUID = data.from.uid || "";
-            senderName = data.from.name || "Unknown";
-          } else if (data.fromName) {
-            senderName = data.fromName;
-          }
-
-          const card = document.createElement("div");
-          card.className = "inbox-card";
-          card.innerHTML = `
-            <div>
-              <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
-              From: ${escapeHtml(senderName)}
-            </div>
-            <div class="btn-group">
-              <button onclick="acceptInbox('${doc.id}', '${data.type}', '${fromUID}')">✔</button>
-              <button onclick="declineInbox('${doc.id}')">✖</button>
-            </div>
-          `;
-          list.appendChild(card);
-        }
-
-        const badge = document.getElementById("inboxBadge");
-        if (badge) {
-          badge.textContent = unreadCount || "";
-          badge.style.display = unreadCount ? "inline-block" : "none";
-        }
-      } catch (err) {
-        console.error("❌ Error in inbox snapshot loop:", err.message || err);
-        alert("❌ Inbox loop failed: " + (err.message || err));
-      }
-    }, err => {
-      console.error("❌ Inbox snapshot listener error:", err.message || err);
-      alert("❌ Inbox listener failed: " + (err.message || err));
-    });
 }
 
   // === Realtime Groups ===
