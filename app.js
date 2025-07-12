@@ -363,6 +363,12 @@ function loadGroups() {
     );
 }
 
+function loadChatList() {
+  loadRealtimeGroups();   // ✅ Loads group chats
+  loadFriendThreads();    // ✅ Loads direct messages
+  listenInbox();          // ✅ Loads inbox notifications
+}
+
 // ===== Load All Chats (DMs + Groups) =====
 function listenInbox() {
   const list = document.getElementById("inboxList");
@@ -370,67 +376,71 @@ function listenInbox() {
 
   if (unsubscribeInbox) unsubscribeInbox();
 
-  unsubscribeInbox = db.collection("inbox")
-    .doc(currentUser.uid)
-    .collection("items")
-    .orderBy("timestamp", "desc")
-    .onSnapshot(async (snapshot) => {
-      list.innerHTML = "";
-      let unreadCount = 0;
+  try {
+    unsubscribeInbox = db.collection("inbox")
+      .doc(currentUser.uid)
+      .collection("items")
+      .orderBy("timestamp", "desc")
+      .onSnapshot(
+        async (snapshot) => {
+          list.innerHTML = "";
+          let unreadCount = 0;
 
-      for (const doc of snapshot.docs) {
-        const data = doc.data();
-        if (!data.read) unreadCount++;
+          for (const doc of snapshot.docs) {
+            const data = doc.data();
+            if (!data.read) unreadCount++;
 
-        let senderName = "Unknown";
+            let senderName = "Unknown";
+            let fromUID = "";
 
-        // Fix: Check fromName or fetch from UID
-        if (data.fromName && typeof data.fromName === "string") {
-          senderName = data.fromName;
-        } else if (data.from && typeof data.from === "string") {
-          try {
-            const senderDoc = await db.collection("users").doc(data.from).get();
-            if (senderDoc.exists) {
-              const senderData = senderDoc.data();
-              senderName = senderData.username || senderData.name || "Unknown";
+            if (data.fromName) {
+              senderName = data.fromName;
+            } else if (typeof data.from === "string") {
+              fromUID = data.from;
+              try {
+                const senderDoc = await db.collection("users").doc(fromUID).get();
+                if (senderDoc.exists) {
+                  const senderData = senderDoc.data();
+                  senderName = senderData.username || senderData.name || "Unknown";
+                }
+              } catch (err) {
+                console.warn("⚠️ Failed to fetch sender info:", err.message || err);
+              }
+            } else if (typeof data.from === "object") {
+              fromUID = data.from.uid || "";
+              senderName = data.from.name || "Unknown";
             }
-          } catch (err) {
-            console.warn("⚠️ Failed to fetch sender:", err.message || err);
+
+            const card = document.createElement("div");
+            card.className = "inbox-card";
+            card.innerHTML = `
+              <div>
+                <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
+                From: ${escapeHtml(senderName)}
+              </div>
+              <div class="btn-group">
+                <button onclick="acceptInbox('${doc.id}', '${data.type}', '${fromUID}')">✔</button>
+                <button onclick="declineInbox('${doc.id}')">✖</button>
+              </div>
+            `;
+            list.appendChild(card);
           }
-        } else if (typeof data.from === "object" && data.from.name) {
-          senderName = data.from.name;
+
+          const badge = document.getElementById("inboxBadge");
+          if (badge) {
+            badge.textContent = unreadCount || "";
+            badge.style.display = unreadCount ? "inline-block" : "none";
+          }
+        },
+        (outerErr) => {
+          const msg = outerErr?.message || JSON.stringify(outerErr);
+          console.error("❌ Inbox error:", msg);
+          alert("❌ Inbox failed: " + msg);
         }
-
-        const card = document.createElement("div");
-        card.className = "inbox-card";
-        card.innerHTML = `
-          <div>
-            <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
-            From: ${escapeHtml(senderName)}
-          </div>
-          <div class="btn-group">
-            <button onclick="acceptInbox('${doc.id}', '${data.type}', '${typeof data.from === 'object' ? data.from.uid : data.from}')">✔</button>
-            <button onclick="declineInbox('${doc.id}')">✖</button>
-          </div>
-        `;
-        list.appendChild(card);
-      }
-
-      const badge = document.getElementById("inboxBadge");
-      if (badge) {
-        badge.textContent = unreadCount || "";
-        badge.style.display = unreadCount ? "inline-block" : "none";
-      }
-    }, err => {
-      console.error("❌ Inbox snapshot error:", err.message || err);
-      alert("❌ Inbox error: " + (err.message || err));
-    });
-}
-
-function loadChatList() {
-  loadRealtimeGroups();   // ✅ Loads group chats
-  loadFriendThreads();    // ✅ Loads direct messages
-  listenInbox();          // ✅ Loads inbox notifications
+      );
+  } catch (e) {
+    alert("❌ Inbox setup error: " + (e.message || JSON.stringify(e)));
+  }
 }
 
   // === Realtime Groups ===
@@ -499,8 +509,6 @@ function loadFriendThreads() {
     .where("participants", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
     .onSnapshot(snapshot => {
-      list.innerHTML = ""; // Clear list before render
-
       snapshot.forEach(doc => {
         const t = doc.data();
         const otherUID = t.participants.find(p => p !== currentUser.uid);
@@ -515,8 +523,8 @@ function loadFriendThreads() {
           msgText = t.lastMessage.text || "[No message]";
           fromSelf = t.lastMessage.from === currentUser.uid;
           isMedia = !!t.lastMessage.fileURL;
-          if (t.lastMessage.timestamp) {
-            timeAgo = timeSince(t.lastMessage.timestamp);
+          if (t.lastMessage.timestamp?.toMillis) {
+            timeAgo = timeSince(t.lastMessage.timestamp.toMillis());
           }
         } else if (typeof t.lastMessage === "string") {
           msgText = t.lastMessage;
@@ -537,16 +545,12 @@ function loadFriendThreads() {
             <div class="last-message">${preview}</div>
             <div class="last-time">${timeAgo}</div>
           </div>
-          <div class="chat-actions">
-            <button title="Mute">🔕</button>
-            <button title="Archive">🗂️</button>
-          </div>
         `;
         list.appendChild(card);
       });
     }, err => {
-      console.error("❌ Error loading friend threads:", err.message || err);
-      alert("❌ Chat threads failed: " + (err.message || err));
+      console.error("❌ Chat threads failed:", err.message || err);
+      alert("❌ DM load failed: " + (err.message || err));
     });
 }
 
