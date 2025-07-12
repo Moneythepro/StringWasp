@@ -864,6 +864,17 @@ function openThread(uid, username) {
         .onSnapshot(async snapshot => {
           area.innerHTML = "";
 
+          const typingArea = document.getElementById("threadTypingStatus");
+typingArea.textContent = "";
+
+db.collection("threads")
+  .doc(threadId(currentUser.uid, uid))
+  .collection("typing")
+  .onSnapshot(snapshot => {
+    const others = snapshot.docs.filter(doc => doc.id !== currentUser.uid);
+    typingArea.textContent = others.length ? "✍️ Typing..." : "";
+  });
+
           for (const doc of snapshot.docs) {
             const msg = doc.data();
             if (!msg?.text) continue;
@@ -1009,12 +1020,14 @@ function listenMessages() {
 
 // ===== Typing Indicator =====
 function handleTyping(type) {
+  if (!currentUser) return;
+
   const typingRef = type === "group"
     ? db.collection("groups").doc(currentRoom).collection("typing").doc(currentUser.uid)
     : db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser)).collection("typing").doc(currentUser.uid);
 
-  typingRef.set({ typing: true });
-  setTimeout(() => typingRef.delete(), 2000);
+  typingRef.set({ typing: true }).catch(console.warn);
+  setTimeout(() => typingRef.delete().catch(() => {}), 2000);
 }
 
 // ===== Search (Users + Groups) =====
