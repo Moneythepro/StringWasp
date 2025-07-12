@@ -993,20 +993,6 @@ function copyToClipboard(text) {
   });
 }
 
-// ===== Theme Toggle =====
-function toggleTheme() {
-  const body = document.body;
-  body.classList.toggle("dark");
-  const isDark = body.classList.contains("dark");
-  localStorage.setItem("theme", isDark ? "dark" : "light");
-}
-
-if (localStorage.getItem("theme") === "dark") {
-  document.body.classList.add("dark");
-  const toggle = document.getElementById("darkModeToggle");
-  if (toggle) toggle.checked = true;
-}
-
 // ===== Modal Handler =====
 function showModal(message, yesCallback) {
   const modal = document.getElementById("customModal");
