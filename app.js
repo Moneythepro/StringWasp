@@ -69,6 +69,9 @@ auth.onAuthStateChanged(async user => {
     }
 
     document.getElementById("usernameDisplay").textContent = data.username;
+    document.querySelector(".profile-edit-label").onclick = () => {
+  document.getElementById("profilePic").click();
+};
 
     // ✅ INIT UI
     loadMainUI();
