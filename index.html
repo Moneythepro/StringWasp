@@ -99,7 +99,7 @@
     <div id="profileTab" class="tab">
       <h3>Your Profile</h3>
       <img id="profilePicPreview" src="default-avatar.png" onclick="triggerProfileUpload()" />
-<label class="profile-edit-label">Tap to upload</label>
+<label class="profile-edit-label" onclick="triggerProfileUpload()">Tap to upload</label>
 <input type="file" id="profilePic" accept="image/*" style="display:none;" onchange="uploadProfilePic(event)" />
       <input id="profileName" placeholder="Your Name" />
       <textarea id="profileBio" placeholder="Your Bio"></textarea>
@@ -193,8 +193,8 @@
 <div id="cropModal" class="modal">
   <div class="modal-content">
     <h3>Crop Image</h3>
-    <img id="cropImage" style="max-width:100%;" />
-    <div class="btn-group">
+    <img id="cropImage" style="max-width: 100%; max-height: 300px;" />
+    <div class="btn-group" style="margin-top: 10px;">
       <button onclick="confirmCrop()">Crop & Upload</button>
       <button onclick="closeCropModal()">Cancel</button>
     </div>
