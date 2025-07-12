@@ -553,6 +553,10 @@ function listenInbox() {
           badge.style.display = unreadCount ? "inline-block" : "none";
         }
 
+        document.body.innerHTML += `<pre style="color:red;font-size:12px;background:#000;padding:10px;overflow:auto;">
+🔥 ERROR: ${JSON.stringify(err, null, 2)}
+</pre>`;
+        
       } catch (err) {
         const msg = err?.message || JSON.stringify(err) || String(err);
         console.error("❌ Inbox render failed:", msg);
