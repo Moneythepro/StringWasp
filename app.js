@@ -1024,17 +1024,6 @@ function showModal(message, yesCallback) {
   modal.style.display = "flex";
 }
 
-// ===== Delete Chat =====
-function deleteThread() {
-  showModal("Delete this chat?", () => {
-    const ref = db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser)).collection("messages");
-    ref.get().then(snapshot => {
-      snapshot.forEach(doc => doc.ref.delete());
-      alert("Chat deleted");
-    });
-  });
-}
-
 // ===== Export Chat (Stub) =====
 function exportChat() {
   alert("Export coming soon!");
@@ -1057,27 +1046,6 @@ function sendTorrentFile(file) {
   });
 }
 
-// Download magnet file
-function autoDownloadMagnet(magnetURI) {
-  if (!client) client = new WebTorrent();
-
-  client.add(magnetURI, torrent => {
-    torrent.files.forEach(file => {
-      file.getBlob((err, blob) => {
-        if (err) return alert("Download failed");
-
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = file.name;
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => link.remove(), 100);
-      });
-    });
-  });
-
-  client.on('error', err => console.error("WebTorrent error:", err));
-}
 
 // Automatically parse incoming magnet links
 function detectMagnetAndRender(text) {
@@ -1085,41 +1053,6 @@ function detectMagnetAndRender(text) {
     const match = text.match(/magnet:\?[^"]+/);
     if (match) handleMagnetDownload(match[0]);
   }
-}
-
-function isFriend(uid) {
-  return db.collection("users").doc(currentUser.uid)
-    .collection("friends").doc(uid).get().then(doc => doc.exists);
-}
-
-function shareFileViaTorrent(type) {
-  if (!client) client = new WebTorrent();
-
-  const input = document.createElement("input");
-  input.type = "file";
-  input.onchange = () => {
-    const file = input.files[0];
-    if (!file) return;
-
-    client.seed(file, torrent => {
-      const magnet = torrent.magnetURI;
-      const msg = `📎 File: <a href="${magnet}" target="_blank">${file.name}</a>`;
-
-      if (type === "dm" && currentThreadUser) {
-        isFriend(currentThreadUser).then(ok => {
-          if (!ok) return alert("❌ Only friends can share P2P files.");
-          document.getElementById("threadInput").value = msg;
-          sendThreadMessage();
-        });
-      } else if (type === "group" && currentRoom) {
-        document.getElementById("groupMessageInput").value = msg;
-        sendGroupMessage();
-      } else {
-        alert("⚠️ Sharing not allowed in this context.");
-      }
-    });
-  };
-  input.click();
 }
 
 function autoDownloadMagnet(magnetURI) {
@@ -1143,20 +1076,6 @@ function autoDownloadMagnet(magnetURI) {
   });
 
   torrent.on('error', err => console.error("Torrent error:", err));
-}
-
-function renderWithMagnetSupport(containerId) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-
-  const links = container.querySelectorAll("a[href^='magnet:']");
-  links.forEach(link => {
-    link.onclick = e => {
-      e.preventDefault();
-      const confirmed = confirm(`Download file: ${link.textContent}?`);
-      if (confirmed) autoDownloadMagnet(link.href);
-    };
-  });
 }
 
 // ===== Search Result Click: View Profile Modal =====
