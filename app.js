@@ -564,52 +564,78 @@ function listenInbox() {
 }
 
 // ===== Accept Inbox Item =====
-function acceptInbox(docId, type, from) {
-  if (!docId || !type || !from) return;
+function acceptInbox(docId, type, fromUID) {
+  if (!currentUser || !docId || !type || !fromUID) return;
 
-  const ref = db.collection("inbox").doc(currentUser.uid).collection("items").doc(docId);
+  const inboxRef = db.collection("inbox").doc(currentUser.uid).collection("items").doc(docId);
 
   if (type === "friend") {
-    // Mutual friend addition
-    db.collection("users").doc(currentUser.uid).collection("friends").doc(from).set({ added: true });
-    db.collection("users").doc(from).collection("friends").doc(currentUser.uid).set({ added: true });
-  } else if (type === "group") {
-    db.collection("groups").doc(from).update({
-      members: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
-    });
-  }
+    // Add each other to friend list
+    const batch = db.batch();
+    const userRef = db.collection("users").doc(currentUser.uid).collection("friends").doc(fromUID);
+    const friendRef = db.collection("users").doc(fromUID).collection("friends").doc(currentUser.uid);
 
-  ref.update({ read: true }).then(() => {
-    alert("✅ Request accepted!");
-  }).catch(err => {
-    console.error("❌ Accept error:", err.message || err);
-    alert("❌ Failed to accept request.");
-  });
+    batch.set(userRef, { addedAt: Date.now() });
+    batch.set(friendRef, { addedAt: Date.now() });
+    batch.update(inboxRef, { read: true });
+
+    batch.commit().then(() => {
+      alert("✅ Friend added!");
+      inboxRef.delete(); // remove from inbox
+    }).catch(err => {
+      console.error("❌ Friend accept failed:", err.message);
+      alert("❌ Could not accept friend.");
+    });
+
+  } else if (type === "group") {
+    // Join group by ID
+    db.collection("groups").doc(fromUID).update({
+      members: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+    }).then(() => {
+      alert("✅ Joined group!");
+      inboxRef.delete();
+    }).catch(err => {
+      console.error("❌ Group join failed:", err.message);
+      alert("❌ Could not join group.");
+    });
+
+  } else {
+    alert("⚠️ Unknown request type.");
+  }
 }
 
 // ===== Decline Inbox Item =====
 function declineInbox(docId) {
-  if (!docId) return;
+  if (!currentUser || !docId) return;
 
   db.collection("inbox").doc(currentUser.uid).collection("items").doc(docId).delete()
     .then(() => {
       alert("❌ Request declined.");
     })
     .catch(err => {
-      console.error("❌ Decline error:", err.message || err);
+      console.error("❌ Decline failed:", err.message);
       alert("❌ Failed to decline request.");
     });
 }
 
 // ===== Mark All as Read =====
 function markAllRead() {
-  const ref = db.collection("inbox").doc(currentUser.uid).collection("items");
-  ref.get().then(snapshot => {
+  if (!currentUser) return;
+
+  const inboxRef = db.collection("inbox").doc(currentUser.uid).collection("items");
+
+  inboxRef.get().then(snapshot => {
+    const batch = db.batch();
     snapshot.forEach(doc => {
-      if (!doc.data().read) {
-        ref.doc(doc.id).update({ read: true });
-      }
+      const ref = inboxRef.doc(doc.id);
+      batch.update(ref, { read: true });
     });
+    return batch.commit();
+  }).then(() => {
+    alert("📬 All inbox items marked as read.");
+  }).catch(err => {
+    console.error("❌ Failed to mark all read:", err.message);
+    alert("❌ Could not mark all as read.");
   });
 }
 
@@ -655,16 +681,19 @@ function loadFriends() {
 function addFriend(uid) {
   if (!uid || uid === currentUser.uid) return;
 
+  const fromName = document.getElementById("usernameDisplay")?.textContent || "User";
+
   db.collection("inbox").doc(uid).collection("items").add({
     type: "friend",
     from: currentUser.uid,
+    fromName: fromName,
     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
     read: false
   }).then(() => {
     alert("✅ Friend request sent!");
   }).catch(err => {
-    console.error("❌ Friend request error:", err.message || err);
-    alert("❌ Failed to send friend request.");
+    console.error("❌ Failed to send friend request:", err.message);
+    alert("❌ Could not send request.");
   });
 }
 
@@ -1249,25 +1278,17 @@ function copyRoomId() {
 
 // === Invite user to group ===
 function inviteToGroup(uid, groupId) {
-  if (!uid || !groupId) return;
-
-  db.collection("groups").doc(groupId).get().then(doc => {
-    if (!doc.exists) throw new Error("Group not found");
-    const group = doc.data();
-    const fromName = group.name || "Group Invite";
-
-    return db.collection("inbox").doc(uid).collection("items").add({
-      type: "group",
-      from: { uid: groupId, name: fromName },
-      fromName,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      read: false
-    });
+  db.collection("inbox").doc(uid).collection("items").add({
+    type: "group",
+    from: groupId, // The group ID
+    fromName: "Group Invite",
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    read: false
   }).then(() => {
     alert("✅ Group invite sent!");
   }).catch(err => {
-    console.error("❌ Failed to send group invite:", err.message || err);
-    alert("❌ Error sending group invite.");
+    console.error("❌ Failed to send invite:", err.message);
+    alert("❌ Could not send invite.");
   });
 }
 
