@@ -352,12 +352,13 @@ function loadChatList() {
         const card = document.createElement("div");
         card.className = "chat-card";
         card.onclick = () => openThread(otherUID, name);
-        card.innerHTML = `
-          <div class="details">
-            <div class="name">@${name}</div>
-            <div class="last-message">${last}</div>
-          </div>
-        `;
+        div.innerHTML = `
+  <img src="${avatar}" class="friend-avatar" />
+  <div class="details">
+    <div class="name">@${name}</div>
+    <div class="last-message">${last}</div>
+  </div>
+`;
         list.appendChild(card);
       });
     });
