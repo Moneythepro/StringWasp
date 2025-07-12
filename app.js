@@ -274,56 +274,26 @@ function confirmCrop() {
   }
 
   const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
-
   if (!canvas) {
     alert("❌ Failed to crop image.");
     return;
   }
 
-  canvas.toBlob(async (blob) => {
-    if (!blob) {
-      alert("❌ Failed to create image blob.");
-      return;
-    }
+  const base64 = canvas.toDataURL("image/jpeg", 0.7); // compressed
 
-    // 🔽 Compress to JPEG at 70% quality
-    try {
-      const compressedBlob = await new Promise(resolve => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = new Image();
-          img.onload = () => {
-            const tempCanvas = document.createElement("canvas");
-            const ctx = tempCanvas.getContext("2d");
-
-            // Resize to 200x200
-            tempCanvas.width = 200;
-            tempCanvas.height = 200;
-            ctx.drawImage(img, 0, 0, 200, 200);
-
-            tempCanvas.toBlob(resolve, "image/jpeg", 0.7); // 70% quality
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(blob);
-      });
-
-      const ref = storage.ref(`avatars/${currentUser.uid}`);
-      await ref.put(compressedBlob);
-
-      const url = await ref.getDownloadURL();
-      document.getElementById("profilePicPreview").src = url;
-
-      await db.collection("users").doc(currentUser.uid).update({ avatar: url });
-
-      closeCropModal();
-      alert("✔ Profile picture updated!");
-    } catch (err) {
-      console.error("❌ Upload failed:", err.message || err);
-      alert("❌ Failed to upload: " + (err.message || err));
-    }
-  }, "image/jpeg", 0.8); // initial compression before re-compressing
+  // ✅ Update user Firestore document with base64 image
+  db.collection("users").doc(currentUser.uid).update({
+    avatarBase64: base64
+  }).then(() => {
+    document.getElementById("profilePicPreview").src = base64;
+    closeCropModal();
+    alert("✔ Profile picture updated (Base64)");
+  }).catch(err => {
+    console.error("❌ Upload error:", err.message || err);
+    alert("❌ Failed to update profile picture: " + (err.message || err));
+  });
 }
+
   
 let currentProfileUID = null;
 
