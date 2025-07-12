@@ -771,7 +771,8 @@ function openThread(uid, username) {
       alert("❌ Could not load messages: " + (err.message || err));
     }
   );
-
+    }
+          }
 function deleteThread() {
   showModal("Delete this chat?", () => {
     const docId = threadId(currentUser.uid, currentThreadUser);
@@ -1370,5 +1371,3 @@ function renderWithMagnetSupport(containerId) {
     };
   });
 }
-
-
