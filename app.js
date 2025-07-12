@@ -496,31 +496,68 @@ function markAllRead() {
   });
 }
 
-// ===== Friend List =====
+// ===== Load Friends List =====
 function loadFriends() {
   const list = document.getElementById("friendsList");
   if (!list || !currentUser) return;
 
   list.innerHTML = "<em>Loading friends...</em>";
-  db.collection("users").doc(currentUser.uid).collection("friends").get().then(snapshot => {
-    list.innerHTML = "";
-    snapshot.forEach(doc => {
-      const div = document.createElement("div");
-      div.className = "friend-entry";
+  
+  db.collection("users").doc(currentUser.uid).collection("friends").get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        list.innerHTML = "<p>No friends yet. Add some friends to get started!</p>";
+        return;
+      }
 
-      db.collection("users").doc(doc.id).get().then(friendDoc => {
-        const friend = friendDoc.data() || {};
-        const username = friend.username || friend.email || doc.id;
+      list.innerHTML = "";
+      const promises = [];
 
-        div.innerHTML = `
-          <img src="${friend.photoURL || 'default-avatar.png'}" class="friend-avatar" />
-          <div class="friend-name">${username}</div>
-          <button onclick="openThread('${doc.id}', '${escapeHtml(username)}')">💬 Chat</button>
-        `;
-        list.appendChild(div);
+      snapshot.forEach(doc => {
+        const friendId = doc.id;
+        const promise = db.collection("users").doc(friendId).get()
+          .then(friendDoc => {
+            if (!friendDoc.exists) return null;
+
+            const friend = friendDoc.data() || {};
+            const username = friend.username || friend.email || "Unknown User";
+            const photoURL = friend.photoURL || 'default-avatar.png';
+            const bio = friend.bio || "No bio available";
+
+            const div = document.createElement("div");
+            div.className = "friend-entry";
+            div.innerHTML = `
+              <img src="${photoURL}" class="friend-avatar" 
+                   onerror="this.src='default-avatar.png'" />
+              <div class="friend-info">
+                <div class="friend-name">${escapeHtml(username)}</div>
+                <div class="friend-bio">${escapeHtml(bio)}</div>
+              </div>
+              <div class="friend-actions">
+                <button onclick="openThread('${friendId}', '${escapeHtml(username)}')">
+                  💬 Chat
+                </button>
+                <button onclick="viewUserProfile('${friendId}')">
+                  👤 Profile
+                </button>
+              </div>
+            `;
+            list.appendChild(div);
+          })
+          .catch(err => {
+            console.error("Error loading friend:", friendId, err);
+            return null;
+          });
+
+        promises.push(promise);
       });
+
+      return Promise.all(promises);
+    })
+    .catch(err => {
+      console.error("Friends list error:", err);
+      list.innerHTML = `<p class="error">Error loading friends: ${err.message || "Unknown error"}</p>`;
     });
-  });
 }
 
 // ===== Add Friend Shortcut =====
