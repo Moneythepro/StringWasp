@@ -235,9 +235,8 @@ function loadProfile() {
 
 document.getElementById("profilePic").addEventListener("change", uploadProfilePic);
 
-function uploadProfilePic() {
-  const fileInput = document.getElementById("profilePic");
-  const file = fileInput.files[0];
+function uploadProfilePic(e) {
+  const file = e.target.files[0];
   if (!file || !currentUser) return;
 
   const ref = storage.ref().child("avatars/" + currentUser.uid + ".jpg");
