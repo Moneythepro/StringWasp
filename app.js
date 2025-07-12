@@ -385,30 +385,36 @@ function listenInbox() {
   if (unsubscribeInbox) unsubscribeInbox();
   unsubscribeInbox = db.collection("inbox").doc(currentUser.uid).collection("items")
     .orderBy("timestamp", "desc")
-    .onSnapshot(snapshot => {
+    .onSnapshot(async snapshot => {
       list.innerHTML = "";
       let unreadCount = 0;
 
-      snapshot.forEach(doc => {
+      for (const doc of snapshot.docs) {
         const data = doc.data();
         if (!data.read) unreadCount++;
 
-        const senderName = data.fromName || "Unknown";
+        let senderName = "Unknown";
+        if (data.fromName) {
+          senderName = data.fromName;
+        } else if (data.from) {
+          const senderDoc = await db.collection("users").doc(data.from).get();
+          senderName = senderDoc.exists ? (senderDoc.data().username || senderDoc.data().name || "Unknown") : "Unknown";
+        }
 
-        const div = document.createElement("div");
-        div.className = "inbox-card";
-        div.innerHTML = `
+        const card = document.createElement("div");
+        card.className = "inbox-card";
+        card.innerHTML = `
           <div>
-  <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
-  From: ${senderName}
-</div>
+            <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
+            From: ${senderName}
+          </div>
           <div class="btn-group">
             <button onclick="acceptInbox('${doc.id}', '${data.type}', '${data.from}')">✔</button>
             <button onclick="declineInbox('${doc.id}')">✖</button>
           </div>
         `;
-        list.appendChild(div);
-      });
+        list.appendChild(card);
+      }
 
       const badge = document.getElementById("inboxBadge");
       if (badge) {
@@ -420,10 +426,15 @@ function listenInbox() {
 
 // ===== Accept Inbox Item =====
 function acceptInbox(id, type, from) {
+  if (!from || !currentUser?.uid) return;
+
   if (type === "friend") {
     const myRef = db.collection("users").doc(currentUser.uid).collection("friends").doc(from);
     const theirRef = db.collection("users").doc(from).collection("friends").doc(currentUser.uid);
-    Promise.all([myRef.set({ added: true }), theirRef.set({ added: true })]);
+    Promise.all([
+      myRef.set({ added: true }),
+      theirRef.set({ added: true })
+    ]);
   } else if (type === "group") {
     db.collection("groups").doc(from).update({
       members: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
@@ -438,6 +449,7 @@ function declineInbox(id) {
   db.collection("inbox").doc(currentUser.uid).collection("items").doc(id).delete();
 }
 
+// ===== Mark All as Read =====
 function markAllRead() {
   const ref = db.collection("inbox").doc(currentUser.uid).collection("items");
   ref.get().then(snapshot => {
