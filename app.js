@@ -310,56 +310,53 @@ function loadGroups() {
 
 // ===== Load All Chats (DMs + Groups) =====
 function loadChatList() {
-  const container = document.getElementById("chatList");
-  container.innerHTML = "";
+  const list = document.getElementById("chatList");
+  list.innerHTML = "";
 
-  const uid = currentUser?.uid;
-  if (!uid) return;
-
-  // 🔹 Load DM Threads
+  // === Load Threads (DMs) ===
   db.collection("threads")
-    .where("participants", "array-contains", uid)
+    .where("participants", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
+    .limit(20)
     .get()
     .then(snapshot => {
       snapshot.forEach(doc => {
-        const data = doc.data();
-        const friendId = data.participants.find(id => id !== uid);
-        const friendName = data.names?.[friendId] || "Friend";
-        const lastMsg = data.lastMessage || "";
+        const t = doc.data();
+        const otherUID = t.participants.find(p => p !== currentUser.uid);
+        const name = t.names?.[otherUID] || "Friend";
+        const last = t.lastMessage || "";
 
-        const div = document.createElement("div");
-        div.className = "chat-card";
-        div.innerHTML = `
-          <img src="default-avatar.png" class="friend-avatar" />
+        const card = document.createElement("div");
+        card.className = "chat-card";
+        card.onclick = () => openThread(otherUID, name);
+        card.innerHTML = `
           <div class="details">
-            <div class="name">${friendName}</div>
-            <div class="last-message">${lastMsg}</div>
+            <div class="name">@${name}</div>
+            <div class="last-message">${last}</div>
           </div>
         `;
-        div.onclick = () => openThread(friendId, friendName);
-        container.appendChild(div);
+        list.appendChild(card);
       });
     });
 
-  // 🔹 Load Group Chats
+  // === Load Groups ===
   db.collection("groups")
-    .where("members", "array-contains", uid)
+    .where("members", "array-contains", currentUser.uid)
     .get()
     .then(snapshot => {
       snapshot.forEach(doc => {
-        const data = doc.data();
-        const div = document.createElement("div");
-        div.className = "chat-card";
-        div.innerHTML = `
-          <img src="${data.icon || 'group-icon.png'}" class="friend-avatar" />
+        const g = doc.data();
+
+        const card = document.createElement("div");
+        card.className = "chat-card";
+        card.onclick = () => joinRoom(doc.id);
+        card.innerHTML = `
           <div class="details">
-            <div class="name">${data.name}</div>
-            <div class="last-message">${data.lastMessage || ""}</div>
+            <div class="name">${g.name}</div>
+            <div class="last-message">${g.description || ""}</div>
           </div>
         `;
-        div.onclick = () => joinRoom(doc.id);
-        container.appendChild(div);
+        list.appendChild(card);
       });
     });
 }
