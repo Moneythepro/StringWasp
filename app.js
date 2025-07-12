@@ -235,7 +235,7 @@ function loadProfile() {
     console.error("Profile save error:", err);
     alert("Failed to save profile");
   });
-  }
+}
 
 document.getElementById("profilePic").addEventListener("change", uploadProfilePic);
 
