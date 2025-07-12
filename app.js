@@ -140,30 +140,24 @@ function checkUsername() {
 
 // ===== Main App Load UI =====
 function loadMainUI() {
-  showLoading(true); // Optional: Show loading spinner
-
+  showLoading(true);
   document.getElementById("appPage").style.display = "block";
   switchTab("chatTab");
 
-  // ✅ Load avatar preview in profile
-  try {
-    db.collection("users").doc(currentUser.uid).onSnapshot(doc => {
-      const data = doc.data();
-      const avatar = data.avatarBase64 || data.avatar || "default-avatar.png";
-      document.getElementById("profilePicPreview").src = avatar;
-    });
-  } catch (err) {
-    console.warn("⚠️ Avatar preview load failed:", err.message || err);
-  }
+  // Real-time avatar update
+  db.collection("users").doc(currentUser.uid).onSnapshot(doc => {
+    const data = doc.data();
+    const avatar = data.avatarBase64 || "default-avatar.png";
+    document.getElementById("profilePicPreview").src = avatar;
+  });
 
-  // Safe calls with error catching
   try { loadInbox(); } catch (e) { console.warn("Inbox failed", e); }
   try { loadFriends(); } catch (e) { console.warn("Friends failed", e); }
   try { loadProfile(); } catch (e) { console.warn("Profile failed", e); }
-  try { loadGroups?.(); } catch (e) { console.warn("Groups load skipped", e); }
+  try { loadGroups?.(); } catch (e) { console.warn("Groups skipped", e); }
   try { loadChatList(); } catch (e) { console.warn("Chats failed", e); }
 
-  setTimeout(() => showLoading(false), 300); // Slight delay for smoother transition
+  setTimeout(() => showLoading(false), 300);
 }
 
 // ===== Save Profile Data =====
@@ -286,23 +280,28 @@ function confirmCrop() {
 
   const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
   if (!canvas) {
-    alert("❌ Failed to crop image.");
+    alert("❌ Failed to get canvas.");
     return;
   }
 
-  const base64 = canvas.toDataURL("image/jpeg", 0.7); // compressed
+  try {
+    const base64 = canvas.toDataURL("image/jpeg", 0.7); // Compress and convert to base64
 
-  // ✅ Update user Firestore document with base64 image
-  db.collection("users").doc(currentUser.uid).update({
-    avatarBase64: base64
-  }).then(() => {
-    document.getElementById("profilePicPreview").src = base64;
-    closeCropModal();
-    alert("✔ Profile picture updated (Base64)");
-  }).catch(err => {
-    console.error("❌ Upload error:", err.message || err);
-    alert("❌ Failed to update profile picture: " + (err.message || err));
-  });
+    // Update Firestore with base64 image
+    db.collection("users").doc(currentUser.uid).update({
+      avatarBase64: base64
+    }).then(() => {
+      document.getElementById("profilePicPreview").src = base64;
+      closeCropModal();
+      alert("✔ Profile picture updated for all users!");
+    }).catch(err => {
+      console.error("❌ Firestore update failed:", err.message || err);
+      alert("❌ Failed to update avatar.");
+    });
+  } catch (e) {
+    console.error("❌ Crop failed:", e.message || e);
+    alert("❌ Crop or upload failed.");
+  }
 }
 
   
