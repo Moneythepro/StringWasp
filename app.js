@@ -36,14 +36,15 @@ function showLoading(state) {
 
 // ===== Switch UI Tabs =====
 function switchTab(id) {
-  document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
   const tab = document.getElementById(id);
-  if (tab) tab.style.display = "block";
-
-  // ✅ Automatically show 'Users' view when opening Search tab
-  if (id === "searchTab") {
-    switchSearchView("user");
+  if (!tab) {
+    console.warn(`⚠️ Tab ${id} not found. Retrying...`);
+    setTimeout(() => switchTab(id), 200); // Retry once after 200ms
+    return;
   }
+
+  document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
+  tab.style.display = "block";
 }
 
 // ===== Invite Link via URL =====
