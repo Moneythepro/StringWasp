@@ -243,35 +243,23 @@ window.onclick = e => {
     e.target.style.display = "none";
   }
 };
-let currentGroupID = null;
+
+let currentGroupProfileId = null;
 
 function viewGroupInfo(groupId) {
-  currentGroupID = groupId;
+  currentGroupProfileId = groupId;
 
   db.collection("groups").doc(groupId).get().then(doc => {
+    if (!doc.exists) return alert("Group not found");
+
     const g = doc.data();
-    if (!g) return alert("Group not found");
+    document.getElementById("groupIcon").src = g.icon || "group-icon.png";
+    document.getElementById("groupName").textContent = g.name || "Unnamed Group";
+    document.getElementById("groupDesc").textContent = g.description || "No description";
+    document.getElementById("groupOwnerText").textContent = `Owner: ${g.ownerName || g.owner || "Unknown"}`;
+    document.getElementById("groupMembersText").textContent = `Members: ${g.members?.length || 0}`;
 
-    document.getElementById("groupAvatar").src = g.photoURL || "group-icon.png";
-    document.getElementById("groupName").textContent = g.name || "Group";
-    document.getElementById("groupDescription").textContent = g.description || "No description";
-    document.getElementById("groupOwnerInfo").textContent = "Owner: @" + (g.ownerUsername || g.owner || "unknown");
-
-    const memberList = document.getElementById("groupMembersList");
-    memberList.innerHTML = "<b>Members:</b>";
-
-    const promises = (g.members || []).map(uid =>
-      db.collection("users").doc(uid).get().then(d => {
-        const user = d.data();
-        const div = document.createElement("div");
-        div.textContent = "@" + (user?.username || uid);
-        memberList.appendChild(div);
-      })
-    );
-
-    Promise.all(promises).then(() => {
-      document.getElementById("groupFullInfo").style.display = "flex";
-    });
+    document.getElementById("groupInfoModal").style.display = "flex";
   });
 }
 
