@@ -875,6 +875,12 @@ db.collection("threads")
     typingArea.textContent = others.length ? "✍️ Typing..." : "";
   });
 
+          // Mark messages as read
+const threadMetaRef = db.collection("threads").doc(docId);
+threadMetaRef.set({
+  unread: { [currentUser.uid]: 0 }
+}, { merge: true });
+
           for (const doc of snapshot.docs) {
             const msg = doc.data();
             if (!msg?.text) continue;
