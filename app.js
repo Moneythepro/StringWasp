@@ -578,114 +578,108 @@ function escapeHtml(unsafe) {
     .replace(/'/g, "&#039;");
 }
 
-// ===== Inbox Listener =====
+// ===== Listen to Inbox =====
 function listenInbox() {
   const list = document.getElementById("inboxList");
-  if (!list || !currentUser) {
-    console.warn("⚠️ listenInbox called without UI or currentUser");
-    return;
-  }
+  if (!list || !currentUser) return;
 
   if (unsubscribeInbox) unsubscribeInbox();
 
-  try {
-    unsubscribeInbox = db.collection("inbox")
-      .doc(currentUser.uid)
-      .collection("items")
-      .orderBy("timestamp", "desc")
-      .onSnapshot(
-        async (snapshot) => {
+  unsubscribeInbox = db.collection("inbox")
+    .doc(currentUser.uid)
+    .collection("items")
+    .orderBy("timestamp", "desc")
+    .onSnapshot(async (snapshot) => {
+      list.innerHTML = "";
+      let unreadCount = 0;
+
+      for (const doc of snapshot.docs) {
+        const data = doc.data();
+        if (!data.read) unreadCount++;
+
+        let senderName = "Unknown";
+        let fromUID = "";
+
+        if (data.fromName && typeof data.fromName === "string") {
+          senderName = data.fromName;
+        } else if (typeof data.from === "string") {
+          fromUID = data.from;
           try {
-            list.innerHTML = "";
-            let unreadCount = 0;
-
-            for (const doc of snapshot.docs) {
-              const data = doc.data();
-              if (!data.read) unreadCount++;
-
-              let senderName = "Unknown";
-              let fromUID = "";
-
-              if (data.fromName) {
-                senderName = data.fromName;
-              } else if (typeof data.from === "string") {
-                fromUID = data.from;
-                try {
-                  const senderDoc = await db.collection("users").doc(data.from).get();
-                  if (senderDoc.exists) {
-                    const senderData = senderDoc.data();
-                    senderName = senderData.username || senderData.name || "Unknown";
-                  }
-                } catch (err) {
-                  console.warn("⚠️ Failed to resolve sender:", err.message || err);
-                }
-              } else if (typeof data.from === "object") {
-                fromUID = data.from.uid || "";
-                senderName = data.from.name || "Unknown";
-              }
-
-              const card = document.createElement("div");
-              card.className = "inbox-card";
-              card.innerHTML = `
-                <div>
-                  <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
-                  From: ${escapeHtml(senderName)}
-                </div>
-                <div class="btn-group">
-                  <button onclick="acceptInbox('${doc.id}', '${data.type}', '${fromUID}')">✔</button>
-                  <button onclick="declineInbox('${doc.id}')">✖</button>
-                </div>
-              `;
-              list.appendChild(card);
+            const senderDoc = await db.collection("users").doc(data.from).get();
+            if (senderDoc.exists) {
+              const senderData = senderDoc.data();
+              senderName = senderData.username || senderData.name || "Unknown";
             }
-
-            const badge = document.getElementById("inboxBadge");
-            if (badge) {
-              badge.textContent = unreadCount || "";
-              badge.style.display = unreadCount ? "inline-block" : "none";
-            }
-          } catch (innerErr) {
-            console.error("❌ Error inside inbox snapshot loop:", innerErr.message || innerErr);
-            alert("❌ Inbox failed: " + (innerErr.message || innerErr));
+          } catch (err) {
+            console.warn("⚠️ Sender fetch failed:", err.message);
           }
-        },
-        (outerErr) => {
-          const msg = outerErr?.message || JSON.stringify(outerErr) || outerErr;
-          console.error("❌ Snapshot listener error in inbox:", msg);
-          alert("❌ Inbox snapshot error: " + msg);
+        } else if (typeof data.from === "object") {
+          fromUID = data.from.uid || "";
+          senderName = data.from.name || "Unknown";
         }
-      );
-  } catch (catchErr) {
-    console.error("❌ listenInbox setup error:", catchErr.message || catchErr);
-    alert("❌ Inbox setup failed: " + (catchErr.message || catchErr));
-  }
+
+        const card = document.createElement("div");
+        card.className = "inbox-card";
+        card.innerHTML = `
+          <div>
+            <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
+            From: ${escapeHtml(senderName)}
+          </div>
+          <div class="btn-group">
+            <button onclick="acceptInbox('${doc.id}', '${data.type}', '${fromUID}')">✔</button>
+            <button onclick="declineInbox('${doc.id}')">✖</button>
+          </div>
+        `;
+        list.appendChild(card);
+      }
+
+      const badge = document.getElementById("inboxBadge");
+      if (badge) {
+        badge.textContent = unreadCount || "";
+        badge.style.display = unreadCount ? "inline-block" : "none";
+      }
+    }, (err) => {
+      console.error("❌ Inbox snapshot error:", err.message || err);
+      alert("❌ Inbox error: " + (err.message || err));
+    });
 }
 
 // ===== Accept Inbox Item =====
-function acceptInbox(id, type, fromUID) {
-  if (!currentUser) return;
+function acceptInbox(docId, type, from) {
+  if (!docId || !type || !from) return;
 
-  const inboxRef = db.collection("inbox").doc(currentUser.uid).collection("items").doc(id);
+  const ref = db.collection("inbox").doc(currentUser.uid).collection("items").doc(docId);
 
   if (type === "friend") {
-    // Accept friend request
-    db.collection("users").doc(currentUser.uid).collection("friends").doc(fromUID).set({ accepted: true });
-    db.collection("users").doc(fromUID).collection("friends").doc(currentUser.uid).set({ accepted: true });
+    // Mutual friend addition
+    db.collection("users").doc(currentUser.uid).collection("friends").doc(from).set({ added: true });
+    db.collection("users").doc(from).collection("friends").doc(currentUser.uid).set({ added: true });
   } else if (type === "group") {
-    // Accept group invite
-    joinGroupById(fromUID); // fromUID is actually groupId
+    db.collection("groups").doc(from).update({
+      members: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+    });
   }
 
-  // Remove the inbox item after accepting
-  inboxRef.delete().catch(err => {
-    console.error("❌ Failed to remove inbox item:", err.message || err);
+  ref.update({ read: true }).then(() => {
+    alert("✅ Request accepted!");
+  }).catch(err => {
+    console.error("❌ Accept error:", err.message || err);
+    alert("❌ Failed to accept request.");
   });
 }
 
 // ===== Decline Inbox Item =====
-function declineInbox(id) {
-  db.collection("inbox").doc(currentUser.uid).collection("items").doc(id).delete()
-    .catch(err => console.error("❌ Failed to decline:", err.message || err));
+function declineInbox(docId) {
+  if (!docId) return;
+
+  db.collection("inbox").doc(currentUser.uid).collection("items").doc(docId).delete()
+    .then(() => {
+      alert("❌ Request declined.");
+    })
+    .catch(err => {
+      console.error("❌ Decline error:", err.message || err);
+      alert("❌ Failed to decline request.");
+    });
 }
 
 // ===== Mark All as Read =====
@@ -1339,12 +1333,20 @@ function copyRoomId() {
 
 // === Invite user to group ===
 function inviteToGroup(uid, groupId) {
-  db.collection("inbox").doc(uid).collection("items").add({
-    type: "group",
-    from: groupId, // the group ID is stored as 'from'
-    fromName: "Group Invite", // visible in inbox card
-    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    read: false
+  if (!uid || !groupId) return;
+
+  db.collection("groups").doc(groupId).get().then(doc => {
+    if (!doc.exists) throw new Error("Group not found");
+    const group = doc.data();
+    const fromName = group.name || "Group Invite";
+
+    return db.collection("inbox").doc(uid).collection("items").add({
+      type: "group",
+      from: { uid: groupId, name: fromName },
+      fromName,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      read: false
+    });
   }).then(() => {
     alert("✅ Group invite sent!");
   }).catch(err => {
