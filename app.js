@@ -145,6 +145,17 @@ function loadMainUI() {
   document.getElementById("appPage").style.display = "block";
   switchTab("chatTab");
 
+  // ✅ Load avatar preview in profile
+  try {
+    db.collection("users").doc(currentUser.uid).onSnapshot(doc => {
+      const data = doc.data();
+      const avatar = data.avatarBase64 || data.avatar || "default-avatar.png";
+      document.getElementById("profilePicPreview").src = avatar;
+    });
+  } catch (err) {
+    console.warn("⚠️ Avatar preview load failed:", err.message || err);
+  }
+
   // Safe calls with error catching
   try { loadInbox(); } catch (e) { console.warn("Inbox failed", e); }
   try { loadFriends(); } catch (e) { console.warn("Friends failed", e); }
