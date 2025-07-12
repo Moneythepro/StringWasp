@@ -323,17 +323,25 @@ function loadGroups() {
   const dropdown = document.getElementById("roomDropdown");
   if (!dropdown || !currentUser) return;
 
-  db.collection("groups").where("members", "array-contains", currentUser.uid).get()
-    .then(snapshot => {
-      dropdown.innerHTML = "";
-      snapshot.forEach(doc => {
-        const group = doc.data();
-        const option = document.createElement("option");
-        option.value = doc.id;
-        option.textContent = group.name || doc.id;
-        dropdown.appendChild(option);
-      });
-    });
+  if (unsubscribeGroups) unsubscribeGroups(); // optional if used elsewhere
+
+  unsubscribeGroups = db.collection("groups")
+    .where("members", "array-contains", currentUser.uid)
+    .onSnapshot(
+      snapshot => {
+        dropdown.innerHTML = "";
+        snapshot.forEach(doc => {
+          const group = doc.data();
+          const option = document.createElement("option");
+          option.value = doc.id;
+          option.textContent = group.name || doc.id;
+          dropdown.appendChild(option);
+        });
+      },
+      err => {
+        console.error("❌ Real-time group loading error:", err.message || err);
+      }
+    );
 }
 
 // ===== Load All Chats (DMs + Groups) =====
@@ -348,135 +356,108 @@ function loadChatList() {
   unsubscribeThreads = db.collection("threads")
     .where("participants", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
-    .onSnapshot(snapshot => {
-      list.innerHTML = ""; // Clear first
+    .onSnapshot(
+      snapshot => {
+        list.innerHTML = ""; // Clear list
 
-      snapshot.forEach(doc => {
-        const t = doc.data();
-        const otherUID = t.participants.find(p => p !== currentUser.uid);
-        const name = t.names?.[otherUID] || "Friend";
+        snapshot.forEach(doc => {
+          const t = doc.data();
+          const otherUID = t.participants.find(p => p !== currentUser.uid);
+          const name = t.names?.[otherUID] || "Friend";
 
-        // ==== Last Message ====
-        let msgText = "[No message]";
-        let fromSelf = false;
-        let isMedia = false;
-        let timeAgo = "";
-        if (typeof t.lastMessage === "object") {
-          msgText = t.lastMessage.text || "[No message]";
-          fromSelf = t.lastMessage.from === currentUser.uid;
-          isMedia = !!t.lastMessage.fileURL;
-          if (t.lastMessage.timestamp) {
-            timeAgo = timeSince(t.lastMessage.timestamp);
+          let msgText = "[No message]";
+          let fromSelf = false;
+          let isMedia = false;
+          let timeAgo = "";
+
+          if (typeof t.lastMessage === "object") {
+            msgText = t.lastMessage.text || "[No message]";
+            fromSelf = t.lastMessage.from === currentUser.uid;
+            isMedia = !!t.lastMessage.fileURL;
+            if (t.lastMessage.timestamp) {
+              timeAgo = timeSince(t.lastMessage.timestamp);
+            }
+          } else if (typeof t.lastMessage === "string") {
+            msgText = t.lastMessage;
           }
-        } else if (typeof t.lastMessage === "string") {
-          msgText = t.lastMessage;
-        }
 
-        const preview = isMedia ? "📎 Media File" : `${fromSelf ? "You: " : ""}${msgText}`;
-        const unread = t.unread?.[currentUser.uid] || 0;
-        const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
-        const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`;
+          const preview = isMedia ? "📎 Media File" : `${fromSelf ? "You: " : ""}${msgText}`;
+          const unread = t.unread?.[currentUser.uid] || 0;
+          const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
+          const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`;
 
-        const card = document.createElement("div");
-        card.className = "chat-card";
-        card.onclick = () => openThread(otherUID, name);
-        card.innerHTML = `
-          <img src="${avatar}" class="friend-avatar" />
-          <div class="details">
-            <div class="name">@${name} ${badgeHTML}</div>
-            <div class="last-message">${preview}</div>
-            <div class="last-time">${timeAgo}</div>
-          </div>
-          <div class="chat-actions">
-            <button title="Mute">🔕</button>
-            <button title="Archive">🗂️</button>
-          </div>
-        `;
-        list.appendChild(card);
-      });
-    });
+          const card = document.createElement("div");
+          card.className = "chat-card";
+          card.onclick = () => openThread(otherUID, name);
+          card.innerHTML = `
+            <img src="${avatar}" class="friend-avatar" />
+            <div class="details">
+              <div class="name">@${name} ${badgeHTML}</div>
+              <div class="last-message">${preview}</div>
+              <div class="last-time">${timeAgo}</div>
+            </div>
+            <div class="chat-actions">
+              <button title="Mute">🔕</button>
+              <button title="Archive">🗂️</button>
+            </div>
+          `;
+          list.appendChild(card);
+        });
+      },
+      err => {
+        console.error("📛 Error in threads snapshot listener:", err.message || err);
+      }
+    );
 
   // === Realtime Groups ===
   unsubscribeGroups = db.collection("groups")
     .where("members", "array-contains", currentUser.uid)
-    .onSnapshot(snapshot => {
-      snapshot.forEach(doc => {
-        const g = doc.data();
-        const groupName = g.name || "Group";
+    .onSnapshot(
+      snapshot => {
+        snapshot.forEach(doc => {
+          const g = doc.data();
+          const groupName = g.name || "Group";
 
-        let msgText = g.description || "[No recent message]";
-        let isMedia = false;
-        let timeAgo = "";
+          let msgText = g.description || "[No recent message]";
+          let isMedia = false;
+          let timeAgo = "";
 
-        if (typeof g.lastMessage === "object") {
-          msgText = g.lastMessage.text || "[No message]";
-          isMedia = !!g.lastMessage.fileURL;
-          if (g.lastMessage.timestamp) {
-            timeAgo = timeSince(g.lastMessage.timestamp);
+          if (typeof g.lastMessage === "object") {
+            msgText = g.lastMessage.text || "[No message]";
+            isMedia = !!g.lastMessage.fileURL;
+            if (g.lastMessage.timestamp) {
+              timeAgo = timeSince(g.lastMessage.timestamp);
+            }
+          } else if (typeof g.lastMessage === "string") {
+            msgText = g.lastMessage;
           }
-        } else if (typeof g.lastMessage === "string") {
-          msgText = g.lastMessage;
-        }
 
-        const preview = isMedia ? "📎 Media File" : msgText;
-        const unread = g.unread?.[currentUser.uid] || 0;
-        const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
+          const preview = isMedia ? "📎 Media File" : msgText;
+          const unread = g.unread?.[currentUser.uid] || 0;
+          const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
 
-        const card = document.createElement("div");
-        card.className = "chat-card";
-        card.onclick = () => joinRoom(doc.id);
-        card.innerHTML = `
-          <div class="details">
-            <div class="name">#${groupName} ${badgeHTML}</div>
-            <div class="last-message">${preview}</div>
-            <div class="last-time">${timeAgo}</div>
-          </div>
-          <div class="chat-actions">
-            <button title="Mute">🔕</button>
-            <button title="Archive">🗂️</button>
-          </div>
-        `;
-        list.appendChild(card);
-      });
-    });
+          const card = document.createElement("div");
+          card.className = "chat-card";
+          card.onclick = () => joinRoom(doc.id);
+          card.innerHTML = `
+            <div class="details">
+              <div class="name">#${groupName} ${badgeHTML}</div>
+              <div class="last-message">${preview}</div>
+              <div class="last-time">${timeAgo}</div>
+            </div>
+            <div class="chat-actions">
+              <button title="Mute">🔕</button>
+              <button title="Archive">🗂️</button>
+            </div>
+          `;
+          list.appendChild(card);
+        });
+      },
+      err => {
+        console.error("📛 Error in groups snapshot listener:", err.message || err);
+      }
+    );
 }
-
-  // === Load Groups - Real-time ===
-  if (unsubscribeGroups) unsubscribeGroups();
-  unsubscribeGroups = db.collection("groups")
-    .where("members", "array-contains", currentUser.uid)
-    .onSnapshot(snapshot => {
-      snapshot.forEach(doc => {
-        const g = doc.data();
-        const groupName = g.name || "Unnamed Group";
-
-        // === Last Group Message Preview ===
-        let msgText = g.description || "[No recent message]";
-        if (typeof g.lastMessage === "string") {
-          msgText = g.lastMessage;
-        } else if (typeof g.lastMessage === "object" && g.lastMessage.text) {
-          msgText = g.lastMessage.text;
-        }
-
-        const preview = `${msgText}`;
-
-        // === Unread badge ===
-        const unread = g.unread?.[currentUser.uid] || 0;
-        const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
-
-        const card = document.createElement("div");
-        card.className = "chat-card";
-        card.onclick = () => joinRoom(doc.id);
-        card.innerHTML = `
-          <div class="details">
-            <div class="name">#${groupName} ${badgeHTML}</div>
-            <div class="last-message">${preview}</div>
-          </div>
-        `;
-        list.appendChild(card);
-      });
-    });
-  
 
 function openChatMenu() {
   const menu = document.getElementById("chatOptionsMenu");
@@ -607,25 +588,36 @@ function loadFriends() {
   if (!list || !currentUser) return;
 
   list.innerHTML = "<em>Loading friends...</em>";
-  db.collection("users").doc(currentUser.uid).collection("friends").get().then(snapshot => {
-    list.innerHTML = "";
-    snapshot.forEach(doc => {
-      const div = document.createElement("div");
-      div.className = "friend-entry";
 
-      db.collection("users").doc(doc.id).get().then(friendDoc => {
-        const friend = friendDoc.data() || {};
-        const username = friend.username || friend.email || doc.id;
+  db.collection("users").doc(currentUser.uid).collection("friends").get()
+    .then(snapshot => {
+      list.innerHTML = "";
 
-        div.innerHTML = `
-          <img src="${friend.photoURL || 'default-avatar.png'}" class="friend-avatar" />
-          <div class="friend-name">${username}</div>
-          <button onclick="openThread('${doc.id}', '${escapeHtml(username)}')">💬 Chat</button>
-        `;
-        list.appendChild(div);
+      snapshot.forEach(doc => {
+        const div = document.createElement("div");
+        div.className = "friend-entry";
+
+        db.collection("users").doc(doc.id).get()
+          .then(friendDoc => {
+            const friend = friendDoc.data() || {};
+            const username = friend.username || friend.email || doc.id;
+
+            div.innerHTML = `
+              <img src="${friend.photoURL || 'default-avatar.png'}" class="friend-avatar" />
+              <div class="friend-name">${username}</div>
+              <button onclick="openThread('${doc.id}', '${escapeHtml(username)}')">💬 Chat</button>
+            `;
+            list.appendChild(div);
+          })
+          .catch(err => {
+            console.error(`❌ Error fetching friend profile (${doc.id}):`, err.message || err);
+          });
       });
+    })
+    .catch(err => {
+      console.error("❌ Error loading friends:", err.message || err);
+      list.innerHTML = "<p style='color:red'>Failed to load friends.</p>";
     });
-  });
 }
 
 // ===== Add Friend Shortcut =====
