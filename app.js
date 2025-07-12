@@ -268,10 +268,25 @@ function closeCropModal() {
 }
 
 function confirmCrop() {
-  if (!cropper || !currentUser) return;
+  if (!cropper || !currentUser) {
+    alert("❌ Missing cropper or user.");
+    return;
+  }
+
+  console.log("✅ Starting crop upload...");
 
   const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
+  if (!canvas) {
+    alert("❌ Failed to get canvas.");
+    return;
+  }
+
   canvas.toBlob(async (blob) => {
+    if (!blob) {
+      alert("❌ Failed to create image blob.");
+      return;
+    }
+
     try {
       const ref = storage.ref(`avatars/${currentUser.uid}`);
       await ref.put(blob);
@@ -284,7 +299,7 @@ function confirmCrop() {
       alert("✔ Profile picture updated");
     } catch (err) {
       console.error("❌ Upload failed:", err.message || err);
-      alert("❌ Failed to upload profile picture.");
+      alert("❌ Failed to upload profile picture: " + (err.message || err));
     }
   }, "image/jpeg", 0.8);
 }
