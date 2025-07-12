@@ -506,6 +506,12 @@ function listenInbox() {
           if (!data.read) unreadCount++;
 
           let senderName = "Unknown";
+
+          if (!data.from && !data.fromName) {
+  console.warn("🚨 Malformed inbox item:", JSON.stringify(data, null, 2));
+  document.body.innerHTML += `<pre style="background:black;color:yellow;">🚨 Missing sender info: ${escapeHtml(JSON.stringify(data))}</pre>`;
+          }
+          
           let fromUID = "";
 
           if (typeof data.from === "string") {
