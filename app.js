@@ -757,7 +757,9 @@ function openThread(uid, username) {
               bubble.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
 
               const textDiv = document.createElement("div");
-              textDiv.innerHTML = `${msg.fromName || "User"}: ${decrypted}`;
+              const safeName = escapeHtml(msg.fromName || "User");
+              const safeText = escapeHtml(decrypted);
+              textDiv.innerHTML = `${safeName}: ${safeText}`;
               bubble.appendChild(textDiv);
 
               area.appendChild(bubble);
@@ -771,8 +773,8 @@ function openThread(uid, username) {
             alert("❌ Could not load messages: " + (err.message || err));
           }
         );
-    }); 
-}  
+    });
+}
 
 function deleteThread() {
   showModal("Delete this chat?", () => {
