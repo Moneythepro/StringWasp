@@ -1059,3 +1059,237 @@ function renderWithMagnetSupport(containerId) {
   });
 }
 
+// ===== Search Result Click: View Profile Modal =====
+function viewUserProfile(uid) {
+  db.collection("users").doc(uid).get().then(doc => {
+    if (!doc.exists) return;
+
+    const data = doc.data();
+    document.getElementById("viewProfileUsername").textContent = "@" + (data.username || "unknown");
+    document.getElementById("viewProfileName").textContent = data.name || "";
+    document.getElementById("viewProfileBio").textContent = data.bio || "No bio";
+    document.getElementById("viewProfilePic").src = data.photoURL || "default-avatar.png";
+    currentThreadUser = uid;
+
+    document.getElementById("viewProfileModal").style.display = "flex";
+  });
+}
+
+// ===== Close Profile Modal =====
+function closeProfileModal() {
+  document.getElementById("viewProfileModal").style.display = "none";
+}
+
+// ===== Toggle Dark Theme Persistently =====
+function toggleTheme() {
+  const body = document.body;
+  body.classList.toggle("dark");
+  const isDark = body.classList.contains("dark");
+  localStorage.setItem("theme", isDark ? "dark" : "light");
+
+  const toggle = document.getElementById("darkModeToggle");
+  if (toggle) toggle.checked = isDark;
+}
+
+// ===== Restore Theme on Load =====
+if (localStorage.getItem("theme") === "dark") {
+  document.body.classList.add("dark");
+  const toggle = document.getElementById("darkModeToggle");
+  if (toggle) toggle.checked = true;
+}
+
+// ===== Inbox Filter/Search (optional) =====
+function filterInbox(term) {
+  const items = document.querySelectorAll("#inboxList .inbox-card");
+  items.forEach(item => {
+    const text = item.textContent.toLowerCase();
+    item.style.display = text.includes(term.toLowerCase()) ? "block" : "none";
+  });
+}
+
+// ===== Toggle Room Dropdown to Chat =====
+function selectGroupFromDropdown() {
+  const dropdown = document.getElementById("roomDropdown");
+  const groupId = dropdown.value;
+  if (groupId) {
+    joinRoom(groupId);
+    switchTab("chatTab");
+  }
+}
+
+// ===== Show Room ID (for invite manually) =====
+function showRoomId() {
+  if (!currentRoom) return;
+  alert("Group ID:\n" + currentRoom);
+}
+
+// ===== Developer Badge & Trust Tagging =====
+function applyDeveloperBadge(uid, usernameElement) {
+  if (uid === "moneythepro") {
+    const badge = document.createElement("span");
+    badge.textContent = "🛠️ Developer";
+    badge.className = "badge developer";
+    usernameElement.appendChild(badge);
+  }
+}
+
+// Called after search renders
+function decorateUsernamesWithBadges() {
+  const usernames = document.querySelectorAll(".search-username");
+  usernames.forEach(el => {
+    const username = el.textContent.replace("@", "").trim();
+    if (username === "moneythepro") {
+      const badge = document.createElement("span");
+      badge.textContent = " 🛠️";
+      badge.style.color = "#f39c12";
+      el.appendChild(badge);
+    }
+  });
+}
+
+// ===== Group Ownership Transfer =====
+function transferGroupOwnership(newOwnerId) {
+  if (!currentRoom || !newOwnerId) return;
+  db.collection("groups").doc(currentRoom).update({
+    createdBy: newOwnerId,
+    admins: firebase.firestore.FieldValue.arrayUnion(newOwnerId)
+  }).then(() => {
+    alert("Ownership transferred.");
+    loadGroupInfo(currentRoom);
+  });
+}
+
+// ===== Delete Group (Owner Only) =====
+function deleteGroup(groupId) {
+  if (!confirm("Are you sure? This will permanently delete the group.")) return;
+  db.collection("groups").doc(groupId).delete().then(() => {
+    alert("Group deleted.");
+    loadChatList();
+  });
+}
+
+// ===== Report DM User (stub only) =====
+function reportUser(uid) {
+  showModal("Report this user?", () => {
+    alert("Thank you for reporting. Our team will review.");
+  });
+}
+
+// ===== Clear All Chat (DM only) =====
+function clearThreadMessages() {
+  const ref = db.collection("threads")
+    .doc(threadId(currentUser.uid, currentThreadUser))
+    .collection("messages");
+
+  showModal("Clear all messages?", () => {
+    ref.get().then(snapshot => {
+      snapshot.forEach(doc => doc.ref.delete());
+      alert("Messages cleared.");
+    });
+  });
+}
+
+// ===== Chat Scroll to Bottom Button =====
+function scrollToBottom(divId) {
+  const div = document.getElementById(divId);
+  if (div) div.scrollTop = div.scrollHeight;
+}
+
+// ===== Emoji Picker (basic integration) =====
+function insertEmoji(targetId, emoji) {
+  const input = document.getElementById(targetId);
+  if (input) input.value += emoji;
+}
+
+// ===== Copy Room ID =====
+function copyRoomId() {
+  if (!currentRoom) return;
+  copyToClipboard(currentRoom);
+  alert("Group ID copied!");
+}
+
+// ===== Helper to Show Toast (if not modal) =====
+function showToast(msg) {
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// ====== WebTorrent (P2P File Share) ======
+
+// ✅ Only friends or group members can share
+function isFriend(uid) {
+  return db.collection("users").doc(currentUser.uid)
+    .collection("friends").doc(uid).get().then(doc => doc.exists);
+}
+
+function shareFileViaTorrent(type) {
+  if (!client) client = new WebTorrent();  // ✅ Lazy init
+
+  const input = document.createElement("input");
+  input.type = "file";
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+
+    client.seed(file, torrent => {
+      const magnet = torrent.magnetURI;
+      const msg = `📎 File: <a href="${magnet}" target="_blank">${file.name}</a>`;
+
+      if (type === "dm" && currentThreadUser) {
+        isFriend(currentThreadUser).then(ok => {
+          if (!ok) return alert("❌ Only friends can share P2P files.");
+          document.getElementById("threadInput").value = msg;
+          sendThreadMessage();
+        });
+      } else if (type === "group" && currentRoom) {
+        document.getElementById("groupMessageInput").value = msg;
+        sendGroupMessage();
+      } else {
+        alert("⚠️ Sharing not allowed in this context.");
+      }
+    });
+  };
+  input.click();
+}
+
+// ✅ Auto download magnet link with confirmation
+function autoDownloadMagnet(magnetURI) {
+  if (!client) client = new WebTorrent();
+
+  const torrent = client.add(magnetURI);
+
+  torrent.on('ready', () => {
+    torrent.files.forEach(file => {
+      file.getBlobURL((err, url) => {
+        if (err) return console.error("Download error:", err);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => a.remove(), 100);
+      });
+    });
+  });
+
+  torrent.on('error', err => console.error("Torrent error:", err));
+}
+
+// ✅ Scan chat for magnet links and bind download
+function renderWithMagnetSupport(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const links = container.querySelectorAll("a[href^='magnet:']");
+  links.forEach(link => {
+    link.onclick = e => {
+      e.preventDefault();
+      const confirmed = confirm(`Download file: ${link.textContent}?`);
+      if (confirmed) autoDownloadMagnet(link.href);
+    };
+  });
+}
