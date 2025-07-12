@@ -264,21 +264,22 @@ function uploadProfilePic(e) {
   if (!file || !currentUser) return;
 
   const ref = storage.ref().child(`avatars/${currentUser.uid}`);
+  showLoading(true);
 
-  ref.put(file).then(snapshot => snapshot.ref.getDownloadURL())
+  ref.put(file)
+    .then(snapshot => snapshot.ref.getDownloadURL())
     .then(url => {
-      return db.collection("users").doc(currentUser.uid).update({
-        photoURL: url
-      });
-    }).then(() => {
+      return db.collection("users").doc(currentUser.uid).update({ photoURL: url });
+    })
+    .then(() => {
       document.getElementById("profilePicPreview").src = URL.createObjectURL(file);
       alert("Profile picture updated!");
-    }).catch(err => {
-      console.error("Upload error:", err);
+    })
+    .catch(err => {
+      console.error("❌ Upload error:", err);
       alert("Failed to upload profile picture.");
-    }).finally(() => {
-      showLoading(false);
-    });
+    })
+    .finally(() => showLoading(false));
 }
   
 let currentProfileUID = null;
@@ -427,9 +428,8 @@ function listenInbox() {
 }
 
 function loadChatList() {
-  loadRealtimeGroups();   // ✅ Group chats
-  loadFriendThreads();    // ✅ DM chats
-  listenInbox();          // ✅ Inbox updates
+  loadRealtimeThreads();  // Your function that loads DMs
+  loadRealtimeGroups();   // Function that loads group chats
 }
 
   // === Realtime Groups ===
