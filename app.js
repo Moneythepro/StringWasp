@@ -548,10 +548,10 @@ function listenInbox() {
         if (!data.read) unreadCount++;
 
         let senderName = "Unknown";
+        let senderUID = "";
 
-        if (data.fromName) {
-          senderName = data.fromName;
-        } else if (typeof data.from === "string") {
+        if (typeof data.from === "string") {
+          senderUID = data.from;
           try {
             const senderDoc = await db.collection("users").doc(data.from).get();
             if (senderDoc.exists) {
@@ -559,8 +559,13 @@ function listenInbox() {
               senderName = senderData.username || senderData.name || "Unknown";
             }
           } catch (err) {
-            console.warn("⚠️ Failed to fetch sender:", err);
+            console.warn("⚠️ Failed to fetch sender doc:", err.message);
           }
+        } else if (typeof data.from === "object") {
+          senderUID = data.from.uid || "";
+          senderName = data.from.name || "Unknown";
+        } else if (data.fromName) {
+          senderName = data.fromName;
         }
 
         const card = document.createElement("div");
@@ -568,10 +573,10 @@ function listenInbox() {
         card.innerHTML = `
           <div>
             <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
-            From: ${senderName}
+            From: ${escapeHtml(senderName)}
           </div>
           <div class="btn-group">
-            <button onclick="acceptInbox('${doc.id}', '${data.type}', '${typeof data.from === 'object' ? data.from.uid : data.from}')">✔</button>
+            <button onclick="acceptInbox('${doc.id}', '${data.type}', '${senderUID}')">✔</button>
             <button onclick="declineInbox('${doc.id}')">✖</button>
           </div>
         `;
