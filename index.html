@@ -98,9 +98,9 @@
     <!-- 🙍 Profile Tab -->
     <div id="profileTab" class="tab">
       <h3>Your Profile</h3>
-      <img id="profilePicPreview" src="default-avatar.png" onclick="triggerProfileUpload()" />
+      <img id="profilePicPreview" src="default-avatar.png" alt="Avatar" onclick="triggerProfileUpload()" />
 <label class="profile-edit-label" onclick="triggerProfileUpload()">Tap to upload</label>
-<input type="file" id="profilePic" accept="image/*" style="display:none;" onchange="uploadProfilePic(event)" />
+<input type="file" id="profilePic" accept="image/*" onchange="uploadProfilePic(event)" style="display:none;" />
       <input id="profileName" placeholder="Your Name" />
       <textarea id="profileBio" placeholder="Your Bio"></textarea>
       <select id="profileGender">
