@@ -365,79 +365,65 @@ function loadGroups() {
 // ===== Load All Chats (DMs + Groups) =====
 function listenInbox() {
   const list = document.getElementById("inboxList");
-  if (!list || !currentUser) {
-    console.warn("⚠️ listenInbox called without UI or currentUser");
-    return;
-  }
+  if (!list || !currentUser) return;
 
   if (unsubscribeInbox) unsubscribeInbox();
 
-  try {
-    unsubscribeInbox = db.collection("inbox")
-      .doc(currentUser.uid)
-      .collection("items")
-      .orderBy("timestamp", "desc")
-      .onSnapshot(
-        async (snapshot) => {
+  unsubscribeInbox = db.collection("inbox")
+    .doc(currentUser.uid)
+    .collection("items")
+    .orderBy("timestamp", "desc")
+    .onSnapshot(async (snapshot) => {
+      list.innerHTML = "";
+      let unreadCount = 0;
+
+      for (const doc of snapshot.docs) {
+        const data = doc.data();
+        if (!data.read) unreadCount++;
+
+        let senderName = "Unknown";
+
+        // Fix: Check fromName or fetch from UID
+        if (data.fromName && typeof data.fromName === "string") {
+          senderName = data.fromName;
+        } else if (data.from && typeof data.from === "string") {
           try {
-            list.innerHTML = "";
-            let unreadCount = 0;
-
-            for (const doc of snapshot.docs) {
-              const data = doc.data();
-              if (!data.read) unreadCount++;
-
-              let senderName = "Unknown";
-
-              if (data.fromName) {
-                senderName = data.fromName;
-              } else if (data.from) {
-                if (typeof data.from === "string") {
-                  const senderDoc = await db.collection("users").doc(data.from).get();
-                  if (senderDoc.exists) {
-                    const senderData = senderDoc.data();
-                    senderName = senderData.username || senderData.name || "Unknown";
-                  }
-                } else if (typeof data.from === "object" && data.from.name) {
-                  senderName = data.from.name;
-                }
-              }
-
-              const card = document.createElement("div");
-              card.className = "inbox-card";
-              card.innerHTML = `
-                <div>
-                  <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
-                  From: ${senderName}
-                </div>
-                <div class="btn-group">
-                  <button onclick="acceptInbox('${doc.id}', '${data.type}', '${typeof data.from === "object" ? data.from.uid : data.from}')">✔</button>
-                  <button onclick="declineInbox('${doc.id}')">✖</button>
-                </div>
-              `;
-              list.appendChild(card);
+            const senderDoc = await db.collection("users").doc(data.from).get();
+            if (senderDoc.exists) {
+              const senderData = senderDoc.data();
+              senderName = senderData.username || senderData.name || "Unknown";
             }
-
-            const badge = document.getElementById("inboxBadge");
-            if (badge) {
-              badge.textContent = unreadCount || "";
-              badge.style.display = unreadCount ? "inline-block" : "none";
-            }
-          } catch (innerErr) {
-            console.error("❌ Error inside inbox snapshot loop:", innerErr.message || innerErr);
-            alert("❌ Inbox loop error: " + (innerErr.message || innerErr));
+          } catch (err) {
+            console.warn("⚠️ Failed to fetch sender:", err.message || err);
           }
-        },
-        (outerErr) => {
-          const msg = outerErr?.message || JSON.stringify(outerErr) || outerErr;
-          console.error("❌ Snapshot listener error in inbox:", msg);
-          alert("❌ Inbox snapshot error: " + msg);
+        } else if (typeof data.from === "object" && data.from.name) {
+          senderName = data.from.name;
         }
-      );
-  } catch (catchErr) {
-    console.error("❌ listenInbox setup error:", catchErr.message || catchErr);
-    alert("❌ Inbox setup failed: " + (catchErr.message || catchErr));
-  }
+
+        const card = document.createElement("div");
+        card.className = "inbox-card";
+        card.innerHTML = `
+          <div>
+            <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
+            From: ${escapeHtml(senderName)}
+          </div>
+          <div class="btn-group">
+            <button onclick="acceptInbox('${doc.id}', '${data.type}', '${typeof data.from === 'object' ? data.from.uid : data.from}')">✔</button>
+            <button onclick="declineInbox('${doc.id}')">✖</button>
+          </div>
+        `;
+        list.appendChild(card);
+      }
+
+      const badge = document.getElementById("inboxBadge");
+      if (badge) {
+        badge.textContent = unreadCount || "";
+        badge.style.display = unreadCount ? "inline-block" : "none";
+      }
+    }, err => {
+      console.error("❌ Inbox snapshot error:", err.message || err);
+      alert("❌ Inbox error: " + (err.message || err));
+    });
 }
 
 function loadChatList() {
