@@ -484,7 +484,10 @@ function escapeHtml(unsafe) {
 // ===== Listen to Inbox =====
 function listenInbox() {
   const list = document.getElementById("inboxList");
-  if (!list || !currentUser) return;
+  if (!list || !currentUser) {
+    console.warn("⚠️ listenInbox skipped – UI or user missing");
+    return;
+  }
 
   if (unsubscribeInbox) unsubscribeInbox();
 
@@ -493,59 +496,65 @@ function listenInbox() {
     .collection("items")
     .orderBy("timestamp", "desc")
     .onSnapshot(async (snapshot) => {
-      list.innerHTML = "";
-      let unreadCount = 0;
+      try {
+        list.innerHTML = "";
+        let unreadCount = 0;
 
-      for (const doc of snapshot.docs) {
-        const data = doc.data();
-        if (!data.read) unreadCount++;
+        for (const doc of snapshot.docs) {
+          const data = doc.data();
+          if (!data) continue;
+          if (!data.read) unreadCount++;
 
-        let senderName = "Unknown";
-        let fromUID = "";
+          let senderName = "Unknown";
+          let fromUID = "";
 
-        if (typeof data.fromName === "string") {
-          senderName = data.fromName;
-        } else if (typeof data.from === "string") {
-          fromUID = data.from;
-          try {
-            const senderDoc = await db.collection("users").doc(data.from).get();
-            if (senderDoc.exists) {
-              const senderData = senderDoc.data();
-              senderName = senderData.username || senderData.name || "Unknown";
+          if (typeof data.from === "string") {
+            fromUID = data.from;
+            try {
+              const senderDoc = await db.collection("users").doc(data.from).get();
+              if (senderDoc.exists) {
+                const senderData = senderDoc.data();
+                senderName = senderData.username || senderData.name || "Unknown";
+              }
+            } catch (e) {
+              console.warn("⚠️ Sender fetch failed:", e.message);
             }
-          } catch (err) {
-            console.warn("⚠️ Sender fetch failed:", err.message || err);
+          } else if (typeof data.from === "object") {
+            fromUID = data.from.uid || "";
+            senderName = data.from.name || "Unknown";
+          } else if (data.fromName) {
+            senderName = data.fromName;
           }
-        } else if (typeof data.from === "object") {
-          fromUID = data.from.uid || "";
-          senderName = data.from.name || "Unknown";
+
+          const typeText = data.type === "friend"
+            ? "Friend Request"
+            : data.type === "group"
+            ? "Group Invite"
+            : "Notification";
+
+          const card = document.createElement("div");
+          card.className = "inbox-card";
+          card.innerHTML = `
+            <div>
+              <strong>${typeText}</strong><br>
+              From: ${escapeHtml(senderName)}
+            </div>
+            <div class="btn-group">
+              <button onclick="acceptInbox('${doc.id}', '${data.type}', '${fromUID}')">✔</button>
+              <button onclick="declineInbox('${doc.id}')">✖</button>
+            </div>
+          `;
+          list.appendChild(card);
         }
 
-        const typeText = data.type === "friend"
-          ? "Friend Request"
-          : data.type === "group"
-          ? "Group Invite"
-          : "Notification";
-
-        const card = document.createElement("div");
-        card.className = "inbox-card";
-        card.innerHTML = `
-          <div>
-            <strong>${typeText}</strong><br>
-            From: ${escapeHtml(senderName)}
-          </div>
-          <div class="btn-group">
-            <button onclick="acceptInbox('${doc.id}', '${data.type}', '${fromUID}')">✔</button>
-            <button onclick="declineInbox('${doc.id}')">✖</button>
-          </div>
-        `;
-        list.appendChild(card);
-      }
-
-      const badge = document.getElementById("inboxBadge");
-      if (badge) {
-        badge.textContent = unreadCount || "";
-        badge.style.display = unreadCount ? "inline-block" : "none";
+        const badge = document.getElementById("inboxBadge");
+        if (badge) {
+          badge.textContent = unreadCount || "";
+          badge.style.display = unreadCount ? "inline-block" : "none";
+        }
+      } catch (err) {
+        console.error("❌ Error in inbox snapshot loop:", err.message || err);
+        alert("❌ Inbox loop failed: " + (err.message || err));
       }
     }, (err) => {
       const msg = err?.message || JSON.stringify(err) || String(err);
