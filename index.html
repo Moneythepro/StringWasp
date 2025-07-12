@@ -89,7 +89,7 @@
       <div class="search-buttons">
         <button onclick="switchSearchView('user')">Users</button>
         <button onclick="switchSearchView('group')">Groups</button>
-        <button onclick="runSearch()">Search</button>
+        <button onclick="runSearch(); switchSearchView('user')">Search</button>
       </div>
       <div id="searchResultsUser" class="search-results"></div>
       <div id="searchResultsGroup" class="search-results" style="display:none;"></div>
