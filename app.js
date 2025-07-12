@@ -43,19 +43,29 @@ function switchTab(id) {
 
 // ===== Load App After Login =====
 function loadMainUI() {
+  if (!currentUser || !currentUser.uid) {
+    console.warn("🚫 currentUser is not ready yet.");
+    return;
+  }
+
   document.getElementById("appPage").style.display = "block";
   switchTab("chatTab");
 
-  loadInbox?.();
-  loadFriends?.();
-  loadProfile?.();
-  loadGroups?.();
-  loadChatList?.().then(() => {
-    const list = document.getElementById("chatList");
-    if (list && list.innerHTML.trim() === "") {
-      list.innerHTML = "<p>No chats yet. Start a conversation!</p>";
-    }
-  });
+  try { loadInbox?.(); } catch (e) { console.warn("📥 Inbox failed", e.message || e); }
+  try { loadFriends?.(); } catch (e) { console.warn("👥 Friends failed", e.message || e); }
+  try { loadProfile?.(); } catch (e) { console.warn("🧑 Profile failed", e.message || e); }
+  try { loadGroups?.(); } catch (e) { console.warn("👪 Groups failed", e.message || e); }
+
+  try {
+    loadChatList?.().then(() => {
+      const list = document.getElementById("chatList");
+      if (list && list.innerHTML.trim() === "") {
+        list.innerHTML = "<p>No chats yet. Start a conversation!</p>";
+      }
+    });
+  } catch (e) {
+    console.warn("💬 Chats failed", e.message || e);
+  }
 }
 
 // ===== Invite Link via URL =====
@@ -65,41 +75,33 @@ const joinGroupId = urlParams.get("join");
 // ===== Auth Listener =====
 auth.onAuthStateChanged(async user => {
   if (!user) {
-    switchTab("loginPage");
+    showTab("authTab");
     return;
   }
 
   currentUser = user;
 
   try {
-    const userDoc = await db.collection("users").doc(user.uid).get();
-    const userData = userDoc.data();
+    const doc = await db.collection("users").doc(user.uid).get();
+    const data = doc.data();
 
-    if (!userData?.username) {
-      switchTab("usernameDialog");
+    if (!data?.username) {
+      showTab("setupTab");
       return;
     }
 
-    const nameEl = document.getElementById("usernameDisplay");
-    if (nameEl) nameEl.textContent = userData.username;
+    document.getElementById("usernameDisplay").textContent = data.username;
 
+    // ✅ INIT after user is ready
     loadMainUI();
 
-    // ✅ If user arrived via group link
     if (joinGroupId) {
-      const doc = await db.collection("groups").doc(joinGroupId).get();
-      if (!doc.exists) return alert("⚠️ Group not found or invite expired.");
-
-      const group = doc.data();
-      showModal(`Join group "${group.name}"?`, () => {
-        joinGroupById(joinGroupId);
-        history.replaceState({}, document.title, window.location.pathname); // Clean URL
-      });
+      tryJoinGroup(joinGroupId);  // move this inside
     }
 
   } catch (err) {
-    console.error("🔥 Auth Init Error:", err);
-    alert("Failed to load user info.");
+    console.error("User load error", err);
+    alert("❌ Failed to load user info.");
   }
 });
 
