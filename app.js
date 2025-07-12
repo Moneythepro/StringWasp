@@ -885,11 +885,11 @@ function openThread(uid, username) {
             }
 
             const bubble = document.createElement("div");
-            bubble.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
+bubble.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
 
-            bubble.innerHTML = `
-              <div class="msg-avatar">
-                <img src="${avatar}" alt="avatar" />
+const textDiv = document.createElement("div");
+textDiv.innerHTML = `${msg.fromName || "User"}: ${decrypted}`;
+bubble.appendChild(textDiv);
               </div>
               <div class="msg-content">
                 <div class="msg-text">
@@ -1088,20 +1088,23 @@ function runSearch() {
         const data = doc.data();
         const groupId = doc.id;
         const groupName = data.name || "Group";
-        const avatar = data.avatarBase64 || `https://ui-avatars.com/api/?name=${encodeURIComponent(groupName)}`;
+        const avatarURL = data.photoURL || `https://ui-avatars.com/api/?name=${data.username || "U"}`;
 
-        const card = document.createElement("div");
-        card.className = "search-card";
-        card.innerHTML = `
-          <img src="${avatar}" class="friend-avatar" />
-          <div class="details">
-            <div class="groupname">#${escapeHtml(groupName)}</div>
-            <div class="btn-group">
-              <button onclick="viewGroupProfile('${groupId}')">👁 View</button>
-              <button onclick="joinGroupById('${groupId}')">➕ Join</button>
-            </div>
-          </div>
-        `;
+card.innerHTML = `
+  <div class="search-result">
+    <img src="${avatarURL}" class="search-avatar" />
+    <div class="search-info">
+      <div class="username">@${data.username || "unknown"}</div>
+      <div class="bio">${data.bio || ""}</div>
+    </div>
+    <div class="btn-group">
+      <button onclick="viewUserProfile('${uid}')">👁</button>
+      <button onclick="addFriend('${uid}')">➕</button>
+      <button onclick="messageUser('${uid}')">💬</button>
+    </div>
+  </div>
+`;
+        
         groupResults.appendChild(card);
       });
     })
