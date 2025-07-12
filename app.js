@@ -235,27 +235,22 @@ function loadProfile() {
 
 document.getElementById("profilePic").addEventListener("change", uploadProfilePic);
 
-function uploadProfilePic(e) {
-  const file = e.target.files[0];
+function uploadProfilePic() {
+  const fileInput = document.getElementById("profilePic");
+  const file = fileInput.files[0];
   if (!file || !currentUser) return;
 
-  const ref = storage.ref().child(`avatars/${currentUser.uid}`);
-  showLoading(true);
-
-  ref.put(file)
-    .then(snapshot => snapshot.ref.getDownloadURL())
-    .then(url => {
-      return db.collection("users").doc(currentUser.uid).update({ photoURL: url });
-    })
-    .then(() => {
-      document.getElementById("profilePicPreview").src = URL.createObjectURL(file);
-      alert("Profile picture updated!");
-    })
-    .catch(err => {
-      console.error("❌ Upload error:", err);
-      alert("Failed to upload profile picture.");
-    })
-    .finally(() => showLoading(false));
+  const ref = storage.ref().child("avatars/" + currentUser.uid + ".jpg");
+  ref.put(file).then(() => {
+    ref.getDownloadURL().then(url => {
+      db.collection("users").doc(currentUser.uid).update({ photoURL: url });
+      document.getElementById("profilePicPreview").src = url;
+      alert("✅ Profile picture updated!");
+    });
+  }).catch(err => {
+    console.error("❌ Profile upload failed:", err);
+    alert("❌ Failed to upload profile picture.");
+  });
 }
   
 let currentProfileUID = null;
