@@ -25,6 +25,10 @@ let unsubscribeThread = null;
 let unsubscribeInbox = null;
 let unsubscribeTyping = null;
 
+// 🧭 Handle Invite Link on Page Load
+const urlParams = new URLSearchParams(window.location.search);
+const joinGroupId = urlParams.get("join");
+
 function loadMainUI() {
   document.getElementById("appPage").style.display = "block";
   switchTab("chatTab");
@@ -34,9 +38,6 @@ function loadMainUI() {
   loadProfile();
   loadGroups?.();
   loadChatList();
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const joinGroupId = urlParams.get("join");
 
   if (joinGroupId && auth.currentUser) {
     showModal("Join this group?", () => {
@@ -61,6 +62,10 @@ auth.onAuthStateChanged(async user => {
   if (user) {
     currentUser = user;
     const userDoc = await db.collection("users").doc(user.uid).get();
+
+    if (joinGroupId) {
+  joinGroupById(joinGroupId);
+    }
 
     if (!userDoc.exists || !userDoc.data().username) {
       switchTab("usernameDialog"); // Username setup
