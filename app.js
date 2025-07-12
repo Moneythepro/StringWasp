@@ -236,30 +236,30 @@ document.getElementById("profilePic").addEventListener("change", uploadProfilePi
 
 let cropper = null;
 
-function triggerProfileUpload() {
-  document.getElementById("profilePic").click();
-}
-
 function uploadProfilePic(e) {
   const file = e.target.files[0];
-  if (!file) return;
+  if (!file || !currentUser) return;
 
-  const reader = new FileReader();
-  reader.onload = function (event) {
-    const image = document.getElementById("cropImage");
-    image.src = event.target.result;
+  const ref = storage.ref().child(`avatars/${currentUser.uid}`);
+  showLoading(true);
 
-    document.getElementById("cropModal").style.display = "block";
-
-    if (cropper) cropper.destroy();
-    cropper = new Cropper(image, {
-      aspectRatio: 1,
-      viewMode: 1
-    });
-  };
-  reader.readAsDataURL(file);
+  ref.put(file)
+    .then(snapshot => snapshot.ref.getDownloadURL())
+    .then(url => {
+      return db.collection("users").doc(currentUser.uid).update({ photoURL: url });
+    })
+    .then(() => {
+      document.getElementById("profilePicPreview").src = URL.createObjectURL(file);
+      alert("Profile picture updated!");
+      loadProfile();
+      loadChatList(); // to refresh avatar in chat
+    })
+    .catch(err => {
+      console.error("❌ Upload error:", err);
+      alert("Failed to upload profile picture.");
+    })
+    .finally(() => showLoading(false));
 }
-
 function closeCropModal() {
   if (cropper) cropper.destroy();
   cropper = null;
