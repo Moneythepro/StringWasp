@@ -693,22 +693,22 @@ function loadFriends() {
 }
 
 // ==== Add Friend Shortcut ====
-function addFriend(uid) {
-  if (!uid || uid === currentUser.uid) return;
-
-  const fromName = document.getElementById("usernameDisplay")?.textContent || "User";
-
-  db.collection("inbox").doc(uid).collection("items").add({
+function addFriend(targetUID) {
+  db.collection("inbox").doc(targetUID).collection("items").add({
     type: "friend",
-    from: currentUser.uid,
-    fromName: fromName,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    read: false
-  }).then(() => {
+    from: {
+      uid: currentUser.uid,
+      name: currentUser.displayName || currentUser.email || "Unknown"
+    },
+    read: false,
+    timestamp: Date.now()
+  })
+  .then(() => {
     alert("✅ Friend request sent!");
-  }).catch(err => {
-    console.error("❌ Failed to send friend request:", err.message);
-    alert("❌ Could not send request.");
+  })
+  .catch(err => {
+    console.error("❌ Error sending friend request:", err);
+    alert("❌ Failed to send friend request: " + (err.message || err));
   });
 }
 
