@@ -409,91 +409,149 @@ function listenInbox() {
   if (!list || !currentUser) return;
 
   if (unsubscribeInbox) unsubscribeInbox();
+
   unsubscribeInbox = db.collection("inbox").doc(currentUser.uid).collection("items")
     .orderBy("timestamp", "desc")
-    .onSnapshot(async snapshot => {
-      list.innerHTML = "";
-      let unreadCount = 0;
+    .onSnapshot(
+      async snapshot => {
+        list.innerHTML = "";
+        let unreadCount = 0;
 
-      for (const doc of snapshot.docs) {
-        const data = doc.data();
-        if (!data.read) unreadCount++;
+        for (const doc of snapshot.docs) {
+          try {
+            const data = doc.data();
+            if (!data.read) unreadCount++;
 
-        let senderName = "Unknown";
+            let senderName = "Unknown";
+            let senderId = null;
 
-        // ✅ Fix: Support fromName OR resolve UID OR handle object
-        if (data.fromName) {
-          senderName = data.fromName;
-        } else if (data.from) {
-          if (typeof data.from === "string") {
-            const senderDoc = await db.collection("users").doc(data.from).get();
-            if (senderDoc.exists) {
-              const senderData = senderDoc.data();
-              senderName = senderData.username || senderData.name || "Unknown";
+            // Handle different sender formats
+            if (typeof data.from === 'string') {
+              senderId = data.from;
+              if (data.fromName) {
+                senderName = data.fromName;
+              } else {
+                const senderDoc = await db.collection("users").doc(data.from).get();
+                senderName = senderDoc.exists ? (senderDoc.data().username || "Unknown") : "Unknown";
+              }
+            } else if (data.from && typeof data.from === 'object') {
+              senderId = data.from.uid || null;
+              senderName = data.from.name || "Unknown";
             }
-          } else if (typeof data.from === "object" && data.from.name) {
-            senderName = data.from.name;
+
+            const card = document.createElement("div");
+            card.className = `inbox-card ${data.read ? '' : 'unread'}`;
+            card.innerHTML = `
+              <div class="inbox-content">
+                <strong>${data.type === "friend" ? "👥 Friend Request" : "👪 Group Invite"}</strong>
+                <p>From: ${escapeHtml(senderName)}</p>
+                ${data.message ? `<p>${escapeHtml(data.message)}</p>` : ''}
+                <small>${formatDate(data.timestamp?.toDate())}</small>
+              </div>
+              <div class="inbox-actions">
+                <button onclick="acceptInbox('${doc.id}', '${data.type}', '${senderId || ''}')">✔ Accept</button>
+                <button onclick="declineInbox('${doc.id}')">✖ Decline</button>
+              </div>
+            `;
+            list.appendChild(card);
+          } catch (err) {
+            console.error("Error processing inbox item:", err);
           }
         }
 
-        const card = document.createElement("div");
-        card.className = "inbox-card";
-        card.innerHTML = `
-          <div>
-            <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
-            From: ${senderName}
-          </div>
-          <div class="btn-group">
-            <button onclick="acceptInbox('${doc.id}', '${data.type}', '${typeof data.from === "object" ? data.from.uid : data.from}')">✔</button>
-            <button onclick="declineInbox('${doc.id}')">✖</button>
-          </div>
-        `;
-        list.appendChild(card);
+        updateInboxBadge(unreadCount);
+      },
+      error => {
+        console.error("Inbox listener error:", error);
+        list.innerHTML = `<div class="error-message">
+          Failed to load inbox: ${error.message || 'Unknown error'}
+        </div>`;
       }
+    );
+}
 
-      const badge = document.getElementById("inboxBadge");
-      if (badge) {
-        badge.textContent = unreadCount || "";
-        badge.style.display = unreadCount ? "inline-block" : "none";
-      }
-    });
+function updateInboxBadge(count) {
+  const badge = document.getElementById("inboxBadge");
+  if (!badge) return;
+  
+  badge.textContent = count > 0 ? count : "";
+  badge.style.display = count > 0 ? "inline-block" : "none";
+}
+
+function formatDate(date) {
+  if (!date) return "";
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date);
 }
 
 // ===== Accept Inbox Item =====
 function acceptInbox(id, type, from) {
-  if (!from || !currentUser?.uid) return;
-
-  if (type === "friend") {
-    const myRef = db.collection("users").doc(currentUser.uid).collection("friends").doc(from);
-    const theirRef = db.collection("users").doc(from).collection("friends").doc(currentUser.uid);
-    Promise.all([
-      myRef.set({ added: true }),
-      theirRef.set({ added: true })
-    ]);
-  } else if (type === "group") {
-    db.collection("groups").doc(from).update({
-      members: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
-    });
+  if (!from || !currentUser?.uid) {
+    console.error("Missing required parameters for acceptInbox");
+    return;
   }
 
-  db.collection("inbox").doc(currentUser.uid).collection("items").doc(id).delete();
+  showLoading(true);
+
+  try {
+    if (type === "friend") {
+      const batch = db.batch();
+      const myRef = db.collection("users").doc(currentUser.uid).collection("friends").doc(from);
+      const theirRef = db.collection("users").doc(from).collection("friends").doc(currentUser.uid);
+      
+      batch.set(myRef, { 
+        added: true,
+        since: firebase.firestore.FieldValue.serverTimestamp() 
+      });
+      batch.set(theirRef, { 
+        added: true,
+        since: firebase.firestore.FieldValue.serverTimestamp() 
+      });
+      
+      batch.commit()
+        .then(() => removeInboxItem(id))
+        .catch(err => {
+          console.error("Friend accept error:", err);
+          alert(`Failed to accept friend request: ${err.message}`);
+        });
+    } 
+    else if (type === "group") {
+      db.collection("groups").doc(from).update({
+        members: firebase.firestore.FieldValue.arrayUnion(currentUser.uid),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      })
+      .then(() => removeInboxItem(id))
+      .catch(err => {
+        console.error("Group join error:", err);
+        alert(`Failed to join group: ${err.message}`);
+      });
+    }
+  } catch (err) {
+    console.error("Accept inbox error:", err);
+    alert(`Error: ${err.message}`);
+  } finally {
+    showLoading(false);
+  }
 }
 
-// ===== Decline Inbox Item =====
 function declineInbox(id) {
-  db.collection("inbox").doc(currentUser.uid).collection("items").doc(id).delete();
+  removeInboxItem(id)
+    .catch(err => {
+      console.error("Decline inbox error:", err);
+      alert(`Failed to decline: ${err.message}`);
+    });
 }
 
-// ===== Mark All as Read =====
-function markAllRead() {
-  const ref = db.collection("inbox").doc(currentUser.uid).collection("items");
-  ref.get().then(snapshot => {
-    snapshot.forEach(doc => {
-      if (!doc.data().read) {
-        ref.doc(doc.id).update({ read: true });
-      }
-    });
-  });
+function removeInboxItem(id) {
+  return db.collection("inbox")
+    .doc(currentUser.uid)
+    .collection("items")
+    .doc(id)
+    .update({ read: true, responded: true });
 }
 
 // ===== Load Friends List =====
