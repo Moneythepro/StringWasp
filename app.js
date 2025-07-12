@@ -484,10 +484,7 @@ function escapeHtml(unsafe) {
 // ===== Listen to Inbox =====
 function listenInbox() {
   const list = document.getElementById("inboxList");
-  if (!list || !currentUser) {
-    console.warn("⚠️ listenInbox skipped – UI or user missing");
-    return;
-  }
+  if (!list || !currentUser) return;
 
   if (unsubscribeInbox) unsubscribeInbox();
 
@@ -495,14 +492,15 @@ function listenInbox() {
     .doc(currentUser.uid)
     .collection("items")
     .orderBy("timestamp", "desc")
-    .onSnapshot(async (snapshot) => {
+    .onSnapshot(async snapshot => {
       try {
         list.innerHTML = "";
         let unreadCount = 0;
 
         for (const doc of snapshot.docs) {
           const data = doc.data();
-          if (!data) continue;
+          if (!data || typeof data !== "object") continue;
+
           if (!data.read) unreadCount++;
 
           let senderName = "Unknown";
@@ -517,7 +515,7 @@ function listenInbox() {
                 senderName = senderData.username || senderData.name || "Unknown";
               }
             } catch (e) {
-              console.warn("⚠️ Sender fetch failed:", e.message);
+              console.warn("⚠️ Failed to fetch sender:", e.message || e);
             }
           } else if (typeof data.from === "object") {
             fromUID = data.from.uid || "";
@@ -552,14 +550,15 @@ function listenInbox() {
           badge.textContent = unreadCount || "";
           badge.style.display = unreadCount ? "inline-block" : "none";
         }
+
       } catch (err) {
-        console.error("❌ Error in inbox snapshot loop:", err.message || err);
-        alert("❌ Inbox loop failed: " + (err.message || err));
+        console.error("❌ Inbox snapshot loop error:", err.message || JSON.stringify(err));
+        alert("❌ Inbox loop error: " + (err.message || JSON.stringify(err)));
       }
-    }, (err) => {
-      const msg = err?.message || JSON.stringify(err) || String(err);
+    }, err => {
+      const msg = err?.message || JSON.stringify(err);
       console.error("❌ Inbox snapshot error:", msg);
-      alert("❌ Inbox snapshot error: " + msg);
+      alert("❌ Inbox failed: " + msg);
     });
 }
 
