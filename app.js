@@ -25,48 +25,54 @@ let unsubscribeThread = null;
 let unsubscribeInbox = null;
 let unsubscribeTyping = null;
 
-
-function loadMainUI() {
-  document.getElementById("appPage").style.display = "block";
-  switchTab("chatTab");
-
-  loadInbox();
-  loadFriends();
-  loadProfile();
-  loadGroups?.();
-  loadChatList();
-
-  if (joinGroupId && auth.currentUser) {
-    showModal("Join this group?", () => {
-      joinGroupById(joinGroupId);
-
-      if (list.innerHTML === "") {
-  list.innerHTML = "<p>No chats yet. Start a conversation!</p>";
-      }
-      
-    });
-  }
-}
-
 // ===== Loading Overlay =====
 function showLoading(state) {
   const overlay = document.getElementById("loadingOverlay");
   if (overlay) overlay.style.display = state ? "flex" : "none";
 }
 
-// ===== Auth Listener =====
+// ===== Switch UI Tabs =====
+function switchTab(id) {
+  document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
+  const tab = document.getElementById(id);
+  if (tab) tab.style.display = "block";
+}
+
+// ===== Load App After Login =====
+function loadMainUI() {
+  document.getElementById("appPage").style.display = "block";
+  switchTab("chatTab");
+
+  loadInbox?.();
+  loadFriends?.();
+  loadProfile?.();
+  loadGroups?.();
+  loadChatList?.().then(() => {
+    const list = document.getElementById("chatList");
+    if (list && list.innerHTML.trim() === "") {
+      list.innerHTML = "<p>No chats yet. Start a conversation!</p>";
+    }
+  });
+}
+
+// ===== Invite Link via URL =====
 const urlParams = new URLSearchParams(window.location.search);
 const joinGroupId = urlParams.get("join");
 
+// ===== Auth Listener =====
 auth.onAuthStateChanged(async user => {
-  if (user) {
-    currentUser = user;
+  if (!user) {
+    switchTab("loginPage");
+    return;
+  }
 
+  currentUser = user;
+
+  try {
     const userDoc = await db.collection("users").doc(user.uid).get();
     const userData = userDoc.data();
 
     if (!userData?.username) {
-      console.warn("User missing username, redirecting to setup.");
       switchTab("usernameDialog");
       return;
     }
@@ -76,23 +82,21 @@ auth.onAuthStateChanged(async user => {
 
     loadMainUI();
 
-    // ✅ Handle group invite
+    // ✅ If user arrived via group link
     if (joinGroupId) {
-      db.collection("groups").doc(joinGroupId).get().then(doc => {
-        if (!doc.exists) return alert("⚠️ Group not found or invite expired.");
-        const group = doc.data();
-        showModal(`Join group "${group.name}"?`, () => {
-          joinGroupById(joinGroupId);
-          history.replaceState({}, document.title, window.location.pathname);
-        });
-      }).catch(err => {
-        console.error("Group join error:", err);
-        alert("⚠️ Could not process group invite.");
+      const doc = await db.collection("groups").doc(joinGroupId).get();
+      if (!doc.exists) return alert("⚠️ Group not found or invite expired.");
+
+      const group = doc.data();
+      showModal(`Join group "${group.name}"?`, () => {
+        joinGroupById(joinGroupId);
+        history.replaceState({}, document.title, window.location.pathname); // Clean URL
       });
     }
 
-  } else {
-    switchTab("loginPage");
+  } catch (err) {
+    console.error("🔥 Auth Init Error:", err);
+    alert("Failed to load user info.");
   }
 });
 
