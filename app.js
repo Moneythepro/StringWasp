@@ -66,26 +66,27 @@ auth.onAuthStateChanged(async user => {
     const userData = userDoc.data();
 
     if (!userData?.username) {
-      switchTab("usernameDialog"); // Prompt for username
+      console.warn("User missing username, redirecting to setup.");
+      switchTab("usernameDialog");
       return;
     }
 
-    document.getElementById("usernameDisplay").textContent = userData.username;
+    const nameEl = document.getElementById("usernameDisplay");
+    if (nameEl) nameEl.textContent = userData.username;
+
     loadMainUI();
 
-    // ✅ Check if invite link is present and group exists
+    // ✅ Handle group invite
     if (joinGroupId) {
       db.collection("groups").doc(joinGroupId).get().then(doc => {
         if (!doc.exists) return alert("⚠️ Group not found or invite expired.");
         const group = doc.data();
-
-        // Show modal with group name
         showModal(`Join group "${group.name}"?`, () => {
           joinGroupById(joinGroupId);
-          history.replaceState({}, document.title, window.location.pathname); // Clean URL
+          history.replaceState({}, document.title, window.location.pathname);
         });
       }).catch(err => {
-        console.error("Group check error:", err);
+        console.error("Group join error:", err);
         alert("⚠️ Could not process group invite.");
       });
     }
