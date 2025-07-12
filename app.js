@@ -25,7 +25,7 @@ let unsubscribeThread = null;
 let unsubscribeInbox = null;
 let unsubscribeTyping = null;
 
-
+// ===== Main UI Load (after auth success) =====
 function loadMainUI() {
   document.getElementById("appPage").style.display = "block";
   switchTab("chatTab");
@@ -34,18 +34,12 @@ function loadMainUI() {
   loadFriends();
   loadProfile();
   loadGroups?.();
-  loadChatList();
-
-  if (joinGroupId && auth.currentUser) {
-    showModal("Join this group?", () => {
-      joinGroupById(joinGroupId);
-
-      if (list.innerHTML === "") {
-  list.innerHTML = "<p>No chats yet. Start a conversation!</p>";
-      }
-      
-    });
-  }
+  loadChatList().then(() => {
+    const list = document.getElementById("chatList");
+    if (list && list.innerHTML.trim() === "") {
+      list.innerHTML = "<p>No chats yet. Start a conversation!</p>";
+    }
+  });
 }
 
 // ===== Loading Overlay =====
@@ -54,7 +48,7 @@ function showLoading(state) {
   if (overlay) overlay.style.display = state ? "flex" : "none";
 }
 
-// ===== Auth Listener =====
+// ===== Auth + Invite Handler =====
 const urlParams = new URLSearchParams(window.location.search);
 const joinGroupId = urlParams.get("join");
 
@@ -66,7 +60,7 @@ auth.onAuthStateChanged(async user => {
     const userData = userDoc.data();
 
     if (!userData?.username) {
-      console.warn("User missing username, redirecting to setup.");
+      console.warn("No username found, redirecting...");
       switchTab("usernameDialog");
       return;
     }
@@ -76,19 +70,21 @@ auth.onAuthStateChanged(async user => {
 
     loadMainUI();
 
-    // ✅ Handle group invite
+    // ✅ Handle Group Invite after load
     if (joinGroupId) {
-      db.collection("groups").doc(joinGroupId).get().then(doc => {
+      try {
+        const doc = await db.collection("groups").doc(joinGroupId).get();
         if (!doc.exists) return alert("⚠️ Group not found or invite expired.");
+        
         const group = doc.data();
         showModal(`Join group "${group.name}"?`, () => {
           joinGroupById(joinGroupId);
-          history.replaceState({}, document.title, window.location.pathname);
+          history.replaceState({}, document.title, window.location.pathname); // clean URL
         });
-      }).catch(err => {
-        console.error("Group join error:", err);
-        alert("⚠️ Could not process group invite.");
-      });
+      } catch (err) {
+        console.error("Error joining group:", err);
+        alert("⚠️ Could not join group.");
+      }
     }
 
   } else {
