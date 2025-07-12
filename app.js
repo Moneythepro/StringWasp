@@ -239,17 +239,41 @@ function uploadProfilePic(e) {
   const file = e.target.files[0];
   if (!file || !currentUser) return;
 
-  const ref = storage.ref().child("avatars/" + currentUser.uid + ".jpg");
-  ref.put(file).then(() => {
-    ref.getDownloadURL().then(url => {
-      db.collection("users").doc(currentUser.uid).update({ photoURL: url });
-      document.getElementById("profilePicPreview").src = url;
-      alert("✅ Profile picture updated!");
-    });
-  }).catch(err => {
-    console.error("❌ Profile upload failed:", err);
-    alert("❌ Failed to upload profile picture.");
-  });
+  const reader = new FileReader();
+  reader.onload = function (event) {
+    const img = new Image();
+    img.onload = function () {
+      const size = 200;
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+
+      // Auto-crop to square (center)
+      const min = Math.min(img.width, img.height);
+      const sx = (img.width - min) / 2;
+      const sy = (img.height - min) / 2;
+
+      ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size);
+      canvas.toBlob(async (blob) => {
+        try {
+          const ref = storage.ref(`avatars/${currentUser.uid}`);
+          await ref.put(blob);
+          const url = await ref.getDownloadURL();
+
+          document.getElementById("profilePicPreview").src = url;
+          await db.collection("users").doc(currentUser.uid).update({ avatar: url });
+
+          console.log("✔ Profile picture updated");
+        } catch (err) {
+          console.error("❌ Upload failed:", err.message || err);
+          alert("❌ Failed to upload picture.");
+        }
+      }, "image/jpeg", 0.8); // JPEG compression
+    };
+    img.src = event.target.result;
+  };
+  reader.readAsDataURL(file);
 }
   
 let currentProfileUID = null;
