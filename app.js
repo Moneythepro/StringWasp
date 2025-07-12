@@ -693,22 +693,41 @@ function loadFriends() {
 }
 
 // ==== Add Friend Shortcut ====
-function addFriend(targetUID) {
-  db.collection("inbox").doc(targetUID).collection("items").add({
-    type: "friend",
-    from: {
-      uid: currentUser.uid,
-      name: currentUser.displayName || currentUser.email || "Unknown"
-    },
-    read: false,
-    timestamp: Date.now()
-  })
-  .then(() => {
-    alert("✅ Friend request sent!");
-  })
-  .catch(err => {
-    console.error("❌ Error sending friend request:", err);
-    alert("❌ Failed to send friend request: " + (err.message || err));
+function addFriend(uid) {
+  if (!uid || !currentUser) return;
+
+  if (uid === currentUser.uid) {
+    alert("❌ You can't add yourself.");
+    return;
+  }
+
+  // Step 1: Check if already friends
+  const friendRef = db.collection("users").doc(currentUser.uid).collection("friends").doc(uid);
+  friendRef.get().then(doc => {
+    if (doc.exists) {
+      alert("✅ Already friends!");
+      return;
+    }
+
+    // Step 2: Send friend request to the other user's inbox
+    const inboxRef = db.collection("inbox").doc(uid).collection("items");
+    inboxRef.add({
+      type: "friend",
+      from: {
+        uid: currentUser.uid,
+        name: currentUser.displayName || currentUser.email || "Unknown"
+      },
+      read: false,
+      timestamp: Date.now()
+    }).then(() => {
+      alert("✅ Friend request sent!");
+    }).catch(err => {
+      console.error("❌ Friend request failed:", err);
+      alert("❌ Failed to send friend request");
+    });
+  }).catch(err => {
+    console.error("❌ Friend check error:", err);
+    alert("❌ Could not verify friend status");
   });
 }
 
@@ -883,54 +902,89 @@ function handleTyping(type) {
 
 // ===== Search (Users + Groups) =====
 function runSearch() {
-  const input = document.getElementById("searchInput").value.toLowerCase();
+  const input = document.getElementById("searchInput");
+  const term = input.value.trim().toLowerCase();
+  if (!term) return;
+
   const userResults = document.getElementById("searchResultsUser");
   const groupResults = document.getElementById("searchResultsGroup");
 
-  userResults.innerHTML = "";
-  groupResults.innerHTML = "";
+  userResults.innerHTML = "<p>Loading...</p>";
+  groupResults.innerHTML = "<p>Loading...</p>";
 
-  // 👤 Search Users
-  db.collection("users").where("username", ">=", input).limit(10).get().then(snapshot => {
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const div = document.createElement("div");
-      div.className = "search-result";
+  // 🔍 Search users
+  db.collection("users")
+    .where("username", ">=", term)
+    .where("username", "<=", term + "\uf8ff")
+    .limit(10)
+    .get()
+    .then(snapshot => {
+      userResults.innerHTML = "";
 
-      div.innerHTML = `
-        <img src="${data.photoURL || 'default-avatar.png'}" class="search-avatar" />
-        <div class="search-info">
+      if (snapshot.empty) {
+        userResults.innerHTML = "<p>No users found.</p>";
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const uid = doc.id;
+
+        const card = document.createElement("div");
+        card.className = "search-card";
+        card.innerHTML = `
           <div class="username">@${data.username || "unknown"}</div>
-          <div class="bio">${data.bio || "No bio available"}</div>
-        </div>
-        <button onclick="event.stopPropagation(); messageUser('${doc.id}', '${data.username}')">Message</button>
-      `;
+          <div class="btn-group">
+            <button onclick="viewUserProfile('${uid}')">👁 View</button>
+            <button onclick="addFriend('${uid}')">➕ Add</button>
+            <button onclick="messageUser('${uid}')">💬 Message</button>
+          </div>
+        `;
+        userResults.appendChild(card);
+      });
 
-      div.onclick = () => viewUserProfile(doc.id);
-      userResults.appendChild(div);
+      // Show user results by default
+      switchSearchView("user");
+    })
+    .catch(err => {
+      console.error("❌ User search failed:", err);
+      userResults.innerHTML = "<p>Search failed.</p>";
     });
-  });
 
-  // 👥 Search Groups
-  db.collection("groups").where("name", ">=", input).limit(10).get().then(snapshot => {
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const div = document.createElement("div");
-      div.className = "search-result";
+  // 🔍 Search groups
+  db.collection("groups")
+    .where("name", ">=", term)
+    .where("name", "<=", term + "\uf8ff")
+    .limit(10)
+    .get()
+    .then(snapshot => {
+      groupResults.innerHTML = "";
 
-      div.innerHTML = `
-        <img src="${data.icon || 'group-icon.png'}" class="search-avatar" />
-        <div class="search-info">
-          <div class="username">${data.name}</div>
-          <div class="bio">${data.description || "No description"}</div>
-        </div>
-        <button onclick="event.stopPropagation(); joinGroupById('${doc.id}')">Join</button>
-      `;
+      if (snapshot.empty) {
+        groupResults.innerHTML = "<p>No groups found.</p>";
+        return;
+      }
 
-      div.onclick = () => viewGroupInfo(doc.id);
-      groupResults.appendChild(div);
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const groupId = doc.id;
+
+        const card = document.createElement("div");
+        card.className = "search-card";
+        card.innerHTML = `
+          <div class="groupname">#${data.name || "Group"}</div>
+          <div class="btn-group">
+            <button onclick="viewGroupProfile('${groupId}')">👁 View</button>
+            <button onclick="joinGroupById('${groupId}')">➕ Join</button>
+          </div>
+        `;
+        groupResults.appendChild(card);
+      });
+    })
+    .catch(err => {
+      console.error("❌ Group search failed:", err);
+      groupResults.innerHTML = "<p>Search failed.</p>";
     });
-  });
 }
 
 function searchChats() {
