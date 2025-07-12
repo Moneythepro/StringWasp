@@ -433,57 +433,60 @@ function listenInbox() {
 }
 
   // === Realtime Groups ===
-const list = document.getElementById("chatList");
-if (!list) return;
-list.innerHTML = "";
+function loadRealtimeGroups() {
+  const list = document.getElementById("chatList");
+  if (!list) return;
+  list.innerHTML = "";
 
-unsubscribeGroups = db.collection("groups")
-  .where("members", "array-contains", currentUser.uid)
-  .onSnapshot(
-    snapshot => {
-      snapshot.forEach(doc => {
-        const g = doc.data();
-        const groupName = g.name || "Group";
+  unsubscribeGroups = db.collection("groups")
+    .where("members", "array-contains", currentUser.uid)
+    .onSnapshot(
+      snapshot => {
+        snapshot.forEach(doc => {
+          const g = doc.data();
+          const groupName = g.name || "Group";
 
-        let msgText = g.description || "[No recent message]";
-        let isMedia = false;
-        let timeAgo = "";
+          let msgText = g.description || "[No recent message]";
+          let isMedia = false;
+          let timeAgo = "";
 
-        if (typeof g.lastMessage === "object") {
-          msgText = g.lastMessage.text || "[No message]";
-          isMedia = !!g.lastMessage.fileURL;
-          if (g.lastMessage.timestamp) {
-            timeAgo = timeSince(g.lastMessage.timestamp);
+          if (typeof g.lastMessage === "object") {
+            msgText = g.lastMessage.text || "[No message]";
+            isMedia = !!g.lastMessage.fileURL;
+            if (g.lastMessage.timestamp) {
+              timeAgo = timeSince(g.lastMessage.timestamp);
+            }
+          } else if (typeof g.lastMessage === "string") {
+            msgText = g.lastMessage;
           }
-        } else if (typeof g.lastMessage === "string") {
-          msgText = g.lastMessage;
-        }
 
-        const preview = isMedia ? "📎 Media File" : msgText;
-        const unread = g.unread?.[currentUser.uid] || 0;
-        const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
+          const preview = isMedia ? "📎 Media File" : msgText;
+          const unread = g.unread?.[currentUser.uid] || 0;
+          const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
 
-        const card = document.createElement("div");
-        card.className = "chat-card";
-        card.onclick = () => joinRoom(doc.id);
-        card.innerHTML = `
-          <div class="details">
-            <div class="name">#${groupName} ${badgeHTML}</div>
-            <div class="last-message">${preview}</div>
-            <div class="last-time">${timeAgo}</div>
-          </div>
-          <div class="chat-actions">
-            <button title="Mute">🔕</button>
-            <button title="Archive">🗂️</button>
-          </div>
-        `;
-        list.appendChild(card);
-      });
-    },
-    err => {
-      console.error("📛 Error in groups snapshot listener:", err.message || err);
-    }
-  );
+          const card = document.createElement("div");
+          card.className = "chat-card";
+          card.onclick = () => joinRoom(doc.id);
+          card.innerHTML = `
+            <div class="details">
+              <div class="name">#${groupName} ${badgeHTML}</div>
+              <div class="last-message">${preview}</div>
+              <div class="last-time">${timeAgo}</div>
+            </div>
+            <div class="chat-actions">
+              <button title="Mute">🔕</button>
+              <button title="Archive">🗂️</button>
+            </div>
+          `;
+          list.appendChild(card);
+        });
+      },
+      err => {
+        console.error("📛 Error in groups snapshot listener:", err.message || err);
+      }
+    );
+}
+
 
 function openChatMenu() {
   const menu = document.getElementById("chatOptionsMenu");
