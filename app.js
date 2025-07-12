@@ -1,4 +1,4 @@
-// ====== StringWasp App.js (Final Unified Version, Part 1) ======
+// ====== StringWasp App.js Final Unified Version
 
 // 🔐 UUID Generator
 function uuidv4() {
@@ -41,48 +41,14 @@ function switchTab(id) {
   if (tab) tab.style.display = "block";
 }
 
-// ===== Load App After Login =====
-auth.onAuthStateChanged(async user => {
-  if (!user) {
-    showTab("authTab");
-    return;
-  }
-
-  currentUser = user;
-
-  try {
-    const doc = await db.collection("users").doc(user.uid).get();
-    const data = doc.data();
-
-    if (!data?.username) {
-      showTab("setupTab");
-      return;
-    }
-
-    document.getElementById("usernameDisplay").textContent = data.username;
-
-    // ✅ INIT after user is ready
-    loadMainUI();
-    loadChatList();  // ✅ Add this line here
-
-    if (joinGroupId) {
-      tryJoinGroup(joinGroupId);  // move this inside
-    }
-
-  } catch (err) {
-    console.error("User load error", err);
-    alert("❌ Failed to load user info.");
-  }
-});
-
 // ===== Invite Link via URL =====
 const urlParams = new URLSearchParams(window.location.search);
 const joinGroupId = urlParams.get("join");
 
-// ===== Auth Listener =====
+// ===== Load App After Login =====
 auth.onAuthStateChanged(async user => {
   if (!user) {
-    showTab("authTab");
+    switchTab("loginPage");
     return;
   }
 
@@ -93,22 +59,24 @@ auth.onAuthStateChanged(async user => {
     const data = doc.data();
 
     if (!data?.username) {
-      showTab("setupTab");
+      switchTab("usernameDialog");
       return;
     }
 
     document.getElementById("usernameDisplay").textContent = data.username;
 
-    // ✅ INIT after user is ready
+    // ✅ INIT UI
     loadMainUI();
+    loadChatList(); // ✅ Load all chats and inbox
 
+    // ✅ Handle invite link
     if (joinGroupId) {
-      tryJoinGroup(joinGroupId);  // move this inside
+      tryJoinGroup(joinGroupId);
     }
 
   } catch (err) {
-    console.error("User load error", err);
-    alert("❌ Failed to load user info.");
+    console.error("❌ User load error:", err.message || err);
+    alert("❌ Failed to load user info: " + (err.message || JSON.stringify(err)));
   }
 });
 
