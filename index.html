@@ -99,8 +99,8 @@
     <div id="profileTab" class="tab">
       <h3>Your Profile</h3>
       <img id="profilePicPreview" src="default-avatar.png" alt="Avatar" />
-      <label class="profile-edit-label">Tap to upload</label>
-      <input type="file" id="profilePic" accept="image/*" style="display:none;" onchange="uploadProfilePic()" />
+      <label for="profilePic" class="profile-edit-label">Tap to upload</label>
+<input type="file" id="profilePic" accept="image/*" style="display:none;" onchange="uploadProfilePic(event)" />
       <input id="profileName" placeholder="Your Name" />
       <textarea id="profileBio" placeholder="Your Bio"></textarea>
       <select id="profileGender">
