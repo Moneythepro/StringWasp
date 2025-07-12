@@ -333,30 +333,37 @@ function loadChatList() {
   const list = document.getElementById("chatList");
   list.innerHTML = "";
 
-  // === Load Threads (DMs) ===
-  db.collection("threads")
+  // === Load Threads (DMs) - Real-time ===
+  if (unsubscribeThreads) unsubscribeThreads();
+  unsubscribeThreads = db.collection("threads")
     .where("participants", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
-    .limit(20)
-    .get()
-    .then(snapshot => {
+    .onSnapshot(snapshot => {
+      list.innerHTML = ""; // Clear old list before redraw
+
       snapshot.forEach(doc => {
         const t = doc.data();
         const otherUID = t.participants.find(p => p !== currentUser.uid);
         const name = t.names?.[otherUID] || "Friend";
 
-        // ✅ Fix: Handle lastMessage format
-        let lastMsg = "";
+        // === Last Message Preview ===
+        let msgText = "[No message]";
+        let fromSelf = false;
         if (typeof t.lastMessage === "string") {
-          lastMsg = t.lastMessage;
-        } else if (typeof t.lastMessage === "object" && t.lastMessage.text) {
-          lastMsg = t.lastMessage.text;
-        } else {
-          lastMsg = "[No message]";
+          msgText = t.lastMessage;
+        } else if (typeof t.lastMessage === "object") {
+          msgText = t.lastMessage.text || "[No message]";
+          fromSelf = t.lastMessage.from === currentUser.uid;
         }
 
-        // Optional: avatar placeholder
-        const avatar = "https://ui-avatars.com/api/?name=" + encodeURIComponent(name);
+        const senderPrefix = fromSelf ? "You: " : "";
+        const preview = `${senderPrefix}${msgText}`;
+
+        // === Unread badge ===
+        const unread = t.unread?.[currentUser.uid] || 0;
+        const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
+
+        const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`;
 
         const card = document.createElement("div");
         card.className = "chat-card";
@@ -364,45 +371,51 @@ function loadChatList() {
         card.innerHTML = `
           <img src="${avatar}" class="friend-avatar" />
           <div class="details">
-            <div class="name">@${name}</div>
-            <div class="last-message">${lastMsg}</div>
+            <div class="name">@${name} ${badgeHTML}</div>
+            <div class="last-message">${preview}</div>
           </div>
         `;
         list.appendChild(card);
       });
     });
 
-  // === Load Groups ===
-  db.collection("groups")
+  // === Load Groups - Real-time ===
+  if (unsubscribeGroups) unsubscribeGroups();
+  unsubscribeGroups = db.collection("groups")
     .where("members", "array-contains", currentUser.uid)
-    .get()
-    .then(snapshot => {
+    .onSnapshot(snapshot => {
       snapshot.forEach(doc => {
         const g = doc.data();
+        const groupName = g.name || "Unnamed Group";
 
-        // ✅ Fix: Optional preview from last message field
-        let groupLast = "";
+        // === Last Group Message Preview ===
+        let msgText = g.description || "[No recent message]";
         if (typeof g.lastMessage === "string") {
-          groupLast = g.lastMessage;
+          msgText = g.lastMessage;
         } else if (typeof g.lastMessage === "object" && g.lastMessage.text) {
-          groupLast = g.lastMessage.text;
-        } else {
-          groupLast = g.description || "[No recent message]";
+          msgText = g.lastMessage.text;
         }
+
+        const preview = `${msgText}`;
+
+        // === Unread badge ===
+        const unread = g.unread?.[currentUser.uid] || 0;
+        const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
 
         const card = document.createElement("div");
         card.className = "chat-card";
         card.onclick = () => joinRoom(doc.id);
         card.innerHTML = `
           <div class="details">
-            <div class="name">#${g.name}</div>
-            <div class="last-message">${groupLast}</div>
+            <div class="name">#${groupName} ${badgeHTML}</div>
+            <div class="last-message">${preview}</div>
           </div>
         `;
         list.appendChild(card);
       });
     });
 }
+  
 
 function openChatMenu() {
   const menu = document.getElementById("chatOptionsMenu");
