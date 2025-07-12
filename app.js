@@ -595,6 +595,11 @@ if (typeof data.from === "string") {
   continue; // skip invalid item
           }
 
+        if (!data || !data.type || !data.timestamp || (!data.from && !data.fromName)) {
+  console.warn("❌ Skipping invalid inbox entry:", doc.id);
+  continue;
+        }
+        
           const typeText = data.type === "friend"
             ? "Friend Request"
             : data.type === "group"
