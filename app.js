@@ -568,7 +568,7 @@ function listenInbox() {
         let senderName = "Unknown";
         let fromUID = "";
 
-        if (data.fromName && typeof data.fromName === "string") {
+        if (typeof data.fromName === "string") {
           senderName = data.fromName;
         } else if (typeof data.from === "string") {
           fromUID = data.from;
@@ -579,18 +579,24 @@ function listenInbox() {
               senderName = senderData.username || senderData.name || "Unknown";
             }
           } catch (err) {
-            console.warn("⚠️ Sender fetch failed:", err.message);
+            console.warn("⚠️ Sender fetch failed:", err.message || err);
           }
         } else if (typeof data.from === "object") {
           fromUID = data.from.uid || "";
           senderName = data.from.name || "Unknown";
         }
 
+        const typeText = data.type === "friend"
+          ? "Friend Request"
+          : data.type === "group"
+          ? "Group Invite"
+          : "Notification";
+
         const card = document.createElement("div");
         card.className = "inbox-card";
         card.innerHTML = `
           <div>
-            <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
+            <strong>${typeText}</strong><br>
             From: ${escapeHtml(senderName)}
           </div>
           <div class="btn-group">
@@ -607,8 +613,9 @@ function listenInbox() {
         badge.style.display = unreadCount ? "inline-block" : "none";
       }
     }, (err) => {
-      console.error("❌ Inbox snapshot error:", err.message || err);
-      alert("❌ Inbox error: " + (err.message || err));
+      const msg = err?.message || JSON.stringify(err) || String(err);
+      console.error("❌ Inbox snapshot error:", msg);
+      alert("❌ Inbox snapshot error: " + msg);
     });
 }
 
