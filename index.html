@@ -205,18 +205,18 @@
   </div>
 </div>
 
-  <!-- 👥 Group Info Modal -->
-<div id="groupFullInfo" class="modal">
+  <!-- 👥 Group Public Info Modal -->
+<div id="groupInfoModal" class="modal">
   <div class="modal-content">
-    <span class="close" onclick="groupFullInfo.style.display='none'">×</span>
-    <img id="groupAvatar" src="group-icon.png" class="profile-avatar" />
+    <span class="close" onclick="document.getElementById('groupInfoModal').style.display='none'">×</span>
+    <img id="groupIcon" src="group-icon.png" alt="Group" style="width:80px;height:80px;border-radius:50%;margin:10px auto;display:block;" />
     <h3 id="groupName">Group Name</h3>
-    <p id="groupDescription">No description</p>
-    <p id="groupOwnerInfo">Owner: loading...</p>
-    <div id="groupMembersList"></div>
-    <div class="btn-group">
-      <button onclick="joinGroupById(currentGroupID)">Join</button>
-      <button onclick="inviteByLink()">Invite</button>
+    <p id="groupDesc">No description provided.</p>
+    <p id="groupOwnerText">Owner: </p>
+    <p id="groupMembersText">Members: </p>
+    <div class="btn-group" style="margin-top:10px;display:flex;gap:8px;">
+      <button onclick="joinGroupById(currentGroupProfileId)">Join</button>
+      <button onclick="copyGroupInviteLink()">Copy Invite Link</button>
     </div>
   </div>
 </div>
