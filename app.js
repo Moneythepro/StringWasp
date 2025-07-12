@@ -25,9 +25,6 @@ let unsubscribeThread = null;
 let unsubscribeInbox = null;
 let unsubscribeTyping = null;
 
-function threadId(a, b) {
-  return [a, b].sort().join("_");
-}
 
 function loadMainUI() {
   document.getElementById("appPage").style.display = "block";
@@ -553,6 +550,10 @@ function loadGroupInfo(groupId) {
 }
 
 // ===== DM: Open Thread Chat =====
+function threadId(a, b) {
+  return [a, b].sort().join("_");
+}
+
 function openThread(uid, username) {
   currentThreadUser = uid;
   switchTab("threadView");
@@ -611,6 +612,9 @@ function messageUser(uid, username) {
 }
 
 // ===== DM: Send Thread Message with AES Encryption =====
+function threadId(a, b) {
+  return [a, b].sort().join("_");
+}
 
 function sendThreadMessage() {
   const input = document.getElementById("threadInput");
