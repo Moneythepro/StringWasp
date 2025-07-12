@@ -553,18 +553,16 @@ function listenInbox() {
           badge.style.display = unreadCount ? "inline-block" : "none";
         }
 
-        } catch (err) {
-  const msg = err?.message || JSON.stringify(err) || String(err);
-  console.error("❌ Inbox render failed:", msg);
-  console.error("🔥 Full error object:", err);
-  alert("❌ Inbox failed: " + msg);
+        }, (err) => {
+      const msg = err?.message || JSON.stringify(err) || String(err);
+      console.error("❌ Inbox snapshot error:", msg);
+      console.error("🔥 Full error object:", err);
+      alert("❌ Inbox listener failed: " + msg);
 
-  // 🔧 Show the error on-screen for debugging on mobile
-  document.body.innerHTML += `<pre style="color:red;font-size:12px;background:#000;padding:10px;overflow:auto;">
-🔥 ERROR: ${JSON.stringify(err, null, 2)}
+      // 👇 Show full error in page (for mobile debugging)
+      document.body.innerHTML += `<pre style="color:red;font-size:12px;background:#000;padding:10px;overflow:auto;">
+🔥 SNAPSHOT ERROR: ${JSON.stringify(err, null, 2)}
 </pre>`;
-      }
-        
     });
 }
 
