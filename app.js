@@ -204,20 +204,31 @@ function saveProfile() {
 // ===== Load Profile UI =====
 function loadProfile() {
   const uid = currentUser?.uid;
-  if (!uid) return;
+  if (!uid) {
+    console.warn("⚠️ loadProfile called without a valid user.");
+    return;
+  }
 
-  db.collection("users").doc(uid).get().then(doc => {
-    const data = doc.data();
-    if (!data) return;
+  db.collection("users").doc(uid).get()
+    .then(doc => {
+      const data = doc.data();
+      if (!data) {
+        console.warn("⚠️ No profile data found for user:", uid);
+        return;
+      }
 
-    document.getElementById("profilePicPreview").src = data.photoURL || "default-avatar.png";
-    document.getElementById("profileName").value = data.name || "";
-    document.getElementById("profileBio").value = data.bio || "";
-    document.getElementById("profileGender").value = data.gender || "";
-    document.getElementById("profilePhone").value = data.phone || "";
-    document.getElementById("profileEmail").value = data.publicEmail || "";
-    document.getElementById("profileUsername").value = data.username || "";
-  });
+      document.getElementById("profilePicPreview").src = data.photoURL || "default-avatar.png";
+      document.getElementById("profileName").value = data.name || "";
+      document.getElementById("profileBio").value = data.bio || "";
+      document.getElementById("profileGender").value = data.gender || "";
+      document.getElementById("profilePhone").value = data.phone || "";
+      document.getElementById("profileEmail").value = data.publicEmail || "";
+      document.getElementById("profileUsername").value = data.username || "";
+    })
+    .catch(err => {
+      console.error("❌ Failed to load profile:", err.message || err);
+      alert("Failed to load profile info.");
+    });
 }
 
   function saveProfile() {
@@ -492,10 +503,16 @@ function escapeHtml(unsafe) {
 // ===== Inbox Listener =====
 function listenInbox() {
   const list = document.getElementById("inboxList");
-  if (!list || !currentUser) return;
+  if (!list || !currentUser) {
+    console.warn("⚠️ listenInbox called without UI or currentUser");
+    return;
+  }
 
   if (unsubscribeInbox) unsubscribeInbox();
-  unsubscribeInbox = db.collection("inbox").doc(currentUser.uid).collection("items")
+
+  unsubscribeInbox = db.collection("inbox")
+    .doc(currentUser.uid)
+    .collection("items")
     .orderBy("timestamp", "desc")
     .onSnapshot(async snapshot => {
       list.innerHTML = "";
@@ -507,15 +524,18 @@ function listenInbox() {
 
         let senderName = "Unknown";
 
-        // ✅ Fix: Support fromName OR resolve UID OR handle object
         if (data.fromName) {
           senderName = data.fromName;
         } else if (data.from) {
           if (typeof data.from === "string") {
-            const senderDoc = await db.collection("users").doc(data.from).get();
-            if (senderDoc.exists) {
-              const senderData = senderDoc.data();
-              senderName = senderData.username || senderData.name || "Unknown";
+            try {
+              const senderDoc = await db.collection("users").doc(data.from).get();
+              if (senderDoc.exists) {
+                const senderData = senderDoc.data();
+                senderName = senderData.username || senderData.name || "Unknown";
+              }
+            } catch (err) {
+              console.warn("⚠️ Failed to resolve sender:", err.message || err);
             }
           } else if (typeof data.from === "object" && data.from.name) {
             senderName = data.from.name;
@@ -542,6 +562,9 @@ function listenInbox() {
         badge.textContent = unreadCount || "";
         badge.style.display = unreadCount ? "inline-block" : "none";
       }
+    }, err => {
+      // 🛑 This catches and shows snapshot listener errors
+      console.error("❌ Uncaught Error in inbox snapshot listener:", err.message || err);
     });
 }
 
