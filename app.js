@@ -673,40 +673,52 @@ function threadId(a, b) {
 }
 
 function openThread(uid, username) {
-  currentThreadUser = uid;
-  switchTab("threadView");
-  document.getElementById("threadWithName").textContent = username;
-  document.getElementById("roomDropdown").style.display = "none";
-  document.querySelector(".group-info").style.display = "none";
+  if (!currentUser || !uid) return;
 
-  if (unsubscribeThread) unsubscribeThread();
+  // 🔒 Block strangers unless they're in friend list
+  db.collection("users").doc(currentUser.uid).collection("friends").doc(uid)
+    .get()
+    .then(friendDoc => {
+      if (!friendDoc.exists) {
+        alert("🔒 You must be friends to start a chat.");
+        return;
+      }
 
-  const docId = threadId(currentUser.uid, uid);
+      currentThreadUser = uid;
+      switchTab("threadView");
+      document.getElementById("threadWithName").textContent = username;
+      document.getElementById("roomDropdown").style.display = "none";
+      document.querySelector(".group-info").style.display = "none";
 
-  unsubscribeThread = db.collection("threads")
-    .doc(docId)
-    .collection("messages")
-    .orderBy("timestamp")
-    .onSnapshot(snapshot => {
-      const area = document.getElementById("threadMessages");
-      area.innerHTML = "";
+      if (unsubscribeThread) unsubscribeThread();
 
-      snapshot.forEach(doc => {
-        const msg = doc.data();
-        const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+      const docId = threadId(currentUser.uid, uid);
 
-        const bubble = document.createElement("div");
-        bubble.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
+      unsubscribeThread = db.collection("threads")
+        .doc(docId)
+        .collection("messages")
+        .orderBy("timestamp")
+        .onSnapshot(snapshot => {
+          const area = document.getElementById("threadMessages");
+          area.innerHTML = "";
 
-        const textDiv = document.createElement("div");
-        textDiv.innerHTML = `${msg.fromName || "User"}: ${decrypted}`;
-        bubble.appendChild(textDiv);
+          snapshot.forEach(doc => {
+            const msg = doc.data();
+            const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
 
-        area.appendChild(bubble);
-      });
+            const bubble = document.createElement("div");
+            bubble.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
 
-      area.scrollTop = area.scrollHeight;
-      renderWithMagnetSupport("threadMessages");
+            const textDiv = document.createElement("div");
+            textDiv.innerHTML = `${msg.fromName || "User"}: ${decrypted}`;
+            bubble.appendChild(textDiv);
+
+            area.appendChild(bubble);
+          });
+
+          area.scrollTop = area.scrollHeight;
+          renderWithMagnetSupport("threadMessages");
+        });
     });
 }
 
@@ -793,9 +805,6 @@ function listenMessages() {
         messagesDiv.appendChild(bubble);
       });
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      renderWithMagnetSupport("groupMessages");
-
-      // 👇 Add magnet download handler
       renderWithMagnetSupport("groupMessages");
     });
 }
@@ -926,18 +935,35 @@ function joinGroupById(groupId) {
 
 function joinRoom(roomId) {
   currentRoom = roomId;
+
+  switchTab("roomView");
   document.getElementById("roomDropdown").style.display = "block";
   document.querySelector(".group-info").style.display = "block";
-  
+
   if (unsubscribeMessages) unsubscribeMessages();
   if (unsubscribeTyping) unsubscribeTyping();
-  listenMessages(); // ✅ Real-time group chat
-  loadGroupInfo(roomId); // ✅ Load group metadata
+
+  listenMessages();       // ✅ Listen to group messages
+  loadGroupInfo(roomId);  // ✅ Load name, members, description, etc.
 }
+
+
 
 // ===== Message User Shortcut =====
 function messageUser(uid, username) {
-  openThread(uid, username || "Friend");
+  if (!uid || !currentUser) return;
+
+  db.collection("users").doc(currentUser.uid).collection("friends").doc(uid)
+    .get()
+    .then(doc => {
+      if (doc.exists) {
+        openThread(uid, username || "Friend");
+        document.getElementById("userFullProfile").style.display = "none";
+        document.getElementById("viewProfileModal").style.display = "none";
+      } else {
+        alert("⚠️ You are not friends with this user. Send a request first.");
+      }
+    });
 }
 
 // ===== Upload File (DM or Group) =====
