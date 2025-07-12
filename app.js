@@ -664,12 +664,10 @@ function runSearch() {
           <div class="username">@${data.username || "unknown"}</div>
           <div class="bio">${data.bio || "No bio available"}</div>
         </div>
-        <button onclick="messageUser('${doc.id}', '${data.username}')">Message</button>
+        <button onclick="event.stopPropagation(); messageUser('${doc.id}', '${data.username}')">Message</button>
       `;
 
-      // ✅ Click anywhere opens full profile
       div.onclick = () => viewUserProfile(doc.id);
-
       userResults.appendChild(div);
     });
   });
@@ -687,12 +685,10 @@ function runSearch() {
           <div class="username">${data.name}</div>
           <div class="bio">${data.description || "No description"}</div>
         </div>
-        <button onclick="joinGroupById('${doc.id}')">Join</button>
+        <button onclick="event.stopPropagation(); joinGroupById('${doc.id}')">Join</button>
       `;
 
-      // ✅ Click anywhere opens group info
       div.onclick = () => viewGroupInfo(doc.id);
-
       groupResults.appendChild(div);
     });
   });
