@@ -20,10 +20,13 @@ let client = null;
 let currentUser = null;
 let currentRoom = null;
 let currentThreadUser = null;
+
 let unsubscribeMessages = null;
 let unsubscribeThread = null;
 let unsubscribeInbox = null;
 let unsubscribeTyping = null;
+let unsubscribeThreads = null;
+let unsubscribeGroups = null;
 
 // ===== Loading Overlay =====
 function showLoading(state) {
@@ -337,36 +340,40 @@ function loadChatList() {
   const list = document.getElementById("chatList");
   list.innerHTML = "";
 
-  // === Load Threads (DMs) - Real-time ===
   if (unsubscribeThreads) unsubscribeThreads();
+  if (unsubscribeGroups) unsubscribeGroups();
+
+  // === Realtime Threads (DMs) ===
   unsubscribeThreads = db.collection("threads")
     .where("participants", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
     .onSnapshot(snapshot => {
-      list.innerHTML = ""; // Clear old list before redraw
+      list.innerHTML = ""; // Clear first
 
       snapshot.forEach(doc => {
         const t = doc.data();
         const otherUID = t.participants.find(p => p !== currentUser.uid);
         const name = t.names?.[otherUID] || "Friend";
 
-        // === Last Message Preview ===
+        // ==== Last Message ====
         let msgText = "[No message]";
         let fromSelf = false;
-        if (typeof t.lastMessage === "string") {
-          msgText = t.lastMessage;
-        } else if (typeof t.lastMessage === "object") {
+        let isMedia = false;
+        let timeAgo = "";
+        if (typeof t.lastMessage === "object") {
           msgText = t.lastMessage.text || "[No message]";
           fromSelf = t.lastMessage.from === currentUser.uid;
+          isMedia = !!t.lastMessage.fileURL;
+          if (t.lastMessage.timestamp) {
+            timeAgo = timeSince(t.lastMessage.timestamp);
+          }
+        } else if (typeof t.lastMessage === "string") {
+          msgText = t.lastMessage;
         }
 
-        const senderPrefix = fromSelf ? "You: " : "";
-        const preview = `${senderPrefix}${msgText}`;
-
-        // === Unread badge ===
+        const preview = isMedia ? "📎 Media File" : `${fromSelf ? "You: " : ""}${msgText}`;
         const unread = t.unread?.[currentUser.uid] || 0;
         const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
-
         const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`;
 
         const card = document.createElement("div");
@@ -377,11 +384,61 @@ function loadChatList() {
           <div class="details">
             <div class="name">@${name} ${badgeHTML}</div>
             <div class="last-message">${preview}</div>
+            <div class="last-time">${timeAgo}</div>
+          </div>
+          <div class="chat-actions">
+            <button title="Mute">🔕</button>
+            <button title="Archive">🗂️</button>
           </div>
         `;
         list.appendChild(card);
       });
     });
+
+  // === Realtime Groups ===
+  unsubscribeGroups = db.collection("groups")
+    .where("members", "array-contains", currentUser.uid)
+    .onSnapshot(snapshot => {
+      snapshot.forEach(doc => {
+        const g = doc.data();
+        const groupName = g.name || "Group";
+
+        let msgText = g.description || "[No recent message]";
+        let isMedia = false;
+        let timeAgo = "";
+
+        if (typeof g.lastMessage === "object") {
+          msgText = g.lastMessage.text || "[No message]";
+          isMedia = !!g.lastMessage.fileURL;
+          if (g.lastMessage.timestamp) {
+            timeAgo = timeSince(g.lastMessage.timestamp);
+          }
+        } else if (typeof g.lastMessage === "string") {
+          msgText = g.lastMessage;
+        }
+
+        const preview = isMedia ? "📎 Media File" : msgText;
+        const unread = g.unread?.[currentUser.uid] || 0;
+        const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
+
+        const card = document.createElement("div");
+        card.className = "chat-card";
+        card.onclick = () => joinRoom(doc.id);
+        card.innerHTML = `
+          <div class="details">
+            <div class="name">#${groupName} ${badgeHTML}</div>
+            <div class="last-message">${preview}</div>
+            <div class="last-time">${timeAgo}</div>
+          </div>
+          <div class="chat-actions">
+            <button title="Mute">🔕</button>
+            <button title="Archive">🗂️</button>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    });
+}
 
   // === Load Groups - Real-time ===
   if (unsubscribeGroups) unsubscribeGroups();
@@ -426,7 +483,20 @@ function openChatMenu() {
   menu.style.display = (menu.style.display === "block") ? "none" : "block";
 }
 
+function timeSince(ts) {
+  const now = Date.now();
+  const seconds = Math.floor((now - ts) / 1000);
 
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  const weeks = Math.floor(days / 7);
+  return `${weeks}w ago`;
+}
 
 // ===== Escape HTML Utility =====
 function escapeHtml(unsafe) {
@@ -455,11 +525,20 @@ function listenInbox() {
         if (!data.read) unreadCount++;
 
         let senderName = "Unknown";
+
+        // ✅ Fix: Support fromName OR resolve UID OR handle object
         if (data.fromName) {
           senderName = data.fromName;
         } else if (data.from) {
-          const senderDoc = await db.collection("users").doc(data.from).get();
-          senderName = senderDoc.exists ? (senderDoc.data().username || senderDoc.data().name || "Unknown") : "Unknown";
+          if (typeof data.from === "string") {
+            const senderDoc = await db.collection("users").doc(data.from).get();
+            if (senderDoc.exists) {
+              const senderData = senderDoc.data();
+              senderName = senderData.username || senderData.name || "Unknown";
+            }
+          } else if (typeof data.from === "object" && data.from.name) {
+            senderName = data.from.name;
+          }
         }
 
         const card = document.createElement("div");
@@ -470,7 +549,7 @@ function listenInbox() {
             From: ${senderName}
           </div>
           <div class="btn-group">
-            <button onclick="acceptInbox('${doc.id}', '${data.type}', '${data.from}')">✔</button>
+            <button onclick="acceptInbox('${doc.id}', '${data.type}', '${typeof data.from === "object" ? data.from.uid : data.from}')">✔</button>
             <button onclick="declineInbox('${doc.id}')">✖</button>
           </div>
         `;
