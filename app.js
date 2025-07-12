@@ -574,42 +574,41 @@ function listenInbox() {
           let fromUID = "";
           let avatarURL = "default-avatar.png";
 
-if (typeof data.from === "string") {
-  fromUID = data.from;
-  try {
-    const senderDoc = await db.collection("users").doc(data.from).get();
-    if (senderDoc.exists) {
-      const senderData = senderDoc.data();
-      senderName = senderData.username || senderData.name || "Unknown";
-      avatarURL = senderData.photoURL || `https://ui-avatars.com/api/?name=${senderName}`;
-    }
-  } catch (e) { console.warn("⚠️ Sender fetch failed:", e.message); }
-}
-} else if (typeof data.from === "object" && data.from.uid) {
-  fromUID = data.from.uid;
-  senderName = data.from.name || "Unknown";
-} else if (data.fromName) {
-  senderName = data.fromName;
-} else {
-  console.warn("⚠️ Malformed inbox entry:", data);
-  continue; // skip invalid item
+          if (typeof data.from === "string") {
+            fromUID = data.from;
+            try {
+              const senderDoc = await db.collection("users").doc(data.from).get();
+              if (senderDoc.exists) {
+                const senderData = senderDoc.data();
+                senderName = senderData.username || senderData.name || "Unknown";
+                avatarURL = senderData.photoURL || `https://ui-avatars.com/api/?name=${senderName}`;
+              }
+            } catch (e) { console.warn("⚠️ Sender fetch failed:", e.message); }
+          } else if (typeof data.from === "object" && data.from.uid) {
+            fromUID = data.from.uid;
+            senderName = data.from.name || "Unknown";
+          } else if (data.fromName) {
+            senderName = data.fromName;
+          } else {
+            console.warn("⚠️ Malformed inbox entry:", data);
+            continue; // skip invalid item
           }
 
-        if (!data || !data.type || !data.timestamp || (!data.from && !data.fromName)) {
-  console.warn("❌ Skipping invalid inbox entry:", doc.id);
-  continue;
-        }
-        
+          if (!data || !data.type || !data.timestamp || (!data.from && !data.fromName)) {
+            console.warn("❌ Skipping invalid inbox entry:", doc.id);
+            continue;
+          }
+
           const typeText = data.type === "friend"
             ? "Friend Request"
             : data.type === "group"
-            ? "Group Invite"
-            : "Notification";
+              ? "Group Invite"
+              : "Notification";
 
           const card = document.createElement("div");
           card.className = "inbox-card";
           card.innerHTML = `
-            <img src="${avatar}" class="friend-avatar" />
+            <img src="${avatarURL}" class="friend-avatar" />
             <div>
               <strong>${escapeHtml(typeText)}</strong><br>
               From: ${escapeHtml(senderName)}
