@@ -39,6 +39,11 @@ function switchTab(id) {
   document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
   const tab = document.getElementById(id);
   if (tab) tab.style.display = "block";
+
+  // ✅ Automatically show 'Users' view when opening Search tab
+  if (id === "searchTab") {
+    switchSearchView("user");
+  }
 }
 
 // ===== Invite Link via URL =====
