@@ -244,7 +244,6 @@ function uploadProfilePic(e) {
   if (!file || !currentUser) return;
 
   const ref = storage.ref().child(`avatars/${currentUser.uid}`);
-  showLoading(true);
 
   ref.put(file).then(snapshot => snapshot.ref.getDownloadURL())
     .then(url => {
