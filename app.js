@@ -474,7 +474,6 @@ function loadChatList() {
         list.appendChild(card);
       });
     });
-
   
 
 function openChatMenu() {
@@ -1297,3 +1296,5 @@ function renderWithMagnetSupport(containerId) {
     };
   });
 }
+
+
