@@ -499,42 +499,30 @@ function listenInbox() {
 
         for (const doc of snapshot.docs) {
           const data = doc.data();
-          if (!data || typeof data !== "object") continue;
-
+          if (!data || !data.type) continue;
           if (!data.read) unreadCount++;
 
-          let senderName = "Unknown";
+          let senderName = data.fromName || "Unknown";
           let fromUID = "";
 
           if (typeof data.from === "string") {
             fromUID = data.from;
             try {
-              const senderDoc = await db.collection("users").doc(data.from).get();
+              const senderDoc = await db.collection("users").doc(fromUID).get();
               if (senderDoc.exists) {
-                const senderData = senderDoc.data();
-                senderName = senderData.username || senderData.name || "Unknown";
+                const sender = senderDoc.data();
+                senderName = sender.username || sender.name || "Unknown";
               }
-            } catch (e) {
-              console.warn("⚠️ Failed to fetch sender:", e.message || e);
+            } catch (err) {
+              console.warn("⚠️ Could not fetch sender:", err.message);
             }
-          } else if (typeof data.from === "object") {
-            fromUID = data.from.uid || "";
-            senderName = data.from.name || "Unknown";
-          } else if (data.fromName) {
-            senderName = data.fromName;
           }
-
-          const typeText = data.type === "friend"
-            ? "Friend Request"
-            : data.type === "group"
-            ? "Group Invite"
-            : "Notification";
 
           const card = document.createElement("div");
           card.className = "inbox-card";
           card.innerHTML = `
             <div>
-              <strong>${typeText}</strong><br>
+              <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
               From: ${escapeHtml(senderName)}
             </div>
             <div class="btn-group">
@@ -550,15 +538,13 @@ function listenInbox() {
           badge.textContent = unreadCount || "";
           badge.style.display = unreadCount ? "inline-block" : "none";
         }
-
       } catch (err) {
-        console.error("❌ Inbox snapshot loop error:", err.message || JSON.stringify(err));
-        alert("❌ Inbox loop error: " + (err.message || JSON.stringify(err)));
+        console.error("❌ Inbox render error:", err.message || err);
+        alert("❌ Inbox error: " + (err.message || err));
       }
     }, err => {
-      const msg = err?.message || JSON.stringify(err);
-      console.error("❌ Inbox snapshot error:", msg);
-      alert("❌ Inbox failed: " + msg);
+      console.error("❌ Inbox snapshot error:", err.message || err);
+      alert("❌ Inbox error: " + (err.message || err));
     });
 }
 
@@ -569,37 +555,31 @@ function acceptInbox(docId, type, fromUID) {
   const inboxRef = db.collection("inbox").doc(currentUser.uid).collection("items").doc(docId);
 
   if (type === "friend") {
-    // Add each other to friend list
-    const batch = db.batch();
-    const userRef = db.collection("users").doc(currentUser.uid).collection("friends").doc(fromUID);
-    const friendRef = db.collection("users").doc(fromUID).collection("friends").doc(currentUser.uid);
+    const myFriendRef = db.collection("users").doc(currentUser.uid).collection("friends").doc(fromUID);
+    const theirFriendRef = db.collection("users").doc(fromUID).collection("friends").doc(currentUser.uid);
 
-    batch.set(userRef, { addedAt: Date.now() });
-    batch.set(friendRef, { addedAt: Date.now() });
+    const batch = db.batch();
+    batch.set(myFriendRef, { since: firebase.firestore.FieldValue.serverTimestamp() });
+    batch.set(theirFriendRef, { since: firebase.firestore.FieldValue.serverTimestamp() });
     batch.update(inboxRef, { read: true });
 
     batch.commit().then(() => {
-      alert("✅ Friend added!");
-      inboxRef.delete(); // remove from inbox
+      alert("🎉 Friend added!");
     }).catch(err => {
       console.error("❌ Friend accept failed:", err.message);
-      alert("❌ Could not accept friend.");
+      alert("❌ Friend accept failed: " + err.message);
     });
 
   } else if (type === "group") {
-    // Join group by ID
     db.collection("groups").doc(fromUID).update({
       members: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
     }).then(() => {
+      inboxRef.update({ read: true });
       alert("✅ Joined group!");
-      inboxRef.delete();
     }).catch(err => {
       console.error("❌ Group join failed:", err.message);
-      alert("❌ Could not join group.");
+      alert("❌ Group join failed: " + err.message);
     });
-
-  } else {
-    alert("⚠️ Unknown request type.");
   }
 }
 
