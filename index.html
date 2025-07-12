@@ -189,6 +189,15 @@
     </div>
   </div>
 
+  <div id="cropModal" class="modal">
+  <div class="modal-content" style="max-width: 320px;">
+    <span class="close" onclick="closeCropModal()">×</span>
+    <h3>Crop Image</h3>
+    <img id="cropImage" style="max-width: 100%;" />
+    <button onclick="confirmCrop()">Crop & Upload</button>
+  </div>
+  </div>
+  
   <!-- 👤 Full User Profile View -->
 <div id="userFullProfile" class="modal">
   <div class="modal-content">
@@ -227,6 +236,8 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <script src="firebase.js"></script>
   <script src="app.js"></script>
 
