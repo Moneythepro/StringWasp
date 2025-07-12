@@ -862,7 +862,7 @@ function openThread(uid, username) {
 
           for (const doc of snapshot.docs) {
             const msg = doc.data();
-            if (!msg.text) continue;
+            if (!msg?.text) continue;
 
             let decrypted = "";
             try {
@@ -872,7 +872,7 @@ function openThread(uid, username) {
               decrypted = "[Failed to decrypt]";
             }
 
-            // Get avatar if available
+            // 🔄 Fetch sender avatar
             let avatar = "default-avatar.png";
             try {
               const userDoc = await db.collection("users").doc(msg.from).get();
@@ -885,11 +885,12 @@ function openThread(uid, username) {
             }
 
             const bubble = document.createElement("div");
-bubble.className = "message-bubble " + (msg.from === currentUser.uid ? "right" : "left");
+            const isSelf = msg.from === currentUser.uid;
+            bubble.className = "message-bubble " + (isSelf ? "right" : "left");
 
-const textDiv = document.createElement("div");
-textDiv.innerHTML = `${msg.fromName || "User"}: ${decrypted}`;
-bubble.appendChild(textDiv);
+            bubble.innerHTML = `
+              <div class="msg-avatar">
+                <img src="${avatar}" alt="avatar" />
               </div>
               <div class="msg-content">
                 <div class="msg-text">
