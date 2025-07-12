@@ -420,11 +420,20 @@ function listenInbox() {
         if (!data.read) unreadCount++;
 
         let senderName = "Unknown";
+
+        // ✅ Fix: Support fromName OR resolve UID OR handle object
         if (data.fromName) {
           senderName = data.fromName;
         } else if (data.from) {
-          const senderDoc = await db.collection("users").doc(data.from).get();
-          senderName = senderDoc.exists ? (senderDoc.data().username || senderDoc.data().name || "Unknown") : "Unknown";
+          if (typeof data.from === "string") {
+            const senderDoc = await db.collection("users").doc(data.from).get();
+            if (senderDoc.exists) {
+              const senderData = senderDoc.data();
+              senderName = senderData.username || senderData.name || "Unknown";
+            }
+          } else if (typeof data.from === "object" && data.from.name) {
+            senderName = data.from.name;
+          }
         }
 
         const card = document.createElement("div");
@@ -435,7 +444,7 @@ function listenInbox() {
             From: ${senderName}
           </div>
           <div class="btn-group">
-            <button onclick="acceptInbox('${doc.id}', '${data.type}', '${data.from}')">✔</button>
+            <button onclick="acceptInbox('${doc.id}', '${data.type}', '${typeof data.from === "object" ? data.from.uid : data.from}')">✔</button>
             <button onclick="declineInbox('${doc.id}')">✖</button>
           </div>
         `;
