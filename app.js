@@ -489,10 +489,7 @@ function escapeHtml(unsafe) {
 // ===== Listen to Inbox =====
 function listenInbox() {
   const list = document.getElementById("inboxList");
-  if (!list || !currentUser) {
-    console.warn("⚠️ listenInbox skipped – UI or user missing");
-    return;
-  }
+  if (!list || !currentUser) return;
 
   if (unsubscribeInbox) unsubscribeInbox();
 
@@ -511,12 +508,6 @@ function listenInbox() {
           if (!data.read) unreadCount++;
 
           let senderName = "Unknown";
-
-          if (!data.from && !data.fromName) {
-  console.warn("🚨 Malformed inbox item:", JSON.stringify(data, null, 2));
-  document.body.innerHTML += `<pre style="background:black;color:yellow;">🚨 Missing sender info: ${escapeHtml(JSON.stringify(data))}</pre>`;
-          }
-          
           let fromUID = "";
 
           if (typeof data.from === "string") {
@@ -565,18 +556,18 @@ function listenInbox() {
         }
 
       } catch (err) {
-        const msg = err?.message || JSON.stringify(err) || String(err);
+        const msg = err?.message || JSON.stringify(err, null, 2) || String(err);
         console.error("❌ Inbox render failed:", msg);
-        alert("❌ Inbox failed: " + msg);
+        alert("❌ Inbox failed:\n" + msg);
         document.body.innerHTML += `<pre style="color:red;font-size:12px;background:#000;padding:10px;overflow:auto;">
 🔥 RENDER ERROR: ${escapeHtml(JSON.stringify(err, null, 2))}
 </pre>`;
       }
     }, (err) => {
-      const msg = err?.message || JSON.stringify(err) || String(err);
+      const msg = err?.message || JSON.stringify(err, null, 2) || String(err);
       console.error("❌ Inbox snapshot error:", msg);
       console.error("🔥 Full error object:", err);
-      alert("❌ Inbox listener failed: " + msg);
+      alert("❌ Inbox listener failed:\n" + msg);
       document.body.innerHTML += `<pre style="color:red;font-size:12px;background:#000;padding:10px;overflow:auto;">
 🔥 SNAPSHOT ERROR: ${escapeHtml(JSON.stringify(err, null, 2))}
 </pre>`;
