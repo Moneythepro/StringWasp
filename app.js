@@ -25,9 +25,6 @@ let unsubscribeThread = null;
 let unsubscribeInbox = null;
 let unsubscribeTyping = null;
 
-// 🧭 Handle Invite Link on Page Load
-const urlParams = new URLSearchParams(window.location.search);
-const joinGroupId = urlParams.get("join");
 
 function loadMainUI() {
   document.getElementById("appPage").style.display = "block";
@@ -58,29 +55,41 @@ function showLoading(state) {
 }
 
 // ===== Auth Listener =====
+const urlParams = new URLSearchParams(window.location.search);
+const joinGroupId = urlParams.get("join");
+
 auth.onAuthStateChanged(async user => {
   if (user) {
     currentUser = user;
+
     const userDoc = await db.collection("users").doc(user.uid).get();
+    const userData = userDoc.data();
 
+    if (!userData?.username) {
+      switchTab("usernameDialog"); // Prompt for username
+      return;
+    }
+
+    document.getElementById("usernameDisplay").textContent = userData.username;
+    loadMainUI();
+
+    // ✅ Check if invite link is present and group exists
     if (joinGroupId) {
-  joinGroupById(joinGroupId);
-    }
+      db.collection("groups").doc(joinGroupId).get().then(doc => {
+        if (!doc.exists) return alert("⚠️ Group not found or invite expired.");
+        const group = doc.data();
 
-    if (!userDoc.exists || !userDoc.data().username) {
-      switchTab("usernameDialog"); // Username setup
-    } else {
-      document.getElementById("usernameDisplay").textContent = userDoc.data().username;
-      loadMainUI(); // Load app tabs & content
-
-      // 🔗 Auto Join Group from Invite
-      if (joinId) {
-        db.collection("groups").doc(joinId).get().then(doc => {
-          if (!doc.exists) return alert("⚠️ Group not found or invite expired.");
-          joinGroupById(joinId); // Custom join function
+        // Show modal with group name
+        showModal(`Join group "${group.name}"?`, () => {
+          joinGroupById(joinGroupId);
+          history.replaceState({}, document.title, window.location.pathname); // Clean URL
         });
-      }
+      }).catch(err => {
+        console.error("Group check error:", err);
+        alert("⚠️ Could not process group invite.");
+      });
     }
+
   } else {
     switchTab("loginPage");
   }
