@@ -356,69 +356,80 @@ function loadGroups() {
 }
 
 // ===== Load All Chats (DMs + Groups) =====
-function loadChatList() {
-  const list = document.getElementById("chatList");
-  list.innerHTML = "";
+function listenInbox() {
+  const list = document.getElementById("inboxList");
+  if (!list || !currentUser) {
+    console.warn("⚠️ listenInbox called without UI or currentUser");
+    return;
+  }
 
-  if (unsubscribeThreads) unsubscribeThreads();
-  if (unsubscribeGroups) unsubscribeGroups();
+  if (unsubscribeInbox) unsubscribeInbox();
 
-  // === Realtime Threads (DMs) ===
-  unsubscribeThreads = db.collection("threads")
-    .where("participants", "array-contains", currentUser.uid)
-    .orderBy("updatedAt", "desc")
-    .onSnapshot(
-      snapshot => {
-        list.innerHTML = ""; // Clear list
+  try {
+    unsubscribeInbox = db.collection("inbox")
+      .doc(currentUser.uid)
+      .collection("items")
+      .orderBy("timestamp", "desc")
+      .onSnapshot(async snapshot => {
+        try {
+          list.innerHTML = "";
+          let unreadCount = 0;
 
-        snapshot.forEach(doc => {
-          const t = doc.data();
-          const otherUID = t.participants.find(p => p !== currentUser.uid);
-          const name = t.names?.[otherUID] || "Friend";
+          for (const doc of snapshot.docs) {
+            const data = doc.data();
+            if (!data.read) unreadCount++;
 
-          let msgText = "[No message]";
-          let fromSelf = false;
-          let isMedia = false;
-          let timeAgo = "";
+            let senderName = "Unknown";
 
-          if (typeof t.lastMessage === "object") {
-            msgText = t.lastMessage.text || "[No message]";
-            fromSelf = t.lastMessage.from === currentUser.uid;
-            isMedia = !!t.lastMessage.fileURL;
-            if (t.lastMessage.timestamp) {
-              timeAgo = timeSince(t.lastMessage.timestamp);
+            if (data.fromName) {
+              senderName = data.fromName;
+            } else if (data.from) {
+              if (typeof data.from === "string") {
+                const senderDoc = await db.collection("users").doc(data.from).get();
+                if (senderDoc.exists) {
+                  const senderData = senderDoc.data();
+                  senderName = senderData.username || senderData.name || "Unknown";
+                }
+              } else if (typeof data.from === "object" && data.from.name) {
+                senderName = data.from.name;
+              }
             }
-          } else if (typeof t.lastMessage === "string") {
-            msgText = t.lastMessage;
+
+            const card = document.createElement("div");
+            card.className = "inbox-card";
+            card.innerHTML = `
+              <div>
+                <strong>${data.type === "friend" ? "Friend Request" : "Group Invite"}</strong><br>
+                From: ${senderName}
+              </div>
+              <div class="btn-group">
+                <button onclick="acceptInbox('${doc.id}', '${data.type}', '${typeof data.from === "object" ? data.from.uid : data.from}')">✔</button>
+                <button onclick="declineInbox('${doc.id}')">✖</button>
+              </div>
+            `;
+            list.appendChild(card);
           }
 
-          const preview = isMedia ? "📎 Media File" : `${fromSelf ? "You: " : ""}${msgText}`;
-          const unread = t.unread?.[currentUser.uid] || 0;
-          const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
-          const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`;
+          const badge = document.getElementById("inboxBadge");
+          if (badge) {
+            badge.textContent = unreadCount || "";
+            badge.style.display = unreadCount ? "inline-block" : "none";
+          }
 
-          const card = document.createElement("div");
-          card.className = "chat-card";
-          card.onclick = () => openThread(otherUID, name);
-          card.innerHTML = `
-            <img src="${avatar}" class="friend-avatar" />
-            <div class="details">
-              <div class="name">@${name} ${badgeHTML}</div>
-              <div class="last-message">${preview}</div>
-              <div class="last-time">${timeAgo}</div>
-            </div>
-            <div class="chat-actions">
-              <button title="Mute">🔕</button>
-              <button title="Archive">🗂️</button>
-            </div>
-          `;
-          list.appendChild(card);
-        });
-      },
-      err => {
-        console.error("📛 Error in threads snapshot listener:", err.message || err);
-      }
-    );
+        } catch (innerErr) {
+          console.error("❌ Error inside inbox snapshot loop:", innerErr);
+          alert("❌ Inbox failed (loop error): " + (innerErr.message || innerErr));
+        }
+      }, outerErr => {
+        console.error("❌ Snapshot listener error in inbox:", outerErr);
+        alert("❌ Inbox snapshot error: " + (outerErr.message || outerErr));
+      });
+
+  } catch (catchErr) {
+    console.error("❌ listenInbox setup error:", catchErr);
+    alert("❌ Inbox setup failed: " + (catchErr.message || catchErr));
+  }
+}
 
   // === Realtime Groups ===
   unsubscribeGroups = db.collection("groups")
