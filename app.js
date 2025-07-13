@@ -1334,7 +1334,6 @@ function showModal(title, html) {
   };
 
   modal.style.display = "flex";
-}
 
 // ===== Export Chat (Stub) =====
 function exportChat() {
