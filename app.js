@@ -1319,21 +1319,19 @@ function copyToClipboard(text) {
   });
 }
 
-// ===== Modal Handler =====
+// Declare modal globally
 const modal = document.getElementById("customModal");
 
-function showModal(title, html) {
-  modal.querySelector("#modalMessage").innerHTML = html;
-  modal.style.display = "flex";  // Show modal
-
-  modal.querySelector("#modalYes").style.display = "none";
-  modal.querySelector("#modalNo").textContent = "Close";
-}
-
-// Close button handler
 document.getElementById("modalNo").onclick = () => {
   modal.style.display = "none";
 };
+
+function showModal(title, html) {
+  modal.querySelector("#modalMessage").innerHTML = html;
+  modal.querySelector("#modalYes").style.display = "none";
+  modal.querySelector("#modalNo").textContent = "Close";
+  modal.style.display = "flex";
+}
 
 // ===== Export Chat (Stub) =====
 function exportChat() {
