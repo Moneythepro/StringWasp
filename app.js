@@ -573,7 +573,7 @@ function sendRoomMessage() {
   const text = input?.value.trim();
   if (!text) return;
 
-  const encrypted = CryptoJS.AES.encrypt(text, "yourSecretKey").toString(); // Replace key for E2E later
+  const encrypted = CryptoJS.AES.encrypt(text, "yourSecretKey").toString(); // update for real E2E
 
   const msg = {
     text: encrypted,
@@ -582,10 +582,11 @@ function sendRoomMessage() {
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
 
-  db.collection("groups").doc(currentRoom).collection("messages").add(msg)
+  db.collection("threads").doc(currentRoom).collection("messages").add(msg)
     .then(() => {
       input.value = "";
 
+      // Update last message in group
       db.collection("groups").doc(currentRoom).update({
         lastMessage: {
           text,
@@ -594,12 +595,13 @@ function sendRoomMessage() {
         }
       });
 
-      db.collection("groups").doc(currentRoom)
+      // Stop typing
+      db.collection("threads").doc(currentRoom)
         .collection("typing")
         .doc(currentUser.uid).delete().catch(() => {});
     })
     .catch(err => {
-      console.error("❌ Failed to send message:", err.message || err);
+      console.error("❌ Failed to send message:", err.message);
       alert("❌ Couldn't send group message.");
     });
 }
@@ -609,12 +611,18 @@ function handleTyping(context) {
   const targetId = context === "group" ? currentRoom : currentThreadUser;
   if (!targetId || !currentUser) return;
 
-  const typingRef = context === "group"
-    ? db.collection("groups").doc(targetId).collection("typing").doc(currentUser.uid)
-    : db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser)).collection("typing").doc(currentUser.uid);
+  const inputId = context === "group" ? "roomInput" : "threadInput";
+  const input = document.getElementById(inputId);
+  if (!input || !input.value.trim()) return;
+
+  const typingRef = db.collection("threads").doc(targetId)
+    .collection("typing").doc(currentUser.uid);
 
   typingRef.set({ typing: true }).catch(() => {});
-  setTimeout(() => typingRef.delete().catch(() => {}), 4000);
+
+  setTimeout(() => {
+    typingRef.delete().catch(() => {});
+  }, 3000);
 }
 
 // ===== Send Thread Message (DM) =====
@@ -1434,75 +1442,74 @@ function joinGroupById(groupId) {
   });
 }
 
+let currentRoom = null;
+let unsubscribeRoomMessages = null;
+let unsubscribeTyping = null;
+
 function joinRoom(roomId) {
-  if (!currentUser || !roomId) return;
+  if (!roomId || !currentUser) return;
 
   currentRoom = roomId;
   switchTab("roomView");
 
-  const roomView = document.getElementById("roomView");
-  const roomTitle = document.getElementById("roomTitle");
-  const roomMessages = document.getElementById("roomMessages");
-  const typingStatus = document.getElementById("groupTypingStatus");
+  const title = document.getElementById("roomTitle");
+  const messageList = document.getElementById("roomMessages");
+  messageList.innerHTML = "";
 
-  if (!roomView || !roomTitle || !roomMessages) return;
-
-  roomMessages.innerHTML = "";
-  typingStatus.textContent = "";
-
-  // Group Info
+  // Load group data
   db.collection("groups").doc(roomId).get().then(doc => {
-    if (!doc.exists) return alert("❌ Group not found.");
-    const group = doc.data();
-    roomTitle.textContent = "#" + (group.name || "Group");
+    if (doc.exists) {
+      const group = doc.data();
+      title.textContent = group.name || "Group Chat";
+    } else {
+      title.textContent = "Group (Not Found)";
+    }
   });
 
-  // Typing Status
+  // Unsubscribe if already listening
+  if (unsubscribeRoomMessages) unsubscribeRoomMessages();
   if (unsubscribeTyping) unsubscribeTyping();
-  unsubscribeTyping = db.collection("groups").doc(roomId).collection("typing")
-    .onSnapshot(snapshot => {
-      const others = snapshot.docs.filter(doc => doc.id !== currentUser.uid);
-      typingStatus.textContent = others.length ? "✍️ Someone is typing..." : "";
-    });
 
-  // Messages
-  if (unsubscribeThread) unsubscribeThread();
-  unsubscribeThread = db.collection("groups").doc(roomId).collection("messages")
+  // Listen for messages
+  unsubscribeRoomMessages = db.collection("threads")
+    .doc(roomId)
+    .collection("messages")
     .orderBy("timestamp")
     .onSnapshot(snapshot => {
-      roomMessages.innerHTML = "";
+      messageList.innerHTML = "";
+
       snapshot.forEach(doc => {
         const msg = doc.data();
         const isSelf = msg.from === currentUser.uid;
-
         const bubble = document.createElement("div");
         bubble.className = "message-bubble " + (isSelf ? "right" : "left");
 
-        let decrypted = "";
-        try {
-          decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
-          if (!decrypted) decrypted = "[Encrypted]";
-        } catch {
-          decrypted = "[Decryption Failed]";
-        }
-
+        const content = escapeHtml(msg.text || "[No message]");
         bubble.innerHTML = `
           <div class="msg-avatar">
-            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(msg.fromName || 'User')}" />
+            <img src="${isSelf ? currentUser.photoURL || 'default-avatar.png' : 'default-avatar.png'}" />
           </div>
           <div class="msg-content">
-            <div class="msg-text">
-              <strong>${escapeHtml(msg.fromName || "User")}</strong><br>
-              ${escapeHtml(decrypted)}
-            </div>
+            <div class="msg-text">${content}</div>
             <div class="message-time">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</div>
           </div>
         `;
-
-        roomMessages.appendChild(bubble);
+        messageList.appendChild(bubble);
+        messageList.scrollTop = messageList.scrollHeight;
       });
+    });
 
-      roomMessages.scrollTop = roomMessages.scrollHeight;
+  // Typing Indicator
+  const typingStatus = document.getElementById("groupTypingStatus");
+  unsubscribeTyping = db.collection("threads").doc(roomId).collection("typing")
+    .onSnapshot(snapshot => {
+      const others = [];
+      snapshot.forEach(doc => {
+        if (doc.id !== currentUser.uid) others.push(doc.id);
+      });
+      typingStatus.textContent = others.length
+        ? `✍️ ${others.length} typing...`
+        : "";
     });
 }
 
