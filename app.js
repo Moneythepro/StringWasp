@@ -423,6 +423,28 @@ function loadGroups() {
     );
 }
 
+function createGroup() {
+  const groupName = prompt("Enter group name:");
+  if (!groupName || !currentUser) return;
+
+  const group = {
+    name: groupName,
+    owner: currentUser.uid,
+    members: [currentUser.uid],
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  db.collection("groups").add(group)
+    .then(docRef => {
+      console.log("✅ Group created with ID:", docRef.id);
+      joinRoom(docRef.id);
+    })
+    .catch(err => {
+      console.error("❌ Failed to create group:", err.message);
+      alert("Group creation failed: " + (err.message || "Unknown error"));
+    });
+}
+
 function loadChatList() {
   const list = document.getElementById("chatList");
   if (!list || !currentUser) return;
@@ -1234,27 +1256,25 @@ function runSearch() {
 
   const usersDiv = document.getElementById("searchResultsUser");
   const groupsDiv = document.getElementById("searchResultsGroup");
-  usersDiv.innerHTML = "<p>Searching users...</p>";
-  groupsDiv.innerHTML = "<p>Searching groups...</p>";
+  usersDiv.innerHTML = "";
+  groupsDiv.innerHTML = "";
 
   // === USERS SEARCH ===
   db.collection("users")
-    .orderBy("username")
-    .startAt(term)
-    .endAt(term + "\uf8ff")
+    .where("username", ">=", term)
+    .where("username", "<=", term + "\uf8ff")
     .limit(15)
     .get()
     .then(snapshot => {
-      usersDiv.innerHTML = "";
       if (snapshot.empty) {
-        usersDiv.innerHTML = "<p>No users found.</p>";
+        usersDiv.innerHTML = "<p class='no-results'>No users found.</p>";
         return;
       }
 
       snapshot.forEach(doc => {
         const user = doc.data();
         const uid = doc.id;
-        if (uid === currentUser.uid) return; // Skip self
+        if (uid === currentUser.uid) return;
 
         const div = document.createElement("div");
         div.className = "search-card";
@@ -1273,21 +1293,19 @@ function runSearch() {
       });
     })
     .catch(err => {
-      console.error("❌ User search failed:", err.message || err);
-      usersDiv.innerHTML = `<p class="error">User search failed: ${escapeHtml(err.message || "Unknown error")}</p>`;
+      console.error("❌ User search failed:", err.message);
+      usersDiv.innerHTML = `<p class="error">Search failed: ${escapeHtml(err.message)}</p>`;
     });
 
   // === GROUPS SEARCH ===
   db.collection("groups")
-    .orderBy("name")
-    .startAt(term)
-    .endAt(term + "\uf8ff")
+    .where("name", ">=", term)
+    .where("name", "<=", term + "\uf8ff")
     .limit(15)
     .get()
     .then(snapshot => {
-      groupsDiv.innerHTML = "";
       if (snapshot.empty) {
-        groupsDiv.innerHTML = "<p>No groups found.</p>";
+        groupsDiv.innerHTML = "<p class='no-results'>No groups found.</p>";
         return;
       }
 
@@ -1312,8 +1330,8 @@ function runSearch() {
       });
     })
     .catch(err => {
-      console.error("❌ Group search failed:", err.message || err);
-      groupsDiv.innerHTML = `<p class="error">Group search failed: ${escapeHtml(err.message || "Unknown error")}</p>`;
+      console.error("❌ Group search failed:", err.message);
+      groupsDiv.innerHTML = `<p class="error">Search failed: ${escapeHtml(err.message)}</p>`;
     });
 }
 
