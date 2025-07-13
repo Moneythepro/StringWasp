@@ -52,10 +52,7 @@ function login() {
 
   showLoading();
   auth.signInWithEmailAndPassword(email, password)
-    .then(() => {
-      // On success, Firebase auth listener will handle UI
-    })
-    .catch(err => alert("❌ Login failed: " + err.message))
+    .catch(err => alert("Login failed: " + err.message))
     .finally(() => hideLoading());
 }
 
