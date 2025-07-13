@@ -1586,22 +1586,32 @@ function copyToClipboard(text) {
   navigator.clipboard.writeText(text).then(() => {
     alert("Copied to clipboard");
     showToast("🔗 Invite link copied!");
+  }).catch((err) => {
+    console.error("Clipboard error:", err);
+    alert("❌ Failed to copy");
   });
 }
 
-// Declare modal globally
-const modal = document.getElementById("customModal");
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("customModal");
+  const modalNo = document.getElementById("modalNo");
+  const modalYes = document.getElementById("modalYes");
+  const modalMessage = document.getElementById("modalMessage");
 
-document.getElementById("modalNo").onclick = () => {
-  modal.style.display = "none";
-};
+  if (modal && modalNo) {
+    modalNo.onclick = () => {
+      modal.style.display = "none";
+    };
+  }
 
-function showModal(title, html) {
-  modal.querySelector("#modalMessage").innerHTML = html;
-  modal.querySelector("#modalYes").style.display = "none";
-  modal.querySelector("#modalNo").textContent = "Close";
-  modal.style.display = "flex";
-}
+  window.showModal = function(title, html) {
+    if (!modal || !modalMessage) return;
+    modalMessage.innerHTML = html;
+    if (modalYes) modalYes.style.display = "none";
+    if (modalNo) modalNo.textContent = "Close";
+    modal.style.display = "flex";
+  };
+});
 
 // ===== Export Chat (Stub) =====
 function exportChat() {
