@@ -120,6 +120,7 @@ function loadMainUI() {
 auth.onAuthStateChanged(async user => {
   if (!user) {
     switchTab("loginPage");
+    hideLoading(); // ✅ Ensure loading overlay is hidden
     return;
   }
 
@@ -131,25 +132,30 @@ auth.onAuthStateChanged(async user => {
 
     if (!data?.username) {
       switchTab("usernameDialog");
+      hideLoading(); // ✅ Ensure loading overlay is hidden
       return;
     }
 
     document.getElementById("usernameDisplay").textContent = data.username;
+
     document.querySelector(".profile-edit-label").onclick = () => {
       document.getElementById("profilePic").click();
     };
 
-    // ✅ INIT UI
+    // ✅ Load main UI
     loadMainUI();
 
-    // ✅ Handle invite link
+    // ✅ Handle invite links
     if (joinGroupId) {
       tryJoinGroup(joinGroupId);
     }
 
+    switchTab("chatTab"); // ✅ Show main chat
   } catch (err) {
     console.error("❌ User load error:", err.message || err);
     alert("❌ Failed to load user info: " + (err.message || JSON.stringify(err)));
+  } finally {
+    hideLoading(); // ✅ Always hide loading
   }
 });
 
