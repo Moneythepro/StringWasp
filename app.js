@@ -1467,7 +1467,6 @@ function joinGroupById(groupId) {
 }
 
 let unsubscribeRoomMessages = null;
-let unsubscribeTyping = null;
 
 function joinRoom(groupId) {
   if (!groupId || !currentUser) return;
