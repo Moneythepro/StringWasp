@@ -428,13 +428,12 @@ function loadChatList() {
   const list = document.getElementById("chatList");
   if (list) list.innerHTML = "";
 
-  setTimeout(() => {
-    loadRealtimeGroups();
-    loadFriendThreads();
-  }, 300); // small delay to prevent overlap
+  // Load both DM and group chats
+  loadRealtimeGroups();
+  loadFriendThreads();
 }
 
-  // === Realtime Groups ===
+// === GROUP CHAT LISTENER ===
 function loadRealtimeGroups() {
   const list = document.getElementById("chatList");
   if (!list || !currentUser) return;
@@ -444,8 +443,6 @@ function loadRealtimeGroups() {
   unsubscribeGroups = db.collection("groups")
     .where("members", "array-contains", currentUser.uid)
     .onSnapshot(snapshot => {
-      list.innerHTML = "";
-
       snapshot.forEach(doc => {
         const g = doc.data();
         const groupName = g.name || "Group";
@@ -458,8 +455,8 @@ function loadRealtimeGroups() {
         if (typeof g.lastMessage === "object") {
           msgText = g.lastMessage.text || "[No message]";
           isMedia = !!g.lastMessage.fileURL;
-          if (g.lastMessage.timestamp) {
-            timeAgo = timeSince(g.lastMessage.timestamp);
+          if (g.lastMessage.timestamp?.toDate) {
+            timeAgo = timeSince(g.lastMessage.timestamp.toDate());
           }
         } else if (typeof g.lastMessage === "string") {
           msgText = g.lastMessage;
@@ -470,7 +467,7 @@ function loadRealtimeGroups() {
         const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
 
         const card = document.createElement("div");
-        card.className = "chat-card";
+        card.className = "chat-card group-chat";
         card.onclick = () => joinRoom(doc.id);
         card.innerHTML = `
           <img src="${avatar}" class="friend-avatar" />
@@ -478,10 +475,6 @@ function loadRealtimeGroups() {
             <div class="name">#${escapeHtml(groupName)} ${badgeHTML}</div>
             <div class="last-message">${preview}</div>
             <div class="last-time">${timeAgo}</div>
-          </div>
-          <div class="chat-actions">
-            <button title="Mute">🔕</button>
-            <button title="Archive">🗂️</button>
           </div>
         `;
         list.appendChild(card);
