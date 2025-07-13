@@ -1501,10 +1501,11 @@ function copyRoomId() {
 }
 
 // === Invite user to group ===
-function inviteToGroup(uid, groupId) {
+function inviteToGroup(uid) {
+  if (!currentGroupProfileId) return alert("❌ No group selected.");
   db.collection("inbox").doc(uid).collection("items").add({
     type: "group",
-    from: groupId, // The group ID
+    from: currentGroupProfileId,
     fromName: "Group Invite",
     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
     read: false
