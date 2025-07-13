@@ -447,16 +447,18 @@ function createGroup() {
 
 function loadChatList() {
   const list = document.getElementById("chatList");
-  if (!list || !currentUser) return;
-  list.innerHTML = "";
+  if (list) list.innerHTML = "";
 
+  // Small delay to avoid overlap
   setTimeout(() => {
     loadRealtimeGroups();
     loadFriendThreads();
-  }, 300); // Delay to prevent UI clash
+  }, 300);
 }
 
 // === Realtime Group Chats ===
+let unsubscribeGroups = null;
+
 function loadRealtimeGroups() {
   const list = document.getElementById("chatList");
   if (!list || !currentUser) return;
@@ -501,11 +503,14 @@ function loadRealtimeGroups() {
         list.appendChild(card);
       });
     }, err => {
-      console.error("❌ Group snapshot error:", err.message);
+      console.error("❌ Group chat load error:", err.message || err);
+      alert("❌ Couldn't load groups.");
     });
 }
 
 // === Direct Message Threads ===
+let unsubscribeThreads = null;
+
 function loadFriendThreads() {
   const list = document.getElementById("chatList");
   if (!list || !currentUser) return;
@@ -519,20 +524,26 @@ function loadFriendThreads() {
       for (const doc of snapshot.docs) {
         const t = doc.data();
         const otherUID = t.participants.find(p => p !== currentUser.uid);
-        let name = "Friend", avatar = "default-avatar.png";
+        if (!otherUID) continue;
+
+        let name = "Friend";
+        let avatar = "default-avatar.png";
 
         try {
           const userDoc = await db.collection("users").doc(otherUID).get();
           if (userDoc.exists) {
             const user = userDoc.data();
             name = user.username || user.name || "Friend";
-            avatar = user.avatarBase64 || user.photoURL || avatar;
+            avatar = user.avatarBase64 || user.photoURL || "default-avatar.png";
           }
         } catch (e) {
-          console.warn("⚠️ Failed to load user:", e.message);
+          console.warn("⚠️ Couldn't fetch user:", e.message);
         }
 
-        let msgText = "[No message]", fromSelf = false, isMedia = false, timeAgo = "";
+        let msgText = "[No message]";
+        let fromSelf = false;
+        let isMedia = false;
+        let timeAgo = "";
 
         if (typeof t.lastMessage === "object") {
           msgText = t.lastMessage.text || "[No message]";
@@ -561,7 +572,7 @@ function loadFriendThreads() {
         list.appendChild(card);
       }
     }, err => {
-      console.error("❌ Error loading threads:", err.message);
+      console.error("❌ DM threads load error:", err.message || err);
     });
 }
 
