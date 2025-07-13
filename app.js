@@ -826,57 +826,47 @@ function updateInboxBadge() {
 }
 
 // ===== Accept Inbox Item =====
-function acceptInboxItem(id, type, fromUID) {
+function acceptInbox(id, type, fromUID) {
   if (!currentUser) return;
 
   const inboxRef = db.collection("inbox").doc(currentUser.uid).collection("items").doc(id);
 
   if (type === "friend") {
-    // Add both as friends
     const batch = db.batch();
-    const userFriends = db.collection("users").doc(currentUser.uid).collection("friends").doc(fromUID);
-    const otherFriends = db.collection("users").doc(fromUID).collection("friends").doc(currentUser.uid);
+    const userRef = db.collection("users").doc(currentUser.uid).collection("friends").doc(fromUID);
+    const otherRef = db.collection("users").doc(fromUID).collection("friends").doc(currentUser.uid);
 
-    batch.set(userFriends, { since: Date.now() });
-    batch.set(otherFriends, { since: Date.now() });
+    batch.set(userRef, { since: Date.now() });
+    batch.set(otherRef, { since: Date.now() });
     batch.delete(inboxRef);
 
     batch.commit().then(() => {
-      alert("✅ Friend added.");
+      alert("✅ Friend added!");
     }).catch(err => {
-      console.error("❌ Failed to accept friend:", err.message);
+      console.error("❌ Friend accept failed:", err.message);
+      alert("❌ Failed to accept friend.");
     });
 
   } else if (type === "group") {
-    // Join the group
-    const groupId = fromUID; // group UID used in "from"
-    db.collection("groups").doc(groupId).update({
+    db.collection("groups").doc(fromUID).update({
       members: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
     }).then(() => {
       inboxRef.delete();
-      alert("✅ Joined the group.");
-      joinRoom(groupId);
+      alert("✅ Joined the group!");
+      joinRoom(fromUID);
     }).catch(err => {
-      console.error("❌ Failed to join group:", err.message);
+      console.error("❌ Group join failed:", err.message);
+      alert("❌ Failed to join group.");
     });
   }
 }
 
-function declineInboxItem(id) {
-  if (!currentUser) return;
-
-  db.collection("inbox").doc(currentUser.uid).collection("items").doc(id)
-    .delete()
-    .catch(err => {
-      console.error("❌ Error declining item:", err.message);
-    });
-}
 
 // ===== Decline Inbox Item =====
-function declineInbox(docId) {
-  if (!currentUser || !docId) return;
+function declineInbox(id) {
+  if (!currentUser || !id) return;
 
-  db.collection("inbox").doc(currentUser.uid).collection("items").doc(docId).delete()
+  db.collection("inbox").doc(currentUser.uid).collection("items").doc(id).delete()
     .then(() => {
       alert("❌ Request declined.");
     })
