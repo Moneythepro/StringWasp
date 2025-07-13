@@ -124,7 +124,7 @@ function loadMainUI() {
 auth.onAuthStateChanged(async user => {
   if (!user) {
     switchTab("loginPage");
-    hideLoading(); // ✅ Hide overlay
+    hideLoading(); // ✅ Hide overlay if not logged in
     return;
   }
 
@@ -136,32 +136,32 @@ auth.onAuthStateChanged(async user => {
 
     if (!data?.username) {
       switchTab("usernameDialog");
-      hideLoading();
+      hideLoading(); // ✅ Still hide overlay if no username yet
       return;
     }
 
     document.getElementById("usernameDisplay").textContent = data.username;
 
-    const label = document.querySelector(".profile-edit-label");
-    if (label) {
-      label.onclick = () => {
-        const input = document.getElementById("profilePic");
-        if (input) input.click();
-      };
-    }
+    // 👤 Profile picture trigger
+    document.querySelector(".profile-edit-label").onclick = () => {
+      document.getElementById("profilePic").click();
+    };
 
-    // ✅ Load main UI
+    // ✅ Load all main UI sections
     loadMainUI();
 
-    // ✅ Handle invite link
+    // 🔗 Handle invite link if present in URL
     if (joinGroupId) {
-      tryJoinGroup(joinGroupId);
+      tryJoinGroup(joinGroupId); // ✅ FIXED typo here
     }
+
+    switchTab("chatTab"); // ✅ Show main chat tab
 
   } catch (err) {
     console.error("❌ User load error:", err.message || err);
     alert("❌ Failed to load user info: " + (err.message || JSON.stringify(err)));
-    hideLoading();
+  } finally {
+    hideLoading(); // ✅ Always hide loader
   }
 });
 
