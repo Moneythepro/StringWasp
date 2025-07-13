@@ -188,6 +188,15 @@ body.dark .input-bar input {
 .chat-card .name {
   font-weight: bold;
 }
+
+.chat-card.group-chat .name {
+  color: #0d47a1;
+}
+
+.chat-card.personal-chat .name {
+  color: #00897b;
+}
+
 .chat-card .last-message {
   font-size: 13px;
   color: #666;
