@@ -1071,29 +1071,27 @@ function runSearch() {
       }
 
       snapshot.forEach(doc => {
-        const data = doc.data();
-        const uid = doc.id;
+  const data = doc.data();
+  const uid = doc.id;
 
-        const username = data.username || "unknown";
-        const displayName = data.name || username;
-        const avatar = data.avatarBase64 || "default-avatar.png";
+  const avatar = data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username || "User")}`;
 
-        const card = document.createElement("div");
-        card.className = "search-card";
-        card.innerHTML = `
-          <img src="${avatar}" class="friend-avatar" />
-          <div class="details">
-            <div class="username">@${escapeHtml(username)}</div>
-            <div class="name">${escapeHtml(displayName)}</div>
-          </div>
-          <div class="btn-group">
-            <button onclick="viewUserProfile('${uid}')">👁 View</button>
-            <button onclick="addFriend('${uid}')">➕ Add</button>
-            <button onclick="messageUser('${uid}')">💬 Message</button>
-          </div>
-        `;
-        userResults.appendChild(card);
-      });
+  const card = document.createElement("div");
+  card.className = "search-result";
+  card.innerHTML = `
+    <img src="${avatar}" class="search-avatar" />
+    <div class="search-info">
+      <div class="username">@${escapeHtml(data.username || "unknown")}</div>
+      <div class="bio">${escapeHtml(data.bio || "")}</div>
+    </div>
+    <div class="btn-group">
+      <button onclick="viewUserProfile('${uid}')">👁</button>
+      <button onclick="addFriend('${uid}')">➕</button>
+      <button onclick="messageUser('${uid}')">💬</button>
+    </div>
+  `;
+  userResults.appendChild(card);
+});
 
       switchSearchView("user"); // Show user tab by default
     })
