@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>StringWasp</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="manifest.json" />
@@ -64,7 +64,7 @@
         <button onclick="searchChats()">🔍</button>
         <button onclick="loadChatList()">🔄</button>
       </div>
-      <div id="chatList" class="chat-list"></div>
+      <div id="chatList" style="overflow-y: auto; max-height: calc(100vh - 150px);"></div>
       <button class="floating-btn" onclick="switchTab('searchTab')">➕</button>
     </div>
 
