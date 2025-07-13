@@ -455,8 +455,6 @@ function loadChatList() {
 }
 
 // === Realtime Group Chats ===
-let unsubscribeGroups = null;
-
 function loadRealtimeGroups() {
   const list = document.getElementById("chatList");
   if (!list || !currentUser) return;
