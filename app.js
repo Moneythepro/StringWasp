@@ -103,7 +103,7 @@ function checkUsername() {
 
 // ===== Main App Load UI =====
 function loadMainUI() {
-  showLoading(); // ✅ Fixed: No argument
+  showLoading();
 
   document.getElementById("appPage").style.display = "block";
 
@@ -115,7 +115,7 @@ function loadMainUI() {
     switchTab("chatTab");
 
     setTimeout(() => {
-      hideLoading(); // ✅ Always hide after UI loads
+      hideLoading();
     }, 300);
   });
 }
@@ -124,7 +124,7 @@ function loadMainUI() {
 auth.onAuthStateChanged(async user => {
   if (!user) {
     switchTab("loginPage");
-    hideLoading(); // ✅ Hide overlay if not logged in
+    hideLoading();
     return;
   }
 
@@ -136,32 +136,33 @@ auth.onAuthStateChanged(async user => {
 
     if (!data?.username) {
       switchTab("usernameDialog");
-      hideLoading(); // ✅ Still hide overlay if no username yet
+      hideLoading();
       return;
     }
 
     document.getElementById("usernameDisplay").textContent = data.username;
 
-    // 👤 Profile picture trigger
     document.querySelector(".profile-edit-label").onclick = () => {
       document.getElementById("profilePic").click();
     };
 
-    // ✅ Load all main UI sections
     loadMainUI();
 
-    // 🔗 Handle invite link if present in URL
     if (joinGroupId) {
-      tryJoinGroup(joinGroupId); // ✅ FIXED typo here
+      try {
+        await tryJoinGroup(joinGroupId);
+      } catch (e) {
+        console.warn("Group join failed:", e);
+      }
     }
 
-    switchTab("chatTab"); // ✅ Show main chat tab
+    switchTab("chatTab");
 
   } catch (err) {
     console.error("❌ User load error:", err.message || err);
     alert("❌ Failed to load user info: " + (err.message || JSON.stringify(err)));
   } finally {
-    hideLoading(); // ✅ Always hide loader
+    hideLoading();
   }
 });
 
