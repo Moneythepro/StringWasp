@@ -1131,95 +1131,87 @@ function switchSearchView(view) {
 }
 
 function runSearch() {
-  const input = document.getElementById("searchInput");
-  const term = input.value.trim().toLowerCase();
-  if (!term) return;
+  const term = document.getElementById("searchInput")?.value.trim().toLowerCase();
+  if (!term || !currentUser) return alert("Enter something to search.");
 
-  const userResults = document.getElementById("searchResultsUser");
-  const groupResults = document.getElementById("searchResultsGroup");
+  const usersDiv = document.getElementById("searchResultsUser");
+  const groupsDiv = document.getElementById("searchResultsGroup");
+  usersDiv.innerHTML = "";
+  groupsDiv.innerHTML = "";
 
-  userResults.innerHTML = "<p>Loading users...</p>";
-  groupResults.innerHTML = "<p>Loading groups...</p>";
-
-  // 🔍 Search USERS
+  // === USERS SEARCH ===
   db.collection("users")
     .where("username", ">=", term)
     .where("username", "<=", term + "\uf8ff")
-    .limit(10)
+    .limit(15)
     .get()
     .then(snapshot => {
-      userResults.innerHTML = "";
       if (snapshot.empty) {
-        userResults.innerHTML = "<p>No users found.</p>";
+        usersDiv.innerHTML = "<p>No users found.</p>";
         return;
       }
 
       snapshot.forEach(doc => {
-        const data = doc.data();
+        const user = doc.data();
         const uid = doc.id;
-        const avatar = data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username || "User")}`;
-        const card = document.createElement("div");
-        card.className = "search-result";
-        card.innerHTML = `
-          <img src="${avatar}" class="search-avatar" />
-          <div class="search-info">
-            <div class="username">@${escapeHtml(data.username || "unknown")}</div>
-            <div class="bio">${escapeHtml(data.bio || "")}</div>
+        if (uid === currentUser.uid) return; // Skip self
+
+        const div = document.createElement("div");
+        div.className = "search-card";
+        div.innerHTML = `
+          <img src="${user.photoURL || 'default-avatar.png'}" class="friend-avatar" />
+          <div>
+            <strong>@${escapeHtml(user.username || "user")}</strong><br>
+            ${escapeHtml(user.name || "Unnamed")}
           </div>
           <div class="btn-group">
             <button onclick="viewUserProfile('${uid}')">👁</button>
             <button onclick="addFriend('${uid}')">➕</button>
-            <button onclick="messageUser('${uid}')">💬</button>
           </div>
         `;
-        userResults.appendChild(card);
+        usersDiv.appendChild(div);
       });
-
-      switchSearchView("user");
     })
     .catch(err => {
-      console.error("❌ User search failed:", err.message);
-      userResults.innerHTML = "<p>Search failed.</p>";
+      console.error("❌ User search failed:", err.message || err);
+      usersDiv.innerHTML = `<p class="error">User search failed: ${escapeHtml(err.message)}</p>`;
     });
 
-  // 🔍 Search GROUPS
+  // === GROUPS SEARCH ===
   db.collection("groups")
     .where("name", ">=", term)
     .where("name", "<=", term + "\uf8ff")
-    .limit(10)
+    .limit(15)
     .get()
     .then(snapshot => {
-      groupResults.innerHTML = "";
       if (snapshot.empty) {
-        groupResults.innerHTML = "<p>No groups found.</p>";
+        groupsDiv.innerHTML = "<p>No groups found.</p>";
         return;
       }
 
       snapshot.forEach(doc => {
-        const data = doc.data();
-        const groupId = doc.id;
-        const avatar = data.icon || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "Group")}`;
-        const card = document.createElement("div");
-        card.className = "search-result";
-        card.innerHTML = `
-          <img src="${avatar}" class="search-avatar" />
-          <div class="search-info">
-            <div class="username">#${escapeHtml(data.name || "Group")}</div>
-            <div class="bio">${escapeHtml(data.description || "")}</div>
+        const group = doc.data();
+        const gid = doc.id;
+
+        const div = document.createElement("div");
+        div.className = "search-card";
+        div.innerHTML = `
+          <img src="${group.icon || 'group-icon.png'}" class="friend-avatar" />
+          <div>
+            <strong>${escapeHtml(group.name || "Unnamed Group")}</strong><br>
+            Members: ${group.members?.length || 0}
           </div>
           <div class="btn-group">
-            <button onclick="viewGroupProfile('${groupId}')">👁</button>
-            <button onclick="joinGroupById('${groupId}')">➕ Join</button>
+            <button onclick="viewGroup('${gid}')">👁</button>
+            <button onclick="joinGroupById('${gid}')">➕</button>
           </div>
         `;
-        groupResults.appendChild(card);
+        groupsDiv.appendChild(div);
       });
-
-      switchSearchView("group");
     })
     .catch(err => {
-      console.error("❌ Group search failed:", err.message);
-      groupResults.innerHTML = "<p>Search failed.</p>";
+      console.error("❌ Group search failed:", err.message || err);
+      groupsDiv.innerHTML = `<p class="error">Group search failed: ${escapeHtml(err.message)}</p>`;
     });
 }
 
