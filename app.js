@@ -826,22 +826,36 @@ function addFriend(uid) {
       return;
     }
 
-    // Step 2: Send friend request to inbox (flat, valid format)
-    const inboxRef = db.collection("inbox").doc(uid).collection("items");
-    inboxRef.add({
-      type: "friend",
-      from: currentUser.uid, // ✅ must match Firestore rule
-      fromName: currentUser.displayName || currentUser.email || "Unknown",
-      read: false,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-      alert("✅ Friend request sent!");
-    }).catch(err => {
-      console.error("❌ Friend request failed:", err.message || err);
-      alert("❌ Failed to send friend request");
-    });
+    // Step 2: Check if request already sent
+    db.collection("inbox").doc(uid).collection("items")
+      .where("type", "==", "friend")
+      .where("from.uid", "==", currentUser.uid)
+      .limit(1)
+      .get()
+      .then(snapshot => {
+        if (!snapshot.empty) {
+          alert("📬 Friend request already sent!");
+          return;
+        }
+
+        // Step 3: Send friend request
+        db.collection("inbox").doc(uid).collection("items").add({
+          type: "friend",
+          from: {
+            uid: currentUser.uid,
+            name: currentUser.displayName || currentUser.email || "Unknown"
+          },
+          read: false,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+          alert("✅ Friend request sent!");
+        }).catch(err => {
+          console.error("❌ Friend request failed:", err);
+          alert("❌ Failed to send friend request");
+        });
+      });
   }).catch(err => {
-    console.error("❌ Friend check error:", err.message || err);
+    console.error("❌ Friend check error:", err);
     alert("❌ Could not verify friend status");
   });
 }
