@@ -502,11 +502,14 @@ function loadFriendThreads() {
     .where("participants", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
     .onSnapshot(async snapshot => {
+      const renderedUIDs = new Set();
       list.innerHTML = "";
 
       for (const doc of snapshot.docs) {
         const t = doc.data();
         const otherUID = t.participants.find(p => p !== currentUser.uid);
+        if (!otherUID || renderedUIDs.has(otherUID)) continue;
+        renderedUIDs.add(otherUID);
 
         let name = "Friend";
         let avatar = "default-avatar.png";
@@ -516,10 +519,10 @@ function loadFriendThreads() {
           if (userDoc.exists) {
             const user = userDoc.data();
             name = user.username || user.name || "Friend";
-            avatar = user.avatarBase64 || avatar;
+            avatar = user.photoURL || user.avatarBase64 || avatar;
           }
         } catch (e) {
-          console.warn("⚠️ Failed to fetch user avatar:", e.message);
+          console.warn("⚠️ User fetch failed:", e.message);
         }
 
         let msgText = "[No message]";
@@ -531,8 +534,8 @@ function loadFriendThreads() {
           msgText = t.lastMessage.text || "[No message]";
           fromSelf = t.lastMessage.from === currentUser.uid;
           isMedia = !!t.lastMessage.fileURL;
-          if (t.lastMessage.timestamp) {
-            timeAgo = timeSince(t.lastMessage.timestamp);
+          if (t.lastMessage.timestamp?.toDate) {
+            timeAgo = timeSince(t.lastMessage.timestamp.toDate());
           }
         } else if (typeof t.lastMessage === "string") {
           msgText = t.lastMessage;
@@ -551,10 +554,6 @@ function loadFriendThreads() {
             <div class="name">@${escapeHtml(name)} ${badgeHTML}</div>
             <div class="last-message">${preview}</div>
             <div class="last-time">${timeAgo}</div>
-          </div>
-          <div class="chat-actions">
-            <button title="Mute">🔕</button>
-            <button title="Archive">🗂️</button>
           </div>
         `;
         list.appendChild(card);
