@@ -758,59 +758,88 @@ function escapeHtml(text) {
 }
 
 // ===== Listen to Inbox =====
-function loadInbox() {
+let unsubscribeInbox = null;
+
+// ===== Load Inbox Items (Cards + Badge) =====
+function listenInbox() {
   const list = document.getElementById("inboxList");
+  const badge = document.getElementById("inboxBadge");
   if (!list || !currentUser) return;
 
-  db.collection("inbox").doc(currentUser.uid).collection("items")
+  if (unsubscribeInbox) unsubscribeInbox(); // clear previous listener
+
+  unsubscribeInbox = db.collection("inbox")
+    .doc(currentUser.uid)
+    .collection("items")
     .orderBy("timestamp", "desc")
-    .onSnapshot(snapshot => {
-      list.innerHTML = "";
+    .onSnapshot(async (snapshot) => {
+      try {
+        list.innerHTML = "";
+        let unreadCount = 0;
 
-      snapshot.forEach(async doc => {
-        const item = doc.data();
-        const type = item.type || "unknown";
-        const fromUID = item.from?.uid || item.from;  // handles legacy cases
-        const itemId = doc.id;
+        for (const doc of snapshot.docs) {
+          const data = doc.data();
+          if (!data) continue;
 
-        let displayName = "Someone";
-        let avatar = "default-avatar.png";
+          // Count unread
+          if (!data.read) unreadCount++;
 
-        try {
-          const userDoc = await db.collection("users").doc(fromUID).get();
-          if (userDoc.exists) {
-            const u = userDoc.data();
-            displayName = u.username || u.name || "Unknown";
-            avatar = u.avatarBase64 || u.photoURL || "default-avatar.png";
+          // Get sender info
+          let senderName = "Unknown";
+          let fromUID = "";
+          let avatarURL = "default-avatar.png";
+
+          if (typeof data.from === "string") {
+            fromUID = data.from;
+            try {
+              const senderDoc = await db.collection("users").doc(fromUID).get();
+              if (senderDoc.exists) {
+                const senderData = senderDoc.data();
+                senderName = senderData.username || senderData.name || "Unknown";
+                avatarURL = senderData.photoURL || `https://ui-avatars.com/api/?name=${senderName}`;
+              }
+            } catch (e) {
+              console.warn("⚠️ Sender fetch failed:", e.message);
+            }
+          } else if (data.from?.uid) {
+            fromUID = data.from.uid;
+            senderName = data.from.name || "Unknown";
           }
-        } catch (e) {
-          console.warn("❌ Failed to load sender:", e.message);
+
+          const typeText = data.type === "friend"
+            ? "👤 Friend request from @" + senderName
+            : data.type === "group"
+              ? `📣 Group invite: ${data.groupName || "Unnamed Group"}`
+              : "📩 Notification";
+
+          const card = document.createElement("div");
+          card.className = "inbox-card";
+          card.innerHTML = `
+            <img src="${avatarURL}" alt="Avatar" />
+            <div style="flex:1">
+              <div style="font-weight:bold;">${typeText}</div>
+              <div style="font-size:12px; color:#777;">${timeSince(data.timestamp?.toDate?.() || new Date())}</div>
+            </div>
+            <div class="btn-group">
+              <button onclick="acceptInbox('${doc.id}', '${data.type}', '${fromUID}')">Accept</button>
+              <button onclick="declineInbox('${doc.id}')">Decline</button>
+            </div>
+          `;
+          list.appendChild(card);
         }
 
-        let message = "";
-        if (type === "friend") {
-          message = `👤 Friend request from @${displayName}`;
-        } else if (type === "group") {
-          message = `📣 Group invite: ${item.groupName || "Unnamed Group"}`;
-        } else {
-          message = `📩 ${type}`;
+        if (badge) {
+          badge.textContent = unreadCount ? unreadCount : "";
+          badge.style.display = unreadCount ? "inline-block" : "none";
         }
 
-        const card = document.createElement("div");
-        card.className = "inbox-card";
-        card.innerHTML = `
-          <img src="${avatar}" alt="Avatar" />
-          <div style="flex:1">
-            <div style="font-weight:bold;">${message}</div>
-            <div style="font-size:12px; color:#777;">${timeSince(item.timestamp?.toDate?.() || new Date())}</div>
-          </div>
-          <div class="btn-group">
-            <button onclick="acceptInboxItem('${itemId}', '${type}', '${fromUID}')">Accept</button>
-            <button onclick="declineInboxItem('${itemId}')">Decline</button>
-          </div>
-        `;
-        list.appendChild(card);
-      });
+      } catch (err) {
+        console.error("❌ Inbox render error:", err.message);
+        alert("❌ Failed to load inbox");
+      }
+    }, err => {
+      console.error("❌ Inbox listener error:", err.message);
+      alert("❌ Inbox loading failed");
     });
 }
 
