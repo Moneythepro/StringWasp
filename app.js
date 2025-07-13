@@ -1171,7 +1171,54 @@ function blockUser() {
 }
 
 function viewMedia() {
-  alert("📎 Media viewer coming soon");
+  if (!currentRoom && !currentThreadUser) {
+    alert("❌ No chat selected");
+    return;
+  }
+
+  const container = document.createElement("div");
+  container.style.padding = "20px";
+
+  const messagesRef = currentRoom
+    ? db.collection("groups").doc(currentRoom).collection("messages")
+    : db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser)).collection("messages");
+
+  messagesRef
+    .where("fileURL", "!=", null)
+    .orderBy("timestamp", "desc")
+    .limit(20)
+    .get()
+    .then(snapshot => {
+      if (snapshot.empty) {
+        alert("📎 No media found");
+        return;
+      }
+
+      snapshot.forEach(doc => {
+        const msg = doc.data();
+        const div = document.createElement("div");
+        div.style.marginBottom = "12px";
+        div.innerHTML = `
+          <p>${escapeHtml(msg.fromName || "User")} - ${msg.timestamp?.toDate?.().toLocaleString?.() || ""}</p>
+          <a href="${msg.fileURL}" target="_blank">${msg.fileName || "Download File"}</a>
+        `;
+        container.appendChild(div);
+      });
+
+      showModal("📎 Shared Media", container.innerHTML);
+    }).catch(err => {
+      console.error("❌ Media fetch failed:", err.message || err);
+      alert("❌ Failed to load media.");
+    });
+}
+
+function showModal(title, html) {
+  const modal = document.getElementById("customModal");
+  modal.querySelector("#modalMessage").innerHTML = html;
+  modal.style.display = "block";
+
+  modal.querySelector("#modalYes").style.display = "none";
+  modal.querySelector("#modalNo").textContent = "Close";
 }
 
 function leaveGroup() {
