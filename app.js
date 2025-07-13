@@ -973,26 +973,23 @@ function sendThreadMessage() {
   };
 
   threadRef.collection("messages").add(message).then(() => {
-    input.value = "";
+  threadRef.get().then(docSnap => {
+  const prev = docSnap.data() || {};
+  const unread = prev.unread || {};
+  const otherUID = currentThreadUser;
+  unread[otherUID] = (unread[otherUID] || 0) + 1;
 
-    threadRef.set({
-      participants: [currentUser.uid, currentThreadUser],
-      names: {
-        [currentUser.uid]: fromName,
-        [currentThreadUser]: document.getElementById("threadWithName").textContent || "Friend"
-      },
-      lastMessage: {
-        text: encryptedText,
-        from: currentUser.uid,
-        fromName,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      },
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-  }).catch(err => {
-    console.error("❌ Message send failed:", err.message || err);
-    alert("❌ Failed to send message: " + (err.message || err));
-  });
+  threadRef.set({
+    participants: [currentUser.uid, otherUID],
+    names: {
+      [currentUser.uid]: fromName,
+      [otherUID]: document.getElementById("threadWithName").textContent || "Friend"
+    },
+    lastMessage: { text, from: currentUser.uid, timestamp: Date.now() },
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    unread
+  }, { merge: true });
+});
 }
 
 function listenMessages() {
