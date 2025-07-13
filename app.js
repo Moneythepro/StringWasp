@@ -103,24 +103,28 @@ function checkUsername() {
 
 // ===== Main App Load UI =====
 function loadMainUI() {
-  showLoading(true);
+  showLoading(); // ✅ Fixed: No argument
+
   document.getElementById("appPage").style.display = "block";
 
   loadProfile(() => {
-    switchTab("chatTab");
     try { loadChatList(); } catch (e) { console.warn("Chats failed", e); }
     try { loadFriends(); } catch (e) { console.warn("Friends failed", e); }
     try { loadGroups?.(); } catch (e) { console.warn("Groups skipped", e); }
 
-    setTimeout(() => showLoading(false), 300);
+    switchTab("chatTab");
+
+    setTimeout(() => {
+      hideLoading(); // ✅ Always hide after UI loads
+    }, 300);
   });
 }
 
-// ===== Load App After Login (MUST BE AT BOTTOM) =====
+// ===== Load App After Login =====
 auth.onAuthStateChanged(async user => {
   if (!user) {
     switchTab("loginPage");
-    hideLoading(); // ✅ Ensure loading overlay is hidden
+    hideLoading(); // ✅ Hide overlay
     return;
   }
 
@@ -132,30 +136,32 @@ auth.onAuthStateChanged(async user => {
 
     if (!data?.username) {
       switchTab("usernameDialog");
-      hideLoading(); // ✅ Ensure loading overlay is hidden
+      hideLoading();
       return;
     }
 
     document.getElementById("usernameDisplay").textContent = data.username;
 
-    document.querySelector(".profile-edit-label").onclick = () => {
-      document.getElementById("profilePic").click();
-    };
+    const label = document.querySelector(".profile-edit-label");
+    if (label) {
+      label.onclick = () => {
+        const input = document.getElementById("profilePic");
+        if (input) input.click();
+      };
+    }
 
     // ✅ Load main UI
     loadMainUI();
 
-    // ✅ Handle invite links
+    // ✅ Handle invite link
     if (joinGroupId) {
       tryJoinGroup(joinGroupId);
     }
 
-    switchTab("chatTab"); // ✅ Show main chat
   } catch (err) {
     console.error("❌ User load error:", err.message || err);
     alert("❌ Failed to load user info: " + (err.message || JSON.stringify(err)));
-  } finally {
-    hideLoading(); // ✅ Always hide loading
+    hideLoading();
   }
 });
 
