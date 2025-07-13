@@ -1212,14 +1212,6 @@ function viewMedia() {
     });
 }
 
-function showModal(title, html) {
-  const modal = document.getElementById("customModal");
-  modal.querySelector("#modalMessage").innerHTML = html;
-  modal.style.display = "block";
-
-  modal.querySelector("#modalYes").style.display = "none";
-  modal.querySelector("#modalNo").textContent = "Close";
-}
 
 function leaveGroup() {
   if (!currentRoom) return;
@@ -1328,14 +1320,14 @@ function copyToClipboard(text) {
 }
 
 // ===== Modal Handler =====
-function showModal(message, yesCallback) {
+function showModal(title, html) {
   const modal = document.getElementById("customModal");
-  document.getElementById("modalMessage").textContent = message;
+  modal.querySelector("#modalMessage").innerHTML = html;
+  modal.style.display = "block";
 
-  document.getElementById("modalYes").onclick = () => {
-    modal.style.display = "none";
-    yesCallback();
-  };
+  modal.querySelector("#modalYes").style.display = "none";
+  modal.querySelector("#modalNo").textContent = "Close";
+}
 
   document.getElementById("modalNo").onclick = () => {
     modal.style.display = "none";
