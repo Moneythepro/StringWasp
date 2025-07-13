@@ -427,61 +427,71 @@ function loadGroups() {
 
 function loadChatList() {
   const list = document.getElementById("chatList");
-  if (list) list.innerHTML = "";
+  if (list) list.innerHTML = ""; // clears once
 
-  // Load DMs and Groups in parallel
-  loadRealtimeGroups();    // groups → append to list
-  loadFriendThreads();     // DMs → append to same list
+  setTimeout(() => {
+    loadRealtimeGroups();  // loads groups
+    loadFriendThreads();   // loads DMs
+  }, 300);
 }
 
 // === Load Group Chats (with fix) ===
-function loadRealtimeGroups() {
-  const list = document.getElementById("chatList");
-  if (!list || !currentUser) return;
+function sendRoomMessage() {
+  if (!currentRoom || !currentUser) return;
 
-  if (unsubscribeGroups) unsubscribeGroups();
+  const input = document.getElementById("roomInput");
+  const text = input?.value.trim();
+  if (!text) return;
 
-  unsubscribeGroups = db.collection("groups")
-    .where("members", "array-contains", currentUser.uid)
-    .onSnapshot(snapshot => {
-      snapshot.forEach(doc => {
-        const g = doc.data();
-        const groupName = g.name || "Group";
-        const avatar = g.icon || `https://ui-avatars.com/api/?name=${encodeURIComponent(groupName)}`;
-        
-        let msgText = "[No message]";
-        let isMedia = false;
-        let timeAgo = "";
+  const encrypted = CryptoJS.AES.encrypt(text, "yourSecretKey").toString(); // replace key later
 
-        if (typeof g.lastMessage === "object") {
-          msgText = g.lastMessage.text || "[No message]";
-          isMedia = !!g.lastMessage.fileURL;
-          if (g.lastMessage.timestamp?.toDate) {
-            timeAgo = timeSince(g.lastMessage.timestamp.toDate());
-          }
+  const msg = {
+    text: encrypted,
+    from: currentUser.uid,
+    fromName: currentUser.displayName || currentUser.email,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  // Save to group thread
+  db.collection("threads").doc(currentRoom).collection("messages").add(msg)
+    .then(() => {
+      input.value = "";
+
+      // Update last message in group doc
+      db.collection("groups").doc(currentRoom).update({
+        lastMessage: {
+          text,
+          from: currentUser.uid,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
         }
-
-        const preview = isMedia ? "📎 Media File" : escapeHtml(msgText);
-        const unread = g.unread?.[currentUser.uid] || 0;
-        const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
-
-        const card = document.createElement("div");
-        card.className = "chat-card group-chat";
-        card.onclick = () => joinRoom(doc.id);
-        card.innerHTML = `
-          <img src="${avatar}" class="friend-avatar" />
-          <div class="details">
-            <div class="name">#${escapeHtml(groupName)} ${badgeHTML}</div>
-            <div class="last-message">${preview}</div>
-            <div class="last-time">${timeAgo}</div>
-          </div>
-        `;
-        list.appendChild(card);
       });
-    }, err => {
-      console.error("❌ Group snapshot error:", err.message);
-      alert("❌ Failed to load groups: " + (err.message || err));
+
+      // Stop typing indicator
+      db.collection("threads").doc(currentRoom)
+        .collection("typing")
+        .doc(currentUser.uid).delete().catch(() => {});
+    })
+    .catch(err => {
+      console.error("❌ Failed to send message:", err.message || err);
+      alert("❌ Couldn't send group message.");
     });
+}
+
+function handleTyping(context) {
+  const targetId = context === "group" ? currentRoom : currentThreadUser;
+  if (!targetId || !currentUser) return;
+
+  const inputId = context === "group" ? "roomInput" : "threadInput";
+  const input = document.getElementById(inputId);
+  if (!input || !input.value.trim()) return;
+
+  const typingRef = db.collection("threads").doc(targetId).collection("typing").doc(currentUser.uid);
+
+  typingRef.set({ typing: true }).catch(() => {});
+
+  setTimeout(() => {
+    typingRef.delete().catch(() => {});
+  }, 4000);
 }
 
 // === Load Personal Threads ===
