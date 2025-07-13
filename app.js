@@ -556,10 +556,12 @@ function sendRoomMessage() {
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
 
+  // Save to group's message subcollection
   db.collection("groups").doc(currentRoom).collection("messages").add(msg)
     .then(() => {
       input.value = "";
 
+      // Update last message preview
       db.collection("groups").doc(currentRoom).update({
         lastMessage: {
           text,
@@ -568,11 +570,13 @@ function sendRoomMessage() {
         }
       });
 
-      db.collection("groups").doc(currentRoom)
-        .collection("typing").doc(currentUser.uid).delete().catch(() => {});
+      // Clear typing
+      db.collection("threads").doc(currentRoom)
+        .collection("typing")
+        .doc(currentUser.uid).delete().catch(() => {});
     })
     .catch(err => {
-      console.error("❌ Failed to send message:", err.message);
+      console.error("❌ Failed to send message:", err.message || err);
       alert("❌ Couldn't send group message.");
     });
 }
@@ -1421,36 +1425,32 @@ function joinRoom(roomId) {
   currentRoom = roomId;
   switchTab("roomView");
 
-  const roomView = document.getElementById("roomView");
   const roomTitle = document.getElementById("roomTitle");
   const roomMessages = document.getElementById("roomMessages");
   const typingStatus = document.getElementById("groupTypingStatus");
 
-  if (!roomView || !roomTitle || !roomMessages) {
-    console.warn("❌ roomView not found");
-    return;
-  }
+  if (!roomMessages) return console.warn("❌ roomMessages element not found.");
 
-  // Clear UI
   roomMessages.innerHTML = "";
   typingStatus.textContent = "";
 
-  // Load group info
+  // Load group name
   db.collection("groups").doc(roomId).get().then(doc => {
-    if (!doc.exists) return alert("❌ Group not found.");
-    const group = doc.data();
-    roomTitle.textContent = "#" + (group.name || "Group");
+    if (doc.exists) {
+      const group = doc.data();
+      roomTitle.textContent = "#" + (group.name || "Group");
+    }
   });
 
-  // Typing indicator
+  // Typing status
   if (unsubscribeTyping) unsubscribeTyping();
   unsubscribeTyping = db.collection("threads").doc(roomId).collection("typing")
     .onSnapshot(snapshot => {
-      const others = snapshot.docs.filter(doc => doc.id !== currentUser.uid);
-      typingStatus.textContent = others.length ? "✍️ Someone is typing..." : "";
+      const othersTyping = snapshot.docs.filter(d => d.id !== currentUser.uid);
+      typingStatus.textContent = othersTyping.length ? "✍️ Someone is typing..." : "";
     });
 
-  // ✅ Group Messages: Now actually load messages
+  // ✅ Real-time group messages from groups > {roomId} > messages
   if (unsubscribeThread) unsubscribeThread();
   unsubscribeThread = db.collection("groups").doc(roomId).collection("messages")
     .orderBy("timestamp")
@@ -1473,7 +1473,7 @@ function joinRoom(roomId) {
         bubble.className = "message-bubble " + (isSelf ? "right" : "left");
         bubble.innerHTML = `
           <div class="msg-avatar">
-            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(msg.fromName || 'User')}" />
+            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(msg.fromName || "User")}" />
           </div>
           <div class="msg-content">
             <div class="msg-text">
@@ -1487,6 +1487,7 @@ function joinRoom(roomId) {
         roomMessages.appendChild(bubble);
       });
 
+      // Scroll to bottom
       roomMessages.scrollTop = roomMessages.scrollHeight;
     });
 }
