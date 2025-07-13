@@ -505,7 +505,6 @@ function loadRealtimeGroups() {
 }
 
 // === Direct Message Threads ===
-let unsubscribeThreads = null;
 
 function loadFriendThreads() {
   const list = document.getElementById("chatList");
