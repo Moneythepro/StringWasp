@@ -423,13 +423,15 @@ function loadGroups() {
     );
 }
 
-// ===== Load All Chats (DMs + Groups) =====
 function loadChatList() {
   const list = document.getElementById("chatList");
-  if (list) list.innerHTML = ""; // ✅ clear first
-  loadRealtimeGroups();   // ✅ Load group chats
-  loadFriendThreads();    // ✅ Load personal threads
-  listenInbox();          // ✅ Load inbox notifications
+  if (!list || !currentUser) return;
+  list.innerHTML = "";
+
+  setTimeout(() => {
+    loadRealtimeGroups();
+    loadFriendThreads();
+  }, 300); // Delay to prevent UI clash
 }
 
 // === Realtime Group Chats ===
@@ -442,8 +444,6 @@ function loadRealtimeGroups() {
   unsubscribeGroups = db.collection("groups")
     .where("members", "array-contains", currentUser.uid)
     .onSnapshot(snapshot => {
-      list.innerHTML = "";
-
       snapshot.forEach(doc => {
         const g = doc.data();
         const groupName = g.name || "Group";
@@ -456,11 +456,9 @@ function loadRealtimeGroups() {
         if (typeof g.lastMessage === "object") {
           msgText = g.lastMessage.text || "[No message]";
           isMedia = !!g.lastMessage.fileURL;
-          if (g.lastMessage.timestamp) {
-            timeAgo = timeSince(g.lastMessage.timestamp.toDate?.() || g.lastMessage.timestamp);
+          if (g.lastMessage.timestamp?.toDate) {
+            timeAgo = timeSince(g.lastMessage.timestamp.toDate());
           }
-        } else if (typeof g.lastMessage === "string") {
-          msgText = g.lastMessage;
         }
 
         const preview = isMedia ? "📎 Media File" : escapeHtml(msgText);
@@ -482,7 +480,6 @@ function loadRealtimeGroups() {
       });
     }, err => {
       console.error("❌ Group snapshot error:", err.message);
-      alert("❌ Failed to load group chats.");
     });
 }
 
@@ -497,45 +494,52 @@ function loadFriendThreads() {
     .where("participants", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
     .onSnapshot(async snapshot => {
-      list.innerHTML = "";
-
       for (const doc of snapshot.docs) {
         const t = doc.data();
         const otherUID = t.participants.find(p => p !== currentUser.uid);
-
-        let name = "Friend";
-        let avatar = "default-avatar.png";
+        let name = "Friend", avatar = "default-avatar.png";
 
         try {
           const userDoc = await db.collection("users").doc(otherUID).get();
           if (userDoc.exists) {
             const user = userDoc.data();
             name = user.username || user.name || "Friend";
-            avatar = user.avatarBase64 || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`;
+            avatar = user.avatarBase64 || user.photoURL || avatar;
           }
         } catch (e) {
-          console.warn("⚠️ Failed to fetch user:", e.message);
+          console.warn("⚠️ Failed to load user:", e.message);
         }
 
-        let msgText = t.lastMessage || "[No message]";
-        const unread = t.unread?.[currentUser.uid] || 0;
-        const timeAgo = t.updatedAt?.toDate ? timeSince(t.updatedAt.toDate()) : "";
+        let msgText = "[No message]", fromSelf = false, isMedia = false, timeAgo = "";
 
+        if (typeof t.lastMessage === "object") {
+          msgText = t.lastMessage.text || "[No message]";
+          fromSelf = t.lastMessage.from === currentUser.uid;
+          isMedia = !!t.lastMessage.fileURL;
+          if (t.lastMessage.timestamp?.toDate) {
+            timeAgo = timeSince(t.lastMessage.timestamp.toDate());
+          }
+        }
+
+        const preview = isMedia ? "📎 Media File" : `${fromSelf ? "You: " : ""}${escapeHtml(msgText)}`;
+        const unread = t.unread?.[currentUser.uid] || 0;
         const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
 
         const card = document.createElement("div");
         card.className = "chat-card";
-        card.onclick = () => openThread(otherUID);
+        card.onclick = () => openThread(otherUID, name);
         card.innerHTML = `
           <img src="${avatar}" class="friend-avatar" />
           <div class="details">
-            <div class="name">${escapeHtml(name)} ${badgeHTML}</div>
-            <div class="last-message">${escapeHtml(msgText)}</div>
+            <div class="name">@${escapeHtml(name)} ${badgeHTML}</div>
+            <div class="last-message">${preview}</div>
             <div class="last-time">${timeAgo}</div>
           </div>
         `;
         list.appendChild(card);
       }
+    }, err => {
+      console.error("❌ Error loading threads:", err.message);
     });
 }
 
