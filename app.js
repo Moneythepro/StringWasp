@@ -306,24 +306,25 @@ function viewUserProfile(uid) {
   currentProfileUID = uid;
 
   db.collection("users").doc(uid).get().then(doc => {
-    const u = doc.data();
-    if (!u) return alert("User not found");
+    if (!doc.exists) {
+      alert("❌ User not found");
+      return;
+    }
 
-    document.getElementById("fullUserAvatar").src = u.photoURL || "default-avatar.png";
-    document.getElementById("fullUserName").textContent = "@" + (u.username || "unknown");
-    document.getElementById("fullUserBio").textContent = u.bio || "No bio";
-    document.getElementById("fullUserEmail").textContent = u.email || "";
-    document.getElementById("fullUserPhone").textContent = u.phone || "";
-
-    document.getElementById("userFullProfile").style.display = "flex";
+    const data = doc.data();
+    document.getElementById("viewProfileModal").style.display = "block";
+    document.getElementById("viewProfilePic").src =
+      data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username || "User")}`;
+    document.getElementById("viewProfileName").textContent = data.name || "Unnamed";
+    document.getElementById("viewProfileUsername").textContent = `@${data.username || "unknown"}`;
+    document.getElementById("viewProfileBio").textContent = data.bio || "No bio";
+    document.getElementById("viewProfileEmail").textContent = data.email || "";
+    document.getElementById("viewProfileStatus").textContent = data.status || "";
+  }).catch(err => {
+    console.error("❌ Profile view error:", err.message || err);
+    alert("❌ Failed to view profile.");
   });
 }
-
-window.onclick = e => {
-  if (e.target.id === "userFullProfile") {
-    e.target.style.display = "none";
-  }
-};
 
 let currentGroupProfileId = null;
 
