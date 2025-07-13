@@ -197,10 +197,21 @@ function saveProfile() {
 
 // ===== Load Profile UI =====
 function loadProfile(callback) {
-  db.collection("users").doc(currentUser.uid).onSnapshot(doc => {
-    if (!doc.exists) return;
+  if (!currentUser?.uid) {
+    console.warn("🔒 No authenticated user to load profile.");
+    if (typeof callback === "function") callback();
+    return;
+  }
 
-    const data = doc.data();
+  db.collection("users").doc(currentUser.uid).onSnapshot(doc => {
+    if (!doc.exists) {
+      console.warn("⚠️ User profile document not found.");
+      if (typeof callback === "function") callback();
+      return;
+    }
+
+    const data = doc.data() || {};
+
     document.getElementById("profileName").value = data.name || "";
     document.getElementById("profileBio").value = data.bio || "";
     document.getElementById("profileGender").value = data.gender || "";
@@ -208,9 +219,14 @@ function loadProfile(callback) {
     document.getElementById("profileEmail").value = data.email || "";
     document.getElementById("profileUsername").value = data.username || "";
 
-    const avatar = data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username || "User")}`;
-    document.getElementById("profilePicPreview").src = avatar;
+    const avatarUrl = data.avatar?.trim()
+      || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username || "User")}&background=random`;
 
+    document.getElementById("profilePicPreview").src = avatarUrl;
+
+    if (typeof callback === "function") callback();
+  }, err => {
+    console.error("❌ Failed to load profile:", err.message || err);
     if (typeof callback === "function") callback();
   });
 }
