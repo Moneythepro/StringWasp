@@ -373,6 +373,27 @@ body.dark .search-info .bio {
   margin-top: 16px;
 }
 
+.search-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f9f9f9;
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+.search-card img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+.search-card .btn-group {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
 /* ===== Modal ===== */
 .modal {
   display: none;
