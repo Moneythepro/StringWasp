@@ -427,22 +427,20 @@ function createGroup() {
   const groupName = prompt("Enter group name:");
   if (!groupName || !currentUser) return;
 
-  const group = {
-    name: groupName,
-    owner: currentUser.uid,
-    members: [currentUser.uid],
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  };
+  const id = db.collection("groups").doc().id;
 
-  db.collection("groups").add(group)
-    .then(docRef => {
-      console.log("✅ Group created with ID:", docRef.id);
-      joinRoom(docRef.id);
-    })
-    .catch(err => {
-      console.error("❌ Failed to create group:", err.message);
-      alert("Group creation failed: " + (err.message || "Unknown error"));
-    });
+  db.collection("groups").doc(id).set({
+    name: groupName,
+    icon: "",
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    members: [currentUser.uid],
+    owner: currentUser.uid
+  }).then(() => {
+    alert("✅ Group created!");
+    joinRoom(id);
+  }).catch(err => {
+    console.error("❌ Failed to create group:", err.message);
+  });
 }
 
 function loadChatList() {
@@ -573,6 +571,38 @@ function loadFriendThreads() {
       }
     }, err => {
       console.error("❌ DM threads load error:", err.message || err);
+    });
+}
+
+function loadRoomMessages(groupId) {
+  const box = document.getElementById("roomMessages");
+  if (!groupId || !currentUser || !box) return;
+
+  box.innerHTML = "";
+
+  db.collection("threads").doc(groupId).collection("messages")
+    .orderBy("timestamp", "asc")
+    .onSnapshot(snapshot => {
+      box.innerHTML = "";
+
+      snapshot.forEach(doc => {
+        const m = doc.data();
+        const fromSelf = m.from === currentUser.uid;
+        const msgText = m.text || "";
+        const decrypted = m.text
+          ? CryptoJS.AES.decrypt(msgText, "yourSecretKey").toString(CryptoJS.enc.Utf8)
+          : "";
+
+        const bubble = document.createElement("div");
+        bubble.className = `message-bubble ${fromSelf ? "right" : "left"}`;
+        bubble.innerHTML = `
+          <div class="msg-content">${escapeHtml(decrypted)}</div>
+          <div class="message-time">${timeSince(m.timestamp?.toDate?.() || new Date())}</div>
+        `;
+        box.appendChild(bubble);
+      });
+
+      box.scrollTop = box.scrollHeight;
     });
 }
 
@@ -1045,7 +1075,20 @@ function threadId(a, b) {
 }
 
 // ===== DM: Open Thread Chat =====
-function openThread(uid, username) {
+function openThread(uid, name) {
+  if (!uid || !currentUser) return;
+
+  switchTab("threadView");
+
+  const title = document.getElementById("chatName");
+  title.textContent = name || "Chat";
+
+  currentThreadUser = uid;
+  currentRoom = null;
+
+  loadThreadMessages(uid);
+  listenToTyping(uid);
+} {
   if (!currentUser || !uid) return;
 
   db.collection("users")
@@ -1270,89 +1313,69 @@ function switchSearchView(view) {
 }
 
 function runSearch() {
-  const term = document.getElementById("searchInput")?.value.trim().toLowerCase();
-  if (!term || !currentUser) return alert("Enter something to search.");
+  const input = document.getElementById("searchInput");
+  const term = input?.value?.trim().toLowerCase();
+  if (!term) return;
 
-  const usersDiv = document.getElementById("searchResultsUser");
-  const groupsDiv = document.getElementById("searchResultsGroup");
-  usersDiv.innerHTML = "";
-  groupsDiv.innerHTML = "";
+  const userResults = document.getElementById("searchResultsUser");
+  const groupResults = document.getElementById("searchResultsGroup");
 
-  // === USERS SEARCH ===
+  userResults.innerHTML = "";
+  groupResults.innerHTML = "";
+
+  // User search
   db.collection("users")
     .where("username", ">=", term)
     .where("username", "<=", term + "\uf8ff")
-    .limit(15)
     .get()
     .then(snapshot => {
       if (snapshot.empty) {
-        usersDiv.innerHTML = "<p class='no-results'>No users found.</p>";
-        return;
+        userResults.innerHTML = `<div class="no-results">No users found.</div>`;
+      } else {
+        snapshot.forEach(doc => {
+          const user = doc.data();
+          const card = document.createElement("div");
+          card.className = "search-result";
+          card.innerHTML = `
+            <img src="${user.avatarBase64 || 'default-avatar.png'}" class="search-avatar" />
+            <div class="search-info">
+              <div class="username">@${escapeHtml(user.username || "user")}</div>
+              <div class="bio">${escapeHtml(user.bio || "")}</div>
+            </div>
+            <button onclick="viewUserProfile('${doc.id}')">View</button>
+          `;
+          userResults.appendChild(card);
+        });
       }
-
-      snapshot.forEach(doc => {
-        const user = doc.data();
-        const uid = doc.id;
-        if (uid === currentUser.uid) return;
-
-        const div = document.createElement("div");
-        div.className = "search-card";
-        div.innerHTML = `
-          <img src="${user.photoURL || 'default-avatar.png'}" class="friend-avatar" />
-          <div>
-            <strong>@${escapeHtml(user.username || "user")}</strong><br>
-            ${escapeHtml(user.name || "Unnamed")}
-          </div>
-          <div class="btn-group">
-            <button onclick="viewUserProfile('${uid}')">👁</button>
-            <button onclick="addFriend('${uid}')">➕</button>
-          </div>
-        `;
-        usersDiv.appendChild(div);
-      });
-    })
-    .catch(err => {
-      console.error("❌ User search failed:", err.message);
-      usersDiv.innerHTML = `<p class="error">Search failed: ${escapeHtml(err.message)}</p>`;
     });
 
-  // === GROUPS SEARCH ===
+  // Group search
   db.collection("groups")
     .where("name", ">=", term)
     .where("name", "<=", term + "\uf8ff")
-    .limit(15)
     .get()
     .then(snapshot => {
       if (snapshot.empty) {
-        groupsDiv.innerHTML = "<p class='no-results'>No groups found.</p>";
-        return;
+        groupResults.innerHTML = `<div class="no-results">No groups found.</div>`;
+      } else {
+        snapshot.forEach(doc => {
+          const group = doc.data();
+          const card = document.createElement("div");
+          card.className = "search-result";
+          card.innerHTML = `
+            <img src="${group.icon || 'group-icon.png'}" class="search-avatar" />
+            <div class="search-info">
+              <div class="username">#${escapeHtml(group.name || "Group")}</div>
+              <div class="bio">${escapeHtml(group.description || "")}</div>
+            </div>
+            <button onclick="viewGroup('${doc.id}')">View</button>
+          `;
+          groupResults.appendChild(card);
+        });
       }
-
-      snapshot.forEach(doc => {
-        const group = doc.data();
-        const gid = doc.id;
-
-        const div = document.createElement("div");
-        div.className = "search-card";
-        div.innerHTML = `
-          <img src="${group.icon || 'group-icon.png'}" class="friend-avatar" />
-          <div>
-            <strong>${escapeHtml(group.name || "Unnamed Group")}</strong><br>
-            Members: ${group.members?.length || 0}
-          </div>
-          <div class="btn-group">
-            <button onclick="viewGroup('${gid}')">👁</button>
-            <button onclick="joinGroupById('${gid}')">➕</button>
-          </div>
-        `;
-        groupsDiv.appendChild(div);
-      });
-    })
-    .catch(err => {
-      console.error("❌ Group search failed:", err.message);
-      groupsDiv.innerHTML = `<p class="error">Search failed: ${escapeHtml(err.message)}</p>`;
     });
 }
+
 
 // ==== For Group Setting ====
 function viewGroupMembers() {
@@ -1457,7 +1480,20 @@ let currentRoom = null;
 let unsubscribeRoomMessages = null;
 let unsubscribeTyping = null;
 
-function joinRoom(roomId) {
+function joinRoom(groupId) {
+  if (!groupId || !currentUser) return;
+
+  switchTab("roomView");
+
+  currentRoom = groupId;
+  currentThreadUser = null;
+
+  const title = document.getElementById("roomTitle");
+  title.textContent = "Group Chat";
+
+  loadRoomMessages(groupId);
+  listenToGroupTyping(groupId);
+} {
   if (!roomId || !currentUser) return;
 
   currentRoom = roomId;
