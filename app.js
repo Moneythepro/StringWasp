@@ -328,20 +328,27 @@ function viewUserProfile(uid) {
 
 let currentGroupProfileId = null;
 
-function viewGroupInfo(groupId) {
+function viewGroupProfile(groupId) {
   currentGroupProfileId = groupId;
 
   db.collection("groups").doc(groupId).get().then(doc => {
-    if (!doc.exists) return alert("Group not found");
+    if (!doc.exists) {
+      alert("❌ Group not found");
+      return;
+    }
 
     const g = doc.data();
-    document.getElementById("groupIcon").src = g.icon || "group-icon.png";
-    document.getElementById("groupName").textContent = g.name || "Unnamed Group";
-    document.getElementById("groupDesc").textContent = g.description || "No description";
-    document.getElementById("groupOwnerText").textContent = `Owner: ${g.ownerName || g.owner || "Unknown"}`;
-    document.getElementById("groupMembersText").textContent = `Members: ${g.members?.length || 0}`;
+    document.getElementById("groupInfoModal").style.display = "block";
 
-    document.getElementById("groupInfoModal").style.display = "flex";
+    document.getElementById("groupIcon").src =
+      g.icon || `https://ui-avatars.com/api/?name=${encodeURIComponent(g.name || "Group")}`;
+    document.getElementById("groupName").textContent = g.name || "Unnamed Group";
+    document.getElementById("groupDesc").textContent = g.description || "No description provided.";
+    document.getElementById("groupOwnerText").textContent = "Owner: " + (g.ownerName || g.owner || "Unknown");
+    document.getElementById("groupMembersText").textContent = "Members: " + (g.members?.length || 0);
+  }).catch(err => {
+    console.error("❌ Group view error:", err.message || err);
+    alert("❌ Failed to load group info.");
   });
 }
 
