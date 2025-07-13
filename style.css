@@ -209,6 +209,18 @@ body.dark .chat-card:hover {
   background: #292929;
 }
 
+.chat-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid #ccc;
+  border-radius: 10px;
+  margin: 8px 0;
+  overflow: hidden;
+  word-break: break-word;
+}
+
 /* ===== Inbox Cards ===== */
 .inbox-card {
   background: #fff;
