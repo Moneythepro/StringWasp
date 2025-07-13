@@ -831,6 +831,7 @@ function threadId(a, b) {
 }
 
 // ===== DM: Open Thread Chat =====
+
 function openThread(uid, username) {
   if (!currentUser || !uid) return;
 
