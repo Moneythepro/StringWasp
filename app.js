@@ -1094,79 +1094,74 @@ function switchSearchView(view) {
 
 function runSearch() {
   const term = document.getElementById("searchInput")?.value.trim().toLowerCase();
-  if (!term) {
-    alert("❌ Please enter a search term.");
-    return;
-  }
+  if (!term) return alert("❌ Enter a search term");
 
-  // --- 🔎 Search Users ---
+  // USER SEARCH
   db.collection("users")
-    .where("username", ">=", term)
-    .where("username", "<=", term + "\uf8ff")
-    .limit(20)
+    .orderBy("username")
+    .startAt(term)
+    .endAt(term + "\uf8ff")
+    .limit(10)
     .get()
     .then(snapshot => {
       const container = document.getElementById("searchResultsUser");
       container.innerHTML = "";
+
+      if (snapshot.empty) {
+        container.innerHTML = `<p class="no-results">🙅 No users found.</p>`;
+        return;
+      }
+
       snapshot.forEach(doc => {
-        const user = doc.data();
-        if (doc.id === currentUser?.uid) return; // Skip self
+        const data = doc.data();
+        if (data.uid === currentUser?.uid) return; // skip self
+
         const card = document.createElement("div");
-        card.className = "search-card";
+        card.className = "result-card";
         card.innerHTML = `
-          <img src="${user.photoURL || `https://ui-avatars.com/api/?name=${user.username}`}" />
+          <img src="${data.photoURL || 'default-avatar.png'}" class="avatar" />
           <div>
-            <strong>@${escapeHtml(user.username || "user")}</strong><br>
-            ${escapeHtml(user.name || "")}
+            <strong>@${escapeHtml(data.username || "unknown")}</strong><br>
+            ${escapeHtml(data.name || "")}
           </div>
           <button onclick="viewUserProfile('${doc.id}')">View</button>
         `;
         container.appendChild(card);
       });
-    })
-    .catch(err => {
-      console.error("❌ User search failed:", err.message);
-      alert("❌ User search failed: " + err.message);
     });
 
-  // --- 🔎 Search Groups ---
+  // GROUP SEARCH
   db.collection("groups")
-    .where("name", ">=", term)
-    .where("name", "<=", term + "\uf8ff")
-    .limit(20)
+    .orderBy("name")
+    .startAt(term)
+    .endAt(term + "\uf8ff")
+    .limit(10)
     .get()
     .then(snapshot => {
       const container = document.getElementById("searchResultsGroup");
       container.innerHTML = "";
+
+      if (snapshot.empty) {
+        container.innerHTML = `<p class="no-results">🙅 No groups found.</p>`;
+        return;
+      }
+
       snapshot.forEach(doc => {
-        const group = doc.data();
+        const data = doc.data();
+
         const card = document.createElement("div");
-        card.className = "search-card";
+        card.className = "result-card";
         card.innerHTML = `
-          <img src="${group.icon || 'group-icon.png'}" />
+          <img src="${data.icon || 'group-icon.png'}" class="avatar" />
           <div>
-            <strong>${escapeHtml(group.name || "Group")}</strong><br>
-            ${escapeHtml(group.description || "")}
+            <strong>${escapeHtml(data.name || "Unnamed Group")}</strong><br>
+            ${escapeHtml(data.description || "No description")}
           </div>
           <button onclick="viewGroupProfile('${doc.id}')">View</button>
         `;
         container.appendChild(card);
       });
-    })
-    .catch(err => {
-      console.error("❌ Group search failed:", err.message);
-      alert("❌ Group search failed: " + err.message);
     });
-}
-
-function searchChats() {
-  const term = document.getElementById("chatSearchInput")?.value.toLowerCase();
-  const cards = document.querySelectorAll("#chatList .chat-card");
-
-  cards.forEach(card => {
-    const name = card.querySelector(".name")?.textContent.toLowerCase() || "";
-    card.style.display = name.includes(term) ? "flex" : "none";
-  });
 }
 
 // ==== For Group Setting ====
