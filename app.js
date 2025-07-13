@@ -516,6 +516,8 @@ function loadFriendThreads() {
     .where("participants", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
     .onSnapshot(async snapshot => {
+      list.innerHTML = ""; // Clear previous list
+
       for (const doc of snapshot.docs) {
         const t = doc.data();
         const otherUID = t.participants.find(p => p !== currentUser.uid);
