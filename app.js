@@ -1458,28 +1458,21 @@ let unsubscribeRoomMessages = null;
 function joinRoom(groupId) {
   if (!groupId || !currentUser) return;
 
-  switchTab("roomView");
-
   currentRoom = groupId;
   currentThreadUser = null;
 
-  const title = document.getElementById("roomTitle");
-  title.textContent = "Group Chat";
-
-  loadRoomMessages(groupId);
-  listenToGroupTyping(groupId);
-} {
-  if (!roomId || !currentUser) return;
-
-  currentRoom = roomId;
   switchTab("roomView");
 
   const title = document.getElementById("roomTitle");
   const messageList = document.getElementById("roomMessages");
-  messageList.innerHTML = "";
+  const typingStatus = document.getElementById("groupTypingStatus");
 
-  // Load group data
-  db.collection("groups").doc(roomId).get().then(doc => {
+  title.textContent = "Loading...";
+  messageList.innerHTML = "";
+  typingStatus.textContent = "";
+
+  // Load group metadata
+  db.collection("groups").doc(groupId).get().then(doc => {
     if (doc.exists) {
       const group = doc.data();
       title.textContent = group.name || "Group Chat";
@@ -1488,13 +1481,13 @@ function joinRoom(groupId) {
     }
   });
 
-  // Unsubscribe if already listening
+  // Unsubscribe previous listeners
   if (unsubscribeRoomMessages) unsubscribeRoomMessages();
   if (unsubscribeTyping) unsubscribeTyping();
 
-  // Listen for messages
+  // Load room messages
   unsubscribeRoomMessages = db.collection("threads")
-    .doc(roomId)
+    .doc(groupId)
     .collection("messages")
     .orderBy("timestamp")
     .onSnapshot(snapshot => {
@@ -1517,13 +1510,13 @@ function joinRoom(groupId) {
           </div>
         `;
         messageList.appendChild(bubble);
-        messageList.scrollTop = messageList.scrollHeight;
       });
+
+      messageList.scrollTop = messageList.scrollHeight;
     });
 
-  // Typing Indicator
-  const typingStatus = document.getElementById("groupTypingStatus");
-  unsubscribeTyping = db.collection("threads").doc(roomId).collection("typing")
+  // Listen to typing status
+  unsubscribeTyping = db.collection("threads").doc(groupId).collection("typing")
     .onSnapshot(snapshot => {
       const others = [];
       snapshot.forEach(doc => {
