@@ -139,16 +139,18 @@
         </div>
       </div>
 
-      <!-- 🏠 Room View (Group Chat Thread) -->
+      <!-- 🏠 Room View (Group Chat) -->
 <div id="roomView" class="tab" style="display:none;">
   <div class="chat-header">
     <h3 id="roomTitle">Group Name</h3>
-    <button onclick="leaveGroup()">🚪 Leave Group</button>
+    <div id="groupTypingStatus" class="typing-indicator"></div>
   </div>
   <div id="roomMessages" class="messages"></div>
   <div class="input-bar">
+    <button class="icon-btn" onclick="triggerFileInput('group')">📎</button>
     <input id="roomInput" placeholder="Type a message..." oninput="handleTyping('group')" />
-    <button onclick="sendRoomMessage()">➤</button>
+    <button class="icon-btn" onclick="sendRoomMessage()">➤</button>
+    <input type="file" id="roomFile" style="display:none;" onchange="uploadFile('group')" />
   </div>
 </div>
       
