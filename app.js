@@ -318,7 +318,7 @@ function viewUserProfile(uid) {
   });
 }
 
-let currentGroupProfileId = null;
+window.currentGroupProfileId = null;
 
 function viewGroupProfile(groupId) {
   currentGroupProfileId = groupId;
