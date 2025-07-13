@@ -757,8 +757,6 @@ function escapeHtml(text) {
   }[m]));
 }
 
-// ===== Listen to Inbox =====
-
 // ===== Load Inbox Items (Cards + Badge) =====
 function listenInbox() {
   const list = document.getElementById("inboxList");
