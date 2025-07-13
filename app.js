@@ -1320,20 +1320,20 @@ function copyToClipboard(text) {
 }
 
 // ===== Modal Handler =====
+const modal = document.getElementById("customModal");
+
 function showModal(title, html) {
-  const modal = document.getElementById("customModal");
   modal.querySelector("#modalMessage").innerHTML = html;
-  modal.style.display = "block";
+  modal.style.display = "flex";  // Show modal
 
   modal.querySelector("#modalYes").style.display = "none";
   modal.querySelector("#modalNo").textContent = "Close";
 }
 
-  document.getElementById("modalNo").onclick = () => {
-    modal.style.display = "none";
-  };
-
-  modal.style.display = "flex";
+// Close button handler
+document.getElementById("modalNo").onclick = () => {
+  modal.style.display = "none";
+};
 
 // ===== Export Chat (Stub) =====
 function exportChat() {
