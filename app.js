@@ -424,16 +424,17 @@ function loadGroups() {
 }
 
 // ===== Load All Chats (DMs + Groups) =====
+
 function loadChatList() {
   const list = document.getElementById("chatList");
   if (list) list.innerHTML = "";
 
-  // Load both DM and group chats
-  loadRealtimeGroups();
-  loadFriendThreads();
+  // Load DMs and Groups in parallel
+  loadRealtimeGroups();    // groups → append to list
+  loadFriendThreads();     // DMs → append to same list
 }
 
-// === GROUP CHAT LISTENER ===
+// === Load Group Chats (with fix) ===
 function loadRealtimeGroups() {
   const list = document.getElementById("chatList");
   if (!list || !currentUser) return;
@@ -447,7 +448,7 @@ function loadRealtimeGroups() {
         const g = doc.data();
         const groupName = g.name || "Group";
         const avatar = g.icon || `https://ui-avatars.com/api/?name=${encodeURIComponent(groupName)}`;
-
+        
         let msgText = "[No message]";
         let isMedia = false;
         let timeAgo = "";
@@ -458,8 +459,6 @@ function loadRealtimeGroups() {
           if (g.lastMessage.timestamp?.toDate) {
             timeAgo = timeSince(g.lastMessage.timestamp.toDate());
           }
-        } else if (typeof g.lastMessage === "string") {
-          msgText = g.lastMessage;
         }
 
         const preview = isMedia ? "📎 Media File" : escapeHtml(msgText);
@@ -480,11 +479,12 @@ function loadRealtimeGroups() {
         list.appendChild(card);
       });
     }, err => {
-      console.error("📛 Error in groups snapshot:", err.message || err);
-      alert("❌ Group chat failed: " + (err.message || err));
+      console.error("❌ Group snapshot error:", err.message);
+      alert("❌ Failed to load groups: " + (err.message || err));
     });
 }
 
+// === Load Personal Threads ===
 function loadFriendThreads() {
   const list = document.getElementById("chatList");
   if (!list || !currentUser) return;
@@ -495,14 +495,10 @@ function loadFriendThreads() {
     .where("participants", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
     .onSnapshot(async snapshot => {
-      const renderedUIDs = new Set();
-      list.innerHTML = "";
-
       for (const doc of snapshot.docs) {
         const t = doc.data();
         const otherUID = t.participants.find(p => p !== currentUser.uid);
-        if (!otherUID || renderedUIDs.has(otherUID)) continue;
-        renderedUIDs.add(otherUID);
+        if (!otherUID) continue;
 
         let name = "Friend";
         let avatar = "default-avatar.png";
@@ -512,10 +508,10 @@ function loadFriendThreads() {
           if (userDoc.exists) {
             const user = userDoc.data();
             name = user.username || user.name || "Friend";
-            avatar = user.photoURL || user.avatarBase64 || avatar;
+            avatar = user.avatarBase64 || avatar;
           }
         } catch (e) {
-          console.warn("⚠️ User fetch failed:", e.message);
+          console.warn("⚠️ Failed to fetch friend info:", e.message);
         }
 
         let msgText = "[No message]";
@@ -530,8 +526,6 @@ function loadFriendThreads() {
           if (t.lastMessage.timestamp?.toDate) {
             timeAgo = timeSince(t.lastMessage.timestamp.toDate());
           }
-        } else if (typeof t.lastMessage === "string") {
-          msgText = t.lastMessage;
         }
 
         const preview = isMedia ? "📎 Media File" : `${fromSelf ? "You: " : ""}${escapeHtml(msgText)}`;
@@ -539,7 +533,7 @@ function loadFriendThreads() {
         const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
 
         const card = document.createElement("div");
-        card.className = "chat-card";
+        card.className = "chat-card personal-chat";
         card.onclick = () => openThread(otherUID, name);
         card.innerHTML = `
           <img src="${avatar}" class="friend-avatar" />
@@ -552,8 +546,8 @@ function loadFriendThreads() {
         list.appendChild(card);
       }
     }, err => {
-      console.error("❌ Error loading friend threads:", err.message || err);
-      alert("❌ Chat threads failed: " + (err.message || err));
+      console.error("❌ Friend thread load error:", err.message);
+      alert("❌ Failed to load chats: " + (err.message || err));
     });
 }
 
