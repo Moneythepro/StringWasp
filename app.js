@@ -40,20 +40,10 @@ function hideLoading() {
 
 // ===== Switch UI Tabs =====
 function switchTab(tabId) {
-  // Hide all tabs
-  document.querySelectorAll(".tab").forEach(tab => {
-    tab.style.display = "none";
-  });
-
-  // Show selected tab
+  document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
   const selected = document.getElementById(tabId);
   if (selected) selected.style.display = "block";
 }
-  
-
-// ===== Invite Link via URL =====
-const urlParams = new URLSearchParams(window.location.search);
-const joinGroupId = urlParams.get("join");
 
 // ===== Login/Register =====
 function login() {
@@ -61,10 +51,13 @@ function login() {
   const password = document.getElementById("password")?.value.trim();
   if (!email || !password) return alert("Enter email & password");
 
-  showLoading(true);
+  showLoading();
   auth.signInWithEmailAndPassword(email, password)
-    .catch(err => alert("Login failed: " + err.message))
-    .finally(() => showLoading(false));
+    .then(() => {
+      // On success, Firebase auth listener will handle UI
+    })
+    .catch(err => alert("❌ Login failed: " + err.message))
+    .finally(() => hideLoading());
 }
 
 function register() {
@@ -72,10 +65,13 @@ function register() {
   const password = document.getElementById("password")?.value.trim();
   if (!email || !password) return alert("Enter email & password");
 
-  showLoading(true);
+  showLoading();
   auth.createUserWithEmailAndPassword(email, password)
-    .catch(err => alert("Registration failed: " + err.message))
-    .finally(() => showLoading(false));
+    .then(() => {
+      switchTab("usernameDialog");
+    })
+    .catch(err => alert("❌ Registration failed: " + err.message))
+    .finally(() => hideLoading());
 }
 
 // ===== Username Save After Register =====
