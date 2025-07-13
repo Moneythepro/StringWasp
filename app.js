@@ -1232,7 +1232,8 @@ function viewMedia() {
 
   messagesRef
     .where("fileURL", "!=", null)
-    .orderBy("timestamp", "desc")
+    .orderBy("fileURL") // ✅ Required first
+    .orderBy("timestamp", "desc") // ✅ Then timestamp
     .limit(20)
     .get()
     .then(snapshot => {
@@ -1258,7 +1259,6 @@ function viewMedia() {
       alert("❌ Failed to load media.");
     });
 }
-
 
 function leaveGroup() {
   if (!currentRoom) return;
