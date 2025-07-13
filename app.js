@@ -1515,7 +1515,7 @@ function joinRoom(groupId) {
       messageList.scrollTop = messageList.scrollHeight;
     });
 
-  // Listen to typing status
+  // Typing indicator
   unsubscribeTyping = db.collection("threads").doc(groupId).collection("typing")
     .onSnapshot(snapshot => {
       const others = [];
