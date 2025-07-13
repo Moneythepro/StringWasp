@@ -60,7 +60,7 @@
     <!-- 💬 Chats (DM + Groups) -->
     <div id="chatTab" class="tab">
       <div class="chat-header">
-        <input id="globalSearch" placeholder="Search chats..." />
+        <input id="chatSearchInput" placeholder="Search chats..." oninput="searchChats()" />
         <button onclick="searchChats()">🔍</button>
         <button onclick="loadChatList()">🔄</button>
       </div>
