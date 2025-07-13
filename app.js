@@ -1068,25 +1068,10 @@ function threadId(a, b) {
 
 // ===== DM: Open Thread Chat =====
 function openThread(uid, name) {
-  if (!uid || !currentUser) return;
-
-  switchTab("threadView");
-
-  const title = document.getElementById("chatName");
-  title.textContent = name || "Chat";
-
-  currentThreadUser = uid;
-  currentRoom = null;
-
-  loadThreadMessages(uid);
-  listenToTyping(uid);
-} {
   if (!currentUser || !uid) return;
 
-  db.collection("users")
-    .doc(currentUser.uid)
-    .collection("friends")
-    .doc(uid)
+  // 🔒 Verify friendship before allowing chat
+  db.collection("users").doc(currentUser.uid).collection("friends").doc(uid)
     .get()
     .then(friendDoc => {
       if (!friendDoc.exists) {
@@ -1094,11 +1079,10 @@ function openThread(uid, name) {
         return;
       }
 
-      currentThreadUser = uid;
       switchTab("threadView");
 
-      const nameLabel = document.getElementById("threadWithName");
-      if (nameLabel) nameLabel.textContent = username;
+      const title = document.getElementById("threadWithName");
+      if (title) title.textContent = name || "Chat";
 
       const dropdown = document.getElementById("roomDropdown");
       if (dropdown) dropdown.style.display = "none";
@@ -1109,38 +1093,38 @@ function openThread(uid, name) {
       const groupButton = document.getElementById("groupInfoButton");
       if (groupButton) groupButton.style.display = "none";
 
-      if (unsubscribeThread) unsubscribeThread();
-      if (unsubscribeTyping) unsubscribeTyping();
+      currentThreadUser = uid;
+      currentRoom = null;
 
-      const docId = threadId(currentUser.uid, uid);
+      const threadIdStr = threadId(currentUser.uid, uid);
       const area = document.getElementById("threadMessages");
       if (area) area.innerHTML = "";
 
-      // 🔄 Typing status
+      if (unsubscribeThread) unsubscribeThread();
+      if (unsubscribeTyping) unsubscribeTyping();
+
+      // 🔄 Typing Status
       const typingArea = document.getElementById("threadTypingStatus");
       if (typingArea) typingArea.textContent = "";
 
-      unsubscribeTyping = db.collection("threads")
-        .doc(docId)
-        .collection("typing")
+      unsubscribeTyping = db.collection("threads").doc(threadIdStr).collection("typing")
         .onSnapshot(snapshot => {
           const others = snapshot.docs.filter(doc => doc.id !== currentUser.uid);
           if (typingArea) typingArea.textContent = others.length ? "✍️ Typing..." : "";
         });
 
       // ✅ Mark as read
-      db.collection("threads").doc(docId).set({
+      db.collection("threads").doc(threadIdStr).set({
         unread: { [currentUser.uid]: 0 }
       }, { merge: true });
 
-      // 🔁 Listen to messages
+      // 🔁 Load Messages
       unsubscribeThread = db.collection("threads")
-        .doc(docId)
+        .doc(threadIdStr)
         .collection("messages")
         .orderBy("timestamp")
         .onSnapshot(async snapshot => {
           if (!area) return;
-
           area.innerHTML = "";
 
           for (const doc of snapshot.docs) {
@@ -1161,8 +1145,8 @@ function openThread(uid, name) {
             try {
               const userDoc = await db.collection("users").doc(msg.from).get();
               if (userDoc.exists) {
-                const userData = userDoc.data();
-                avatar = userData.avatar || userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.username || "User")}`;
+                const user = userDoc.data();
+                avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
               }
             } catch (e) {
               console.warn("⚠️ Avatar fetch failed:", e.message);
@@ -1194,6 +1178,7 @@ function openThread(uid, name) {
           console.error("❌ Thread snapshot error:", err.message || err);
           alert("❌ Failed to load messages: " + (err.message || err));
         });
+
     })
     .catch(err => {
       console.error("❌ Friend check failed:", err.message || err);
