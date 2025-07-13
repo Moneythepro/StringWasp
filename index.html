@@ -57,7 +57,7 @@
       <button onclick="switchTab('profileTab')" id="tab-profile">🙍‍♂️<br><span>Profile</span></button>
     </div>
 
-    <!-- 💬 Chats (DM + Groups) -->
+    <!-- 💬 Chats -->
     <div id="chatTab" class="tab">
       <div class="chat-header">
         <input id="chatSearchInput" placeholder="Search chats..." oninput="searchChats()" />
@@ -99,8 +99,8 @@
     <div id="profileTab" class="tab">
       <h3>Your Profile</h3>
       <img id="profilePicPreview" src="default-avatar.png" alt="Avatar" onclick="triggerProfileUpload()" />
-<label class="profile-edit-label" onclick="triggerProfileUpload()">Tap to upload</label>
-<input type="file" id="profilePic" accept="image/*" onchange="uploadProfilePic(event)" style="display:none;" />
+      <label class="profile-edit-label" onclick="triggerProfileUpload()">Tap to upload</label>
+      <input type="file" id="profilePic" accept="image/*" onchange="uploadProfilePic(event)" style="display:none;" />
       <input id="profileName" placeholder="Your Name" />
       <textarea id="profileBio" placeholder="Your Bio"></textarea>
       <select id="profileGender">
@@ -117,61 +117,55 @@
       <button onclick="contactSupport()">Contact Us</button>
     </div>
 
-    <!-- 💬 Thread View (DM + Group) -->
+    <!-- 💬 DM View (Clean) -->
     <div id="threadView" class="tab">
-      <div id="chatHeader" class="chat-header">
+      <div class="chat-header">
+        <button onclick="switchTab('chatTab')">←</button>
         <img id="chatProfilePic" src="default-avatar.png" alt="Avatar" />
         <div class="chat-info">
           <h3 id="chatName">Chat Name</h3>
-          <p id="chatStatus">Loading...</p>
-          <span id="threadWithName" style="font-size: 12px;"></span>
+          <p id="chatStatus">Online</p>
         </div>
-        <select id="roomDropdown" onchange="joinRoom(this.value)"></select>
         <button onclick="openChatMenu()">⋮</button>
         <div id="chatOptionsMenu" class="chat-options" style="display:none;">
-          <button onclick="viewGroupMembers()">👥 View Members</button>
-          <button onclick="inviteByLink()">🔗 Invite</button>
-          <button onclick="leaveGroup()">🚪 Leave</button>
           <button onclick="blockUser()">🚫 Block</button>
           <button onclick="viewMedia()">📎 Media</button>
           <button onclick="exportChat()">📤 Export</button>
           <button onclick="deleteThread()">🗑️ Delete</button>
         </div>
       </div>
-
-      <!-- 🏠 Room View (Group Chat) -->
-<div id="roomView" class="tab" style="display:none;">
-  <div class="chat-header">
-    <h3 id="roomTitle">Group Name</h3>
-    <div id="groupTypingStatus" class="typing-indicator"></div>
-  </div>
-  <div id="roomMessages" class="messages"></div>
-  <div class="input-bar">
-    <button class="icon-btn" onclick="triggerFileInput('group')">📎</button>
-    <input id="roomInput" placeholder="Type a message..." oninput="handleTyping('group')" />
-    <button class="icon-btn" onclick="sendRoomMessage()">➤</button>
-    <input type="file" id="roomFile" style="display:none;" onchange="uploadFile('group')" />
-  </div>
-</div>
-      
-      <!-- Group Info Panel -->
-      <div class="group-info">
-        <p id="groupOwner">Owner: </p>
-        <p id="groupAdmins">Admins: </p>
-        <div id="groupMembers" class="member-list"></div>
-      </div>
-
-      <!-- Messages -->
       <div id="threadMessages" class="messages"></div>
       <div id="threadTypingStatus" class="typing-indicator"></div>
       <div class="input-bar">
         <button class="icon-btn" onclick="triggerFileInput('thread')">📎</button>
         <button class="icon-btn" onclick="shareFileViaTorrent('dm')">🌐</button>
-        <button class="icon-btn" onclick="shareFileViaTorrent('group')">🌍</button>
         <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" />
         <button class="icon-btn" onclick="sendThreadMessage()">➤</button>
         <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
-        <input type="file" id="groupFile" style="display:none;" onchange="uploadFile('group')" />
+      </div>
+    </div>
+
+    <!-- 💬 Group Chat View -->
+    <div id="roomView" class="tab" style="display:none;">
+      <div class="chat-header">
+        <h3 id="roomTitle">Group Name</h3>
+        <div id="groupTypingStatus" class="typing-indicator"></div>
+      </div>
+      <div id="roomMessages" class="messages"></div>
+      <div class="input-bar">
+        <button class="icon-btn" onclick="triggerFileInput('group')">📎</button>
+        <button class="icon-btn" onclick="shareFileViaTorrent('group')">🌍</button>
+        <input id="roomInput" placeholder="Type a message..." oninput="handleTyping('group')" />
+        <button class="icon-btn" onclick="sendRoomMessage()">➤</button>
+        <input type="file" id="roomFile" style="display:none;" onchange="uploadFile('group')" />
+      </div>
+      <div class="group-info">
+        <p id="groupOwner">Owner: </p>
+        <p id="groupAdmins">Admins: </p>
+        <div id="groupMembers" class="member-list"></div>
+        <button onclick="viewGroupMembers()">👥 View Members</button>
+        <button onclick="inviteByLink()">🔗 Invite</button>
+        <button onclick="leaveGroup()">🚪 Leave</button>
       </div>
     </div>
 
@@ -202,66 +196,72 @@
         </div>
       </div>
     </div>
+
+    <!-- 📸 Crop Modal -->
+    <div id="cropModal" class="modal" style="display:none;">
+      <div class="modal-content" style="max-width: 90%; padding: 10px;">
+        <h3 style="margin-bottom: 10px;">Crop Profile Picture</h3>
+        <div style="max-height: 300px; overflow: auto; text-align: center;">
+          <img id="cropImage" alt="Crop Preview" />
+        </div>
+        <div class="btn-group" style="margin-top: 12px; display: flex; gap: 10px; justify-content: center;">
+          <button onclick="confirmCrop()">Crop & Upload</button>
+          <button onclick="closeCropModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 👤 Full User Profile View -->
+    <div id="userFullProfile" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="document.getElementById('userFullProfile').style.display='none'">×</span>
+        <img id="fullUserAvatar" src="default-avatar.png" alt="Avatar" style="width:80px;height:80px;border-radius:50%;margin:10px auto;display:block;" />
+        <h3 id="fullUserName">@username</h3>
+        <p id="fullUserBio">Bio goes here</p>
+        <p id="fullUserEmail">Email: </p>
+        <p id="fullUserPhone">Phone: </p>
+        <div class="btn-group" style="margin-top:10px;display:flex;gap:8px;">
+          <button onclick="addFriend(currentProfileUID)">Add Friend</button>
+          <button onclick="messageUser(currentProfileUID)">Message</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 👥 Group Info Modal -->
+    <div id="groupInfoModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="document.getElementById('groupInfoModal').style.display='none'">×</span>
+        <img id="groupIcon" src="group-icon.png" alt="Group" style="width:80px;height:80px;border-radius:50%;margin:10px auto;display:block;" />
+        <h3 id="groupName">Group Name</h3>
+        <p id="groupDesc">No description provided.</p>
+        <p id="groupOwnerText">Owner: </p>
+        <p id="groupMembersText">Members: </p>
+        <div class="btn-group" style="margin-top:10px;display:flex;gap:8px;">
+          <button onclick="joinGroupById(window.currentGroupProfileId)">Join</button>
+          <button onclick="copyGroupInviteLink()">Copy Invite Link</button>
+        </div>
+      </div>
+    </div>
   </div>
 
-<!-- 📸 Crop Modal -->
-<div id="cropModal" class="modal" style="display:none;">
-  <div class="modal-content" style="max-width: 90%; padding: 10px;">
-    <h3 style="margin-bottom: 10px;">Crop Profile Picture</h3>
-    <div style="max-height: 300px; overflow: auto; text-align: center;">
-      <img id="cropImage" style="..." alt="Crop Preview" />
-    </div>
-    <div class="btn-group" style="margin-top: 12px; display: flex; gap: 10px; justify-content: center;">
-      <button onclick="confirmCrop()">Crop & Upload</button>
-      <button onclick="closeCropModal()">Cancel</button>
-    </div>
-  </div>
-</div>
-  
-  <!-- 👤 Full User Profile View -->
-<div id="userFullProfile" class="modal">
-  <div class="modal-content">
-    <span class="close" onclick="document.getElementById('userFullProfile').style.display='none'">×</span>
-    <img id="fullUserAvatar" src="default-avatar.png" alt="Avatar" style="width:80px;height:80px;border-radius:50%;margin:10px auto;display:block;" />
-    <h3 id="fullUserName">@username</h3>
-    <p id="fullUserBio">Bio goes here</p>
-    <p id="fullUserEmail">Email: </p>
-    <p id="fullUserPhone">Phone: </p>
-    <div class="btn-group" style="margin-top:10px;display:flex;gap:8px;">
-      <button onclick="addFriend(currentProfileUID)">Add Friend</button>
-      <button onclick="messageUser(currentProfileUID)">Message</button>
-    </div>
-  </div>
-</div>
-
-  <!-- 👥 Group Public Info Modal -->
-<div id="groupInfoModal" class="modal">
-  <div class="modal-content">
-    <span class="close" onclick="document.getElementById('groupInfoModal').style.display='none'">×</span>
-    <img id="groupIcon" src="group-icon.png" alt="Group" style="width:80px;height:80px;border-radius:50%;margin:10px auto;display:block;" />
-    <h3 id="groupName">Group Name</h3>
-    <p id="groupDesc">No description provided.</p>
-    <p id="groupOwnerText">Owner: </p>
-    <p id="groupMembersText">Members: </p>
-    <div class="btn-group" style="margin-top:10px;display:flex;gap:8px;">
-      <button onclick="joinGroupById(window.currentGroupProfileId)">Join</button>
-      <button onclick="copyGroupInviteLink()">Copy Invite Link</button>
-    </div>
-  </div>
-</div>
-  
   <!-- 🔥 Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <!-- 📦 Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/webtorrent/webtorrent.min.js"></script>
+
+  <!-- 🔧 App Logic -->
   <script src="firebase.js"></script>
   <script src="app.js"></script>
-
-  <!-- 📦 Utilities -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
@@ -269,11 +269,5 @@
         .catch(console.error);
     }
   </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
-  <script src="https://unpkg.com/idb@7/build/umd.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/webtorrent/webtorrent.min.js"></script>
 </body>
-      </html>
+</html>
