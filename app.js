@@ -1685,10 +1685,6 @@ function toggleTheme() {
   localStorage.setItem("theme", isDark ? "dark" : "light");
 }
 
-  const toggle = document.getElementById("darkModeToggle");
-  if (toggle) toggle.checked = isDark;
-}
-
 // ===== Restore Theme on Load =====
 if (localStorage.getItem("theme") === "dark") {
   document.body.classList.add("dark");
