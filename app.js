@@ -40,16 +40,14 @@ function hideLoading() {
 
 // ===== Switch UI Tabs =====
 function switchTab(tabId) {
-  document.querySelectorAll(".tab").forEach(tabEl => {
-    tabEl.style.display = "none";
+  // Hide all tabs
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.style.display = "none";
   });
 
-  const selectedTab = document.getElementById(tabId);
-  if (selectedTab) {
-    selectedTab.style.display = "block";
-  } else {
-    console.warn("Tab not found:", tabId);
-  }
+  // Show selected tab
+  const selected = document.getElementById(tabId);
+  if (selected) selected.style.display = "block";
 }
   
 
