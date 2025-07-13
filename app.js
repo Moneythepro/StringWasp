@@ -524,29 +524,34 @@ function openChatMenu() {
   menu.style.display = (menu.style.display === "block") ? "none" : "block";
 }
 
-function timeSince(ts) {
-  const now = Date.now();
-  const seconds = Math.floor((now - ts) / 1000);
-
-  if (seconds < 60) return "just now";
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  const weeks = Math.floor(days / 7);
-  return `${weeks}w ago`;
+function timeSince(date) {
+  if (!date) return "";
+  const seconds = Math.floor((new Date() - date) / 1000);
+  const intervals = [
+    [31536000, 'y'],
+    [2592000, 'mo'],
+    [86400, 'd'],
+    [3600, 'h'],
+    [60, 'm'],
+    [1, 's']
+  ];
+  for (const [secs, label] of intervals) {
+    const interval = Math.floor(seconds / secs);
+    if (interval >= 1) return `${interval}${label}`;
+  }
+  return "just now";
 }
 
 // ===== Escape HTML Utility =====
-function escapeHtml(unsafe) {
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+function escapeHtml(text) {
+  if (!text) return "";
+  return text.replace(/[&<>"']/g, m => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  }[m]));
 }
 
 // ===== Listen to Inbox =====
@@ -973,23 +978,25 @@ function sendThreadMessage() {
   };
 
   threadRef.collection("messages").add(message).then(() => {
-  threadRef.get().then(docSnap => {
-  const prev = docSnap.data() || {};
-  const unread = prev.unread || {};
-  const otherUID = currentThreadUser;
-  unread[otherUID] = (unread[otherUID] || 0) + 1;
+    input.value = "";
 
-  threadRef.set({
-    participants: [currentUser.uid, otherUID],
-    names: {
-      [currentUser.uid]: fromName,
-      [otherUID]: document.getElementById("threadWithName").textContent || "Friend"
-    },
-    lastMessage: { text, from: currentUser.uid, timestamp: Date.now() },
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-    unread
-  }, { merge: true });
-});
+    threadRef.set({
+      participants: [currentUser.uid, currentThreadUser],
+      names: {
+        [currentUser.uid]: fromName,
+        [currentThreadUser]: document.getElementById("threadWithName").textContent || "Friend"
+      },
+      lastMessage: text,
+      unread: {
+        [currentUser.uid]: 0,
+        [currentThreadUser]: firebase.firestore.FieldValue.increment(1)
+      },
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+  }).catch(err => {
+    console.error("❌ Send failed:", err.message || err);
+    alert("❌ Failed to send message.");
+  });
 }
 
 function listenMessages() {
