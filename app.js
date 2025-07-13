@@ -1426,20 +1426,23 @@ function joinRoom(roomId) {
   const roomMessages = document.getElementById("roomMessages");
   const typingStatus = document.getElementById("groupTypingStatus");
 
-  if (!roomView || !roomTitle || !roomMessages) return;
+  if (!roomView || !roomTitle || !roomMessages) {
+    console.warn("❌ roomView not found");
+    return;
+  }
 
-  // Reset messages
+  // Clear UI
   roomMessages.innerHTML = "";
   typingStatus.textContent = "";
 
-  // Fetch group info
+  // Load group info
   db.collection("groups").doc(roomId).get().then(doc => {
     if (!doc.exists) return alert("❌ Group not found.");
     const group = doc.data();
     roomTitle.textContent = "#" + (group.name || "Group");
   });
 
-  // Listen for typing
+  // Typing indicator
   if (unsubscribeTyping) unsubscribeTyping();
   unsubscribeTyping = db.collection("threads").doc(roomId).collection("typing")
     .onSnapshot(snapshot => {
@@ -1447,18 +1450,16 @@ function joinRoom(roomId) {
       typingStatus.textContent = others.length ? "✍️ Someone is typing..." : "";
     });
 
-  // Listen for messages
+  // ✅ Group Messages: Now actually load messages
   if (unsubscribeThread) unsubscribeThread();
-  unsubscribeThread = db.collection("threads").doc(roomId).collection("messages")
+  unsubscribeThread = db.collection("groups").doc(roomId).collection("messages")
     .orderBy("timestamp")
     .onSnapshot(snapshot => {
       roomMessages.innerHTML = "";
+
       snapshot.forEach(doc => {
         const msg = doc.data();
         const isSelf = msg.from === currentUser.uid;
-
-        const bubble = document.createElement("div");
-        bubble.className = "message-bubble " + (isSelf ? "right" : "left");
 
         let decrypted = "";
         try {
@@ -1468,6 +1469,8 @@ function joinRoom(roomId) {
           decrypted = "[Decryption failed]";
         }
 
+        const bubble = document.createElement("div");
+        bubble.className = "message-bubble " + (isSelf ? "right" : "left");
         bubble.innerHTML = `
           <div class="msg-avatar">
             <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(msg.fromName || 'User')}" />
