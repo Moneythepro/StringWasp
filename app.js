@@ -29,17 +29,27 @@ let unsubscribeGroups = null;
 
 // ===== Loading Overlay =====
 function showLoading() {
-  document.getElementById("loadingOverlay").style.display = "flex";
+  const overlay = document.getElementById("loadingOverlay");
+  if (overlay) overlay.style.display = "flex";
 }
+
 function hideLoading() {
-  document.getElementById("loadingOverlay").style.display = "none";
+  const overlay = document.getElementById("loadingOverlay");
+  if (overlay) overlay.style.display = "none";
 }
 
 // ===== Switch UI Tabs =====
 function switchTab(tabId) {
-  document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
-  const selected = document.getElementById(tabId);
-  if (selected) selected.style.display = "block";
+  document.querySelectorAll(".tab").forEach(tabEl => {
+    tabEl.style.display = "none";
+  });
+
+  const selectedTab = document.getElementById(tabId);
+  if (selectedTab) {
+    selectedTab.style.display = "block";
+  } else {
+    console.warn("Tab not found:", tabId);
+  }
 }
   
 
