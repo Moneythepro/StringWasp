@@ -1466,7 +1466,6 @@ function joinGroupById(groupId) {
   });
 }
 
-let currentRoom = null;
 let unsubscribeRoomMessages = null;
 let unsubscribeTyping = null;
 
