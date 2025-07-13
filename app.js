@@ -424,18 +424,122 @@ function loadGroups() {
 }
 
 // ===== Load All Chats (DMs + Groups) =====
-
 function loadChatList() {
   const list = document.getElementById("chatList");
-  if (list) list.innerHTML = "";
-
-  setTimeout(() => {
-    loadRealtimeGroups();
-    loadFriendThreads();
-  }, 300);
+  if (list) list.innerHTML = ""; // ✅ clear first
+  loadRealtimeGroups();   // ✅ Load group chats
+  loadFriendThreads();    // ✅ Load personal threads
+  listenInbox();          // ✅ Load inbox notifications
 }
 
-// ===== Send Group Message =====
+// === Realtime Group Chats ===
+function loadRealtimeGroups() {
+  const list = document.getElementById("chatList");
+  if (!list || !currentUser) return;
+
+  if (unsubscribeGroups) unsubscribeGroups();
+
+  unsubscribeGroups = db.collection("groups")
+    .where("members", "array-contains", currentUser.uid)
+    .onSnapshot(snapshot => {
+      list.innerHTML = "";
+
+      snapshot.forEach(doc => {
+        const g = doc.data();
+        const groupName = g.name || "Group";
+        const avatar = g.icon || `https://ui-avatars.com/api/?name=${encodeURIComponent(groupName)}`;
+
+        let msgText = "[No message]";
+        let isMedia = false;
+        let timeAgo = "";
+
+        if (typeof g.lastMessage === "object") {
+          msgText = g.lastMessage.text || "[No message]";
+          isMedia = !!g.lastMessage.fileURL;
+          if (g.lastMessage.timestamp) {
+            timeAgo = timeSince(g.lastMessage.timestamp.toDate?.() || g.lastMessage.timestamp);
+          }
+        } else if (typeof g.lastMessage === "string") {
+          msgText = g.lastMessage;
+        }
+
+        const preview = isMedia ? "📎 Media File" : escapeHtml(msgText);
+        const unread = g.unread?.[currentUser.uid] || 0;
+        const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
+
+        const card = document.createElement("div");
+        card.className = "chat-card group-chat";
+        card.onclick = () => joinRoom(doc.id);
+        card.innerHTML = `
+          <img src="${avatar}" class="friend-avatar" />
+          <div class="details">
+            <div class="name">#${escapeHtml(groupName)} ${badgeHTML}</div>
+            <div class="last-message">${preview}</div>
+            <div class="last-time">${timeAgo}</div>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }, err => {
+      console.error("❌ Group snapshot error:", err.message);
+      alert("❌ Failed to load group chats.");
+    });
+}
+
+// === Direct Message Threads ===
+function loadFriendThreads() {
+  const list = document.getElementById("chatList");
+  if (!list || !currentUser) return;
+
+  if (unsubscribeThreads) unsubscribeThreads();
+
+  unsubscribeThreads = db.collection("threads")
+    .where("participants", "array-contains", currentUser.uid)
+    .orderBy("updatedAt", "desc")
+    .onSnapshot(async snapshot => {
+      list.innerHTML = "";
+
+      for (const doc of snapshot.docs) {
+        const t = doc.data();
+        const otherUID = t.participants.find(p => p !== currentUser.uid);
+
+        let name = "Friend";
+        let avatar = "default-avatar.png";
+
+        try {
+          const userDoc = await db.collection("users").doc(otherUID).get();
+          if (userDoc.exists) {
+            const user = userDoc.data();
+            name = user.username || user.name || "Friend";
+            avatar = user.avatarBase64 || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`;
+          }
+        } catch (e) {
+          console.warn("⚠️ Failed to fetch user:", e.message);
+        }
+
+        let msgText = t.lastMessage || "[No message]";
+        const unread = t.unread?.[currentUser.uid] || 0;
+        const timeAgo = t.updatedAt?.toDate ? timeSince(t.updatedAt.toDate()) : "";
+
+        const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
+
+        const card = document.createElement("div");
+        card.className = "chat-card";
+        card.onclick = () => openThread(otherUID);
+        card.innerHTML = `
+          <img src="${avatar}" class="friend-avatar" />
+          <div class="details">
+            <div class="name">${escapeHtml(name)} ${badgeHTML}</div>
+            <div class="last-message">${escapeHtml(msgText)}</div>
+            <div class="last-time">${timeAgo}</div>
+          </div>
+        `;
+        list.appendChild(card);
+      }
+    });
+}
+
+// === Send Room Message (Group Chat) ===
 function sendRoomMessage() {
   if (!currentRoom || !currentUser) return;
 
@@ -452,26 +556,42 @@ function sendRoomMessage() {
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
 
-  db.collection("threads").doc(currentRoom).collection("messages").add(msg)
+  db.collection("groups").doc(currentRoom).collection("messages").add(msg)
     .then(() => {
       input.value = "";
 
-      // Update last message in group document
       db.collection("groups").doc(currentRoom).update({
         lastMessage: {
           text,
           from: currentUser.uid,
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        },
-        [`unread.${currentUser.uid}`]: 0
+        }
       });
 
-      db.collection("threads").doc(currentRoom).collection("typing").doc(currentUser.uid).delete().catch(() => {});
+      db.collection("groups").doc(currentRoom)
+        .collection("typing").doc(currentUser.uid).delete().catch(() => {});
     })
     .catch(err => {
-      console.error("❌ Failed to send message:", err.message || err);
+      console.error("❌ Failed to send message:", err.message);
       alert("❌ Couldn't send group message.");
     });
+}
+
+// === Typing Indicator ===
+function handleTyping(context) {
+  const targetId = context === "group" ? currentRoom : currentThreadUser;
+  if (!targetId || !currentUser) return;
+
+  const inputId = context === "group" ? "roomInput" : "threadInput";
+  const input = document.getElementById(inputId);
+  if (!input || !input.value.trim()) return;
+
+  const typingRef = context === "group"
+    ? db.collection("groups").doc(targetId).collection("typing").doc(currentUser.uid)
+    : db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser)).collection("typing").doc(currentUser.uid);
+
+  typingRef.set({ typing: true }).catch(() => {});
+  setTimeout(() => typingRef.delete().catch(() => {}), 4000);
 }
 
 // ===== Send Thread Message (DM) =====
@@ -487,7 +607,7 @@ function sendThreadMessage() {
 
   const msg = {
     text: encrypted,
-    from: currentUser.uid,
+    from: currentUsercurrentUser.uid,
     fromName: currentUser.displayName || currentUser.email,
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
