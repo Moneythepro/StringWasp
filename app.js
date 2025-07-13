@@ -1140,9 +1140,9 @@ function runSearch() {
       switchSearchView("user"); // Show user tab by default
     })
     .catch(err => {
-      console.error("❌ User search failed:", err);
-      userResults.innerHTML = "<p>Search failed.</p>";
-    });
+  console.error("❌ User search failed:", err.message || JSON.stringify(err));
+  userResults.innerHTML = "<p>Search failed.</p>";
+});
 
   // 🔍 Search Groups
   db.collection("groups")
