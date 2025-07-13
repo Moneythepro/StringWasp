@@ -663,3 +663,10 @@ body.dark #loadingOverlay {
   margin-top: 4px;
   text-align: right;
 }
+
+i[data-lucide] {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  color: inherit;
+}
