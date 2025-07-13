@@ -426,10 +426,12 @@ function loadGroups() {
 // ===== Load All Chats (DMs + Groups) =====
 function loadChatList() {
   const list = document.getElementById("chatList");
-  if (list) list.innerHTML = ""; // ✅ clear first
-  loadRealtimeGroups();   // ✅ Loads group chats
-  loadFriendThreads();    // ✅ Loads DMs
-  listenInbox();          // ✅ Load inbox badge
+  if (list) list.innerHTML = "";
+
+  setTimeout(() => {
+    loadRealtimeGroups();
+    loadFriendThreads();
+  }, 300); // small delay to prevent overlap
 }
 
   // === Realtime Groups ===
@@ -934,6 +936,7 @@ function openThread(uid, username) {
       document.getElementById("threadWithName").textContent = username;
       document.getElementById("roomDropdown").style.display = "none";
       document.querySelector(".group-info").style.display = "none";
+      document.getElementById("groupInfoButton").style.display = "none";
 
       if (unsubscribeThread) unsubscribeThread();
 
@@ -1128,70 +1131,58 @@ function switchSearchView(view) {
 }
 
 function runSearch() {
-  const term = document.getElementById("searchInput")?.value.trim().toLowerCase();
-  if (!term) return alert("❌ Enter something to search.");
+  const input = document.getElementById("searchInput");
+  const term = input.value.trim().toLowerCase();
+  if (!term) return;
 
   const userResults = document.getElementById("searchResultsUser");
   const groupResults = document.getElementById("searchResultsGroup");
-  userResults.innerHTML = "<p>Searching users...</p>";
-  groupResults.innerHTML = "<p>Searching groups...</p>";
 
-  // USER SEARCH
+  userResults.innerHTML = "<p>Loading users...</p>";
+  groupResults.innerHTML = "<p>Loading groups...</p>";
+
+  // 🔍 Search USERS
   db.collection("users")
     .where("username", ">=", term)
     .where("username", "<=", term + "\uf8ff")
     .limit(10)
     .get()
-    .then(async snapshot => {
+    .then(snapshot => {
       userResults.innerHTML = "";
       if (snapshot.empty) {
         userResults.innerHTML = "<p>No users found.</p>";
         return;
       }
 
-      for (const doc of snapshot.docs) {
+      snapshot.forEach(doc => {
         const data = doc.data();
         const uid = doc.id;
-        const isSelf = currentUser?.uid === uid;
-        let isFriend = false;
-
-        // Check if already friends
-        try {
-          const friendDoc = await db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).get();
-          isFriend = friendDoc.exists;
-        } catch (e) {
-          console.warn("⚠️ Friend check failed:", e.message);
-        }
-
-        const div = document.createElement("div");
-        div.className = "search-card";
-
-        div.innerHTML = `
-          <img src="${data.photoURL || `https://ui-avatars.com/api/?name=${data.username}`}" onclick="viewUserProfile('${uid}')" />
-          <div>
-            <strong>@${data.username}</strong><br>
-            <small>${escapeHtml(data.name || "No name")}</small>
+        const avatar = data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username || "User")}`;
+        const card = document.createElement("div");
+        card.className = "search-result";
+        card.innerHTML = `
+          <img src="${avatar}" class="search-avatar" />
+          <div class="search-info">
+            <div class="username">@${escapeHtml(data.username || "unknown")}</div>
+            <div class="bio">${escapeHtml(data.bio || "")}</div>
           </div>
-          <div class="btn-group" id="friendBtn_${uid}">
-            ${
-              isSelf
-                ? `<span style="font-size:12px;">👤 You</span>`
-                : isFriend
-                ? `<span style="font-size:12px;">✅ Friends</span>`
-                : `<button onclick="sendFriendRequest('${uid}', '${escapeHtml(data.username)}')">Add Friend</button>`
-            }
+          <div class="btn-group">
+            <button onclick="viewUserProfile('${uid}')">👁</button>
+            <button onclick="addFriend('${uid}')">➕</button>
+            <button onclick="messageUser('${uid}')">💬</button>
           </div>
         `;
+        userResults.appendChild(card);
+      });
 
-        userResults.appendChild(div);
-      }
+      switchSearchView("user");
     })
     .catch(err => {
       console.error("❌ User search failed:", err.message);
-      userResults.innerHTML = "<p>❌ Error searching users.</p>";
+      userResults.innerHTML = "<p>Search failed.</p>";
     });
 
-  // GROUP SEARCH
+  // 🔍 Search GROUPS
   db.collection("groups")
     .where("name", ">=", term)
     .where("name", "<=", term + "\uf8ff")
@@ -1206,19 +1197,29 @@ function runSearch() {
 
       snapshot.forEach(doc => {
         const data = doc.data();
-        const div = document.createElement("div");
-        div.className = "search-card";
-        div.innerHTML = `
-          <strong>${escapeHtml(data.name)}</strong><br>
-          <small>${escapeHtml(data.description || "")}</small><br>
-          <button onclick="joinGroupById('${doc.id}')">Join Group</button>
+        const groupId = doc.id;
+        const avatar = data.icon || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "Group")}`;
+        const card = document.createElement("div");
+        card.className = "search-result";
+        card.innerHTML = `
+          <img src="${avatar}" class="search-avatar" />
+          <div class="search-info">
+            <div class="username">#${escapeHtml(data.name || "Group")}</div>
+            <div class="bio">${escapeHtml(data.description || "")}</div>
+          </div>
+          <div class="btn-group">
+            <button onclick="viewGroupProfile('${groupId}')">👁</button>
+            <button onclick="joinGroupById('${groupId}')">➕ Join</button>
+          </div>
         `;
-        groupResults.appendChild(div);
+        groupResults.appendChild(card);
       });
+
+      switchSearchView("group");
     })
     .catch(err => {
       console.error("❌ Group search failed:", err.message);
-      groupResults.innerHTML = "<p>❌ Error searching groups.</p>";
+      groupResults.innerHTML = "<p>Search failed.</p>";
     });
 }
 
@@ -1327,6 +1328,8 @@ function joinRoom(roomId) {
   switchTab("roomView");
   document.getElementById("roomDropdown").style.display = "block";
   document.querySelector(".group-info").style.display = "flex";
+  document.getElementById("threadTypingStatus").textContent = "";
+document.getElementById("groupInfoButton").style.display = "block";
 
   if (unsubscribeMessages) unsubscribeMessages();
   if (unsubscribeTyping) unsubscribeTyping();
