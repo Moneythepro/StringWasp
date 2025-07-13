@@ -826,24 +826,22 @@ function addFriend(uid) {
       return;
     }
 
-    // Step 2: Send friend request to the other user's inbox
+    // Step 2: Send friend request to inbox (flat, valid format)
     const inboxRef = db.collection("inbox").doc(uid).collection("items");
     inboxRef.add({
       type: "friend",
-      from: {
-        uid: currentUser.uid,
-        name: currentUser.displayName || currentUser.email || "Unknown"
-      },
+      from: currentUser.uid, // ✅ must match Firestore rule
+      fromName: currentUser.displayName || currentUser.email || "Unknown",
       read: false,
-      timestamp: Date.now()
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
       alert("✅ Friend request sent!");
     }).catch(err => {
-      console.error("❌ Friend request failed:", err);
+      console.error("❌ Friend request failed:", err.message || err);
       alert("❌ Failed to send friend request");
     });
   }).catch(err => {
-    console.error("❌ Friend check error:", err);
+    console.error("❌ Friend check error:", err.message || err);
     alert("❌ Could not verify friend status");
   });
 }
@@ -1090,8 +1088,7 @@ function handleTyping(type) {
 
 // ===== Search (Users + Groups) =====
 function runSearch() {
-  const input = document.getElementById("searchInput");
-  const term = input.value.trim().toLowerCase();
+  const term = document.getElementById("searchInput").value.trim().toLowerCase();
   if (!term) return;
 
   const userResults = document.getElementById("searchResultsUser");
@@ -1100,7 +1097,7 @@ function runSearch() {
   userResults.innerHTML = "<p>Loading users...</p>";
   groupResults.innerHTML = "<p>Loading groups...</p>";
 
-  // 🔍 Search Users
+  // 🔍 USERS SEARCH
   db.collection("users")
     .where("username", ">=", term)
     .where("username", "<=", term + "\uf8ff")
@@ -1114,32 +1111,26 @@ function runSearch() {
       }
 
       snapshot.forEach(doc => {
-        const data = doc.data();
-        const uid = doc.id;
-        const avatar = data.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username || "User")}`;
-
+        const user = doc.data();
         const card = document.createElement("div");
-        card.className = "search-result";
+        card.className = "search-card";
         card.innerHTML = `
-          <img class="search-avatar" src="${avatar}" />
-          <div class="search-info">
-            <div class="username">@${escapeHtml(data.username || "unknown")}</div>
-            <div class="bio">${escapeHtml(data.bio || "")}</div>
-          </div>
+          <img src="${user.photoURL || 'default-avatar.png'}" class="friend-avatar" />
           <div>
-            <button onclick="viewUserProfile('${uid}')">👁 View</button>
-            <button onclick="addFriend('${uid}')">➕ Add</button>
+            <strong>${escapeHtml(user.username)}</strong><br>
+            ${escapeHtml(user.name || "")}
           </div>
+          <button onclick="viewUserProfile('${doc.id}')">View</button>
         `;
         userResults.appendChild(card);
       });
     })
     .catch(err => {
-      console.error("❌ User search failed:", err.message);
-      userResults.innerHTML = `<p>Search failed: ${escapeHtml(err.message || "unknown")}</p>`;
+      console.error("❌ User search failed:", err.message || err);
+      userResults.innerHTML = "<p>Error loading users.</p>";
     });
 
-  // 🔍 Search Groups
+  // 🔍 GROUPS SEARCH
   db.collection("groups")
     .where("name", ">=", term)
     .where("name", "<=", term + "\uf8ff")
@@ -1153,29 +1144,19 @@ function runSearch() {
       }
 
       snapshot.forEach(doc => {
-        const data = doc.data();
-        const groupId = doc.id;
-        const avatar = data.icon || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "Group")}`;
-
+        const group = doc.data();
         const card = document.createElement("div");
-        card.className = "search-result";
+        card.className = "search-card";
         card.innerHTML = `
-          <img class="search-avatar" src="${avatar}" />
-          <div class="search-info">
-            <div class="username">#${escapeHtml(data.name || "Group")}</div>
-            <div class="bio">${escapeHtml(data.description || "")}</div>
-          </div>
-          <div>
-            <button onclick="viewGroupProfile('${groupId}')">👁 View</button>
-            <button onclick="joinGroupById('${groupId}')">➕ Join</button>
-          </div>
+          <strong>${escapeHtml(group.name)}</strong><br>
+          <button onclick="viewGroupProfile('${doc.id}')">View</button>
         `;
         groupResults.appendChild(card);
       });
     })
     .catch(err => {
-      console.error("❌ Group search failed:", err.message);
-      groupResults.innerHTML = `<p>Search failed: ${escapeHtml(err.message || "unknown")}</p>`;
+      console.error("❌ Group search failed:", err.message || err);
+      groupResults.innerHTML = "<p>Error loading groups.</p>";
     });
 }
 
