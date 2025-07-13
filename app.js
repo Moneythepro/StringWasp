@@ -28,9 +28,11 @@ let unsubscribeThreads = null;
 let unsubscribeGroups = null;
 
 // ===== Loading Overlay =====
-function showLoading(state) {
-  const overlay = document.getElementById("loadingOverlay");
-  if (overlay) overlay.style.display = state ? "flex" : "none";
+function showLoading() {
+  document.getElementById("loadingOverlay").style.display = "flex";
+}
+function hideLoading() {
+  document.getElementById("loadingOverlay").style.display = "none";
 }
 
 // ===== Switch UI Tabs =====
@@ -219,11 +221,9 @@ function loadProfile(callback) {
 }
 
 function triggerProfileUpload() {
-  const input = document.getElementById("profilePic");
-  if (input) input.click();
+  document.getElementById("profilePic").addEventListener("change", uploadProfilePic);
 }
 
-document.getElementById("profilePic").addEventListener("change", uploadProfilePic);
 
 let cropper = null;
 
@@ -665,6 +665,11 @@ function handleTyping(context) {
 
 // ===== Typing Indicator Handler =====
 function handleTyping(context) {
+  const input = context === "thread" ? threadInput.value : roomInput.value;
+  sendTypingStatus(context, input.length > 0);
+}
+
+function handleTyping(context) {
   const targetId = context === "group" ? currentRoom : currentThreadUser;
   if (!targetId || !currentUser) return;
 
@@ -879,6 +884,22 @@ function markAllRead() {
     console.error("❌ Failed to mark all read:", err.message);
     alert("❌ Could not mark all as read.");
   });
+}
+
+function renderInboxCard(data) {
+  return `
+    <div class="inbox-card">
+      <img src="${data.photo || 'default-avatar.png'}" />
+      <div style="flex:1;">
+        <strong>${data.name || "Unknown"}</strong><br/>
+        <small>${data.message || "Notification"}</small>
+      </div>
+      <div class="btn-group">
+        <button onclick="acceptInbox('${data.id}')">✔</button>
+        <button onclick="declineInbox('${data.id}')">✖</button>
+      </div>
+    </div>
+  `;
 }
 
 // ===== Friend List =====
@@ -1154,6 +1175,18 @@ function deleteThread() {
   });
 }
 
+function renderChatCard(chat) {
+  return `
+    <div class="chat-card" onclick="openThread('${chat.uid}', '${chat.name}')">
+      <img src="${chat.photo || 'default-avatar.png'}" class="friend-avatar" />
+      <div class="details">
+        <div class="name">${chat.name}</div>
+        <div class="last-message">${chat.lastMessage || "No messages yet"}</div>
+      </div>
+      <div class="meta">${chat.timestamp || ""}</div>
+    </div>
+  `;
+}
 
 // ===== DM: Send Thread Message with AES Encryption =====
 function sendThreadMessage() {
@@ -1193,6 +1226,14 @@ function sendThreadMessage() {
     console.error("❌ Send failed:", err.message || err);
     alert("❌ Failed to send message.");
   });
+}
+
+function renderMessage(msg, isOwn) {
+  return `
+    <div class="message-bubble ${isOwn ? 'right' : 'left'}">
+      ${msg.text}
+    </div>
+  `;
 }
 
 function listenMessages() {
@@ -1309,6 +1350,18 @@ function runSearch() {
     });
 }
 
+function renderUserSearchResult(user) {
+  return `
+    <div class="search-result">
+      <img class="search-avatar" src="${user.photo || 'default-avatar.png'}" />
+      <div class="search-info">
+        <div class="username">@${user.username}</div>
+        <div class="bio">${user.bio || "No bio"}</div>
+      </div>
+      <button onclick="addFriend('${user.uid}')">Add</button>
+    </div>
+  `;
+}
 
 // ==== For Group Setting ====
 function viewGroupMembers() {
@@ -1628,10 +1681,10 @@ function closeProfileModal() {
 
 // ===== Toggle Dark Theme Persistently =====
 function toggleTheme() {
-  const body = document.body;
-  body.classList.toggle("dark");
-  const isDark = body.classList.contains("dark");
+  const isDark = document.getElementById("darkModeToggle").checked;
+  document.documentElement.classList.toggle("dark", isDark);
   localStorage.setItem("theme", isDark ? "dark" : "light");
+}
 
   const toggle = document.getElementById("darkModeToggle");
   if (toggle) toggle.checked = isDark;
@@ -1778,6 +1831,13 @@ function showToast(msg) {
   toast.textContent = msg;
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
+}
+
+function uploadFile(context) {
+  const fileInput = context === "thread" ? document.getElementById("threadFile") : document.getElementById("roomFile");
+  const file = fileInput.files[0];
+  if (!file) return;
+  sendFileMessage(file, context);
 }
 
 // ====== WebTorrent (P2P File Share) ======
