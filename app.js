@@ -183,10 +183,11 @@ function saveProfile() {
 }
 
 // ===== Load Profile UI =====
-function loadProfile() {
+function loadProfile(callback) {
   const uid = currentUser?.uid;
   if (!uid) {
     console.warn("⚠️ loadProfile called without a valid user.");
+    if (callback) callback();
     return;
   }
 
@@ -195,20 +196,26 @@ function loadProfile() {
       const data = doc.data();
       if (!data) {
         console.warn("⚠️ No profile data found for user:", uid);
+        if (callback) callback();
         return;
       }
 
-      document.getElementById("profilePicPreview").src = data.photoURL || "default-avatar.png";
       document.getElementById("profileName").value = data.name || "";
       document.getElementById("profileBio").value = data.bio || "";
       document.getElementById("profileGender").value = data.gender || "";
       document.getElementById("profilePhone").value = data.phone || "";
-      document.getElementById("profileEmail").value = data.publicEmail || "";
+      document.getElementById("profileEmail").value = data.email || "";
       document.getElementById("profileUsername").value = data.username || "";
+
+      document.getElementById("profilePicPreview").src =
+        data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username || "User")}`;
+
+      if (callback) callback();
     })
     .catch(err => {
-      console.error("❌ Failed to load profile:", err.message || err);
-      alert("Failed to load profile info.");
+      console.error("❌ Failed to load profile:", err.message);
+      alert("❌ Failed to load profile data.");
+      if (callback) callback();
     });
 }
 
