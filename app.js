@@ -107,10 +107,9 @@ function loadMainUI() {
 
   loadProfile(() => {
     switchTab("chatTab");
-    try { loadInbox(); } catch (e) { console.warn("Inbox failed", e); }
+    try { loadChatList(); } catch (e) { console.warn("Chats failed", e); }
     try { loadFriends(); } catch (e) { console.warn("Friends failed", e); }
     try { loadGroups?.(); } catch (e) { console.warn("Groups skipped", e); }
-    try { loadChatList(); } catch (e) { console.warn("Chats failed", e); }
 
     setTimeout(() => showLoading(false), 300);
   });
@@ -184,39 +183,22 @@ function saveProfile() {
 
 // ===== Load Profile UI =====
 function loadProfile(callback) {
-  const uid = currentUser?.uid;
-  if (!uid) {
-    console.warn("⚠️ loadProfile called without a valid user.");
-    if (callback) callback();
-    return;
-  }
+  db.collection("users").doc(currentUser.uid).onSnapshot(doc => {
+    if (!doc.exists) return;
 
-  db.collection("users").doc(uid).get()
-    .then(doc => {
-      const data = doc.data();
-      if (!data) {
-        console.warn("⚠️ No profile data found for user:", uid);
-        if (callback) callback();
-        return;
-      }
+    const data = doc.data();
+    document.getElementById("profileName").value = data.name || "";
+    document.getElementById("profileBio").value = data.bio || "";
+    document.getElementById("profileGender").value = data.gender || "";
+    document.getElementById("profilePhone").value = data.phone || "";
+    document.getElementById("profileEmail").value = data.email || "";
+    document.getElementById("profileUsername").value = data.username || "";
 
-      document.getElementById("profileName").value = data.name || "";
-      document.getElementById("profileBio").value = data.bio || "";
-      document.getElementById("profileGender").value = data.gender || "";
-      document.getElementById("profilePhone").value = data.phone || "";
-      document.getElementById("profileEmail").value = data.email || "";
-      document.getElementById("profileUsername").value = data.username || "";
+    const avatar = data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username || "User")}`;
+    document.getElementById("profilePicPreview").src = avatar;
 
-      document.getElementById("profilePicPreview").src =
-        data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username || "User")}`;
-
-      if (callback) callback();
-    })
-    .catch(err => {
-      console.error("❌ Failed to load profile:", err.message);
-      alert("❌ Failed to load profile data.");
-      if (callback) callback();
-    });
+    if (typeof callback === "function") callback();
+  });
 }
 
   function saveProfile() {
@@ -396,9 +378,9 @@ function loadGroups() {
 
 // ===== Load All Chats (DMs + Groups) =====
 function loadChatList() {
-  loadRealtimeGroups();   // ✅ Loads group chats
-  loadFriendThreads();    // ✅ Loads direct messages
-  listenInbox();          // ✅ Loads inbox notifications
+  loadRealtimeGroups();   // Group chats
+  loadFriendThreads();    // DM threads
+  listenInbox();          // Inbox alerts
 }
 
   // === Realtime Groups ===
