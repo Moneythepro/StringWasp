@@ -915,7 +915,6 @@ function threadId(a, b) {
 }
 
 // ===== DM: Open Thread Chat =====
-
 function openThread(uid, username) {
   if (!currentUser || !uid) return;
 
@@ -933,46 +932,57 @@ function openThread(uid, username) {
       currentThreadUser = uid;
       switchTab("threadView");
 
-      document.getElementById("threadWithName").textContent = username;
-      document.getElementById("roomDropdown").style.display = "none";
-      document.querySelector(".group-info").style.display = "none";
-      document.getElementById("groupInfoButton").style.display = "none";
+      const nameLabel = document.getElementById("threadWithName");
+      if (nameLabel) nameLabel.textContent = username;
+
+      const dropdown = document.getElementById("roomDropdown");
+      if (dropdown) dropdown.style.display = "none";
+
+      const groupInfo = document.querySelector(".group-info");
+      if (groupInfo) groupInfo.style.display = "none";
+
+      const groupButton = document.getElementById("groupInfoButton");
+      if (groupButton) groupButton.style.display = "none";
 
       if (unsubscribeThread) unsubscribeThread();
+      if (unsubscribeTyping) unsubscribeTyping();
 
       const docId = threadId(currentUser.uid, uid);
       const area = document.getElementById("threadMessages");
+      if (area) area.innerHTML = "";
 
-      // 🔄 Listen for typing status
+      // 🔄 Typing status
       const typingArea = document.getElementById("threadTypingStatus");
-      typingArea.textContent = "";
+      if (typingArea) typingArea.textContent = "";
 
       unsubscribeTyping = db.collection("threads")
-  .doc(docId)
-  .collection("typing")
-  .onSnapshot(snapshot => {
-    const others = snapshot.docs.filter(doc => doc.id !== currentUser.uid);
-    typingArea.textContent = others.length ? "✍️ Typing..." : "";
-});
+        .doc(docId)
+        .collection("typing")
+        .onSnapshot(snapshot => {
+          const others = snapshot.docs.filter(doc => doc.id !== currentUser.uid);
+          if (typingArea) typingArea.textContent = others.length ? "✍️ Typing..." : "";
+        });
 
-      // ✅ Reset unread count
+      // ✅ Mark as read
       db.collection("threads").doc(docId).set({
         unread: { [currentUser.uid]: 0 }
       }, { merge: true });
 
-      // 🔁 Listen for messages
+      // 🔁 Listen to messages
       unsubscribeThread = db.collection("threads")
         .doc(docId)
         .collection("messages")
         .orderBy("timestamp")
         .onSnapshot(async snapshot => {
+          if (!area) return;
+
           area.innerHTML = "";
 
           for (const doc of snapshot.docs) {
             const msg = doc.data();
             if (!msg?.text) continue;
 
-            // 🔐 Decrypt message
+            // 🔐 Decrypt
             let decrypted = "";
             try {
               decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
@@ -981,19 +991,18 @@ function openThread(uid, username) {
               decrypted = "[Failed to decrypt]";
             }
 
-            // 👤 Fetch sender avatar
+            // 👤 Avatar
             let avatar = "default-avatar.png";
             try {
               const userDoc = await db.collection("users").doc(msg.from).get();
               if (userDoc.exists) {
                 const userData = userDoc.data();
-                avatar = userData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.username || "User")}`;
+                avatar = userData.avatar || userData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.username || "User")}`;
               }
             } catch (e) {
               console.warn("⚠️ Avatar fetch failed:", e.message);
             }
 
-            // 🧾 Message bubble
             const isSelf = msg.from === currentUser.uid;
             const bubble = document.createElement("div");
             bubble.className = "message-bubble " + (isSelf ? "right" : "left");
