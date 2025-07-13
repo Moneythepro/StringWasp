@@ -1091,19 +1091,15 @@ function runSearch() {
   const term = document.getElementById("searchInput").value.trim().toLowerCase();
   if (!term) return;
 
-  const userResults = document.getElementById("searchResultsUser");
-  const groupResults = document.getElementById("searchResultsGroup");
-
-  userResults.innerHTML = "<p>Loading users...</p>";
-  groupResults.innerHTML = "<p>Loading groups...</p>";
-
-  // 🔍 USERS SEARCH
+  // === USERS ===
   db.collection("users")
     .where("username", ">=", term)
     .where("username", "<=", term + "\uf8ff")
-    .limit(10)
+    .orderBy("username")
+    .limit(20)
     .get()
     .then(snapshot => {
+      const userResults = document.getElementById("searchResultsUser");
       userResults.innerHTML = "";
       if (snapshot.empty) {
         userResults.innerHTML = "<p>No users found.</p>";
@@ -1117,7 +1113,7 @@ function runSearch() {
         card.innerHTML = `
           <img src="${user.photoURL || 'default-avatar.png'}" class="friend-avatar" />
           <div>
-            <strong>${escapeHtml(user.username)}</strong><br>
+            <strong>@${user.username}</strong><br>
             ${escapeHtml(user.name || "")}
           </div>
           <button onclick="viewUserProfile('${doc.id}')">View</button>
@@ -1126,39 +1122,42 @@ function runSearch() {
       });
     })
     .catch(err => {
-      console.error("❌ User search failed:", err.message || err);
-      userResults.innerHTML = "<p>Error loading users.</p>";
-    });
-
-  // 🔍 GROUPS SEARCH
-  db.collection("groups")
-    .where("name", ">=", term)
-    .where("name", "<=", term + "\uf8ff")
-    .limit(10)
-    .get()
-    .then(snapshot => {
-      groupResults.innerHTML = "";
-      if (snapshot.empty) {
-        groupResults.innerHTML = "<p>No groups found.</p>";
-        return;
-      }
-
-      snapshot.forEach(doc => {
-        const group = doc.data();
-        const card = document.createElement("div");
-        card.className = "search-card";
-        card.innerHTML = `
-          <strong>${escapeHtml(group.name)}</strong><br>
-          <button onclick="viewGroupProfile('${doc.id}')">View</button>
-        `;
-        groupResults.appendChild(card);
-      });
-    })
-    .catch(err => {
-      console.error("❌ Group search failed:", err.message || err);
-      groupResults.innerHTML = "<p>Error loading groups.</p>";
+      console.error("❌ User search failed:", err.message);
+      alert("❌ Failed to search users:\n" + err.message);
     });
 }
+
+  // === GROUPS ===
+db.collection("groups")
+  .where("name", ">=", term)
+  .where("name", "<=", term + "\uf8ff")
+  .orderBy("name")
+  .limit(20)
+  .get()
+  .then(snapshot => {
+    const groupResults = document.getElementById("searchResultsGroup");
+    groupResults.innerHTML = "";
+    if (snapshot.empty) {
+      groupResults.innerHTML = "<p>No groups found.</p>";
+      return;
+    }
+
+    snapshot.forEach(doc => {
+      const group = doc.data();
+      const card = document.createElement("div");
+      card.className = "search-card";
+      card.innerHTML = `
+        <strong>${escapeHtml(group.name)}</strong><br>
+        ${escapeHtml(group.description || "")}
+        <button onclick="viewGroupPublic('${doc.id}')">View</button>
+      `;
+      groupResults.appendChild(card);
+    });
+  })
+  .catch(err => {
+    console.error("❌ Group search failed:", err.message);
+    alert("❌ Failed to search groups:\n" + err.message);
+  });  
 
 function searchChats() {
   const term = document.getElementById("chatSearchInput")?.value.toLowerCase();
