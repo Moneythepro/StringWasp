@@ -220,6 +220,11 @@ function loadProfile(callback) {
   });
 }
 
+function triggerProfileUpload() {
+  const input = document.getElementById("profilePic");
+  if (input) input.click();
+}
+
 document.getElementById("profilePic").addEventListener("change", uploadProfilePic);
 
 let cropper = null;
@@ -378,9 +383,11 @@ function loadGroups() {
 
 // ===== Load All Chats (DMs + Groups) =====
 function loadChatList() {
-  loadRealtimeGroups();   // Group chats
-  loadFriendThreads();    // DM threads
-  listenInbox();          // Inbox alerts
+  const list = document.getElementById("chatList");
+  if (list) list.innerHTML = ""; // ✅ clear first
+  loadRealtimeGroups();   // ✅ Loads group chats
+  loadFriendThreads();    // ✅ Loads DMs
+  listenInbox();          // ✅ Load inbox badge
 }
 
   // === Realtime Groups ===
@@ -862,13 +869,13 @@ function openThread(uid, username) {
       const typingArea = document.getElementById("threadTypingStatus");
       typingArea.textContent = "";
 
-      db.collection("threads")
-        .doc(docId)
-        .collection("typing")
-        .onSnapshot(snapshot => {
-          const others = snapshot.docs.filter(doc => doc.id !== currentUser.uid);
-          typingArea.textContent = others.length ? "✍️ Typing..." : "";
-        });
+      unsubscribeTyping = db.collection("threads")
+  .doc(docId)
+  .collection("typing")
+  .onSnapshot(snapshot => {
+    const others = snapshot.docs.filter(doc => doc.id !== currentUser.uid);
+    typingArea.textContent = others.length ? "✍️ Typing..." : "";
+});
 
       // ✅ Reset unread count
       db.collection("threads").doc(docId).set({
@@ -1137,6 +1144,16 @@ card.innerHTML = `
       console.error("❌ Group search failed:", err);
       groupResults.innerHTML = "<p>Search failed.</p>";
     });
+}
+
+function searchChats() {
+  const term = document.getElementById("chatSearchInput")?.value.toLowerCase();
+  const cards = document.querySelectorAll("#chatList .chat-card");
+
+  cards.forEach(card => {
+    const name = card.querySelector(".name")?.textContent.toLowerCase() || "";
+    card.style.display = name.includes(term) ? "flex" : "none";
+  });
 }
 
 // ==== For Group Setting ====
