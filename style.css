@@ -327,6 +327,14 @@ body.dark .search-info .bio {
   background: #0b6c60;
 }
 
+.search-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 12px;
+}
+
 /* ===== Modal ===== */
 .modal {
   display: none;
