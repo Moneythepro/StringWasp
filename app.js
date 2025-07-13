@@ -37,12 +37,10 @@ function hideLoading() {
 
 // ===== Switch UI Tabs =====
 function switchTab(tabId) {
-  document.querySelectorAll(".tab").forEach(tab => tab.style.display = "none");
-  tab.style.display = "block";
+  document.querySelectorAll(".tab").forEach(t => t.style.display = "none"); // renamed from `tab` to `t` for clarity
   const selected = document.getElementById(tabId);
   if (selected) selected.style.display = "block";
 }
-
   
 
 // ===== Invite Link via URL =====
