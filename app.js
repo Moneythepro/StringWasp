@@ -427,15 +427,15 @@ function loadGroups() {
 
 function loadChatList() {
   const list = document.getElementById("chatList");
-  if (list) list.innerHTML = ""; // clears once
+  if (list) list.innerHTML = "";
 
   setTimeout(() => {
-    loadRealtimeGroups();  // loads groups
-    loadFriendThreads();   // loads DMs
+    loadRealtimeGroups();
+    loadFriendThreads();
   }, 300);
 }
 
-// === Load Group Chats (with fix) ===
+// ===== Send Group Message =====
 function sendRoomMessage() {
   if (!currentRoom || !currentUser) return;
 
@@ -443,7 +443,7 @@ function sendRoomMessage() {
   const text = input?.value.trim();
   if (!text) return;
 
-  const encrypted = CryptoJS.AES.encrypt(text, "yourSecretKey").toString(); // replace key later
+  const encrypted = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
 
   const msg = {
     text: encrypted,
@@ -452,24 +452,21 @@ function sendRoomMessage() {
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
 
-  // Save to group thread
   db.collection("threads").doc(currentRoom).collection("messages").add(msg)
     .then(() => {
       input.value = "";
 
-      // Update last message in group doc
+      // Update last message in group document
       db.collection("groups").doc(currentRoom).update({
         lastMessage: {
           text,
           from: currentUser.uid,
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }
+        },
+        [`unread.${currentUser.uid}`]: 0
       });
 
-      // Stop typing indicator
-      db.collection("threads").doc(currentRoom)
-        .collection("typing")
-        .doc(currentUser.uid).delete().catch(() => {});
+      db.collection("threads").doc(currentRoom).collection("typing").doc(currentUser.uid).delete().catch(() => {});
     })
     .catch(err => {
       console.error("❌ Failed to send message:", err.message || err);
@@ -477,6 +474,49 @@ function sendRoomMessage() {
     });
 }
 
+// ===== Send Thread Message (DM) =====
+function sendThreadMessage() {
+  if (!currentThreadUser || !currentUser) return;
+
+  const input = document.getElementById("threadInput");
+  const text = input?.value.trim();
+  if (!text) return;
+
+  const encrypted = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
+  const docId = threadId(currentUser.uid, currentThreadUser);
+
+  const msg = {
+    text: encrypted,
+    from: currentUser.uid,
+    fromName: currentUser.displayName || currentUser.email,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  db.collection("threads").doc(docId).collection("messages").add(msg)
+    .then(() => {
+      input.value = "";
+
+      db.collection("threads").doc(docId).set({
+        lastMessage: {
+          text,
+          from: currentUser.uid,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        },
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        participants: [currentUser.uid, currentThreadUser],
+        [`unread.${currentThreadUser}`]: firebase.firestore.FieldValue.increment(1),
+        [`unread.${currentUser.uid}`]: 0
+      }, { merge: true });
+
+      db.collection("threads").doc(docId).collection("typing").doc(currentUser.uid).delete().catch(() => {});
+    })
+    .catch(err => {
+      console.error("❌ Failed to send thread message:", err.message || err);
+      alert("❌ Couldn't send message.");
+    });
+}
+
+// ===== Typing Indicator Handler =====
 function handleTyping(context) {
   const targetId = context === "group" ? currentRoom : currentThreadUser;
   if (!targetId || !currentUser) return;
@@ -486,79 +526,11 @@ function handleTyping(context) {
   if (!input || !input.value.trim()) return;
 
   const typingRef = db.collection("threads").doc(targetId).collection("typing").doc(currentUser.uid);
-
   typingRef.set({ typing: true }).catch(() => {});
 
   setTimeout(() => {
     typingRef.delete().catch(() => {});
   }, 4000);
-}
-
-// === Load Personal Threads ===
-function loadFriendThreads() {
-  const list = document.getElementById("chatList");
-  if (!list || !currentUser) return;
-
-  if (unsubscribeThreads) unsubscribeThreads();
-
-  unsubscribeThreads = db.collection("threads")
-    .where("participants", "array-contains", currentUser.uid)
-    .orderBy("updatedAt", "desc")
-    .onSnapshot(async snapshot => {
-      for (const doc of snapshot.docs) {
-        const t = doc.data();
-        const otherUID = t.participants.find(p => p !== currentUser.uid);
-        if (!otherUID) continue;
-
-        let name = "Friend";
-        let avatar = "default-avatar.png";
-
-        try {
-          const userDoc = await db.collection("users").doc(otherUID).get();
-          if (userDoc.exists) {
-            const user = userDoc.data();
-            name = user.username || user.name || "Friend";
-            avatar = user.avatarBase64 || avatar;
-          }
-        } catch (e) {
-          console.warn("⚠️ Failed to fetch friend info:", e.message);
-        }
-
-        let msgText = "[No message]";
-        let fromSelf = false;
-        let isMedia = false;
-        let timeAgo = "";
-
-        if (typeof t.lastMessage === "object") {
-          msgText = t.lastMessage.text || "[No message]";
-          fromSelf = t.lastMessage.from === currentUser.uid;
-          isMedia = !!t.lastMessage.fileURL;
-          if (t.lastMessage.timestamp?.toDate) {
-            timeAgo = timeSince(t.lastMessage.timestamp.toDate());
-          }
-        }
-
-        const preview = isMedia ? "📎 Media File" : `${fromSelf ? "You: " : ""}${escapeHtml(msgText)}`;
-        const unread = t.unread?.[currentUser.uid] || 0;
-        const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
-
-        const card = document.createElement("div");
-        card.className = "chat-card personal-chat";
-        card.onclick = () => openThread(otherUID, name);
-        card.innerHTML = `
-          <img src="${avatar}" class="friend-avatar" />
-          <div class="details">
-            <div class="name">@${escapeHtml(name)} ${badgeHTML}</div>
-            <div class="last-message">${preview}</div>
-            <div class="last-time">${timeAgo}</div>
-          </div>
-        `;
-        list.appendChild(card);
-      }
-    }, err => {
-      console.error("❌ Friend thread load error:", err.message);
-      alert("❌ Failed to load chats: " + (err.message || err));
-    });
 }
 
 function openChatMenu() {
