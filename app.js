@@ -38,7 +38,6 @@ function hideLoading() {
 // ===== Switch UI Tabs =====
 function switchTab(tabId) {
   document.querySelectorAll(".tab").forEach(tab => tab.style.display = "none");
-  document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
   tab.style.display = "block";
   const selected = document.getElementById(tabId);
   if (selected) selected.style.display = "block";
