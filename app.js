@@ -547,7 +547,7 @@ function sendRoomMessage() {
   const text = input?.value.trim();
   if (!text) return;
 
-  const encrypted = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
+  const encrypted = CryptoJS.AES.encrypt(text, "yourSecretKey").toString(); // Replace key for E2E later
 
   const msg = {
     text: encrypted,
@@ -556,12 +556,10 @@ function sendRoomMessage() {
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
 
-  // Save to group's message subcollection
   db.collection("groups").doc(currentRoom).collection("messages").add(msg)
     .then(() => {
       input.value = "";
 
-      // Update last message preview
       db.collection("groups").doc(currentRoom).update({
         lastMessage: {
           text,
@@ -570,8 +568,7 @@ function sendRoomMessage() {
         }
       });
 
-      // Clear typing
-      db.collection("threads").doc(currentRoom)
+      db.collection("groups").doc(currentRoom)
         .collection("typing")
         .doc(currentUser.uid).delete().catch(() => {});
     })
@@ -585,10 +582,6 @@ function sendRoomMessage() {
 function handleTyping(context) {
   const targetId = context === "group" ? currentRoom : currentThreadUser;
   if (!targetId || !currentUser) return;
-
-  const inputId = context === "group" ? "roomInput" : "threadInput";
-  const input = document.getElementById(inputId);
-  if (!input || !input.value.trim()) return;
 
   const typingRef = context === "group"
     ? db.collection("groups").doc(targetId).collection("typing").doc(currentUser.uid)
@@ -1425,55 +1418,55 @@ function joinRoom(roomId) {
   currentRoom = roomId;
   switchTab("roomView");
 
+  const roomView = document.getElementById("roomView");
   const roomTitle = document.getElementById("roomTitle");
   const roomMessages = document.getElementById("roomMessages");
   const typingStatus = document.getElementById("groupTypingStatus");
 
-  if (!roomMessages) return console.warn("❌ roomMessages element not found.");
+  if (!roomView || !roomTitle || !roomMessages) return;
 
   roomMessages.innerHTML = "";
   typingStatus.textContent = "";
 
-  // Load group name
+  // Group Info
   db.collection("groups").doc(roomId).get().then(doc => {
-    if (doc.exists) {
-      const group = doc.data();
-      roomTitle.textContent = "#" + (group.name || "Group");
-    }
+    if (!doc.exists) return alert("❌ Group not found.");
+    const group = doc.data();
+    roomTitle.textContent = "#" + (group.name || "Group");
   });
 
-  // Typing status
+  // Typing Status
   if (unsubscribeTyping) unsubscribeTyping();
-  unsubscribeTyping = db.collection("threads").doc(roomId).collection("typing")
+  unsubscribeTyping = db.collection("groups").doc(roomId).collection("typing")
     .onSnapshot(snapshot => {
-      const othersTyping = snapshot.docs.filter(d => d.id !== currentUser.uid);
-      typingStatus.textContent = othersTyping.length ? "✍️ Someone is typing..." : "";
+      const others = snapshot.docs.filter(doc => doc.id !== currentUser.uid);
+      typingStatus.textContent = others.length ? "✍️ Someone is typing..." : "";
     });
 
-  // ✅ Real-time group messages from groups > {roomId} > messages
+  // Messages
   if (unsubscribeThread) unsubscribeThread();
   unsubscribeThread = db.collection("groups").doc(roomId).collection("messages")
     .orderBy("timestamp")
     .onSnapshot(snapshot => {
       roomMessages.innerHTML = "";
-
       snapshot.forEach(doc => {
         const msg = doc.data();
         const isSelf = msg.from === currentUser.uid;
+
+        const bubble = document.createElement("div");
+        bubble.className = "message-bubble " + (isSelf ? "right" : "left");
 
         let decrypted = "";
         try {
           decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
           if (!decrypted) decrypted = "[Encrypted]";
         } catch {
-          decrypted = "[Decryption failed]";
+          decrypted = "[Decryption Failed]";
         }
 
-        const bubble = document.createElement("div");
-        bubble.className = "message-bubble " + (isSelf ? "right" : "left");
         bubble.innerHTML = `
           <div class="msg-avatar">
-            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(msg.fromName || "User")}" />
+            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(msg.fromName || 'User')}" />
           </div>
           <div class="msg-content">
             <div class="msg-text">
@@ -1487,7 +1480,6 @@ function joinRoom(roomId) {
         roomMessages.appendChild(bubble);
       });
 
-      // Scroll to bottom
       roomMessages.scrollTop = roomMessages.scrollHeight;
     });
 }
