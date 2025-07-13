@@ -139,6 +139,19 @@
         </div>
       </div>
 
+      <!-- 🏠 Room View (Group Chat Thread) -->
+<div id="roomView" class="tab" style="display:none;">
+  <div class="chat-header">
+    <h3 id="roomTitle">Group Name</h3>
+    <button onclick="leaveGroup()">🚪 Leave Group</button>
+  </div>
+  <div id="roomMessages" class="messages"></div>
+  <div class="input-bar">
+    <input id="roomInput" placeholder="Type a message..." oninput="handleTyping('group')" />
+    <button onclick="sendRoomMessage()">➤</button>
+  </div>
+</div>
+      
       <!-- Group Info Panel -->
       <div class="group-info">
         <p id="groupOwner">Owner: </p>
