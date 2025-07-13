@@ -665,48 +665,6 @@ function handleTyping(context) {
   }, 3000);
 }
 
-// ===== Send Thread Message (DM) =====
-function sendThreadMessage() {
-  if (!currentThreadUser || !currentUser) return;
-
-  const input = document.getElementById("threadInput");
-  const text = input?.value.trim();
-  if (!text) return;
-
-  const encrypted = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
-  const docId = threadId(currentUser.uid, currentThreadUser);
-
-  const msg = {
-    text: encrypted,
-    from: currentUsercurrentUser.uid,
-    fromName: currentUser.displayName || currentUser.email,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  };
-
-  db.collection("threads").doc(docId).collection("messages").add(msg)
-    .then(() => {
-      input.value = "";
-
-      db.collection("threads").doc(docId).set({
-        lastMessage: {
-          text,
-          from: currentUser.uid,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        },
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        participants: [currentUser.uid, currentThreadUser],
-        [`unread.${currentThreadUser}`]: firebase.firestore.FieldValue.increment(1),
-        [`unread.${currentUser.uid}`]: 0
-      }, { merge: true });
-
-      db.collection("threads").doc(docId).collection("typing").doc(currentUser.uid).delete().catch(() => {});
-    })
-    .catch(err => {
-      console.error("❌ Failed to send thread message:", err.message || err);
-      alert("❌ Couldn't send message.");
-    });
-}
-
 // ===== Typing Indicator Handler =====
 function handleTyping(context) {
   const targetId = context === "group" ? currentRoom : currentThreadUser;
