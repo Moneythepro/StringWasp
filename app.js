@@ -1145,16 +1145,18 @@ function runSearch() {
 
   const usersDiv = document.getElementById("searchResultsUser");
   const groupsDiv = document.getElementById("searchResultsGroup");
-  usersDiv.innerHTML = "";
-  groupsDiv.innerHTML = "";
+  usersDiv.innerHTML = "<p>Searching users...</p>";
+  groupsDiv.innerHTML = "<p>Searching groups...</p>";
 
   // === USERS SEARCH ===
   db.collection("users")
-    .where("username", ">=", term)
-    .where("username", "<=", term + "\uf8ff")
+    .orderBy("username")
+    .startAt(term)
+    .endAt(term + "\uf8ff")
     .limit(15)
     .get()
     .then(snapshot => {
+      usersDiv.innerHTML = "";
       if (snapshot.empty) {
         usersDiv.innerHTML = "<p>No users found.</p>";
         return;
@@ -1183,16 +1185,18 @@ function runSearch() {
     })
     .catch(err => {
       console.error("❌ User search failed:", err.message || err);
-      usersDiv.innerHTML = `<p class="error">User search failed: ${escapeHtml(err.message)}</p>`;
+      usersDiv.innerHTML = `<p class="error">User search failed: ${escapeHtml(err.message || "Unknown error")}</p>`;
     });
 
   // === GROUPS SEARCH ===
   db.collection("groups")
-    .where("name", ">=", term)
-    .where("name", "<=", term + "\uf8ff")
+    .orderBy("name")
+    .startAt(term)
+    .endAt(term + "\uf8ff")
     .limit(15)
     .get()
     .then(snapshot => {
+      groupsDiv.innerHTML = "";
       if (snapshot.empty) {
         groupsDiv.innerHTML = "<p>No groups found.</p>";
         return;
@@ -1220,7 +1224,7 @@ function runSearch() {
     })
     .catch(err => {
       console.error("❌ Group search failed:", err.message || err);
-      groupsDiv.innerHTML = `<p class="error">Group search failed: ${escapeHtml(err.message)}</p>`;
+      groupsDiv.innerHTML = `<p class="error">Group search failed: ${escapeHtml(err.message || "Unknown error")}</p>`;
     });
 }
 
