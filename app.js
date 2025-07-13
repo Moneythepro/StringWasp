@@ -1,11 +1,10 @@
-// ====== StringWasp App.js Final Unified Version
+// ====== StringWasp App.js Final Unified Version ======
 
 // 🔐 UUID Generator
 function uuidv4() {
-  return ([1e7]+-1e3+-4e3+-8e3+-1e11)
-    .replace(/[018]/g, c =>
-      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-    );
+  return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+  );
 }
 
 // ===== Firebase & Storage Init =====
@@ -39,7 +38,7 @@ function switchTab(id) {
   const tab = document.getElementById(id);
   if (!tab) {
     console.warn(`⚠️ Tab ${id} not found. Retrying...`);
-    setTimeout(() => switchTab(id), 200); // Retry once after 200ms
+    setTimeout(() => switchTab(id), 200);
     return;
   }
 
@@ -50,44 +49,6 @@ function switchTab(id) {
 // ===== Invite Link via URL =====
 const urlParams = new URLSearchParams(window.location.search);
 const joinGroupId = urlParams.get("join");
-
-// ===== Load App After Login =====
-auth.onAuthStateChanged(async user => {
-  if (!user) {
-    switchTab("loginPage");
-    return;
-  }
-
-  currentUser = user;
-
-  try {
-    const doc = await db.collection("users").doc(user.uid).get();
-    const data = doc.data();
-
-    if (!data?.username) {
-      switchTab("usernameDialog");
-      return;
-    }
-
-    document.getElementById("usernameDisplay").textContent = data.username;
-    document.querySelector(".profile-edit-label").onclick = () => {
-  document.getElementById("profilePic").click();
-};
-
-    // ✅ INIT UI
-    loadMainUI();
-    loadChatList(); // ✅ Load all chats and inbox
-
-    // ✅ Handle invite link
-    if (joinGroupId) {
-      tryJoinGroup(joinGroupId);
-    }
-
-  } catch (err) {
-    console.error("❌ User load error:", err.message || err);
-    alert("❌ Failed to load user info: " + (err.message || JSON.stringify(err)));
-  }
-});
 
 // ===== Login/Register =====
 function login() {
@@ -131,10 +92,10 @@ function saveUsername() {
 function checkUsername() {
   db.collection("users").doc(currentUser.uid).get().then(doc => {
     if (!doc.exists || !doc.data().username) {
-      switchTab("usernameDialog"); // Ask username
+      switchTab("usernameDialog");
     } else {
       document.getElementById("usernameDisplay").textContent = doc.data().username;
-      loadMainUI(); // Proceed to app
+      loadMainUI();
     }
   });
 }
@@ -143,17 +104,54 @@ function checkUsername() {
 function loadMainUI() {
   showLoading(true);
   document.getElementById("appPage").style.display = "block";
-  
-  // Load user profile first
+
   loadProfile(() => {
     switchTab("chatTab");
     try { loadInbox(); } catch (e) { console.warn("Inbox failed", e); }
     try { loadFriends(); } catch (e) { console.warn("Friends failed", e); }
     try { loadGroups?.(); } catch (e) { console.warn("Groups skipped", e); }
     try { loadChatList(); } catch (e) { console.warn("Chats failed", e); }
+
     setTimeout(() => showLoading(false), 300);
   });
 }
+
+// ===== Load App After Login (MUST BE AT BOTTOM) =====
+auth.onAuthStateChanged(async user => {
+  if (!user) {
+    switchTab("loginPage");
+    return;
+  }
+
+  currentUser = user;
+
+  try {
+    const doc = await db.collection("users").doc(user.uid).get();
+    const data = doc.data();
+
+    if (!data?.username) {
+      switchTab("usernameDialog");
+      return;
+    }
+
+    document.getElementById("usernameDisplay").textContent = data.username;
+    document.querySelector(".profile-edit-label").onclick = () => {
+      document.getElementById("profilePic").click();
+    };
+
+    // ✅ INIT UI
+    loadMainUI();
+
+    // ✅ Handle invite link
+    if (joinGroupId) {
+      tryJoinGroup(joinGroupId);
+    }
+
+  } catch (err) {
+    console.error("❌ User load error:", err.message || err);
+    alert("❌ Failed to load user info: " + (err.message || JSON.stringify(err)));
+  }
+});
 
 // ===== Save Profile Data =====
 function saveProfile() {
