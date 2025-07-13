@@ -758,7 +758,6 @@ function escapeHtml(text) {
 }
 
 // ===== Listen to Inbox =====
-let unsubscribeInbox = null;
 
 // ===== Load Inbox Items (Cards + Badge) =====
 function listenInbox() {
