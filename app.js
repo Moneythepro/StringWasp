@@ -1314,22 +1314,77 @@ function joinGroupById(groupId) {
 }
 
 function joinRoom(roomId) {
+  if (!currentUser || !roomId) return;
+
   currentRoom = roomId;
-
   switchTab("roomView");
-  document.getElementById("roomDropdown").style.display = "block";
-  document.querySelector(".group-info").style.display = "flex";
-  document.getElementById("threadTypingStatus").textContent = "";
-document.getElementById("groupInfoButton").style.display = "block";
 
-  if (unsubscribeMessages) unsubscribeMessages();
+  const roomView = document.getElementById("roomView");
+  const roomTitle = document.getElementById("roomTitle");
+  const roomMessages = document.getElementById("roomMessages");
+  const typingStatus = document.getElementById("groupTypingStatus");
+
+  if (!roomView || !roomTitle || !roomMessages) return;
+
+  // Reset messages
+  roomMessages.innerHTML = "";
+  typingStatus.textContent = "";
+
+  // Fetch group info
+  db.collection("groups").doc(roomId).get().then(doc => {
+    if (!doc.exists) return alert("❌ Group not found.");
+    const group = doc.data();
+    roomTitle.textContent = "#" + (group.name || "Group");
+  });
+
+  // Listen for typing
   if (unsubscribeTyping) unsubscribeTyping();
+  unsubscribeTyping = db.collection("threads").doc(roomId).collection("typing")
+    .onSnapshot(snapshot => {
+      const others = snapshot.docs.filter(doc => doc.id !== currentUser.uid);
+      typingStatus.textContent = others.length ? "✍️ Someone is typing..." : "";
+    });
 
-  listenMessages();       // ✅ Listen to group messages
-  loadGroupInfo(roomId);  // ✅ Load name, members, description, etc.
+  // Listen for messages
+  if (unsubscribeThread) unsubscribeThread();
+  unsubscribeThread = db.collection("threads").doc(roomId).collection("messages")
+    .orderBy("timestamp")
+    .onSnapshot(snapshot => {
+      roomMessages.innerHTML = "";
+      snapshot.forEach(doc => {
+        const msg = doc.data();
+        const isSelf = msg.from === currentUser.uid;
+
+        const bubble = document.createElement("div");
+        bubble.className = "message-bubble " + (isSelf ? "right" : "left");
+
+        let decrypted = "";
+        try {
+          decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+          if (!decrypted) decrypted = "[Encrypted]";
+        } catch {
+          decrypted = "[Decryption failed]";
+        }
+
+        bubble.innerHTML = `
+          <div class="msg-avatar">
+            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(msg.fromName || 'User')}" />
+          </div>
+          <div class="msg-content">
+            <div class="msg-text">
+              <strong>${escapeHtml(msg.fromName || "User")}</strong><br>
+              ${escapeHtml(decrypted)}
+            </div>
+            <div class="message-time">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</div>
+          </div>
+        `;
+
+        roomMessages.appendChild(bubble);
+      });
+
+      roomMessages.scrollTop = roomMessages.scrollHeight;
+    });
 }
-
-
 
 // ===== Message User Shortcut =====
 function messageUser(uid, username) {
