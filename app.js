@@ -860,6 +860,27 @@ function addFriend(uid) {
   });
 }
 
+function sendFriendRequest(uid, username) {
+  if (!uid || uid === currentUser?.uid) return;
+
+  const inboxRef = db.collection("inbox").doc(uid).collection("items");
+  inboxRef.add({
+    type: "friend",
+    from: {
+      uid: currentUser.uid,
+      name: currentUser.displayName || currentUser.email || "Unknown"
+    },
+    read: false,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(() => {
+    const btn = document.getElementById(`friendBtn_${uid}`);
+    if (btn) btn.innerHTML = `<span style="font-size:12px;">📨 Request Sent</span>`;
+  }).catch(err => {
+    console.error("❌ Friend request failed:", err.message);
+    alert("❌ Failed to send friend request");
+  });
+}
+
 // ===== Group Info Loader =====
 function loadGroupInfo(groupId) {
   if (!groupId) return;
@@ -1115,42 +1136,62 @@ function runSearch() {
   userResults.innerHTML = "<p>Searching users...</p>";
   groupResults.innerHTML = "<p>Searching groups...</p>";
 
-  // Search users
+  // USER SEARCH
   db.collection("users")
     .where("username", ">=", term)
     .where("username", "<=", term + "\uf8ff")
     .limit(10)
     .get()
-    .then(snapshot => {
+    .then(async snapshot => {
       userResults.innerHTML = "";
       if (snapshot.empty) {
         userResults.innerHTML = "<p>No users found.</p>";
         return;
       }
 
-      snapshot.forEach(doc => {
+      for (const doc of snapshot.docs) {
         const data = doc.data();
+        const uid = doc.id;
+        const isSelf = currentUser?.uid === uid;
+        let isFriend = false;
+
+        // Check if already friends
+        try {
+          const friendDoc = await db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).get();
+          isFriend = friendDoc.exists;
+        } catch (e) {
+          console.warn("⚠️ Friend check failed:", e.message);
+        }
+
         const div = document.createElement("div");
         div.className = "search-card";
+
         div.innerHTML = `
-          <img src="${data.photoURL || `https://ui-avatars.com/api/?name=${data.username}`}" />
+          <img src="${data.photoURL || `https://ui-avatars.com/api/?name=${data.username}`}" onclick="viewUserProfile('${uid}')" />
           <div>
             <strong>@${data.username}</strong><br>
             <small>${escapeHtml(data.name || "No name")}</small>
           </div>
-          <div class="btn-group">
-            <button onclick="viewUserProfile('${doc.id}')">View</button>
-            <button onclick="addFriend('${doc.id}')">Add Friend</button>
+          <div class="btn-group" id="friendBtn_${uid}">
+            ${
+              isSelf
+                ? `<span style="font-size:12px;">👤 You</span>`
+                : isFriend
+                ? `<span style="font-size:12px;">✅ Friends</span>`
+                : `<button onclick="sendFriendRequest('${uid}', '${escapeHtml(data.username)}')">Add Friend</button>`
+            }
           </div>
         `;
+
         userResults.appendChild(div);
-      });
-    }).catch(err => {
-      userResults.innerHTML = `<p>❌ Error searching users.</p>`;
-      console.error("❌ User search failed:", err);
+      }
+    })
+    .catch(err => {
+      console.error("❌ User search failed:", err.message);
+      userResults.innerHTML = "<p>❌ Error searching users.</p>";
     });
 
-  // Search groups
+  // GROUP SEARCH
   db.collection("groups")
     .where("name", ">=", term)
     .where("name", "<=", term + "\uf8ff")
@@ -1174,9 +1215,10 @@ function runSearch() {
         `;
         groupResults.appendChild(div);
       });
-    }).catch(err => {
-      groupResults.innerHTML = `<p>❌ Error searching groups.</p>`;
-      console.error("❌ Group search failed:", err);
+    })
+    .catch(err => {
+      console.error("❌ Group search failed:", err.message);
+      groupResults.innerHTML = "<p>❌ Error searching groups.</p>";
     });
 }
 
