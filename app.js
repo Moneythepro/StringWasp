@@ -233,30 +233,72 @@ function uploadProfilePic(e) {
   const file = e.target.files[0];
   if (!file || !currentUser) return;
 
-  const ref = storage.ref().child(`avatars/${currentUser.uid}`);
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = document.getElementById("cropImage");
+    img.src = reader.result;
+
+    if (cropper) cropper.destroy();
+    cropper = new Cropper(img, {
+      aspectRatio: 1,
+      viewMode: 1,
+      autoCropArea: 1
+    });
+
+    document.getElementById("cropModal").style.display = "flex";
+  };
+  reader.readAsDataURL(file);
+}
+
+async function confirmCrop() {
+  if (!cropper || !currentUser) return;
+
   showLoading(true);
 
-  ref.put(file)
-    .then(snapshot => snapshot.ref.getDownloadURL())
-    .then(url => {
-      return db.collection("users").doc(currentUser.uid).update({ photoURL: url });
-    })
-    .then(() => {
-      document.getElementById("profilePicPreview").src = URL.createObjectURL(file);
-      alert("Profile picture updated!");
+  try {
+    const canvas = cropper.getCroppedCanvas({
+      width: 300,
+      height: 300,
+      imageSmoothingQuality: "high"
+    });
+
+    const blob = await new Promise(resolve =>
+      canvas.toBlob(resolve, "image/jpeg", 0.7)
+    );
+
+    // Convert to base64 string
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result;
+
+      await db.collection("users").doc(currentUser.uid).update({
+        avatarBase64: base64
+      });
+
+      document.getElementById("profilePicPreview").src = base64;
+      closeCropModal();
+      alert("✅ Profile picture updated!");
+
       loadProfile();
-      loadChatList(); // to refresh avatar in chat
-    })
-    .catch(err => {
-      console.error("❌ Upload error:", err);
-      alert("Failed to upload profile picture.");
-    })
-    .finally(() => showLoading(false));
+      loadChatList();
+    };
+
+    reader.readAsDataURL(blob);
+  } catch (err) {
+    console.error("❌ Crop error:", err.message || err);
+    alert("❌ Failed to upload avatar.");
+  } finally {
+    showLoading(false);
+  }
 }
+
 function closeCropModal() {
-  if (cropper) cropper.destroy();
-  cropper = null;
-  document.getElementById("cropModal").style.display = "none";
+  const modal = document.getElementById("cropModal");
+  modal.style.display = "none";
+  if (cropper) {
+    cropper.destroy();
+    cropper = null;
+  }
 }
 
 function confirmCrop() {
