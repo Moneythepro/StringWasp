@@ -34,13 +34,11 @@ function showLoading(state) {
 }
 
 // ===== Switch UI Tabs =====
-function switchTab(id) {
-  const tab = document.getElementById(id);
-  if (!tab) {
-    console.warn(`⚠️ Tab ${id} not found. Retrying...`);
-    setTimeout(() => switchTab(id), 200);
-    return;
-  }
+function switchTab(tabId) {
+  document.querySelectorAll(".tab").forEach(tab => tab.style.display = "none");
+  const selected = document.getElementById(tabId);
+  if (selected) selected.style.display = "block";
+}
 
   document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
   tab.style.display = "block";
