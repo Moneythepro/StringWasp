@@ -739,3 +739,33 @@ body.dark .status-dot {
   z-index: 50;
   flex-direction: column;
 }
+
+.msg-ticks {
+  font-size: 12px;
+  margin-left: 6px;
+  color: #999;
+}
+.message-bubble.right .msg-ticks {
+  color: #34B7F1; /* WhatsApp blue for read ticks */
+}
+
+#threadMessages {
+  scroll-behavior: smooth;
+}
+
+.chat-info h3 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.2;
+}
+.chat-info p {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.2;
+}
+
+body.dark .chat-info p {
+  color: #aaa;
+}
+
