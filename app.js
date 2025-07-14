@@ -1236,7 +1236,12 @@ function sendThreadMessage() {
   const text = input?.value.trim();
   if (!text || !currentThreadUser) return;
 
-  const fromName = document.getElementById("usernameDisplay").textContent;
+  const nameEl = document.getElementById("usernameDisplay");
+  const fromName = nameEl ? nameEl.textContent : "User";
+
+  const threadNameEl = document.getElementById("threadWithName");
+  const toName = threadNameEl ? threadNameEl.textContent : "Friend";
+
   const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
   const docId = threadId(currentUser.uid, currentThreadUser);
   const threadRef = db.collection("threads").doc(docId);
@@ -1255,7 +1260,7 @@ function sendThreadMessage() {
       participants: [currentUser.uid, currentThreadUser],
       names: {
         [currentUser.uid]: fromName,
-        [currentThreadUser]: document.getElementById("threadWithName").textContent || "Friend"
+        [currentThreadUser]: toName
       },
       lastMessage: text,
       unread: {
