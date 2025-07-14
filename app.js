@@ -1797,41 +1797,41 @@ document.addEventListener("DOMContentLoaded", () => {
     modal.style.display = "flex";
   };
 
-  // ✅ Thread view initial height fix
+  // ✅ Fix thread view height to match viewport
   const threadView = document.getElementById("threadView");
   if (threadView) {
     threadView.style.height = window.innerHeight + "px";
   }
 
-  // ✅ Scroll to bottom on input focus
+  // ✅ Smooth scroll to bottom on input focus (when keyboard opens)
   const input = document.getElementById("threadInput");
   if (input) {
     input.addEventListener("focus", () => {
       const messages = document.getElementById("threadMessages");
       if (messages) {
         setTimeout(() => {
-          messages.scrollTop = messages.scrollHeight;
+          messages.scrollTo({ top: messages.scrollHeight, behavior: "smooth" });
         }, 300);
       }
     });
   }
 });
 
-// ✅ Fix layout and scroll on keyboard open/close or resize
+// ✅ Scroll thread chat to bottom & fix layout when keyboard toggles or window resizes
 window.addEventListener("resize", () => {
   const view = document.getElementById("threadView");
-  if (view) {
-    view.style.height = window.innerHeight + "px";
-  }
-
-  const input = document.getElementById("threadInput");
   const messages = document.getElementById("threadMessages");
+  const input = document.getElementById("threadInput");
+
+  if (view) view.style.height = window.innerHeight + "px";
+
   if (document.activeElement === input && messages) {
     setTimeout(() => {
       messages.scrollTop = messages.scrollHeight;
     }, 300);
   }
 });
+
 
 
 // ===== Export Chat (Stub) =====
