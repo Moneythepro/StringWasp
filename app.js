@@ -1279,14 +1279,14 @@ function handleTyping(type) {
 
 // ===== Search (Users + Groups) =====
 function switchSearchView(view) {
-  document.getElementById("searchResultsUser").style.display = (view === "user") ? "block" : "none";
-  document.getElementById("searchResultsGroup").style.display = (view === "group") ? "block" : "none";
+  document.getElementById("searchResultsUser").style.display = view === "user" ? "block" : "none";
+  document.getElementById("searchResultsGroup").style.display = view === "group" ? "block" : "none";
 }
 
 function runSearch() {
   const input = document.getElementById("searchInput");
   const term = input?.value?.trim().toLowerCase();
-  if (!term) return;
+  if (!term || !currentUser) return;
 
   const userResults = document.getElementById("searchResultsUser");
   const groupResults = document.getElementById("searchResultsGroup");
@@ -1294,7 +1294,7 @@ function runSearch() {
   userResults.innerHTML = "";
   groupResults.innerHTML = "";
 
-  // User search
+  // 🔍 User Search
   db.collection("users")
     .where("username", ">=", term)
     .where("username", "<=", term + "\uf8ff")
@@ -1302,25 +1302,39 @@ function runSearch() {
     .then(snapshot => {
       if (snapshot.empty) {
         userResults.innerHTML = `<div class="no-results">No users found.</div>`;
-      } else {
-        snapshot.forEach(doc => {
-          const user = doc.data();
-          const card = document.createElement("div");
-          card.className = "search-result";
-          card.innerHTML = `
-            <img src="${user.avatarBase64 || 'default-avatar.png'}" class="search-avatar" />
-            <div class="search-info">
-              <div class="username">@${escapeHtml(user.username || "user")}</div>
-              <div class="bio">${escapeHtml(user.bio || "")}</div>
-            </div>
-            <button onclick="viewUserProfile('${doc.id}')">View</button>
-          `;
-          userResults.appendChild(card);
-        });
+        return;
       }
+
+      snapshot.forEach(doc => {
+        const user = doc.data();
+        if (doc.id === currentUser.uid) return; // 🚫 Skip self
+
+        const avatar = user.avatarBase64 || user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+        const card = document.createElement("div");
+        card.className = "search-result";
+        card.innerHTML = `
+          <img src="${avatar}" class="search-avatar" />
+          <div class="search-info">
+            <div class="username">@${escapeHtml(user.username || "user")}</div>
+            <div class="bio">${escapeHtml(user.bio || "No bio")}</div>
+          </div>
+          <button onclick="viewUserProfile('${doc.id}')">View</button>
+        `;
+        userResults.appendChild(card);
+
+        // 👥 Check if already friend
+        db.collection("users").doc(currentUser.uid).collection("friends").doc(doc.id)
+          .get()
+          .then(friendDoc => {
+            if (friendDoc.exists) {
+              const nameEl = card.querySelector(".username");
+              if (nameEl) nameEl.innerHTML += ` <span class="badge">Friend</span>`;
+            }
+          });
+      });
     });
 
-  // Group search
+  // 🔍 Group Search
   db.collection("groups")
     .where("name", ">=", term)
     .where("name", "<=", term + "\uf8ff")
@@ -1328,22 +1342,32 @@ function runSearch() {
     .then(snapshot => {
       if (snapshot.empty) {
         groupResults.innerHTML = `<div class="no-results">No groups found.</div>`;
-      } else {
-        snapshot.forEach(doc => {
-          const group = doc.data();
-          const card = document.createElement("div");
-          card.className = "search-result";
-          card.innerHTML = `
-            <img src="${group.icon || 'group-icon.png'}" class="search-avatar" />
-            <div class="search-info">
-              <div class="username">#${escapeHtml(group.name || "Group")}</div>
-              <div class="bio">${escapeHtml(group.description || "")}</div>
-            </div>
-            <button onclick="viewGroup('${doc.id}')">View</button>
-          `;
-          groupResults.appendChild(card);
-        });
+        return;
       }
+
+      snapshot.forEach(doc => {
+        const group = doc.data();
+        const icon = group.icon || 'group-icon.png';
+        const members = Array.isArray(group.members) ? group.members : [];
+
+        const card = document.createElement("div");
+        card.className = "search-result";
+        card.innerHTML = `
+          <img src="${icon}" class="search-avatar" />
+          <div class="search-info">
+            <div class="username">#${escapeHtml(group.name || "Group")}</div>
+            <div class="bio">${escapeHtml(group.description || "No description.")}</div>
+          </div>
+          <button onclick="joinGroupById('${doc.id}')">Join</button>
+        `;
+        groupResults.appendChild(card);
+
+        // 👤 Add "Joined" label
+        if (members.includes(currentUser.uid)) {
+          const nameEl = card.querySelector(".username");
+          if (nameEl) nameEl.innerHTML += ` <span class="badge">Joined</span>`;
+        }
+      });
     });
 }
 
