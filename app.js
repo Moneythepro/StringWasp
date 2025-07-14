@@ -1293,7 +1293,7 @@ function runSearch() {
         if (doc.id === currentUser.uid) return; // skip self
 
         const user = doc.data();
-        const avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+        const avatar = user.avatarBase64 || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
 
         const card = document.createElement("div");
         card.className = "search-result";
