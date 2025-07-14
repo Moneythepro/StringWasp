@@ -1319,7 +1319,8 @@ function sendThreadMessage() {
     text: encryptedText,
     from: currentUser.uid,
     fromName,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    seenBy: [currentUser.uid]  // ✅ Mark as seen by sender
   };
 
   threadRef.collection("messages").add(message).then(() => {
