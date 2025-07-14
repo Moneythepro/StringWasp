@@ -131,8 +131,28 @@ auth.onAuthStateChanged(async user => {
 
   currentUser = user;
 
+  // ✅ Set online status and last seen updater
+  const userRef = db.collection("users").doc(user.uid);
   try {
-    const doc = await db.collection("users").doc(user.uid).get();
+    await userRef.update({
+      status: "online",
+      lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // 🔁 Automatically set lastSeen on tab close / refresh
+    window.addEventListener("beforeunload", () => {
+      navigator.sendBeacon(`/offline?uid=${user.uid}`);
+      userRef.update({
+        status: "offline",
+        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(() => {});
+    });
+  } catch (e) {
+    console.warn("⚠️ Could not update user presence:", e.message);
+  }
+
+  try {
+    const doc = await userRef.get();
     const data = doc.data();
 
     if (!data?.username) {
