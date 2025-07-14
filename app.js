@@ -348,9 +348,8 @@ let currentProfileUID = null;
 // ===== View User Profile Modal =====
 function viewUserProfile(uid) {
   currentProfileUID = uid;
-
   db.collection("users").doc(uid).get().then(doc => {
-    if (!doc.exists) return alert("❌ User not found");
+    if (!doc.exists) return alert("User not found");
 
     const user = doc.data();
     const avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
@@ -364,29 +363,22 @@ function viewUserProfile(uid) {
 
     document.getElementById("viewProfileModal").style.display = "flex";
 
-    // Check if already friends
+    const btnGroup = document.querySelector("#viewProfileModal .btn-group");
+    if (!btnGroup) return;
+    btnGroup.innerHTML = "";
+
     db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).get().then(friendDoc => {
-      const btnGroup = document.querySelector("#viewProfileModal .btn-group");
-      if (!btnGroup) return;
-
-      btnGroup.innerHTML = "";
-
       if (friendDoc.exists) {
-        const unfriendBtn = document.createElement("button");
-        unfriendBtn.textContent = "Unfriend";
-        unfriendBtn.onclick = () => removeFriend(uid);
-        btnGroup.appendChild(unfriendBtn);
+        const btn = document.createElement("button");
+        btn.textContent = "Unfriend";
+        btn.onclick = () => removeFriend(uid);
+        btnGroup.appendChild(btn);
       } else {
-        const addBtn = document.createElement("button");
-        addBtn.textContent = "Add Friend";
-        addBtn.onclick = () => addFriend(uid);
-        btnGroup.appendChild(addBtn);
+        const btn = document.createElement("button");
+        btn.textContent = "Add Friend";
+        btn.onclick = () => addFriend(uid);
+        btnGroup.appendChild(btn);
       }
-
-      const msgBtn = document.createElement("button");
-      msgBtn.textContent = "Message";
-      msgBtn.onclick = () => openThread(uid, user.username);
-      btnGroup.appendChild(msgBtn);
     });
   });
 }
@@ -1705,22 +1697,6 @@ function autoDownloadMagnet(magnetURI) {
   });
 
   torrent.on('error', err => console.error("Torrent error:", err));
-}
-
-// ===== Search Result Click: View Profile Modal =====
-function viewUserProfile(uid) {
-  db.collection("users").doc(uid).get().then(doc => {
-    if (!doc.exists) return;
-
-    const data = doc.data();
-    document.getElementById("viewProfileUsername").textContent = "@" + (data.username || "unknown");
-    document.getElementById("viewProfileName").textContent = data.name || "";
-    document.getElementById("viewProfileBio").textContent = data.bio || "No bio";
-    document.getElementById("viewProfilePic").src = data.photoURL || "default-avatar.png";
-    currentThreadUser = uid;
-
-    document.getElementById("viewProfileModal").style.display = "flex";
-  });
 }
 
 // ===== Close Profile Modal =====
