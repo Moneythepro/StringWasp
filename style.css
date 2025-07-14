@@ -286,6 +286,13 @@ body.dark .search-info .bio {
   padding: 6px 16px;
 }
 
+#threadMessages .msg-avatar img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 /* ===== MODAL ===== */
 .modal {
   display: none;
