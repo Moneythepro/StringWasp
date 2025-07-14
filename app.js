@@ -1783,9 +1783,17 @@ document.addEventListener("DOMContentLoaded", () => {
 });
                           
 document.addEventListener("DOMContentLoaded", () => {
-  // ✅ Initial height fix
-  const threadView = document.getElementById("threadView");
-  if (threadView) threadView.style.height = window.innerHeight + "px";
+  const input = document.getElementById("threadInput");
+  const area = document.getElementById("threadMessages");
+
+  if (input) {
+    input.addEventListener("focus", () => {
+      setTimeout(() => {
+        area?.scrollTo({ top: area.scrollHeight });
+      }, 300);
+    });
+  }
+});
 
   // ✅ Scroll to bottom on input focus
 function scrollToBottomThread(smooth = true) {
@@ -1797,14 +1805,19 @@ function scrollToBottomThread(smooth = true) {
   });
 }
 
-  if (input && area) {
+  document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("threadInput");
+  const area = document.getElementById("threadMessages");
+
+  if (input) {
     input.addEventListener("focus", () => {
       setTimeout(() => {
-        area.scrollTop = area.scrollHeight;
+        area?.scrollTo({ top: area.scrollHeight });
       }, 300);
     });
   }
 });
+
 
 // ✅ Adjust height + scroll on resize (keyboard open/close)
 window.addEventListener("resize", () => {
