@@ -166,6 +166,17 @@ auth.onAuthStateChanged(async user => {
   }
 });
 
+function escapeHtml(text) {
+  if (!text) return "";
+  return text.replace(/[&<>"']/g, m => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  }[m]));
+}
+
 // ===== Save Profile Data =====
 function saveProfile() {
   const file = document.getElementById("profilePic").files[0];
@@ -763,17 +774,6 @@ function timeSince(date) {
   return "just now";
 }
 
-// ===== Escape HTML Utility =====
-function escapeHtml(text) {
-  if (!text) return "";
-  return text.replace(/[&<>"']/g, m => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  }[m]));
-}
 
 // ===== Load Inbox Items (Cards + Badge) =====
 function listenInbox() {
