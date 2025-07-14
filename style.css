@@ -307,21 +307,20 @@ body.dark .status-dot.online {
   background: #4caf50;
 }
 
-/* ===== FINAL THREAD DM VIEW (100% FIXED) ===== */
-
+/* ===== FINAL DM THREAD VIEW (100% FIXED) ===== */
 #threadView.thread-container {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   display: flex;
   flex-direction: column;
-  height: 100dvh;
   background: var(--bg, #fff);
   z-index: 999;
+  height: 100dvh;
   overflow: hidden;
 }
 
-/* === HEADER === */
-#threadView .chat-header {
+/* HEADER */
+.chat-header {
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -329,23 +328,22 @@ body.dark .status-dot.online {
   background: #f0f0f0;
   border-bottom: 1px solid #ccc;
 }
-#threadView .chat-header img {
-  width: 32px;
-  height: 32px;
+.chat-header img {
+  width: 32px; height: 32px;
   border-radius: 50%;
   margin: 0 8px;
   object-fit: cover;
 }
-#threadView .chat-info {
+.chat-info {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
-#threadView .chat-info h3 {
+.chat-info h3 {
   font-size: 15px;
   margin: 0;
 }
-#threadView .chat-info p {
+.chat-info p {
   font-size: 11px;
   color: #666;
   margin: 0;
@@ -355,15 +353,18 @@ body.dark .status-dot.online {
   font-size: 20px !important;
 }
 
-/* === SCROLLABLE MESSAGES AREA === */
-.chat-scroll-area {
+/* MAIN AREA */
+.thread-main {
   flex: 1;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
+
+/* MESSAGE LIST */
 .chat-body {
   flex: 1;
+  overflow-y: auto;
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
@@ -371,13 +372,15 @@ body.dark .status-dot.online {
   background: #fafafa;
   scroll-behavior: smooth;
 }
+
+/* TYPING STATUS */
 .typing-indicator {
   font-size: 11px;
   color: #888;
   padding: 4px 14px;
 }
 
-/* === INPUT BAR (FIXED BELOW) === */
+/* INPUT BAR */
 .chat-input-bar {
   flex-shrink: 0;
   display: flex;
@@ -407,7 +410,7 @@ body.dark .status-dot.online {
   justify-content: center;
 }
 
-/* === BUBBLES === */
+/* MESSAGE BUBBLE WRAPPER */
 .message-bubble-wrapper {
   display: flex;
   align-items: flex-end;
@@ -426,7 +429,7 @@ body.dark .status-dot.online {
   object-fit: cover;
 }
 
-/* === DARK MODE === */
+/* DARK MODE */
 body.dark #threadView .chat-header {
   background: #1f1f1f;
   border-color: #333;
