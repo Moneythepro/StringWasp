@@ -1162,6 +1162,7 @@ function openThread(uid, name) {
 
       switchTab("threadView");
 
+      // UI Setup
       document.getElementById("threadWithName").textContent = name || "Chat";
       document.getElementById("chatOptionsMenu").style.display = "none";
 
@@ -1184,15 +1185,15 @@ function openThread(uid, name) {
       if (unsubscribeThread) unsubscribeThread();
       if (unsubscribeTyping) unsubscribeTyping();
 
-      // ✅ Typing indicator listener
+      // Typing listener
       listenToTyping(threadIdStr, "thread");
 
-      // ✅ Mark as read
+      // Mark messages as read
       db.collection("threads").doc(threadIdStr).set({
         unread: { [currentUser.uid]: 0 }
       }, { merge: true });
 
-      // ✅ Listen to user status
+      // Status updates
       db.collection("users").doc(uid).onSnapshot(doc => {
         const data = doc.data();
         const status = document.getElementById("chatStatus");
@@ -1208,11 +1209,7 @@ function openThread(uid, name) {
         }
       });
 
-      setTimeout(() => {
-  document.getElementById("threadMessages")?.scrollTo({ top: 99999, behavior: "smooth" });
-}, 300);
-      
-      // 🔁 Load Messages
+      // Load messages
       unsubscribeThread = db.collection("threads")
         .doc(threadIdStr)
         .collection("messages")
@@ -1225,7 +1222,7 @@ function openThread(uid, name) {
             const msg = doc.data();
             if (!msg?.text) continue;
 
-            // 🔐 Decrypt
+            // Decrypt
             let decrypted = "";
             try {
               decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
@@ -1234,7 +1231,7 @@ function openThread(uid, name) {
               decrypted = "[Failed to decrypt]";
             }
 
-            // 👀 Mark as read if not already
+            // Mark as seen
             if (!msg.seenBy?.includes(currentUser.uid)) {
               db.collection("threads").doc(threadIdStr)
                 .collection("messages").doc(doc.id)
@@ -1243,7 +1240,7 @@ function openThread(uid, name) {
                 }).catch(console.warn);
             }
 
-            // 👤 Avatar
+            // Avatar
             let avatar = "default-avatar.png";
             try {
               const userDoc = await db.collection("users").doc(msg.from).get();
@@ -1290,24 +1287,30 @@ function openThread(uid, name) {
             area.appendChild(wrapper);
           }
 
-          area.scrollTop = area.scrollHeight;
+          // Scroll to bottom after render
+          setTimeout(() => {
+            area.scrollTo({ top: area.scrollHeight, behavior: "smooth" });
+          }, 100);
+
           renderWithMagnetSupport?.("threadMessages");
         }, err => {
           console.error("❌ Thread snapshot error:", err.message || err);
           alert("❌ Failed to load messages: " + (err.message || err));
         });
 
-      // ✅ Focus input bar after load
-      setTimeout(() => {
-        document.getElementById("threadInput")?.focus();
-      }, 300);
+      // Optional: do NOT auto-focus keyboard on desktop
+      if (window.innerWidth < 768) {
+        setTimeout(() => {
+          document.getElementById("threadInput")?.focus();
+        }, 300);
+      }
     })
     .catch(err => {
       console.error("❌ Friend check failed:", err.message || err);
       alert("❌ Failed to verify friendship.");
     });
 }
-
+      
 function deleteThread() {
   showModal("Delete this chat?", () => {
     const docId = threadId(currentUser.uid, currentThreadUser);
