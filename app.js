@@ -1797,29 +1797,32 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 });
 
-// 🧠 Scroll to bottom when keyboard appears
+// ✅ Fix for input bar not visible after keyboard closes
 window.addEventListener("resize", () => {
   const input = document.getElementById("threadInput");
   const messages = document.getElementById("threadMessages");
+  const view = document.getElementById("threadView");
 
-  if (document.activeElement === input && messages) {
-    setTimeout(() => {
-      messages.scrollTop = messages.scrollHeight;
-    }, 300);
+  if (input && messages && view) {
+    // Scroll messages to bottom if input is focused (keyboard open)
+    if (document.activeElement === input) {
+      setTimeout(() => {
+        messages.scrollTop = messages.scrollHeight;
+      }, 300);
+    } else {
+      // Keyboard closed → fix layout height
+      view.style.height = window.innerHeight + "px";
+    }
   }
 });
 
-// 🧠 Also scroll on input focus (especially on iOS)
 document.addEventListener("DOMContentLoaded", () => {
-  const input = document.getElementById("threadInput");
-  const messages = document.getElementById("threadMessages");
-
-  input?.addEventListener("focus", () => {
-    setTimeout(() => {
-      messages?.scrollTo({ top: messages.scrollHeight, behavior: "smooth" });
-    }, 300);
-  });
+  const view = document.getElementById("threadView");
+  if (view) {
+    view.style.height = window.innerHeight + "px"; // initial height
+  }
 });
+
 
 // ===== Export Chat (Stub) =====
 function exportChat() {
