@@ -311,14 +311,15 @@ body.dark .status-dot.online {
 
 #threadView.thread-container {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0; bottom: 0; left: 0; right: 0;
   display: flex;
   flex-direction: column;
   background: var(--bg, #fff);
-  z-index: 999;
   height: 100dvh;
+  z-index: 999;
   overflow: hidden;
 }
+
 
 /* HEADER */
 .chat-header {
@@ -356,7 +357,7 @@ body.dark .status-dot.online {
 }
 
 /* SCROLLABLE MESSAGES */
-.chat-body {
+#threadMessages.chat-body {
   flex: 1;
   overflow-y: auto;
   padding: 10px 12px;
@@ -402,6 +403,11 @@ body.dark .status-dot.online {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* make sure input bar doesn’t scroll away */
+.chat-input-bar {
+  flex-shrink: 0;
 }
 
 /* BUBBLE WRAPPER */
