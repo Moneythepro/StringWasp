@@ -1006,73 +1006,52 @@ function removeFriend(uid) {
 // ==== Add Friend Shortcut ====
 function addFriend(uid) {
   if (!uid || !currentUser) return;
+  if (uid === currentUser.uid) return alert("❌ You can't add yourself.");
 
-  if (uid === currentUser.uid) {
-    alert("❌ You can't add yourself.");
-    return;
-  }
+  const myUID = currentUser.uid;
+  const inboxRef = db.collection("inbox").doc(uid).collection("items");
 
   // Step 1: Check if already friends
-  const friendRef = db.collection("users").doc(currentUser.uid).collection("friends").doc(uid);
-  friendRef.get().then(doc => {
-    if (doc.exists) {
-      alert("✅ Already friends!");
-      return;
-    }
+  db.collection("users").doc(myUID).collection("friends").doc(uid).get()
+    .then(friendDoc => {
+      if (friendDoc.exists) {
+        return alert("✅ You're already friends!");
+      }
 
-    // Step 2: Check if request already sent
-    db.collection("inbox").doc(uid).collection("items")
-      .where("type", "==", "friend")
-      .where("from.uid", "==", currentUser.uid)
-      .limit(1)
-      .get()
-      .then(snapshot => {
-        if (!snapshot.empty) {
-          alert("📬 Friend request already sent!");
-          return;
-        }
+      // Step 2: Check if request already sent
+      return inboxRef
+        .where("type", "==", "friend")
+        .where("from.uid", "==", myUID)
+        .limit(1)
+        .get();
+    })
+    .then(snapshot => {
+      if (snapshot?.empty === false) {
+        return alert("📨 Friend request already sent!");
+      }
 
-        // Step 3: Send friend request
-        db.collection("inbox").doc(uid).collection("items").add({
-          type: "friend",
-          from: {
-            uid: currentUser.uid,
-            name: currentUser.displayName || currentUser.email || "Unknown"
-          },
-          read: false,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
-          alert("✅ Friend request sent!");
-        }).catch(err => {
-          console.error("❌ Friend request failed:", err);
-          alert("❌ Failed to send friend request");
-        });
+      // Step 3: Send request
+      const payload = {
+        type: "friend",
+        from: {
+          uid: myUID,
+          username: currentUser.displayName || currentUser.email || "Unknown",
+          avatar: currentUser.photoURL || "default-avatar.png"
+        },
+        read: false,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      return inboxRef.add(payload).then(() => {
+        alert("✅ Friend request sent!");
+        const btn = document.getElementById(`friendBtn_${uid}`);
+        if (btn) btn.innerHTML = `📨 Sent`;
       });
-  }).catch(err => {
-    console.error("❌ Friend check error:", err);
-    alert("❌ Could not verify friend status");
-  });
-}
-
-function sendFriendRequest(uid, username) {
-  if (!uid || uid === currentUser?.uid) return;
-
-  const inboxRef = db.collection("inbox").doc(uid).collection("items");
-  inboxRef.add({
-    type: "friend",
-    from: {
-      uid: currentUser.uid,
-      name: currentUser.displayName || currentUser.email || "Unknown"
-    },
-    read: false,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(() => {
-    const btn = document.getElementById(`friendBtn_${uid}`);
-    if (btn) btn.innerHTML = `<span style="font-size:12px;">📨 Request Sent</span>`;
-  }).catch(err => {
-    console.error("❌ Friend request failed:", err.message);
-    alert("❌ Failed to send friend request");
-  });
+    })
+    .catch(err => {
+      console.error("❌ Error sending request:", err);
+      alert("❌ Could not send friend request");
+    });
 }
 
 // ===== Group Info Loader =====
