@@ -1172,7 +1172,7 @@ function openThread(uid, name) {
 
       switchTab("threadView");
 
-      // UI Setup
+      // === UI Setup ===
       document.getElementById("threadWithName").textContent = name || "Chat";
       document.getElementById("chatOptionsMenu").style.display = "none";
 
@@ -1195,15 +1195,15 @@ function openThread(uid, name) {
       if (unsubscribeThread) unsubscribeThread();
       if (unsubscribeTyping) unsubscribeTyping();
 
-      // Typing listener
+      // === Typing listener ===
       listenToTyping(threadIdStr, "thread");
 
-      // Mark messages as read
+      // === Mark as read ===
       db.collection("threads").doc(threadIdStr).set({
         unread: { [currentUser.uid]: 0 }
       }, { merge: true });
 
-      // Status updates
+      // === Live status ===
       db.collection("users").doc(uid).onSnapshot(doc => {
         const data = doc.data();
         const status = document.getElementById("chatStatus");
@@ -1219,7 +1219,7 @@ function openThread(uid, name) {
         }
       });
 
-      // Load messages
+      // === Load messages ===
       unsubscribeThread = db.collection("threads")
         .doc(threadIdStr)
         .collection("messages")
@@ -1232,7 +1232,7 @@ function openThread(uid, name) {
             const msg = doc.data();
             if (!msg?.text) continue;
 
-            // Decrypt
+            // 🔐 Decrypt
             let decrypted = "";
             try {
               decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
@@ -1241,7 +1241,7 @@ function openThread(uid, name) {
               decrypted = "[Failed to decrypt]";
             }
 
-            // Mark as seen
+            // ✅ Mark as seen
             if (!msg.seenBy?.includes(currentUser.uid)) {
               db.collection("threads").doc(threadIdStr)
                 .collection("messages").doc(doc.id)
@@ -1250,7 +1250,7 @@ function openThread(uid, name) {
                 }).catch(console.warn);
             }
 
-            // Avatar
+            // 👤 Avatar
             let avatar = "default-avatar.png";
             try {
               const userDoc = await db.collection("users").doc(msg.from).get();
@@ -1297,14 +1297,18 @@ function openThread(uid, name) {
             area.appendChild(wrapper);
           }
 
+          // ✅ Scroll to bottom after render
           setTimeout(() => scrollToBottomThread(true), 100);
-          
           renderWithMagnetSupport?.("threadMessages");
         }, err => {
           console.error("❌ Thread snapshot error:", err.message || err);
           alert("❌ Failed to load messages: " + (err.message || err));
         });
 
+      // ✅ Reset scroll view height
+      if (typeof adjustThreadLayout === "function") {
+        setTimeout(() => adjustThreadLayout(), 200);
+      }
     })
     .catch(err => {
       console.error("❌ Friend check failed:", err.message || err);
@@ -1794,17 +1798,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
                           
-// ✅ Adjust height for mobile keyboard
-function adjustThreadView() {
-  const threadView = document.getElementById("threadView");
-  if (threadView) {
-    threadView.style.height = window.innerHeight + "px";
+function adjustThreadLayout() {
+  const view = document.getElementById("threadView");
+  if (view) {
+    view.style.height = window.innerHeight + "px";
   }
 }
 
-// ✅ Run once after DOM ready
+// Setup once DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
-  adjustThreadView();
+  adjustThreadLayout();
 
   const input = document.getElementById("threadInput");
   if (input) {
@@ -1814,9 +1817,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// ✅ Fix height + scroll on mobile resize / keyboard toggle
+// On screen resize or keyboard show/hide
 window.addEventListener("resize", () => {
-  adjustThreadView();
+  adjustThreadLayout();
 
   const input = document.getElementById("threadInput");
   if (document.activeElement === input) {
