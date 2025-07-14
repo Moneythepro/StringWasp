@@ -1287,11 +1287,6 @@ function openThread(uid, name) {
             area.appendChild(wrapper);
           }
 
-          // Scroll to bottom after render
-          setTimeout(() => {
-  area.scrollTo({ top: area.scrollHeight, behavior: "smooth" });
-}, 100);
-
           renderWithMagnetSupport?.("threadMessages");
         }, err => {
           console.error("❌ Thread snapshot error:", err.message || err);
@@ -1793,8 +1788,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if (threadView) threadView.style.height = window.innerHeight + "px";
 
   // ✅ Scroll to bottom on input focus
-  const input = document.getElementById("threadInput");
+function scrollToBottomThread(smooth = true) {
   const area = document.getElementById("threadMessages");
+  if (!area) return;
+  area.scrollTo({
+    top: area.scrollHeight,
+    behavior: smooth ? "smooth" : "auto"
+  });
+}
 
   if (input && area) {
     input.addEventListener("focus", () => {
