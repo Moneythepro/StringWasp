@@ -1341,8 +1341,7 @@ function switchSearchView(view) {
 }
 
 function runSearch() {
-  const input = document.getElementById("searchInput");
-  const term = input?.value?.trim().toLowerCase();
+  const term = document.getElementById("searchInput").value.trim().toLowerCase();
   if (!term || !currentUser) return;
 
   const userResults = document.getElementById("searchResultsUser");
@@ -1363,10 +1362,11 @@ function runSearch() {
       }
 
       snapshot.forEach(doc => {
-        const user = doc.data();
-        if (doc.id === currentUser.uid) return; // 🚫 Skip self
+        if (doc.id === currentUser.uid) return; // skip self
 
-        const avatar = user.avatarBase64 || user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+        const user = doc.data();
+        const avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+
         const card = document.createElement("div");
         card.className = "search-result";
         card.innerHTML = `
@@ -1379,13 +1379,13 @@ function runSearch() {
         `;
         userResults.appendChild(card);
 
-        // 👥 Check if already friend
+        // ✅ Show "Friend" badge if already a friend
         db.collection("users").doc(currentUser.uid).collection("friends").doc(doc.id)
           .get()
           .then(friendDoc => {
             if (friendDoc.exists) {
-              const nameEl = card.querySelector(".username");
-              if (nameEl) nameEl.innerHTML += ` <span class="badge">Friend</span>`;
+              const label = card.querySelector(".username");
+              if (label) label.innerHTML += ` <span class="badge">Friend</span>`;
             }
           });
       });
@@ -1404,7 +1404,7 @@ function runSearch() {
 
       snapshot.forEach(doc => {
         const group = doc.data();
-        const icon = group.icon || 'group-icon.png';
+        const icon = group.icon || "group-icon.png";
         const members = Array.isArray(group.members) ? group.members : [];
 
         const card = document.createElement("div");
@@ -1419,14 +1419,15 @@ function runSearch() {
         `;
         groupResults.appendChild(card);
 
-        // 👤 Add "Joined" label
+        // ✅ Mark as joined
         if (members.includes(currentUser.uid)) {
-          const nameEl = card.querySelector(".username");
-          if (nameEl) nameEl.innerHTML += ` <span class="badge">Joined</span>`;
+          const label = card.querySelector(".username");
+          if (label) label.innerHTML += ` <span class="badge">Joined</span>`;
         }
       });
     });
 }
+
 
 function renderUserSearchResult(user) {
   return `
