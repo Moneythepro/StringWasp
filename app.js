@@ -1791,7 +1791,7 @@ document.addEventListener("DOMContentLoaded", () => {
       modal.style.display = "none";
     };
   }
-}
+});
                           
 document.addEventListener("DOMContentLoaded", () => {
   // Set height on load
@@ -1825,7 +1825,7 @@ window.addEventListener("resize", () => {
     setTimeout(() => {
       area.scrollTop = area.scrollHeight;
     }, 300);
-  }
+    }
 });
 
 // ===== Export Chat (Stub) =====
