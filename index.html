@@ -161,7 +161,10 @@
       <div class="input-bar">
         <button class="icon-btn" onclick="triggerFileInput('thread')"><i data-lucide="paperclip"></i></button>
         <button class="icon-btn" onclick="shareFileViaTorrent('dm')"><i data-lucide="globe"></i></button>
-        <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" />
+        <input id="threadInput"
+       placeholder="Type a message..."
+       oninput="handleTyping('thread')"
+       onkeydown="handleThreadKey(event)" />
         <button class="icon-btn" onclick="sendThreadMessage()"><i data-lucide="send"></i></button>
         <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
       </div>
