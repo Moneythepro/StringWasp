@@ -724,3 +724,45 @@ body.dark .modal-content {
 body.dark .chat-info p {
   color: #aaa;
 }
+
+/* ===== FIX: Avatar in Thread Bubble ===== */
+.message-bubble-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 8px;
+  max-width: 90%;
+}
+
+.message-bubble-wrapper.left {
+  flex-direction: row;
+}
+
+.message-bubble-wrapper.right {
+  flex-direction: row-reverse;
+}
+
+.msg-avatar-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Optional: tighter layout */
+.message-bubble {
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: #f0f0f0;
+  max-width: 75%;
+  word-wrap: break-word;
+  font-size: 14px;
+}
+
+.message-bubble.right {
+  background: #cce5ff;
+}
+
+.message-bubble.left {
+  background: #ffffff;
+}
