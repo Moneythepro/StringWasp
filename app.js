@@ -1298,12 +1298,6 @@ function openThread(uid, name) {
           alert("❌ Failed to load messages: " + (err.message || err));
         });
 
-      // Optional: do NOT auto-focus keyboard on desktop
-      if (window.innerWidth < 768) {
-        setTimeout(() => {
-          document.getElementById("threadInput")?.focus();
-        }, 300);
-      }
     })
     .catch(err => {
       console.error("❌ Friend check failed:", err.message || err);
