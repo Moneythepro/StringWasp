@@ -366,6 +366,16 @@ body.dark .status-dot.online {
   scroll-behavior: smooth;
 }
 
+.chat-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.chat-scroll-area > .chat-body {
+  flex: 1;
+}
+
 /* === TYPING STATUS === */
 #threadTypingStatus.typing-indicator {
   font-size: 11px;
@@ -380,9 +390,6 @@ body.dark .status-dot.online {
   padding: 8px;
   background: #fff;
   border-top: 1px solid #ddd;
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
 }
 .chat-input-bar input {
   flex: 1;
