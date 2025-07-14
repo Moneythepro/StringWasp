@@ -148,7 +148,9 @@
       <h3 id="threadWithName">Friend Name</h3>
       <p id="chatStatus">Online</p>
     </div>
-    <button onclick="openChatMenu()" class="menu-btn"><i data-lucide="more-vertical"></i></button>
+    <button onclick="openChatMenu()" class="menu-btn">
+      <i data-lucide="more-vertical"></i>
+    </button>
     <div id="chatOptionsMenu" class="chat-options horizontal-menu">
       <button title="Block"><i data-lucide="ban"></i></button>
       <button title="Media"><i data-lucide="image"></i></button>
@@ -157,19 +159,19 @@
     </div>
   </div>
 
-  <!-- MAIN SCROLLABLE CHAT AREA -->
+  <!-- MAIN CHAT AREA (MESSAGES + TYPING) -->
   <div class="thread-main">
     <div id="threadMessages" class="chat-body"></div>
     <div id="threadTypingStatus" class="typing-indicator"></div>
+  </div>
 
-    <!-- INPUT BAR -->
-    <div class="chat-input-bar">
-      <button class="icon-btn" onclick="triggerFileInput('thread')"><i data-lucide="paperclip"></i></button>
-      <button class="icon-btn" onclick="shareFileViaTorrent('dm')"><i data-lucide="globe"></i></button>
-      <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" onkeydown="handleThreadKey(event)" />
-      <button class="icon-btn" onclick="sendThreadMessage()"><i data-lucide="send"></i></button>
-      <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
-    </div>
+  <!-- FIXED INPUT BAR (OUTSIDE SCROLLABLE) -->
+  <div class="chat-input-bar">
+    <button class="icon-btn" onclick="triggerFileInput('thread')"><i data-lucide="paperclip"></i></button>
+    <button class="icon-btn" onclick="shareFileViaTorrent('dm')"><i data-lucide="globe"></i></button>
+    <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" onkeydown="handleThreadKey(event)" />
+    <button class="icon-btn" onclick="sendThreadMessage()"><i data-lucide="send"></i></button>
+    <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
   </div>
 </div>
     
