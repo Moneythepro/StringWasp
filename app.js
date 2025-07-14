@@ -549,32 +549,49 @@ function loadFriendThreads() {
   const list = document.getElementById("chatList");
   if (!list || !currentUser) return;
 
+  list.innerHTML = ""; // ✅ Clear previous entries
+
   if (unsubscribeThreads) unsubscribeThreads();
 
   unsubscribeThreads = db.collection("threads")
     .where("participants", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
     .onSnapshot(async snapshot => {
-      if (snapshot.empty) return;
+      list.innerHTML = ""; // ✅ Clear again inside listener
+
+      if (snapshot.empty) {
+        list.innerHTML = `<div class="no-results">No personal chats found.</div>`;
+        return;
+      }
 
       for (const doc of snapshot.docs) {
         const thread = doc.data();
         const otherUserId = thread.participants.find(p => p !== currentUser.uid);
-        const userDoc = await db.collection("users").doc(otherUserId).get();
-        const user = userDoc.data();
-        const avatar = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+        if (!otherUserId) continue;
 
-        const card = document.createElement("div");
-        card.className = "chat-card personal-chat";
-        card.onclick = () => openThread(otherUserId, user.username);
-        card.innerHTML = `
-          <img class="friend-avatar" src="${avatar}" />
-          <div class="details">
-            <div class="name">${user.username}</div>
-            <div class="last-message">${thread.lastMessage || "Say hi 👋"}</div>
-          </div>
-        `;
-        list.appendChild(card);
+        try {
+          const userDoc = await db.collection("users").doc(otherUserId).get();
+          if (!userDoc.exists) continue;
+
+          const user = userDoc.data();
+          const avatar = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+          const name = user.username || "User";
+          const lastMsg = escapeHtml(thread.lastMessage || "Say hi 👋");
+
+          const card = document.createElement("div");
+          card.className = "chat-card personal-chat";
+          card.onclick = () => openThread(otherUserId, name);
+          card.innerHTML = `
+            <img class="friend-avatar" src="${avatar}" />
+            <div class="details">
+              <div class="name">@${name}</div>
+              <div class="last-message">${lastMsg}</div>
+            </div>
+          `;
+          list.appendChild(card);
+        } catch (e) {
+          console.warn("❌ Failed to load friend data:", e.message);
+        }
       }
     });
 }
