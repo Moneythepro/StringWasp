@@ -954,41 +954,46 @@ function renderInboxCard(data) {
 
 // ===== Friend List =====
 function loadFriends() {
-  const list = document.getElementById("friendsList");
-  if (!list || !currentUser) return;
+  const container = document.getElementById("friendsList");
+  if (!container || !currentUser) return;
 
-  list.innerHTML = "";
+  container.innerHTML = "Loading...";
 
-  db.collection("users")
-    .doc(currentUser.uid)
-    .collection("friends")
+  db.collection("users").doc(currentUser.uid).collection("friends")
     .onSnapshot(async snapshot => {
       if (snapshot.empty) {
-        list.innerHTML = `<p style="text-align:center;color:gray;">No friends yet.</p>`;
+        container.innerHTML = `<div class="no-results">You have no friends yet.</div>`;
         return;
       }
 
-      document.querySelector("#friendsTab h3").textContent = `Your Friends (${snapshot.size})`;
+      container.innerHTML = "";
 
       for (const doc of snapshot.docs) {
-        const uid = doc.id;
-        const userDoc = await db.collection("users").doc(uid).get();
-        const user = userDoc.data();
-        if (!user) continue;
+        const friendId = doc.id;
 
-        const avatar = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-        const card = document.createElement("div");
-        card.className = "friend-card";
-        card.onclick = () => viewUserProfile(uid); // or open modal
+        try {
+          const friendDoc = await db.collection("users").doc(friendId).get();
+          if (!friendDoc.exists) continue;
 
-        card.innerHTML = `
-          <img src="${avatar}" alt="avatar" />
-          <div class="friend-info">
-            <div class="name">@${user.username || "user"} <span class="status-dot ${user.online ? 'online' : 'offline'}"></span></div>
-            <div class="bio">${escapeHtml(user.bio || "No bio")}</div>
-          </div>
-        `;
-        list.appendChild(card);
+          const user = friendDoc.data();
+          const avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+          const isOnline = user.status === "online"; // optional if using status
+
+          const card = document.createElement("div");
+          card.className = "friend-card";
+          card.onclick = () => viewUserProfile(friendId);
+          card.innerHTML = `
+            <img src="${avatar}" alt="Avatar" />
+            <div class="friend-info">
+              <div class="name">${escapeHtml(user.username || "User")}</div>
+              <div class="bio">${escapeHtml(user.bio || "")}</div>
+            </div>
+            <div class="status-dot ${isOnline ? "online" : "offline"}"></div>
+          `;
+          container.appendChild(card);
+        } catch (err) {
+          console.warn("Friend load error:", err);
+        }
       }
     });
 }
