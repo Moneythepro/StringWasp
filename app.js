@@ -1208,12 +1208,15 @@ function openThread(uid, name) {
         }
       });
 
-      // ✅ Scroll fix on keyboard resize
-      window.addEventListener("resize", () => {
-        setTimeout(() => {
-          area.scrollTop = area.scrollHeight;
-        }, 100);
-      });
+      // keyboard fix ()
+window.addEventListener("resize", () => {
+  const area = document.getElementById("threadMessages");
+  if (area) {
+    setTimeout(() => {
+      area.scrollTop = area.scrollHeight;
+    }, 100);
+  }
+});
 
       // 🔁 Load Messages
       unsubscribeThread = db.collection("threads")
