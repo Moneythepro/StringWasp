@@ -1782,28 +1782,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
                           
-document.addEventListener("DOMContentLoaded", () => {
-  const input = document.getElementById("threadInput");
-  const area = document.getElementById("threadMessages");
-
-  // Initial scroll to bottom
-  if (area) {
-    setTimeout(() => {
-      area.scrollTop = area.scrollHeight;
-    }, 100);
-  }
-
-  // Scroll on input focus
-  if (input && area) {
-    input.addEventListener("focus", () => {
-      setTimeout(() => {
-        area.scrollTop = area.scrollHeight;
-      }, 300);
-    });
-  }
-});
-
-// Optional helper
+// ✅ Auto-scroll to bottom on load/focus/resize
 function scrollToBottomThread(smooth = true) {
   const area = document.getElementById("threadMessages");
   if (!area) return;
@@ -1813,19 +1792,33 @@ function scrollToBottomThread(smooth = true) {
   });
 }
 
+// ✅ Adjust thread view height on load and keyboard resize
+function adjustThreadView() {
+  const threadView = document.getElementById("threadView");
+  if (threadView) {
+    threadView.style.height = window.innerHeight + "px";
+  }
+}
 
-// ✅ Adjust height + scroll on resize (keyboard open/close)
-window.addEventListener("resize", () => {
-  const view = document.getElementById("threadView");
-  if (view) view.style.height = window.innerHeight + "px";
+// ✅ Setup once after DOM is ready
+document.addEventListener("DOMContentLoaded", () => {
+  adjustThreadView();
 
   const input = document.getElementById("threadInput");
-  const area = document.getElementById("threadMessages");
+  if (input) {
+    input.addEventListener("focus", () => {
+      setTimeout(() => scrollToBottomThread(true), 200);
+    });
+  }
+});
 
-  if (document.activeElement === input && area) {
-    setTimeout(() => {
-      area.scrollTop = area.scrollHeight;
-    }, 300);
+// ✅ Watch for screen resize (e.g., keyboard open/close)
+window.addEventListener("resize", () => {
+  adjustThreadView();
+
+  const input = document.getElementById("threadInput");
+  if (document.activeElement === input) {
+    setTimeout(() => scrollToBottomThread(true), 200);
   }
 });
 
