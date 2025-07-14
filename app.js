@@ -440,21 +440,20 @@ function createGroup() {
   });
 }
 
+// ===== Chat List Loader =====
 function loadChatList() {
   const list = document.getElementById("chatList");
   if (!list) return;
 
-  list.innerHTML = ""; // ✅ Clear only once
+  list.innerHTML = ""; // ✅ Clear chat list
 
-  try {
-    loadRealtimeGroups();
-    loadFriendThreads();
-  } catch (e) {
-    console.warn("❌ Chat load failed:", e);
-  }
+  setTimeout(() => {
+    try { loadRealtimeGroups(); } catch (e) { console.error("❌ Group load failed:", e); }
+    try { loadFriendThreads(); } catch (e) { console.error("❌ Thread load failed:", e); }
+  }, 200);
 }
 
-// === Realtime Group Chats ===
+// ===== Realtime Group Chats =====
 function loadRealtimeGroups() {
   const list = document.getElementById("chatList");
   if (!list || !currentUser) return;
@@ -465,12 +464,18 @@ function loadRealtimeGroups() {
     .where("members", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
     .onSnapshot(snapshot => {
-      if (snapshot.empty) return;
-
       snapshot.forEach(doc => {
         const group = doc.data();
         const icon = group.icon || "group-icon.png";
+        const name = group.name || "Group";
         const unread = group.unread?.[currentUser.uid] || 0;
+
+        let lastMsg = "[No message]";
+        if (typeof group.lastMessage === "string") {
+          lastMsg = group.lastMessage;
+        } else if (typeof group.lastMessage === "object") {
+          lastMsg = group.lastMessage?.text || "[No message]";
+        }
 
         const card = document.createElement("div");
         card.className = "chat-card group-chat";
@@ -478,17 +483,19 @@ function loadRealtimeGroups() {
         card.innerHTML = `
           <img class="group-avatar" src="${icon}" />
           <div class="details">
-            <div class="name">#${group.name || "Group"}</div>
-            <div class="last-message">${escapeHtml(group.lastMessage || "Start the conversation")}</div>
+            <div class="name">#${escapeHtml(name)}</div>
+            <div class="last-message">${escapeHtml(lastMsg)}</div>
           </div>
           ${unread > 0 ? `<span class="badge">${unread}</span>` : ""}
         `;
         list.appendChild(card);
       });
+    }, err => {
+      console.error("❌ Group snapshot error:", err.message || err);
     });
 }
 
-// === Direct Message Threads ===
+// ===== Direct Message Threads =====
 function loadFriendThreads() {
   const list = document.getElementById("chatList");
   if (!list || !currentUser) return;
@@ -506,14 +513,25 @@ function loadFriendThreads() {
         const otherUid = thread.participants.find(uid => uid !== currentUser.uid);
         if (!otherUid) continue;
 
-        const userDoc = await db.collection("users").doc(otherUid).get();
-        const user = userDoc.data();
+        let user;
+        try {
+          const userDoc = await db.collection("users").doc(otherUid).get();
+          user = userDoc.data();
+        } catch {
+          continue;
+        }
 
-        const avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-        const name = user.username || "Unknown";
+        const avatar = user?.avatarBase64 || user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.username || "User")}`;
+        const name = user?.username || "Friend";
+
+        let lastMsg = "[No message]";
+        if (typeof thread.lastMessage === "string") {
+          lastMsg = thread.lastMessage;
+        } else if (typeof thread.lastMessage === "object") {
+          lastMsg = thread.lastMessage.text || "[No message]";
+        }
 
         const unread = thread.unread?.[currentUser.uid] || 0;
-        const lastMsg = escapeHtml(thread.lastMessage || "Say hi 👋");
 
         const card = document.createElement("div");
         card.className = "chat-card personal-chat";
@@ -521,17 +539,19 @@ function loadFriendThreads() {
         card.innerHTML = `
           <img class="friend-avatar" src="${avatar}" />
           <div class="details">
-            <div class="name">${name}</div>
-            <div class="last-message">${lastMsg}</div>
+            <div class="name">${escapeHtml(name)}</div>
+            <div class="last-message">${escapeHtml(lastMsg)}</div>
           </div>
           ${unread > 0 ? `<span class="badge">${unread}</span>` : ""}
         `;
         list.appendChild(card);
       }
+    }, err => {
+      console.error("❌ Thread snapshot error:", err.message || err);
     });
 }
 
-// ===== Chat Filter (Local) =====
+// ===== Chat Filter (Local search) =====
 function searchChats(term) {
   const chats = document.querySelectorAll(".chat-card");
   chats.forEach(chat => {
@@ -540,6 +560,7 @@ function searchChats(term) {
   });
 }
 
+// ===== Load Messages in Group =====
 function loadRoomMessages(groupId) {
   const box = document.getElementById("roomMessages");
   if (!groupId || !currentUser || !box) return;
@@ -555,9 +576,13 @@ function loadRoomMessages(groupId) {
         const m = doc.data();
         const fromSelf = m.from === currentUser.uid;
         const msgText = m.text || "";
-        const decrypted = m.text
-          ? CryptoJS.AES.decrypt(msgText, "yourSecretKey").toString(CryptoJS.enc.Utf8)
-          : "";
+        let decrypted = "";
+
+        try {
+          decrypted = CryptoJS.AES.decrypt(msgText, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+        } catch {
+          decrypted = "[Encrypted]";
+        }
 
         const bubble = document.createElement("div");
         bubble.className = `message-bubble ${fromSelf ? "right" : "left"}`;
@@ -569,6 +594,8 @@ function loadRoomMessages(groupId) {
       });
 
       box.scrollTop = box.scrollHeight;
+    }, err => {
+      console.error("❌ Room message load failed:", err.message || err);
     });
 }
 
