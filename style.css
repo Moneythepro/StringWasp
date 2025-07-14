@@ -189,11 +189,16 @@ body.dark .message-bubble.right {
 
 /* ===== INPUT BAR ===== */
 .input-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fafafa;
   display: flex;
   align-items: center;
   padding: 8px;
-  background: #fff;
-  border-top: 1px solid #ccc;
+  border-top: 1px solid #ddd;
+  z-index: 99;
 }
 .input-bar input {
   flex: 1;
@@ -622,7 +627,7 @@ body.dark .status-dot {
 }
 
 .input-bar {
-  position: sticky;
+  position: fixed;
   bottom: 0;
   background: #fafafa;
   z-index: 1;
