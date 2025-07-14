@@ -632,3 +632,22 @@ body.dark .status-dot {
   background: #fafafa;
   z-index: 1;
 }
+
+.chat-options.horizontal-menu {
+  display: flex;
+  justify-content: space-around;
+  padding: 10px;
+  background: #fff;
+  border-top: 1px solid #ddd;
+}
+
+.chat-options.horizontal-menu button {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #555;
+}
+
+.chat-options.horizontal-menu button:hover {
+  color: #128C7E;
+}
