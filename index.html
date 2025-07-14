@@ -70,7 +70,7 @@
     <!-- 💬 Chats -->
     <div id="chatTab" class="tab">
       <div class="chat-header">
-        <input id="chatSearchInput" placeholder="Search chats..." oninput="searchChats()" />
+        <input id="chatSearchInput" placeholder="Search chats..." oninput="searchChats(this.value)" />
         <button onclick="searchChats()"><i data-lucide="search"></i></button>
         <button onclick="loadChatList()"><i data-lucide="refresh-ccw"></i></button>
       </div>
