@@ -707,25 +707,52 @@ body.dark .modal-content {
 }
 
 /* ===== MISC ===== */
-#threadMessages {
-  scroll-behavior: smooth;
+
+/* ===== FIX: WhatsApp-style Thread Layout ===== */
+
+.full-screen-thread {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg, #fff);
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 999;
 }
-.chat-info h3 {
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.2;
+
+.chat-header {
+  flex-shrink: 0;
+  padding: 10px 12px;
+  background: #f8f8f8;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  z-index: 10;
 }
-.chat-info p {
-  margin: 0;
-  font-size: 12px;
-  color: #666;
-  line-height: 1.2;
-}
-body.dark .chat-info p {
-  color: #aaa;
+
+.chat-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: 10px;
+  overflow: hidden;
 }
 
 #threadMessages {
-  padding: 12px 10px 90px; /* 90px bottom = safe space above input bar */
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 10px 90px; /* ensure room above input bar */
   scroll-behavior: smooth;
+}
+
+.input-bar {
+  flex-shrink: 0;
+  padding: 8px;
+  background: #fafafa;
+  border-top: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
 }
