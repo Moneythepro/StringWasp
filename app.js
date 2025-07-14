@@ -445,11 +445,20 @@ function loadChatList() {
   const list = document.getElementById("chatList");
   if (!list) return;
 
-  list.innerHTML = ""; // ✅ Clear chat list
+  list.innerHTML = ""; // ✅ Clear only once before loading both chats
 
   setTimeout(() => {
-    try { loadRealtimeGroups(); } catch (e) { console.error("❌ Group load failed:", e); }
-    try { loadFriendThreads(); } catch (e) { console.error("❌ Thread load failed:", e); }
+    try {
+      loadRealtimeGroups();
+    } catch (e) {
+      console.error("❌ Group load failed:", e);
+    }
+
+    try {
+      loadFriendThreads();
+    } catch (e) {
+      console.error("❌ Thread load failed:", e);
+    }
   }, 200);
 }
 
@@ -464,6 +473,11 @@ function loadRealtimeGroups() {
     .where("members", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
     .onSnapshot(snapshot => {
+      if (snapshot.empty) {
+        console.log("ℹ No groups found.");
+        return;
+      }
+
       snapshot.forEach(doc => {
         const group = doc.data();
         const icon = group.icon || "group-icon.png";
@@ -493,6 +507,13 @@ function loadRealtimeGroups() {
     }, err => {
       console.error("❌ Group snapshot error:", err.message || err);
     });
+  setTimeout(() => {
+  const list = document.getElementById("chatList");
+  if (list && list.children.length === 0) {
+    list.innerHTML = `<div class="no-results">No chats found.</div>`;
+  }
+}, 1500);
+  
 }
 
 // ===== Direct Message Threads =====
@@ -506,7 +527,10 @@ function loadFriendThreads() {
     .where("participants", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
     .onSnapshot(async snapshot => {
-      if (snapshot.empty) return;
+      if (snapshot.empty) {
+        console.log("ℹ No threads found.");
+        return;
+      }
 
       for (const doc of snapshot.docs) {
         const thread = doc.data();
@@ -516,19 +540,20 @@ function loadFriendThreads() {
         let user;
         try {
           const userDoc = await db.collection("users").doc(otherUid).get();
+          if (!userDoc.exists) continue;
           user = userDoc.data();
         } catch {
           continue;
         }
 
-        const avatar = user?.avatarBase64 || user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.username || "User")}`;
-        const name = user?.username || "Friend";
+        const avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+        const name = user.username || "Friend";
 
         let lastMsg = "[No message]";
         if (typeof thread.lastMessage === "string") {
           lastMsg = thread.lastMessage;
         } else if (typeof thread.lastMessage === "object") {
-          lastMsg = thread.lastMessage.text || "[No message]";
+          lastMsg = thread.lastMessage?.text || "[No message]";
         }
 
         const unread = thread.unread?.[currentUser.uid] || 0;
@@ -549,6 +574,13 @@ function loadFriendThreads() {
     }, err => {
       console.error("❌ Thread snapshot error:", err.message || err);
     });
+  setTimeout(() => {
+  const list = document.getElementById("chatList");
+  if (list && list.children.length === 0) {
+    list.innerHTML = `<div class="no-results">No chats found.</div>`;
+  }
+}, 1500);
+  
 }
 
 // ===== Chat Filter (Local search) =====
