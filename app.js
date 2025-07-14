@@ -1816,7 +1816,6 @@ document.addEventListener("DOMContentLoaded", () => {
 window.addEventListener("resize", () => {
   const threadView = document.getElementById("threadView");
   if (threadView) {
-    threadView.style.height = window.innerHeight + "px";
   }
 
   const input = document.getElementById("threadInput");
