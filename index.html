@@ -182,8 +182,21 @@
       </div>
     </div>
 
-    <!-- 🔍 Modals (View Profile, Confirm, Crop, Group Info) -->
-    <!-- ... keep as in your version, update icons if needed -->
+    <!-- 👁️ View Profile Modal -->
+<div id="viewProfileModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="document.getElementById('viewProfileModal').style.display='none'">×</span>
+    <img id="viewProfilePic" src="default-avatar.png" alt="Avatar" style="width:80px;height:80px;border-radius:50%;margin:10px auto;display:block;" />
+    <h3 id="viewProfileName">Name</h3>
+    <p id="viewProfileUsername">@username</p>
+    <p id="viewProfileBio">No bio</p>
+    <p id="viewProfileEmail">Email</p>
+    <p id="viewProfileStatus">Status</p>
+    <div class="btn-group">
+      <!-- Buttons like Add Friend / Unfriend / Message will be injected here -->
+    </div>
+  </div>
+</div>
 
   </div>
 
