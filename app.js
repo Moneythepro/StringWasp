@@ -444,21 +444,14 @@ function loadChatList() {
   const list = document.getElementById("chatList");
   if (!list) return;
 
-  list.innerHTML = ""; // 🔄 Clear list first
+  list.innerHTML = ""; // ✅ Clear only once
 
-  setTimeout(() => {
-    try {
-      loadRealtimeGroups();  // ✅ Group chats
-    } catch (e) {
-      console.warn("❌ Group load error:", e);
-    }
-
-    try {
-      loadFriendThreads();   // ✅ Personal chats
-    } catch (e) {
-      console.warn("❌ DM load error:", e);
-    }
-  }, 200);
+  try {
+    loadRealtimeGroups();
+    loadFriendThreads();
+  } catch (e) {
+    console.warn("❌ Chat load failed:", e);
+  }
 }
 
 // === Realtime Group Chats ===
