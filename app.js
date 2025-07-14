@@ -968,25 +968,39 @@ function loadFriends() {
         return;
       }
 
+      document.querySelector("#friendsTab h3").textContent = `Your Friends (${snapshot.size})`;
+
       for (const doc of snapshot.docs) {
         const uid = doc.id;
         const userDoc = await db.collection("users").doc(uid).get();
         const user = userDoc.data();
         if (!user) continue;
 
+        const avatar = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
         const card = document.createElement("div");
         card.className = "friend-card";
-        card.onclick = () => viewUserProfile(uid);
+        card.onclick = () => viewUserProfile(uid); // or open modal
+
         card.innerHTML = `
-          <img src="${user.avatar || 'default-avatar.png'}" />
+          <img src="${avatar}" alt="avatar" />
           <div class="friend-info">
-            <div class="name">@${user.username || "user"}</div>
+            <div class="name">@${user.username || "user"} <span class="status-dot ${user.online ? 'online' : 'offline'}"></span></div>
             <div class="bio">${escapeHtml(user.bio || "No bio")}</div>
           </div>
         `;
         list.appendChild(card);
       }
     });
+}
+
+function removeFriend(uid) {
+  if (!currentUser || !uid) return;
+
+  if (confirm("❌ Remove this friend?")) {
+    db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).delete()
+      .then(() => alert("✅ Friend removed"))
+      .catch(err => alert("❌ Failed: " + err.message));
+  }
 }
 
 // ==== Add Friend Shortcut ====
