@@ -482,3 +482,17 @@ body.dark .status-dot.online {
 body.dark .status-dot {
   background: #555;
 }
+
+.chat-start-btn {
+  background: #128C7E;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-left: auto;
+}
+.chat-start-btn:hover {
+  background: #0b6c60;
+}
