@@ -1126,6 +1126,7 @@ function openThread(uid, name) {
       switchTab("threadView");
 
       document.getElementById("threadWithName").textContent = name || "Chat";
+      document.getElementById("chatOptionsMenu").style.display = "none";
 
       const dropdown = document.getElementById("roomDropdown");
       if (dropdown) dropdown.style.display = "none";
