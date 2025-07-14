@@ -1178,50 +1178,41 @@ function openThread(uid, name) {
             }
 
             // 👤 Avatar
-            let avatar = "default-avatar.png";
-            try {
-              const userDoc = await db.collection("users").doc(msg.from).get();
-              if (userDoc.exists) {
-                const user = userDoc.data();
-                avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-              }
-            } catch (e) {
-              console.warn("⚠️ Avatar fetch failed:", e.message);
-            }
-
-            const isSelf = msg.from === currentUser.uid;
-            const bubble = document.createElement("div");
-            bubble.className = "message-bubble " + (isSelf ? "right" : "left");
-
-            bubble.innerHTML = `
-              <div class="msg-avatar">
-                <img src="${avatar}" alt="avatar" />
-              </div>
-              <div class="msg-content">
-                <div class="msg-text">
-                  <strong>${escapeHtml(msg.fromName || "User")}</strong><br>
-                  ${escapeHtml(decrypted)}
-                </div>
-                <div class="message-time">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</div>
-              </div>
-            `;
-
-            area.appendChild(bubble);
-          }
-
-          area.scrollTop = area.scrollHeight;
-          renderWithMagnetSupport?.("threadMessages");
-        }, err => {
-          console.error("❌ Thread snapshot error:", err.message || err);
-          alert("❌ Failed to load messages: " + (err.message || err));
-        });
-
-    })
-    .catch(err => {
-      console.error("❌ Friend check failed:", err.message || err);
-      alert("❌ Failed to verify friendship.");
-    });
+let avatar = "default-avatar.png";
+try {
+  const userDoc = await db.collection("users").doc(msg.from).get();
+  if (userDoc.exists) {
+    const user = userDoc.data();
+    avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+  }
+} catch (e) {
+  console.warn("⚠️ Avatar fetch failed:", e.message);
 }
+
+const isSelf = msg.from === currentUser.uid;
+const bubble = document.createElement("div");
+bubble.className = "message-bubble " + (isSelf ? "right" : "left");
+
+bubble.innerHTML = `
+  <div class="msg-content">
+    <div class="msg-text">
+      <strong>${escapeHtml(msg.fromName || "User")}</strong><br>
+      ${escapeHtml(decrypted)}
+    </div>
+    <div class="message-time">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</div>
+  </div>
+`;
+
+const wrapper = document.createElement("div");
+wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
+
+const avatarImg = document.createElement("img");
+avatarImg.src = avatar;
+avatarImg.className = "msg-avatar-img";
+
+wrapper.appendChild(avatarImg);
+wrapper.appendChild(bubble);
+area.appendChild(wrapper);
 
 
 function deleteThread() {
