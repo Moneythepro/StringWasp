@@ -596,6 +596,15 @@ function loadFriendThreads() {
     });
 }
 
+// ===== Chat Filter (Local) =====
+function searchChats(term) {
+  const chats = document.querySelectorAll(".chat-card");
+  chats.forEach(chat => {
+    const text = chat.textContent.toLowerCase();
+    chat.style.display = text.includes(term.toLowerCase()) ? "block" : "none";
+  });
+}
+
 function loadRoomMessages(groupId) {
   const box = document.getElementById("roomMessages");
   if (!groupId || !currentUser || !box) return;
