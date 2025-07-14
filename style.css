@@ -307,23 +307,27 @@ body.dark .status-dot.online {
   background: #4caf50;
 }
 
-/* ===== THREAD CHAT VIEW (FIXED WHATSAPP STYLE) ===== */
+/* ===== THREAD CHAT VIEW (FULLY FIXED WHATSAPP STYLE) ===== */
 #threadView {
   position: fixed;
   top: 0; bottom: 0; left: 0; right: 0;
   display: flex;
   flex-direction: column;
+  height: 100vh;
   background: var(--bg, #fff);
   z-index: 999;
+  overflow: hidden;
 }
 
-/* HEADER */
+/* HEADER - Fixed Top */
 #threadView .chat-header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   padding: 10px;
   background: #f0f0f0;
   border-bottom: 1px solid #ccc;
+  z-index: 2;
 }
 #threadView .chat-header img {
   width: 36px; height: 36px;
@@ -345,9 +349,9 @@ body.dark .status-dot.online {
   color: #666;
   margin: 0;
 }
-#chatName { display: none; } /* 💬 HIDE CHAT NAME LABEL */
+#chatName { display: none; } /* 💬 Hide extra label */
 
-/* MESSAGES */
+/* SCROLLABLE MESSAGE AREA */
 #threadMessages {
   flex: 1;
   overflow-y: auto;
@@ -356,25 +360,26 @@ body.dark .status-dot.online {
   flex-direction: column;
   gap: 10px;
   background: #fafafa;
+  min-height: 0;
 }
 
-/* TYPING STATUS */
+/* TYPING STATUS (Sticky Above Input) */
 #threadTypingStatus {
   font-size: 12px;
   color: #888;
   padding: 4px 14px;
+  background: #fafafa;
 }
 
-/* INPUT BAR */
+/* INPUT BAR - Fixed Bottom */
 #threadView .input-bar {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   padding: 10px;
   background: #fff;
   border-top: 1px solid #ddd;
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
+  z-index: 3;
 }
 #threadView .input-bar input {
   flex: 1;
@@ -393,7 +398,7 @@ body.dark .status-dot.online {
   border: none;
 }
 
-/* === BUBBLES (Existing classes) === */
+/* === BUBBLES === */
 .message-bubble-wrapper {
   display: flex;
   align-items: flex-end;
