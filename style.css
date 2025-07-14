@@ -874,3 +874,61 @@ body.dark .chat-options {
 body.dark .horizontal-menu button {
   color: #aaa;
 }
+
+/* ===== SAFE THREAD UI FIX (add this last) ===== */
+
+/* 1. Ensure thread takes full screen properly */
+.full-screen-thread {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  z-index: 1000 !important;
+}
+
+/* 2. Fix message scrolling container */
+#threadMessages {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 12px !important;
+  padding-bottom: 70px !important; /* Space for input bar */
+}
+
+/* 3. Input bar stays glued to bottom */
+.input-bar {
+  position: sticky !important;
+  bottom: 0 !important;
+  background: var(--input-bg, #f5f5f5) !important;
+  border-top: 1px solid var(--border-color, #ddd) !important;
+}
+
+/* 4. Message bubble fixes (minimum required) */
+.message-bubble {
+  max-width: 75% !important;
+  padding: 10px 14px !important;
+  border-radius: 18px !important;
+  margin-bottom: 8px !important;
+}
+
+.message-bubble.left {
+  background: var(--msg-left-bg, #fff) !important;
+  align-self: flex-start !important;
+  border-radius: 0 18px 18px 18px !important;
+}
+
+.message-bubble.right {
+  background: var(--msg-right-bg, #dcf8c6) !important;
+  align-self: flex-end !important;
+  border-radius: 18px 0 18px 18px !important;
+}
+
+/* 5. Dark mode variables (prevents flash) */
+body.dark {
+  --input-bg: #1a1a1a;
+  --border-color: #333;
+  --msg-left-bg: #262626;
+  --msg-right-bg: #1e442a;
+}
