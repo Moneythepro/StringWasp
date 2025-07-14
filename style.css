@@ -307,22 +307,21 @@ body.dark .status-dot.online {
   background: #4caf50;
 }
 
-/* ===== FINAL THREAD DM VIEW (MOBILE FIRST FIXED) ===== */
+/* ===== FINAL THREAD DM VIEW (100% FIXED) ===== */
 
 #threadView.thread-container {
   position: fixed;
-  top: 0; bottom: 0; left: 0; right: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   display: flex;
   flex-direction: column;
-  background: var(--bg, #fff);
   height: 100dvh;
+  background: var(--bg, #fff);
   z-index: 999;
   overflow: hidden;
 }
 
-
-/* HEADER */
-.chat-header {
+/* === HEADER === */
+#threadView .chat-header {
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -330,23 +329,23 @@ body.dark .status-dot.online {
   background: #f0f0f0;
   border-bottom: 1px solid #ccc;
 }
-.chat-header img {
+#threadView .chat-header img {
   width: 32px;
   height: 32px;
   border-radius: 50%;
   margin: 0 8px;
   object-fit: cover;
 }
-.chat-info {
+#threadView .chat-info {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
-.chat-info h3 {
+#threadView .chat-info h3 {
   font-size: 15px;
   margin: 0;
 }
-.chat-info p {
+#threadView .chat-info p {
   font-size: 11px;
   color: #666;
   margin: 0;
@@ -356,10 +355,15 @@ body.dark .status-dot.online {
   font-size: 20px !important;
 }
 
-/* SCROLLABLE MESSAGES */
-#threadMessages.chat-body {
+/* === SCROLLABLE MESSAGES AREA === */
+.chat-scroll-area {
   flex: 1;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.chat-body {
+  flex: 1;
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
@@ -367,16 +371,13 @@ body.dark .status-dot.online {
   background: #fafafa;
   scroll-behavior: smooth;
 }
-
-/* TYPING INDICATOR */
 .typing-indicator {
   font-size: 11px;
   color: #888;
   padding: 4px 14px;
 }
 
-/* FIXED INPUT BAR */
-
+/* === INPUT BAR (FIXED BELOW) === */
 .chat-input-bar {
   flex-shrink: 0;
   display: flex;
@@ -384,10 +385,7 @@ body.dark .status-dot.online {
   padding: 8px;
   background: #fff;
   border-top: 1px solid #ddd;
-  z-index: 2;
 }
-
-
 .chat-input-bar input {
   flex: 1;
   padding: 8px 14px;
@@ -409,12 +407,7 @@ body.dark .status-dot.online {
   justify-content: center;
 }
 
-/* make sure input bar doesn’t scroll away */
-.chat-input-bar {
-  flex-shrink: 0;
-}
-
-/* BUBBLE WRAPPER */
+/* === BUBBLES === */
 .message-bubble-wrapper {
   display: flex;
   align-items: flex-end;
@@ -433,8 +426,8 @@ body.dark .status-dot.online {
   object-fit: cover;
 }
 
-/* DARK MODE */
-body.dark .chat-header {
+/* === DARK MODE === */
+body.dark #threadView .chat-header {
   background: #1f1f1f;
   border-color: #333;
 }
