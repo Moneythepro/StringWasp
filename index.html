@@ -24,16 +24,14 @@
     <h2>Login</h2>
     <input type="email" id="email" placeholder="Email" />
     <input type="password" id="password" placeholder="Password" />
-    <button onclick="login()">Login</button>
-    <button onclick="register()">Register</button>
-  </div>
+    <button onclick="login()"><i data-lucide="log-in"></i> Login</button>
+    <button onclick="register()"><i data-lucide="user-plus"></i> Register</button>
 
   <!-- 👤 Username Setup -->
   <div id="usernameDialog" class="tab" style="display:none;">
     <h3>Pick a Username</h3>
     <input id="newUsername" placeholder="Username" />
-    <button onclick="saveUsername()">Save</button>
-  </div>
+    <button onclick="saveUsername()"><i data-lucide="check"></i> Save</button>
 
   <!-- 📱 Main App -->
   <div id="appPage" class="tabContent">
@@ -84,8 +82,7 @@
     <div id="friendsTab" class="tab">
   <h3>Your Friends</h3>
   <div id="friendsList"></div>
-      <button onclick="removeFriend(currentProfileUID)">Unfriend</button>
-    </div>
+      <button onclick="removeFriend(currentProfileUID)"><i data-lucide="user-minus"></i> Unfriend</button>
     
       
     <!-- 🔔 Inbox Tab -->
@@ -133,10 +130,9 @@
       <input id="profilePhone" placeholder="Phone Number" />
       <input id="profileEmail" placeholder="Public Email" />
       <input id="profileUsername" placeholder="Edit Username" />
-      <button onclick="saveProfile()">Save</button>
-      <button onclick="logout()">Logout</button>
-      <button onclick="contactSupport()">Contact Us</button>
-    </div>
+      <button onclick="saveProfile()"><i data-lucide="save"></i> Save</button>
+      <button onclick="logout()"><i data-lucide="log-out"></i> Logout</button>
+      <button onclick="contactSupport()"><i data-lucide="help-circle"></i> Contact Us</button>
 
     <!-- 💬 DM View -->
 <div id="threadView" class="tab full-screen-thread">
@@ -217,8 +213,8 @@
       <img id="cropImage" alt="Crop Preview" style="max-width: 100%; border-radius: 12px;" />
     </div>
     <div class="btn-group" style="margin-top: 12px; display: flex; gap: 10px; justify-content: center;">
-      <button onclick="confirmCrop()">Crop & Upload</button>
-      <button onclick="closeCropModal()">Cancel</button>
+      <button onclick="confirmCrop()"><i data-lucide="crop"></i> Crop & Upload</button>
+      <button onclick="closeCropModal()"><i data-lucide="x-circle"></i> Cancel</button>
     </div>
   </div>
 </div>
