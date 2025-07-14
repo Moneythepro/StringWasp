@@ -1777,6 +1777,7 @@ function copyToClipboard(text) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  // ✅ Setup modal
   const modal = document.getElementById("customModal");
   const modalNo = document.getElementById("modalNo");
   const modalYes = document.getElementById("modalYes");
@@ -1788,38 +1789,47 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  window.showModal = function(title, html) {
+  window.showModal = function (title, html) {
     if (!modal || !modalMessage) return;
     modalMessage.innerHTML = html;
     if (modalYes) modalYes.style.display = "none";
     if (modalNo) modalNo.textContent = "Close";
     modal.style.display = "flex";
   };
-});
 
-// ✅ Fix for input bar not visible after keyboard closes
-window.addEventListener("resize", () => {
+  // ✅ Thread view initial height fix
+  const threadView = document.getElementById("threadView");
+  if (threadView) {
+    threadView.style.height = window.innerHeight + "px";
+  }
+
+  // ✅ Scroll to bottom on input focus
   const input = document.getElementById("threadInput");
-  const messages = document.getElementById("threadMessages");
-  const view = document.getElementById("threadView");
-
-  if (input && messages && view) {
-    // Scroll messages to bottom if input is focused (keyboard open)
-    if (document.activeElement === input) {
-      setTimeout(() => {
-        messages.scrollTop = messages.scrollHeight;
-      }, 300);
-    } else {
-      // Keyboard closed → fix layout height
-      view.style.height = window.innerHeight + "px";
-    }
+  if (input) {
+    input.addEventListener("focus", () => {
+      const messages = document.getElementById("threadMessages");
+      if (messages) {
+        setTimeout(() => {
+          messages.scrollTop = messages.scrollHeight;
+        }, 300);
+      }
+    });
   }
 });
 
-document.addEventListener("DOMContentLoaded", () => {
+// ✅ Fix layout and scroll on keyboard open/close or resize
+window.addEventListener("resize", () => {
   const view = document.getElementById("threadView");
   if (view) {
-    view.style.height = window.innerHeight + "px"; // initial height
+    view.style.height = window.innerHeight + "px";
+  }
+
+  const input = document.getElementById("threadInput");
+  const messages = document.getElementById("threadMessages");
+  if (document.activeElement === input && messages) {
+    setTimeout(() => {
+      messages.scrollTop = messages.scrollHeight;
+    }, 300);
   }
 });
 
