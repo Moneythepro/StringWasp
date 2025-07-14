@@ -1784,8 +1784,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
                           
-// ✅ Auto-scroll to bottom on load/focus/resize
-function scrollToBottomThread(smooth = true) {
+function ensureThreadScrolledToBottom(smooth = true) {
   const area = document.getElementById("threadMessages");
   if (!area) return;
   area.scrollTo({
@@ -1794,33 +1793,30 @@ function scrollToBottomThread(smooth = true) {
   });
 }
 
-// ✅ Adjust thread view height on load and keyboard resize
-function adjustThreadView() {
+function updateThreadHeight() {
   const threadView = document.getElementById("threadView");
   if (threadView) {
     threadView.style.height = window.innerHeight + "px";
   }
 }
 
-// ✅ Setup once after DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
-  adjustThreadView();
+  updateThreadHeight();
 
   const input = document.getElementById("threadInput");
   if (input) {
     input.addEventListener("focus", () => {
-      setTimeout(() => scrollToBottomThread(true), 200);
+      setTimeout(() => ensureThreadScrolledToBottom(true), 200);
     });
   }
 });
 
-// ✅ Watch for screen resize (e.g., keyboard open/close)
 window.addEventListener("resize", () => {
-  adjustThreadView();
+  updateThreadHeight();
 
   const input = document.getElementById("threadInput");
   if (document.activeElement === input) {
-    setTimeout(() => scrollToBottomThread(true), 200);
+    setTimeout(() => ensureThreadScrolledToBottom(true), 200);
   }
 });
 
