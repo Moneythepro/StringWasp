@@ -139,13 +139,14 @@
     </div>
 
     <!-- 💬 DM View -->
-<div id="threadView" class="tab full-screen-thread">
+<!-- 💬 DM View (Fixed WhatsApp Style) -->
+<div id="threadView" class="tab thread-container">
+  <!-- HEADER -->
   <div class="chat-header">
     <button onclick="switchTab('chatTab')"><i data-lucide="arrow-left"></i></button>
-    <img id="chatProfilePic" class="header-avatar" src="default-avatar.png" alt="Avatar" />
+    <img id="chatProfilePic" class="header-avatar" src="default-avatar.png" />
     <div class="chat-info">
-      <h3 id="chatName">Chat Name</h3>
-      <h3 id="threadWithName">Chat</h3>
+      <h3 id="threadWithName">Friend Name</h3>
       <p id="chatStatus">Online</p>
     </div>
     <button onclick="openChatMenu()" class="menu-btn"><i data-lucide="more-vertical"></i></button>
@@ -157,10 +158,12 @@
     </div>
   </div>
 
-  <div id="threadMessages" class="messages"></div>
+  <!-- MESSAGE LIST -->
+  <div id="threadMessages" class="chat-body"></div>
   <div id="threadTypingStatus" class="typing-indicator"></div>
 
-  <div class="input-bar">
+  <!-- INPUT BAR -->
+  <div class="chat-input-bar">
     <button class="icon-btn" onclick="triggerFileInput('thread')"><i data-lucide="paperclip"></i></button>
     <button class="icon-btn" onclick="shareFileViaTorrent('dm')"><i data-lucide="globe"></i></button>
     <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" onkeydown="handleThreadKey(event)" />
@@ -168,7 +171,7 @@
     <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
   </div>
 </div>
-
+    
     <!-- 💬 Group Chat View -->
     <div id="roomView" class="tab" style="display:none;">
       <div class="chat-header">
