@@ -1786,16 +1786,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("threadInput");
   const area = document.getElementById("threadMessages");
 
-  if (input) {
+  // Initial scroll to bottom
+  if (area) {
+    setTimeout(() => {
+      area.scrollTop = area.scrollHeight;
+    }, 100);
+  }
+
+  // Scroll on input focus
+  if (input && area) {
     input.addEventListener("focus", () => {
       setTimeout(() => {
-        area?.scrollTo({ top: area.scrollHeight });
+        area.scrollTop = area.scrollHeight;
       }, 300);
     });
   }
 });
 
-  // ✅ Scroll to bottom on input focus
+// Optional helper
 function scrollToBottomThread(smooth = true) {
   const area = document.getElementById("threadMessages");
   if (!area) return;
@@ -1804,19 +1812,6 @@ function scrollToBottomThread(smooth = true) {
     behavior: smooth ? "smooth" : "auto"
   });
 }
-
-  document.addEventListener("DOMContentLoaded", () => {
-  const input = document.getElementById("threadInput");
-  const area = document.getElementById("threadMessages");
-
-  if (input) {
-    input.addEventListener("focus", () => {
-      setTimeout(() => {
-        area?.scrollTo({ top: area.scrollHeight });
-      }, 300);
-    });
-  }
-});
 
 
 // ✅ Adjust height + scroll on resize (keyboard open/close)
