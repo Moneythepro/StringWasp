@@ -1784,7 +1784,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
                           
-function ensureThreadScrolledToBottom(smooth = true) {
+// ✅ Scroll helper
+function scrollToBottomThread(smooth = true) {
   const area = document.getElementById("threadMessages");
   if (!area) return;
   area.scrollTo({
@@ -1793,30 +1794,33 @@ function ensureThreadScrolledToBottom(smooth = true) {
   });
 }
 
-function updateThreadHeight() {
+// ✅ Adjust height for mobile keyboard
+function adjustThreadView() {
   const threadView = document.getElementById("threadView");
   if (threadView) {
     threadView.style.height = window.innerHeight + "px";
   }
 }
 
+// ✅ Run once after DOM ready
 document.addEventListener("DOMContentLoaded", () => {
-  updateThreadHeight();
+  adjustThreadView();
 
   const input = document.getElementById("threadInput");
   if (input) {
     input.addEventListener("focus", () => {
-      setTimeout(() => ensureThreadScrolledToBottom(true), 200);
+      setTimeout(() => scrollToBottomThread(true), 200);
     });
   }
 });
 
+// ✅ Fix height + scroll on mobile resize / keyboard toggle
 window.addEventListener("resize", () => {
-  updateThreadHeight();
+  adjustThreadView();
 
   const input = document.getElementById("threadInput");
   if (document.activeElement === input) {
-    setTimeout(() => ensureThreadScrolledToBottom(true), 200);
+    setTimeout(() => scrollToBottomThread(true), 200);
   }
 });
 
