@@ -473,13 +473,24 @@ function createGroup() {
 
 function loadChatList() {
   const list = document.getElementById("chatList");
-  if (list) list.innerHTML = ""; // ✅ Only clear once
+  if (!list) return;
 
-  // Load groups first, then threads
+  list.innerHTML = ""; // Clear previous list only once
+
+  // Load group chats and friend threads with slight delay
   setTimeout(() => {
-    loadRealtimeGroups();   // ✅ Group chats
-    loadFriendThreads();    // ✅ Personal (DM) chats
-  }, 300);
+    try {
+      loadRealtimeGroups();   // ✅ Group chats
+    } catch (e) {
+      console.warn("Group load failed:", e);
+    }
+
+    try {
+      loadFriendThreads();    // ✅ Personal (DM) chats
+    } catch (e) {
+      console.warn("Friend thread load failed:", e);
+    }
+  }, 100); // Slight delay is fine to avoid UI blocking
 }
 
 // === Realtime Group Chats ===
@@ -647,15 +658,13 @@ function handleTyping(context) {
 
   let typingRef;
   if (context === "group" && currentRoom) {
-    typingRef = db
-      .collection("threads")
+    typingRef = db.collection("threads")
       .doc(currentRoom)
       .collection("typing")
       .doc(currentUser.uid);
   } else if (context === "thread" && currentThreadUser) {
     const thread = threadId(currentUser.uid, currentThreadUser);
-    typingRef = db
-      .collection("threads")
+    typingRef = db.collection("threads")
       .doc(thread)
       .collection("typing")
       .doc(currentUser.uid);
@@ -664,34 +673,48 @@ function handleTyping(context) {
   }
 
   typingRef.set({ typing: true }).catch(console.warn);
+
+  // Clear typing after 3 seconds
   setTimeout(() => {
     typingRef.delete().catch(() => {});
   }, 3000);
 }
 
-// ===== Typing Indicator Listener =====
+// ===== Typing Indicator Listener (with usernames) =====
 function listenToTyping(targetId, context) {
   const typingBox = document.getElementById(
     context === "group" ? "groupTypingStatus" : "threadTypingStatus"
   );
 
-  if (unsubscribeTyping) unsubscribeTyping(); // clear old listener
+  if (!typingBox) return;
 
-  unsubscribeTyping = db
-    .collection("threads")
+  if (unsubscribeTyping) unsubscribeTyping(); // remove previous
+
+  unsubscribeTyping = db.collection("threads")
     .doc(targetId)
     .collection("typing")
-    .onSnapshot(snapshot => {
-      let typingUsers = [];
-      snapshot.forEach(doc => {
-        if (doc.id !== currentUser.uid && doc.data().typing) {
-          typingUsers.push(doc.id); // Optional: map to usernames
-        }
-      });
+    .onSnapshot(async snapshot => {
+      const typingUsernames = [];
 
-      typingBox.innerText = typingUsers.length
-        ? `${typingUsers.length} typing...`
-        : "";
+      for (const doc of snapshot.docs) {
+        if (doc.id !== currentUser.uid && doc.data().typing) {
+          try {
+            const userSnap = await db.collection("users").doc(doc.id).get();
+            const username = userSnap.exists ? userSnap.data().username : "Someone";
+            typingUsernames.push(username);
+          } catch {
+            typingUsernames.push("Someone");
+          }
+        }
+      }
+
+      if (typingUsernames.length === 1) {
+        typingBox.innerText = `✍️ ${typingUsernames[0]} is typing...`;
+      } else if (typingUsernames.length > 1) {
+        typingBox.innerText = `✍️ ${typingUsernames.join(", ")} are typing...`;
+      } else {
+        typingBox.innerText = "";
+      }
     });
 }
 
@@ -1495,7 +1518,7 @@ function joinRoom(groupId) {
   messageList.innerHTML = "";
   typingStatus.textContent = "";
 
-  // Load group metadata
+  // ⏳ Load group metadata
   db.collection("groups").doc(groupId).get().then(doc => {
     if (doc.exists) {
       const group = doc.data();
@@ -1505,50 +1528,67 @@ function joinRoom(groupId) {
     }
   });
 
-  // Unsubscribe previous listeners
+  // ❌ Unsubscribe from previous listeners
   if (unsubscribeRoomMessages) unsubscribeRoomMessages();
   if (unsubscribeTyping) unsubscribeTyping();
 
-  // Load room messages
+  // ✅ Start typing listener for this group
+  listenToTyping(groupId, "group");
+
+  // 💬 Load group messages
   unsubscribeRoomMessages = db.collection("threads")
     .doc(groupId)
     .collection("messages")
     .orderBy("timestamp")
-    .onSnapshot(snapshot => {
+    .onSnapshot(async snapshot => {
       messageList.innerHTML = "";
 
-      snapshot.forEach(doc => {
+      for (const doc of snapshot.docs) {
         const msg = doc.data();
         const isSelf = msg.from === currentUser.uid;
         const bubble = document.createElement("div");
         bubble.className = "message-bubble " + (isSelf ? "right" : "left");
 
-        const content = escapeHtml(msg.text || "[No message]");
+        let avatar = "default-avatar.png";
+
+        try {
+          const senderDoc = await db.collection("users").doc(msg.from).get();
+          if (senderDoc.exists) {
+            const user = senderDoc.data();
+            avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+          }
+        } catch (e) {
+          console.warn("⚠️ Failed to fetch group sender avatar:", e.message);
+        }
+
+        const decrypted = (() => {
+          try {
+            return CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+          } catch {
+            return "[Failed to decrypt]";
+          }
+        })();
+
         bubble.innerHTML = `
           <div class="msg-avatar">
-            <img src="${isSelf ? currentUser.photoURL || 'default-avatar.png' : 'default-avatar.png'}" />
+            <img src="${avatar}" />
           </div>
           <div class="msg-content">
-            <div class="msg-text">${content}</div>
+            <div class="msg-text">
+              <strong>${escapeHtml(msg.fromName || "User")}</strong><br>
+              ${escapeHtml(decrypted)}
+            </div>
             <div class="message-time">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</div>
           </div>
         `;
         messageList.appendChild(bubble);
-      });
+      }
 
       messageList.scrollTop = messageList.scrollHeight;
-    });
-
-  // Typing indicator
-  unsubscribeTyping = db.collection("threads").doc(groupId).collection("typing")
-    .onSnapshot(snapshot => {
-      const others = [];
-      snapshot.forEach(doc => {
-        if (doc.id !== currentUser.uid) others.push(doc.id);
-      });
-      typingStatus.textContent = others.length
-        ? `✍️ ${others.length} typing...`
-        : "";
+      renderWithMagnetSupport?.("roomMessages");
+    }, err => {
+      console.error("❌ Room message error:", err.message || err);
+      alert("❌ Failed to load group chat: " + (err.message || err));
     });
 }
 
