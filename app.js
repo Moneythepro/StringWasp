@@ -1208,16 +1208,10 @@ function openThread(uid, name) {
         }
       });
 
-      // keyboard fix ()
-window.addEventListener("resize", () => {
-  const area = document.getElementById("threadMessages");
-  if (area) {
-    setTimeout(() => {
-      area.scrollTop = area.scrollHeight;
-    }, 100);
-  }
-});
-
+      setTimeout(() => {
+  document.getElementById("threadMessages")?.scrollTo({ top: 99999, behavior: "smooth" });
+}, 300);
+      
       // 🔁 Load Messages
       unsubscribeThread = db.collection("threads")
         .doc(threadIdStr)
@@ -1803,7 +1797,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 });
 
-// ====== KEYBOARD SCROLL FIX FOR INPUT BAR ======
+// 🧠 Scroll to bottom when keyboard appears
 window.addEventListener("resize", () => {
   const input = document.getElementById("threadInput");
   const messages = document.getElementById("threadMessages");
@@ -1815,12 +1809,14 @@ window.addEventListener("resize", () => {
   }
 });
 
+// 🧠 Also scroll on input focus (especially on iOS)
 document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("threadInput");
+  const messages = document.getElementById("threadMessages");
+
   input?.addEventListener("focus", () => {
-    const messages = document.getElementById("threadMessages");
     setTimeout(() => {
-      messages.scrollTop = messages.scrollHeight;
+      messages?.scrollTo({ top: messages.scrollHeight, behavior: "smooth" });
     }, 300);
   });
 });
