@@ -1315,11 +1315,10 @@ function runSearch() {
 
   const userResults = document.getElementById("searchResultsUser");
   const groupResults = document.getElementById("searchResultsGroup");
-
   userResults.innerHTML = "";
   groupResults.innerHTML = "";
 
-  // 🔍 User Search
+  // 🔍 USER SEARCH
   db.collection("users")
     .where("username", ">=", term)
     .where("username", "<=", term + "\uf8ff")
@@ -1330,37 +1329,36 @@ function runSearch() {
         return;
       }
 
-      snapshot.forEach(doc => {
+      snapshot.forEach(async doc => {
         if (doc.id === currentUser.uid) return; // skip self
 
         const user = doc.data();
-        const avatar = user.avatarBase64 || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+        const avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
 
         const card = document.createElement("div");
         card.className = "search-result";
         card.innerHTML = `
           <img src="${avatar}" class="search-avatar" />
           <div class="search-info">
-            <div class="username">@${escapeHtml(user.username || "user")}</div>
+            <div class="username">@${escapeHtml(user.username)}</div>
             <div class="bio">${escapeHtml(user.bio || "No bio")}</div>
           </div>
-          <button onclick="viewUserProfile('${doc.id}')">View</button>
+          <button id="friendBtn_${doc.id}" onclick="addFriend('${doc.id}')">Add Friend</button>
         `;
         userResults.appendChild(card);
 
-        // ✅ Show "Friend" badge if already a friend
-        db.collection("users").doc(currentUser.uid).collection("friends").doc(doc.id)
-          .get()
-          .then(friendDoc => {
-            if (friendDoc.exists) {
-              const label = card.querySelector(".username");
-              if (label) label.innerHTML += ` <span class="badge">Friend</span>`;
-            }
-          });
+        // ✅ Mark as Friend if exists
+        const friendDoc = await db.collection("users").doc(currentUser.uid).collection("friends").doc(doc.id).get();
+        if (friendDoc.exists) {
+          const btn = card.querySelector("button");
+          btn.textContent = "Friend";
+          btn.disabled = true;
+          btn.classList.add("disabled-btn");
+        }
       });
     });
 
-  // 🔍 Group Search
+  // 🔍 GROUP SEARCH
   db.collection("groups")
     .where("name", ">=", term)
     .where("name", "<=", term + "\uf8ff")
@@ -1374,29 +1372,25 @@ function runSearch() {
       snapshot.forEach(doc => {
         const group = doc.data();
         const icon = group.icon || "group-icon.png";
-        const members = Array.isArray(group.members) ? group.members : [];
+        const members = group.members || [];
+        const joined = members.includes(currentUser.uid);
 
         const card = document.createElement("div");
         card.className = "search-result";
         card.innerHTML = `
           <img src="${icon}" class="search-avatar" />
           <div class="search-info">
-            <div class="username">#${escapeHtml(group.name || "Group")}</div>
+            <div class="username">#${escapeHtml(group.name)}</div>
             <div class="bio">${escapeHtml(group.description || "No description.")}</div>
           </div>
-          <button onclick="joinGroupById('${doc.id}')">Join</button>
+          <button ${joined ? "disabled" : `onclick="joinGroupById('${doc.id}')"`}>
+            ${joined ? "Joined" : "Join"}
+          </button>
         `;
         groupResults.appendChild(card);
-
-        // ✅ Mark as joined
-        if (members.includes(currentUser.uid)) {
-          const label = card.querySelector(".username");
-          if (label) label.innerHTML += ` <span class="badge">Joined</span>`;
-        }
       });
     });
 }
-
 
 function renderUserSearchResult(user) {
   return `
