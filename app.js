@@ -473,12 +473,12 @@ function createGroup() {
 
 function loadChatList() {
   const list = document.getElementById("chatList");
-  if (list) list.innerHTML = "";
+  if (list) list.innerHTML = ""; // ✅ Only clear once
 
-  // Small delay to avoid overlap
+  // Load groups first, then threads
   setTimeout(() => {
-    loadRealtimeGroups();
-    loadFriendThreads();
+    loadRealtimeGroups();   // ✅ Group chats
+    loadFriendThreads();    // ✅ Personal (DM) chats
   }, 300);
 }
 
