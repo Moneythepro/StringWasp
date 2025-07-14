@@ -627,3 +627,73 @@ body.dark .status-dot {
   background: #fafafa;
   z-index: 1;
 }
+
+@import url('https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600&display=swap');
+
+* {
+  font-family: 'Urbanist', 'Segoe UI', sans-serif;
+}
+
+.header {
+  background: linear-gradient(90deg, #003973, #005aa7);
+}
+
+.header .logo {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #fff;
+}
+
+#usernameDisplay::before {
+  content: "StringWasp | ";
+  font-weight: 600;
+  color: #69a6ff;
+}
+
+/* Update primary buttons */
+button,
+.chat-start-btn,
+.floating-btn {
+  background: #005aa7;
+  color: #fff;
+}
+button:hover,
+.chat-start-btn:hover,
+.floating-btn:hover {
+  background: #004a8b;
+}
+
+/* Unread badge */
+.badge {
+  background: #2962ff;
+}
+
+/* Input bar background */
+.input-bar {
+  background: #f4f7fb;
+  border-top: 1px solid #c0d4f2;
+}
+
+/* Light bubble */
+.message-bubble.left {
+  background: #f9f9ff;
+}
+
+/* Your own messages */
+.message-bubble.right {
+  background: #dbeafe;
+}
+
+@media (max-width: 600px) {
+  .chat-card, .friend-card, .search-result {
+    margin: 6px 10px;
+    padding: 8px;
+  }
+  .message-bubble {
+    font-size: 13px;
+  }
+  .header {
+    padding: 10px;
+  }
+}
