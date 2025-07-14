@@ -1143,6 +1143,16 @@ function loadGroupInfo(groupId) {
   });
 }
 
+// ✅ Scroll to bottom of thread messages
+function scrollToBottomThread(smooth = true) {
+  const area = document.getElementById("threadMessages");
+  if (!area) return;
+  area.scrollTo({
+    top: area.scrollHeight,
+    behavior: smooth ? "smooth" : "auto"
+  });
+}
+
 // ===== DM Utilities =====
 function threadId(a, b) {
   return [a, b].sort().join("_");
@@ -1784,16 +1794,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
                           
-// ✅ Scroll helper
-function scrollToBottomThread(smooth = true) {
-  const area = document.getElementById("threadMessages");
-  if (!area) return;
-  area.scrollTo({
-    top: area.scrollHeight,
-    behavior: smooth ? "smooth" : "auto"
-  });
-}
-
 // ✅ Adjust height for mobile keyboard
 function adjustThreadView() {
   const threadView = document.getElementById("threadView");
