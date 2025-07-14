@@ -544,60 +544,27 @@ function loadFriendThreads() {
     .where("participants", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
     .onSnapshot(async snapshot => {
-      list.innerHTML = ""; // Clear previous list
+      if (snapshot.empty) return;
 
       for (const doc of snapshot.docs) {
-        const t = doc.data();
-        const otherUID = t.participants.find(p => p !== currentUser.uid);
-        if (!otherUID) continue;
-
-        let name = "Friend";
-        let avatar = "default-avatar.png";
-
-        try {
-          const userDoc = await db.collection("users").doc(otherUID).get();
-          if (userDoc.exists) {
-            const user = userDoc.data();
-            name = user.username || user.name || "Friend";
-            avatar = user.avatarBase64 || user.photoURL || "default-avatar.png";
-          }
-        } catch (e) {
-          console.warn("⚠️ Couldn't fetch user:", e.message);
-        }
-
-        let msgText = "[No message]";
-        let fromSelf = false;
-        let isMedia = false;
-        let timeAgo = "";
-
-        if (typeof t.lastMessage === "object") {
-          msgText = t.lastMessage.text || "[No message]";
-          fromSelf = t.lastMessage.from === currentUser.uid;
-          isMedia = !!t.lastMessage.fileURL;
-          if (t.lastMessage.timestamp?.toDate) {
-            timeAgo = timeSince(t.lastMessage.timestamp.toDate());
-          }
-        }
-
-        const preview = isMedia ? "📎 Media File" : `${fromSelf ? "You: " : ""}${escapeHtml(msgText)}`;
-        const unread = t.unread?.[currentUser.uid] || 0;
-        const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
+        const thread = doc.data();
+        const otherUserId = thread.participants.find(p => p !== currentUser.uid);
+        const userDoc = await db.collection("users").doc(otherUserId).get();
+        const user = userDoc.data();
+        const avatar = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
 
         const card = document.createElement("div");
-        card.className = "chat-card";
-        card.onclick = () => openThread(otherUID, name);
+        card.className = "chat-card personal-chat";
+        card.onclick = () => openThread(otherUserId, user.username);
         card.innerHTML = `
-          <img src="${avatar}" class="friend-avatar" />
+          <img class="friend-avatar" src="${avatar}" />
           <div class="details">
-            <div class="name">@${escapeHtml(name)} ${badgeHTML}</div>
-            <div class="last-message">${preview}</div>
-            <div class="last-time">${timeAgo}</div>
+            <div class="name">${user.username}</div>
+            <div class="last-message">${thread.lastMessage || "Say hi 👋"}</div>
           </div>
         `;
         list.appendChild(card);
       }
-    }, err => {
-      console.error("❌ DM threads load error:", err.message || err);
     });
 }
 
