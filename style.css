@@ -307,10 +307,10 @@ body.dark .status-dot.online {
   background: #4caf50;
 }
 
-/* ===== THREAD CHAT VIEW (FULLY FIXED WHATSAPP STYLE) ===== */
+/* ===== FINAL FIXED DM CHAT VIEW ===== */
 #threadView {
   position: fixed;
-  top: 0; bottom: 0; left: 0; right: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -319,15 +319,16 @@ body.dark .status-dot.online {
   overflow: hidden;
 }
 
-/* HEADER - Fixed Top */
+/* === HEADER (STICKY) === */
 #threadView .chat-header {
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   padding: 10px;
   background: #f0f0f0;
   border-bottom: 1px solid #ccc;
-  z-index: 2;
+  position: sticky;
+  top: 0;
+  z-index: 5;
 }
 #threadView .chat-header img {
   width: 36px; height: 36px;
@@ -349,9 +350,9 @@ body.dark .status-dot.online {
   color: #666;
   margin: 0;
 }
-#chatName { display: none; } /* 💬 Hide extra label */
+#chatName { display: none; } /* Don't show "Chat Name" label */
 
-/* SCROLLABLE MESSAGE AREA */
+/* === MESSAGE LIST (ONLY SCROLLS THIS) === */
 #threadMessages {
   flex: 1;
   overflow-y: auto;
@@ -360,26 +361,25 @@ body.dark .status-dot.online {
   flex-direction: column;
   gap: 10px;
   background: #fafafa;
-  min-height: 0;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
 }
 
-/* TYPING STATUS (Sticky Above Input) */
+/* === TYPING INDICATOR === */
 #threadTypingStatus {
   font-size: 12px;
   color: #888;
   padding: 4px 14px;
-  background: #fafafa;
 }
 
-/* INPUT BAR - Fixed Bottom */
+/* === INPUT BAR (ALWAYS AT BOTTOM) === */
 #threadView .input-bar {
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   padding: 10px;
   background: #fff;
   border-top: 1px solid #ddd;
-  z-index: 3;
+  flex-shrink: 0;
 }
 #threadView .input-bar input {
   flex: 1;
@@ -398,7 +398,7 @@ body.dark .status-dot.online {
   border: none;
 }
 
-/* === BUBBLES === */
+/* === BUBBLE WRAPPER === */
 .message-bubble-wrapper {
   display: flex;
   align-items: flex-end;
@@ -406,13 +406,15 @@ body.dark .status-dot.online {
 }
 .message-bubble-wrapper.left { flex-direction: row; }
 .message-bubble-wrapper.right { flex-direction: row-reverse; }
+
 .msg-avatar-img {
-  width: 32px; height: 32px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   object-fit: cover;
 }
 
-/* DARK MODE */
+/* === DARK MODE === */
 body.dark #threadView .chat-header {
   background: #1f1f1f;
   border-color: #333;
