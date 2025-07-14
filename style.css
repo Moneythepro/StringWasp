@@ -299,6 +299,57 @@ body.dark .search-info .bio {
   padding: 10px;
 }
 
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+}
+body.dark .modal-content {
+  background: #222;
+  color: #eee;
+}
+
+.modal .close {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.btn-group {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 15px;
+}
+.btn-group button {
+  padding: 8px 12px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: none;
+  background: #128C7E;
+  color: white;
+  cursor: pointer;
+}
+.btn-group button:hover {
+  background: #0b6c60;
+}
+
 /* ===== LOADER ===== */
 #loadingOverlay {
   display: none;
