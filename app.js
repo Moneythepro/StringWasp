@@ -957,36 +957,35 @@ function loadFriends() {
   const list = document.getElementById("friendsList");
   if (!list || !currentUser) return;
 
-  list.innerHTML = "<em>Loading friends...</em>";
+  list.innerHTML = "";
 
-  db.collection("users").doc(currentUser.uid).collection("friends").get()
-    .then(snapshot => {
-      list.innerHTML = "";
+  db.collection("users")
+    .doc(currentUser.uid)
+    .collection("friends")
+    .onSnapshot(async snapshot => {
+      if (snapshot.empty) {
+        list.innerHTML = `<p style="text-align:center;color:gray;">No friends yet.</p>`;
+        return;
+      }
 
-      snapshot.forEach(doc => {
-        const div = document.createElement("div");
-        div.className = "friend-entry";
+      for (const doc of snapshot.docs) {
+        const uid = doc.id;
+        const userDoc = await db.collection("users").doc(uid).get();
+        const user = userDoc.data();
+        if (!user) continue;
 
-        db.collection("users").doc(doc.id).get()
-          .then(friendDoc => {
-            const friend = friendDoc.data() || {};
-            const username = friend.username || friend.email || doc.id;
-
-            div.innerHTML = `
-              <img src="${friend.photoURL || 'default-avatar.png'}" class="friend-avatar" />
-              <div class="friend-name">${username}</div>
-              <button onclick="openThread('${doc.id}', '${escapeHtml(username)}')">💬 Chat</button>
-            `;
-            list.appendChild(div);
-          })
-          .catch(err => {
-            console.error(`❌ Error fetching friend profile (${doc.id}):`, err.message || err);
-          });
-      });
-    })
-    .catch(err => {
-      console.error("❌ Error loading friends:", err.message || err);
-      list.innerHTML = "<p style='color:red'>Failed to load friends.</p>";
+        const card = document.createElement("div");
+        card.className = "friend-card";
+        card.onclick = () => viewUserProfile(uid);
+        card.innerHTML = `
+          <img src="${user.avatar || 'default-avatar.png'}" />
+          <div class="friend-info">
+            <div class="name">@${user.username || "user"}</div>
+            <div class="bio">${escapeHtml(user.bio || "No bio")}</div>
+          </div>
+        `;
+        list.appendChild(card);
+      }
     });
 }
 
