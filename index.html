@@ -96,17 +96,25 @@
     </div>
 
     <!-- 🔍 Search Tab -->
-    <div id="searchTab" class="tab">
-      <h3>Search</h3>
-      <input id="searchInput" placeholder="Search users or groups..." />
-      <div class="search-buttons">
-        <button onclick="switchSearchView('user')"><i data-lucide="user-search"></i> Users</button>
-        <button onclick="switchSearchView('group')"><i data-lucide="users"></i> Groups</button>
-        <button onclick="runSearch(); switchSearchView('user')"><i data-lucide="search"></i> Search</button>
-      </div>
-      <div id="searchResultsUser" class="search-results"></div>
-      <div id="searchResultsGroup" class="search-results" style="display:none;"></div>
-    </div>
+<div id="searchTab" class="tab">
+  <h3>Search</h3>
+  <input id="searchInput" placeholder="Search users or groups..." />
+
+  <div class="search-buttons">
+    <button onclick="switchSearchView('user')">
+      <i data-lucide="user-search"></i> Users
+    </button>
+    <button onclick="switchSearchView('group')">
+      <i data-lucide="users"></i> Groups
+    </button>
+    <button onclick="runSearch(); switchSearchView('user')">
+      <i data-lucide="search"></i> Search
+    </button>
+  </div>
+
+  <div id="searchResultsUser" class="search-results"></div>
+  <div id="searchResultsGroup" class="search-results" style="display:none;"></div>
+</div>
 
     <!-- 🙍 Profile Tab -->
     <div id="profileTab" class="tab">
