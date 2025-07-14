@@ -1289,8 +1289,8 @@ function openThread(uid, name) {
 
           // Scroll to bottom after render
           setTimeout(() => {
-            area.scrollTo({ top: area.scrollHeight, behavior: "smooth" });
-          }, 100);
+  area.scrollTo({ top: area.scrollHeight, behavior: "smooth" });
+}, 100);
 
           renderWithMagnetSupport?.("threadMessages");
         }, err => {
@@ -1792,42 +1792,21 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  window.showModal = function (title, html) {
-    if (!modal || !modalMessage) return;
-    modalMessage.innerHTML = html;
-    if (modalYes) modalYes.style.display = "none";
-    if (modalNo) modalNo.textContent = "Close";
-    modal.style.display = "flex";
-  };
-
-  // ✅ Fix thread view height to match viewport
-  const threadView = document.getElementById("threadView");
-  if (threadView) {
-    threadView.style.height = window.innerHeight + "px";
-  }
-
-  // ✅ Smooth scroll to bottom on input focus (when keyboard opens)
-  const input = document.getElementById("threadInput");
-  if (input) {
-    input.addEventListener("focus", () => {
-      const messages = document.getElementById("threadMessages");
-      if (messages) {
-        setTimeout(() => {
-          messages.scrollTo({ top: messages.scrollHeight, behavior: "smooth" });
-        }, 300);
-      }
-    });
-  }
-});
-
-// ✅ Scroll thread chat to bottom & fix layout when keyboard toggles or window resizes
-window.addEventListener("resize", () => {
+// ✅ Setup Thread Layout Height
+function fixThreadLayout() {
   const view = document.getElementById("threadView");
-  const messages = document.getElementById("threadMessages");
+  if (view) {
+    view.style.height = window.innerHeight + "px";
+  }
+}
+
+// ✅ Run on load & resize
+window.addEventListener("resize", () => {
+  fixThreadLayout();
+
+  // If focused input, scroll to bottom
   const input = document.getElementById("threadInput");
-
-  if (view) view.style.height = window.innerHeight + "px";
-
+  const messages = document.getElementById("threadMessages");
   if (document.activeElement === input && messages) {
     setTimeout(() => {
       messages.scrollTop = messages.scrollHeight;
@@ -1835,7 +1814,18 @@ window.addEventListener("resize", () => {
   }
 });
 
+document.addEventListener("DOMContentLoaded", () => {
+  fixThreadLayout();
 
+  // Scroll to bottom on input focus
+  const input = document.getElementById("threadInput");
+  input?.addEventListener("focus", () => {
+    setTimeout(() => {
+      const messages = document.getElementById("threadMessages");
+      messages?.scrollTo({ top: messages.scrollHeight, behavior: "smooth" });
+    }, 300);
+  });
+});
 
 // ===== Export Chat (Stub) =====
 function exportChat() {
