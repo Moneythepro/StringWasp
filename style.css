@@ -286,6 +286,47 @@ body.dark .search-info .bio {
   padding: 6px 16px;
 }
 
+#threadMessages {
+  padding: 10px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.message-bubble {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 12px;
+  background: #f0f0f0;
+  max-width: 80%;
+  word-wrap: break-word;
+  font-size: 14px;
+}
+
+.message-bubble.right {
+  margin-left: auto;
+  background: #d1e7dd;
+}
+
+.message-bubble.left {
+  margin-right: auto;
+  background: #ffffff;
+}
+
+.msg-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.message-time {
+  font-size: 11px;
+  color: #888;
+  margin-top: 4px;
+}
+
 #threadMessages .msg-avatar img {
   width: 36px;
   height: 36px;
