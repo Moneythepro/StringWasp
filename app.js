@@ -1803,6 +1803,28 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 });
 
+// ====== KEYBOARD SCROLL FIX FOR INPUT BAR ======
+window.addEventListener("resize", () => {
+  const input = document.getElementById("threadInput");
+  const messages = document.getElementById("threadMessages");
+
+  if (document.activeElement === input && messages) {
+    setTimeout(() => {
+      messages.scrollTop = messages.scrollHeight;
+    }, 300);
+  }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("threadInput");
+  input?.addEventListener("focus", () => {
+    const messages = document.getElementById("threadMessages");
+    setTimeout(() => {
+      messages.scrollTop = messages.scrollHeight;
+    }, 300);
+  });
+});
+
 // ===== Export Chat (Stub) =====
 function exportChat() {
   alert("Export coming soon!");
