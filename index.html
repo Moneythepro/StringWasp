@@ -138,8 +138,7 @@
       <button onclick="contactSupport()">Contact Us</button>
     </div>
 
-    <!-- 💬 DM View -->
-<!-- 💬 DM View (Fixed WhatsApp Style) -->
+    <!-- 💬 DM View (Fixed WhatsApp Style) -->
 <div id="threadView" class="tab thread-container">
   <!-- HEADER -->
   <div class="chat-header">
@@ -158,14 +157,13 @@
     </div>
   </div>
 
-<!-- MESSAGE LIST SCROLLABLE CONTAINER -->
-<div class="chat-scroll-area">
-  <div id="threadMessages" class="chat-body"></div>
-  <div id="threadTypingStatus" class="typing-indicator"></div>
-  <div class="chat-input-bar"> ... </div>
-</div>
+  <!-- SCROLLABLE AREA -->
+  <div class="chat-scroll-area">
+    <div id="threadMessages" class="chat-body"></div>
+    <div id="threadTypingStatus" class="typing-indicator"></div>
+  </div>
 
-  <!-- INPUT BAR -->
+  <!-- FIXED INPUT BAR -->
   <div class="chat-input-bar">
     <button class="icon-btn" onclick="triggerFileInput('thread')"><i data-lucide="paperclip"></i></button>
     <button class="icon-btn" onclick="shareFileViaTorrent('dm')"><i data-lucide="globe"></i></button>
