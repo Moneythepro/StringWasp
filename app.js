@@ -1794,37 +1794,36 @@ document.addEventListener("DOMContentLoaded", () => {
 });
                           
 document.addEventListener("DOMContentLoaded", () => {
-  // Set height on load
+  // ✅ Initial height fix
   const threadView = document.getElementById("threadView");
-  if (threadView) {
-    threadView.style.height = window.innerHeight + "px";
-  }
+  if (threadView) threadView.style.height = window.innerHeight + "px";
 
-  // Fix on focus
+  // ✅ Scroll to bottom on input focus
   const input = document.getElementById("threadInput");
-  if (input) {
+  const area = document.getElementById("threadMessages");
+
+  if (input && area) {
     input.addEventListener("focus", () => {
-      const area = document.getElementById("threadMessages");
       setTimeout(() => {
-        area?.scrollTo({ top: area.scrollHeight, behavior: "smooth" });
+        area.scrollTop = area.scrollHeight;
       }, 300);
     });
   }
 });
 
-// Resize (keyboard open/close or rotate)
+// ✅ Adjust height + scroll on resize (keyboard open/close)
 window.addEventListener("resize", () => {
-  const threadView = document.getElementById("threadView");
-  if (threadView) {
-  }
+  const view = document.getElementById("threadView");
+  if (view) view.style.height = window.innerHeight + "px";
 
   const input = document.getElementById("threadInput");
   const area = document.getElementById("threadMessages");
+
   if (document.activeElement === input && area) {
     setTimeout(() => {
       area.scrollTop = area.scrollHeight;
     }, 300);
-    }
+  }
 });
 
 // ===== Export Chat (Stub) =====
