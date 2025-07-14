@@ -1057,7 +1057,6 @@ function threadId(a, b) {
 function openThread(uid, name) {
   if (!currentUser || !uid) return;
 
-  // 🔒 Verify friendship before allowing chat
   db.collection("users").doc(currentUser.uid).collection("friends").doc(uid)
     .get()
     .then(friendDoc => {
@@ -1068,8 +1067,7 @@ function openThread(uid, name) {
 
       switchTab("threadView");
 
-      const title = document.getElementById("threadWithName");
-      if (title) title.textContent = name || "Chat";
+      document.getElementById("threadWithName").textContent = name || "Chat";
 
       const dropdown = document.getElementById("roomDropdown");
       if (dropdown) dropdown.style.display = "none";
@@ -1090,15 +1088,8 @@ function openThread(uid, name) {
       if (unsubscribeThread) unsubscribeThread();
       if (unsubscribeTyping) unsubscribeTyping();
 
-      // 🔄 Typing Status
-      const typingArea = document.getElementById("threadTypingStatus");
-      if (typingArea) typingArea.textContent = "";
-
-      unsubscribeTyping = db.collection("threads").doc(threadIdStr).collection("typing")
-        .onSnapshot(snapshot => {
-          const others = snapshot.docs.filter(doc => doc.id !== currentUser.uid);
-          if (typingArea) typingArea.textContent = others.length ? "✍️ Typing..." : "";
-        });
+      // ✅ Setup typing indicator listener
+      listenToTyping(threadIdStr, "thread");
 
       // ✅ Mark as read
       db.collection("threads").doc(threadIdStr).set({
@@ -1172,6 +1163,7 @@ function openThread(uid, name) {
       alert("❌ Failed to verify friendship.");
     });
 }
+
 
 function deleteThread() {
   showModal("Delete this chat?", () => {
