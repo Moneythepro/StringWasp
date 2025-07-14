@@ -411,8 +411,17 @@ function contactSupport() {
 
 // ===== Logout & Reset App =====
 function logout() {
-  firebase.auth().signOut();
-  window.location.reload();
+  if (currentUser) {
+    const userRef = db.collection("users").doc(currentUser.uid);
+    userRef.update({
+      status: "offline",
+      lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(() => {});
+  }
+
+  firebase.auth().signOut().then(() => {
+    window.location.reload();
+  });
 }
 
 // ===== Group List for Dropdowns =====
