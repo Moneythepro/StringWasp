@@ -273,6 +273,12 @@ body.dark .search-info .bio {
   margin-left: 6px;
 }
 
+.disabled-btn {
+  background: #ccc !important;
+  color: #666 !important;
+  cursor: not-allowed;
+}
+
 /* ===== TYPING INDICATOR ===== */
 .typing-indicator {
   font-size: 12px;
