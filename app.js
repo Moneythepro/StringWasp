@@ -973,22 +973,25 @@ function loadFriends() {
 
           const user = friendDoc.data();
           const avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-          const isOnline = user.status === "online"; // optional if using status
+          const isOnline = user.status === "online"; // Optional: status check
 
           const card = document.createElement("div");
           card.className = "friend-card";
-          card.onclick = () => viewUserProfile(friendId);
+
           card.innerHTML = `
             <img src="${avatar}" alt="Avatar" />
             <div class="friend-info">
               <div class="name">${escapeHtml(user.username || "User")}</div>
               <div class="bio">${escapeHtml(user.bio || "")}</div>
             </div>
-            <div class="status-dot ${isOnline ? "online" : "offline"}"></div>
+            <div class="status-dot ${isOnline ? "online" : ""}"></div>
+            <button class="chat-start-btn" onclick="event.stopPropagation(); openThread('${friendId}', '${escapeHtml(user.username || "User")}')">💬 Chat</button>
           `;
+
+          card.onclick = () => viewUserProfile(friendId); // Tap card = view profile
           container.appendChild(card);
         } catch (err) {
-          console.warn("Friend load error:", err);
+          console.warn("❌ Friend load error:", err.message || err);
         }
       }
     });
