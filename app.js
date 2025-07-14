@@ -744,7 +744,7 @@ function listenToTyping(targetId, context) {
 
 function openChatMenu() {
   const menu = document.getElementById("chatOptionsMenu");
-  menu.style.display = (menu.style.display === "block") ? "none" : "block";
+  menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
 }
 
 function timeSince(date) {
