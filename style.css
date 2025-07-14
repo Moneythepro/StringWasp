@@ -376,6 +376,7 @@ body.dark .status-dot.online {
 }
 
 /* FIXED INPUT BAR */
+
 .chat-input-bar {
   flex-shrink: 0;
   display: flex;
@@ -383,7 +384,10 @@ body.dark .status-dot.online {
   padding: 8px;
   background: #fff;
   border-top: 1px solid #ddd;
+  z-index: 2;
 }
+
+
 .chat-input-bar input {
   flex: 1;
   padding: 8px 14px;
