@@ -321,14 +321,14 @@ body.dark .status-dot.online {
 
 /* === HEADER (STICKY) === */
 #threadView .chat-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   padding: 10px;
   background: #f0f0f0;
   border-bottom: 1px solid #ccc;
-  position: sticky;
-  top: 0;
-  z-index: 5;
 }
 #threadView .chat-header img {
   width: 36px; height: 36px;
@@ -350,36 +350,38 @@ body.dark .status-dot.online {
   color: #666;
   margin: 0;
 }
-#chatName { display: none; } /* Don't show "Chat Name" label */
+#chatName { display: none; }
 
-/* === MESSAGE LIST (ONLY SCROLLS THIS) === */
+/* === MESSAGE LIST (SCROLLABLE, SMOOTH) === */
 #threadMessages {
   flex: 1;
   overflow-y: auto;
+  scroll-behavior: smooth;
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   background: #fafafa;
-  scroll-behavior: smooth;
   overscroll-behavior: contain;
 }
 
-/* === TYPING INDICATOR === */
+/* === TYPING STATUS === */
 #threadTypingStatus {
   font-size: 12px;
   color: #888;
   padding: 4px 14px;
 }
 
-/* === INPUT BAR (ALWAYS AT BOTTOM) === */
+/* === INPUT BAR (FIXED BOTTOM) === */
 #threadView .input-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   padding: 10px;
   background: #fff;
   border-top: 1px solid #ddd;
-  flex-shrink: 0;
 }
 #threadView .input-bar input {
   flex: 1;
@@ -404,9 +406,12 @@ body.dark .status-dot.online {
   align-items: flex-end;
   gap: 8px;
 }
-.message-bubble-wrapper.left { flex-direction: row; }
-.message-bubble-wrapper.right { flex-direction: row-reverse; }
-
+.message-bubble-wrapper.left {
+  flex-direction: row;
+}
+.message-bubble-wrapper.right {
+  flex-direction: row-reverse;
+}
 .msg-avatar-img {
   width: 32px;
   height: 32px;
