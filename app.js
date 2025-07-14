@@ -682,7 +682,7 @@ function handleTyping(context) {
 
   let typingRef;
   if (context === "group" && currentRoom) {
-    typingRef = db.collection("threads")
+    typingRef = db.collection("groups")
       .doc(currentRoom)
       .collection("typing")
       .doc(currentUser.uid);
@@ -696,9 +696,12 @@ function handleTyping(context) {
     return;
   }
 
-  typingRef.set({ typing: true }).catch(console.warn);
+  typingRef.set({
+    typing: true,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(console.warn);
 
-  // Clear typing after 3 seconds
+  // Auto-clear after 3 seconds
   setTimeout(() => {
     typingRef.delete().catch(() => {});
   }, 3000);
@@ -709,10 +712,10 @@ function listenToTyping(targetId, context) {
   const typingBox = document.getElementById(
     context === "group" ? "groupTypingStatus" : "threadTypingStatus"
   );
+  const statusBox = document.getElementById("chatStatus"); // header
 
   if (!typingBox) return;
-
-  if (unsubscribeTyping) unsubscribeTyping(); // remove previous
+  if (unsubscribeTyping) unsubscribeTyping();
 
   unsubscribeTyping = db.collection("threads")
     .doc(targetId)
@@ -721,10 +724,11 @@ function listenToTyping(targetId, context) {
       const typingUsernames = [];
 
       for (const doc of snapshot.docs) {
-        if (doc.id !== currentUser.uid && doc.data().typing) {
+        const data = doc.data();
+        if (doc.id !== currentUser.uid && data?.typing) {
           try {
             const userSnap = await db.collection("users").doc(doc.id).get();
-            const username = userSnap.exists ? userSnap.data().username : "Someone";
+            const username = userSnap.exists ? (userSnap.data().username || "Someone") : "Someone";
             typingUsernames.push(username);
           } catch {
             typingUsernames.push("Someone");
@@ -732,12 +736,16 @@ function listenToTyping(targetId, context) {
         }
       }
 
+      // Show who is typing
       if (typingUsernames.length === 1) {
         typingBox.innerText = `✍️ ${typingUsernames[0]} is typing...`;
+        if (context === "thread" && statusBox) statusBox.textContent = "Typing...";
       } else if (typingUsernames.length > 1) {
         typingBox.innerText = `✍️ ${typingUsernames.join(", ")} are typing...`;
+        if (context === "thread" && statusBox) statusBox.textContent = "Typing...";
       } else {
         typingBox.innerText = "";
+        if (context === "thread" && statusBox) statusBox.textContent = "Online";
       }
     });
 }
