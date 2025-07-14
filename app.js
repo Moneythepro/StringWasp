@@ -862,14 +862,22 @@ function updateInboxBadge() {
 
 // ===== Accept Inbox Item =====
 function acceptInbox(id, type, fromUID) {
-  if (!currentUser) return;
+  if (!currentUser || !id || !type || !fromUID) return;
 
   const inboxRef = db.collection("inbox").doc(currentUser.uid).collection("items").doc(id);
 
   if (type === "friend") {
     const batch = db.batch();
-    const userRef = db.collection("users").doc(currentUser.uid).collection("friends").doc(fromUID);
-    const otherRef = db.collection("users").doc(fromUID).collection("friends").doc(currentUser.uid);
+
+    const userRef = db.collection("users")
+      .doc(currentUser.uid)
+      .collection("friends")
+      .doc(fromUID);
+
+    const otherRef = db.collection("users")
+      .doc(fromUID)
+      .collection("friends")
+      .doc(currentUser.uid);
 
     batch.set(userRef, { since: Date.now() });
     batch.set(otherRef, { since: Date.now() });
@@ -877,8 +885,16 @@ function acceptInbox(id, type, fromUID) {
 
     batch.commit().then(() => {
       alert("✅ Friend added!");
+      
+      // ✅ Optional: auto-open DM thread
+      openThread(fromUID, "Friend");
+
+      // ✅ Optional: reload updated UI
+      loadFriends?.();
+      loadChatList?.();
+
     }).catch(err => {
-      console.error("❌ Friend accept failed:", err.message);
+      console.error("❌ Friend accept failed:", err.message || err);
       alert("❌ Failed to accept friend.");
     });
 
@@ -888,9 +904,11 @@ function acceptInbox(id, type, fromUID) {
     }).then(() => {
       inboxRef.delete();
       alert("✅ Joined the group!");
-      joinRoom(fromUID);
+
+      joinRoom(fromUID); // ✅ Optional: enter group chat
+      loadChatList?.();
     }).catch(err => {
-      console.error("❌ Group join failed:", err.message);
+      console.error("❌ Group join failed:", err.message || err);
       alert("❌ Failed to join group.");
     });
   }
