@@ -272,9 +272,11 @@ function uploadProfilePic(e) {
   const file = e.target.files[0];
   if (!file || !currentUser) return;
 
+  const img = document.getElementById("cropImage");
+  if (!img) return alert("❌ Crop image element not found!");
+
   const reader = new FileReader();
   reader.onload = () => {
-    const img = document.getElementById("cropImage");
     img.src = reader.result;
 
     if (cropper) cropper.destroy();
@@ -290,7 +292,10 @@ function uploadProfilePic(e) {
 }
 
 async function confirmCrop() {
-  if (!cropper || !currentUser) return;
+  if (!cropper || !currentUser) {
+    alert("❌ Missing cropper or user.");
+    return;
+  }
 
   showLoading(true);
 
@@ -301,28 +306,24 @@ async function confirmCrop() {
       imageSmoothingQuality: "high"
     });
 
-    const blob = await new Promise(resolve =>
-      canvas.toBlob(resolve, "image/jpeg", 0.7)
-    );
+    if (!canvas) {
+      alert("❌ Failed to get crop canvas.");
+      return;
+    }
 
-    // Convert to base64 string
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64 = reader.result;
+    const base64 = canvas.toDataURL("image/jpeg", 0.7); // Compress to base64
 
-      await db.collection("users").doc(currentUser.uid).update({
-        avatarBase64: base64
-      });
+    await db.collection("users").doc(currentUser.uid).update({
+      avatarBase64: base64
+    });
 
-      document.getElementById("profilePicPreview").src = base64;
-      closeCropModal();
-      alert("✅ Profile picture updated!");
+    document.getElementById("profilePicPreview").src = base64;
 
-      loadProfile();
-      loadChatList();
-    };
+    closeCropModal();
+    alert("✅ Profile picture updated!");
 
-    reader.readAsDataURL(blob);
+    loadProfile();
+    loadChatList();
   } catch (err) {
     console.error("❌ Crop error:", err.message || err);
     alert("❌ Failed to upload avatar.");
@@ -334,41 +335,10 @@ async function confirmCrop() {
 function closeCropModal() {
   const modal = document.getElementById("cropModal");
   modal.style.display = "none";
+
   if (cropper) {
     cropper.destroy();
     cropper = null;
-  }
-}
-
-function confirmCrop() {
-  if (!cropper || !currentUser) {
-    alert("❌ Missing cropper or user.");
-    return;
-  }
-
-  const canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
-  if (!canvas) {
-    alert("❌ Failed to get canvas.");
-    return;
-  }
-
-  try {
-    const base64 = canvas.toDataURL("image/jpeg", 0.7); // Compress and convert to base64
-
-    // Update Firestore with base64 image
-    db.collection("users").doc(currentUser.uid).update({
-      avatarBase64: base64
-    }).then(() => {
-      document.getElementById("profilePicPreview").src = base64;
-      closeCropModal();
-      alert("✔ Profile picture updated for all users!");
-    }).catch(err => {
-      console.error("❌ Firestore update failed:", err.message || err);
-      alert("❌ Failed to update avatar.");
-    });
-  } catch (e) {
-    console.error("❌ Crop failed:", e.message || e);
-    alert("❌ Crop or upload failed.");
   }
 }
 
