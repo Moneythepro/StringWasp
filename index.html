@@ -139,36 +139,34 @@
     </div>
 
     <!-- 💬 DM View -->
-    <div id="threadView" class="tab">
-      <div class="chat-header">
-        <button onclick="switchTab('chatTab')"><i data-lucide="arrow-left"></i></button>
-        <img id="chatProfilePic" src="default-avatar.png" alt="Avatar" />
-        <div class="chat-info">
-          <h3 id="chatName">Chat Name</h3>
-          <h3 id="threadWithName">Chat</h3>
-          <p id="chatStatus">Online</p>
-        </div>
-        <button onclick="openChatMenu()"><i data-lucide="more-vertical"></i></button>
-        <div id="chatOptionsMenu" class="chat-options" style="display:none;">
-          <button onclick="blockUser()"><i data-lucide="ban"></i> Block</button>
-          <button onclick="viewMedia()"><i data-lucide="image"></i> Media</button>
-          <button onclick="exportChat()"><i data-lucide="download"></i> Export</button>
-          <button onclick="deleteThread()"><i data-lucide="trash-2"></i> Delete</button>
-        </div>
-      </div>
-      <div id="threadMessages" class="messages"></div>
-      <div id="threadTypingStatus" class="typing-indicator"></div>
-      <div class="input-bar">
-        <button class="icon-btn" onclick="triggerFileInput('thread')"><i data-lucide="paperclip"></i></button>
-        <button class="icon-btn" onclick="shareFileViaTorrent('dm')"><i data-lucide="globe"></i></button>
-        <input id="threadInput"
-       placeholder="Type a message..."
-       oninput="handleTyping('thread')"
-       onkeydown="handleThreadKey(event)" />
-        <button class="icon-btn" onclick="sendThreadMessage()"><i data-lucide="send"></i></button>
-        <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
-      </div>
+<div id="threadView" class="tab full-screen-thread">
+  <div class="chat-header">
+    <button onclick="switchTab('chatTab')"><i data-lucide="arrow-left"></i></button>
+    <img id="chatProfilePic" class="header-avatar" src="default-avatar.png" alt="Avatar" />
+    <div class="chat-info">
+      <h3 id="chatName">Chat Name</h3>
+      <p id="chatStatus">Online</p>
     </div>
+    <button onclick="openChatMenu()" class="menu-btn"><i data-lucide="more-vertical"></i></button>
+    <div id="chatOptionsMenu" class="chat-options">
+      <button onclick="blockUser()"><i data-lucide="ban"></i> Block</button>
+      <button onclick="viewMedia()"><i data-lucide="image"></i> Media</button>
+      <button onclick="exportChat()"><i data-lucide="download"></i> Export</button>
+      <button onclick="deleteThread()"><i data-lucide="trash-2"></i> Delete</button>
+    </div>
+  </div>
+
+  <div id="threadMessages" class="messages"></div>
+  <div id="threadTypingStatus" class="typing-indicator"></div>
+
+  <div class="input-bar">
+    <button class="icon-btn" onclick="triggerFileInput('thread')"><i data-lucide="paperclip"></i></button>
+    <button class="icon-btn" onclick="shareFileViaTorrent('dm')"><i data-lucide="globe"></i></button>
+    <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" onkeydown="handleThreadKey(event)" />
+    <button class="icon-btn" onclick="sendThreadMessage()"><i data-lucide="send"></i></button>
+    <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
+  </div>
+</div>
 
     <!-- 💬 Group Chat View -->
     <div id="roomView" class="tab" style="display:none;">
