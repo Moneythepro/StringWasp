@@ -1287,6 +1287,8 @@ function openThread(uid, name) {
             area.appendChild(wrapper);
           }
 
+          setTimeout(() => scrollToBottomThread(true), 100);
+          
           renderWithMagnetSupport?.("threadMessages");
         }, err => {
           console.error("❌ Thread snapshot error:", err.message || err);
