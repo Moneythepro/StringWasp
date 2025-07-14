@@ -341,43 +341,78 @@ body.dark #loadingOverlay {
 .friend-card {
   display: flex;
   align-items: center;
-  padding: 10px;
+  padding: 12px;
   background: #fff;
-  border-radius: 12px;
+  border-radius: 14px;
   margin: 8px 0;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.05);
   cursor: pointer;
-  gap: 10px;
+  gap: 12px;
   transition: background 0.2s;
 }
+
 .friend-card:hover {
-  background: #f5f5f5;
+  background: #f0f0f0;
 }
+
 .friend-card img {
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
 }
+
 .friend-info {
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
+
 .friend-info .name {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
+
 .friend-info .bio {
   font-size: 12px;
-  color: #777;
+  color: #666;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ccc;
+}
+
+.status-dot.online {
+  background: #00e676;
+}
+
 body.dark .friend-card {
   background: #1f1f1f;
 }
+
 body.dark .friend-card:hover {
   background: #292929;
+}
+
+body.dark .friend-info .bio {
+  color: #aaa;
+}
+
+body.dark .status-dot.online {
+  background: #4caf50;
+}
+
+body.dark .status-dot {
+  background: #555;
 }
