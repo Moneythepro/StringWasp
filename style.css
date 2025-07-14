@@ -618,30 +618,30 @@ body.dark #loadingOverlay {
 
 #threadView.thread-container {
   position: fixed;
-  top: 0; bottom: 0; left: 0; right: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   display: flex;
   flex-direction: column;
   background: var(--bg, #fff);
-  height: 100dvh;
   z-index: 999;
+  height: 100dvh;
   overflow: hidden;
 }
 
-.chat-main {
+.thread-main {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0; /* 🧠 Fix growth overflow */
+  overflow: hidden;
 }
 
 .chat-body {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
-  background: #fafafa;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  background: #fafafa;
   scroll-behavior: smooth;
 }
 
@@ -652,6 +652,5 @@ body.dark #loadingOverlay {
   padding: 8px;
   background: #fff;
   border-top: 1px solid #ddd;
-  position: relative;
   z-index: 10;
 }
