@@ -452,22 +452,21 @@ function loadChatList() {
   const list = document.getElementById("chatList");
   if (!list) return;
 
-  list.innerHTML = ""; // Clear previous list only once
+  list.innerHTML = ""; // 🔄 Clear list first
 
-  // Load group chats and friend threads with slight delay
   setTimeout(() => {
     try {
-      loadRealtimeGroups();   // ✅ Group chats
+      loadRealtimeGroups();  // ✅ Group chats
     } catch (e) {
-      console.warn("Group load failed:", e);
+      console.warn("❌ Group load error:", e);
     }
 
     try {
-      loadFriendThreads();    // ✅ Personal (DM) chats
+      loadFriendThreads();   // ✅ Personal chats
     } catch (e) {
-      console.warn("Friend thread load failed:", e);
+      console.warn("❌ DM load error:", e);
     }
-  }, 100); // Slight delay is fine to avoid UI blocking
+  }, 200);
 }
 
 // === Realtime Group Chats ===
@@ -479,54 +478,35 @@ function loadRealtimeGroups() {
 
   unsubscribeGroups = db.collection("groups")
     .where("members", "array-contains", currentUser.uid)
+    .orderBy("updatedAt", "desc")
     .onSnapshot(snapshot => {
+      if (snapshot.empty) return;
+
       snapshot.forEach(doc => {
-        const g = doc.data();
-        const groupName = g.name || "Group";
-        const avatar = g.icon || `https://ui-avatars.com/api/?name=${encodeURIComponent(groupName)}`;
-
-        let msgText = "[No message]";
-        let isMedia = false;
-        let timeAgo = "";
-
-        if (typeof g.lastMessage === "object") {
-          msgText = g.lastMessage.text || "[No message]";
-          isMedia = !!g.lastMessage.fileURL;
-          if (g.lastMessage.timestamp?.toDate) {
-            timeAgo = timeSince(g.lastMessage.timestamp.toDate());
-          }
-        }
-
-        const preview = isMedia ? "📎 Media File" : escapeHtml(msgText);
-        const unread = g.unread?.[currentUser.uid] || 0;
-        const badgeHTML = unread ? `<span class="badge">${unread}</span>` : "";
+        const group = doc.data();
+        const icon = group.icon || "group-icon.png";
+        const unread = group.unread?.[currentUser.uid] || 0;
 
         const card = document.createElement("div");
         card.className = "chat-card group-chat";
         card.onclick = () => joinRoom(doc.id);
         card.innerHTML = `
-          <img src="${avatar}" class="friend-avatar" />
+          <img class="group-avatar" src="${icon}" />
           <div class="details">
-            <div class="name">#${escapeHtml(groupName)} ${badgeHTML}</div>
-            <div class="last-message">${preview}</div>
-            <div class="last-time">${timeAgo}</div>
+            <div class="name">#${group.name || "Group"}</div>
+            <div class="last-message">${escapeHtml(group.lastMessage || "Start the conversation")}</div>
           </div>
+          ${unread > 0 ? `<span class="badge">${unread}</span>` : ""}
         `;
         list.appendChild(card);
       });
-    }, err => {
-      console.error("❌ Group chat load error:", err.message || err);
-      alert("❌ Couldn't load groups.");
     });
 }
 
 // === Direct Message Threads ===
-
 function loadFriendThreads() {
   const list = document.getElementById("chatList");
   if (!list || !currentUser) return;
-
-  list.innerHTML = ""; // ✅ Clear previous entries
 
   if (unsubscribeThreads) unsubscribeThreads();
 
@@ -534,41 +514,34 @@ function loadFriendThreads() {
     .where("participants", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
     .onSnapshot(async snapshot => {
-      list.innerHTML = ""; // ✅ Clear again inside listener
-
-      if (snapshot.empty) {
-        list.innerHTML = `<div class="no-results">No personal chats found.</div>`;
-        return;
-      }
+      if (snapshot.empty) return;
 
       for (const doc of snapshot.docs) {
         const thread = doc.data();
-        const otherUserId = thread.participants.find(p => p !== currentUser.uid);
-        if (!otherUserId) continue;
+        const otherUid = thread.participants.find(uid => uid !== currentUser.uid);
+        if (!otherUid) continue;
 
-        try {
-          const userDoc = await db.collection("users").doc(otherUserId).get();
-          if (!userDoc.exists) continue;
+        const userDoc = await db.collection("users").doc(otherUid).get();
+        const user = userDoc.data();
 
-          const user = userDoc.data();
-          const avatar = user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-          const name = user.username || "User";
-          const lastMsg = escapeHtml(thread.lastMessage || "Say hi 👋");
+        const avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+        const name = user.username || "Unknown";
 
-          const card = document.createElement("div");
-          card.className = "chat-card personal-chat";
-          card.onclick = () => openThread(otherUserId, name);
-          card.innerHTML = `
-            <img class="friend-avatar" src="${avatar}" />
-            <div class="details">
-              <div class="name">@${name}</div>
-              <div class="last-message">${lastMsg}</div>
-            </div>
-          `;
-          list.appendChild(card);
-        } catch (e) {
-          console.warn("❌ Failed to load friend data:", e.message);
-        }
+        const unread = thread.unread?.[currentUser.uid] || 0;
+        const lastMsg = escapeHtml(thread.lastMessage || "Say hi 👋");
+
+        const card = document.createElement("div");
+        card.className = "chat-card personal-chat";
+        card.onclick = () => openThread(otherUid, name);
+        card.innerHTML = `
+          <img class="friend-avatar" src="${avatar}" />
+          <div class="details">
+            <div class="name">${name}</div>
+            <div class="last-message">${lastMsg}</div>
+          </div>
+          ${unread > 0 ? `<span class="badge">${unread}</span>` : ""}
+        `;
+        list.appendChild(card);
       }
     });
 }
