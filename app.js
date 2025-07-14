@@ -1147,13 +1147,36 @@ function openThread(uid, name) {
       if (unsubscribeThread) unsubscribeThread();
       if (unsubscribeTyping) unsubscribeTyping();
 
-      // ✅ Setup typing indicator listener
+      // ✅ Typing indicator listener
       listenToTyping(threadIdStr, "thread");
 
       // ✅ Mark as read
       db.collection("threads").doc(threadIdStr).set({
         unread: { [currentUser.uid]: 0 }
       }, { merge: true });
+
+      // ✅ Listen to user status
+      db.collection("users").doc(uid).onSnapshot(doc => {
+        const data = doc.data();
+        const status = document.getElementById("chatStatus");
+
+        if (data.typingFor === currentUser.uid) {
+          status.textContent = "Typing...";
+        } else if (data.status === "online") {
+          status.textContent = "Online";
+        } else if (data.lastSeen?.toDate) {
+          status.textContent = "Last seen " + timeSince(data.lastSeen.toDate());
+        } else {
+          status.textContent = "Offline";
+        }
+      });
+
+      // ✅ Scroll fix on keyboard resize
+      window.addEventListener("resize", () => {
+        setTimeout(() => {
+          area.scrollTop = area.scrollHeight;
+        }, 100);
+      });
 
       // 🔁 Load Messages
       unsubscribeThread = db.collection("threads")
@@ -1177,43 +1200,79 @@ function openThread(uid, name) {
               decrypted = "[Failed to decrypt]";
             }
 
+            // 👀 Mark as read if not already
+            if (!msg.seenBy?.includes(currentUser.uid)) {
+              db.collection("threads").doc(threadIdStr)
+                .collection("messages").doc(doc.id)
+                .update({
+                  seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+                }).catch(console.warn);
+            }
+
             // 👤 Avatar
-let avatar = "default-avatar.png";
-try {
-  const userDoc = await db.collection("users").doc(msg.from).get();
-  if (userDoc.exists) {
-    const user = userDoc.data();
-    avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-  }
-} catch (e) {
-  console.warn("⚠️ Avatar fetch failed:", e.message);
+            let avatar = "default-avatar.png";
+            try {
+              const userDoc = await db.collection("users").doc(msg.from).get();
+              if (userDoc.exists) {
+                const user = userDoc.data();
+                avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+              }
+            } catch (e) {
+              console.warn("⚠️ Avatar fetch failed:", e.message);
+            }
+
+            const isSelf = msg.from === currentUser.uid;
+            const isRead = msg.seenBy?.includes(currentThreadUser);
+            const isDelivered = msg.seenBy?.length > 1;
+
+            const ticks = isSelf
+              ? `<span class="msg-ticks">${isRead ? '✔️✔️' : isDelivered ? '✔️✔️' : '✔️'}</span>`
+              : '';
+
+            const bubble = document.createElement("div");
+            bubble.className = "message-bubble " + (isSelf ? "right" : "left");
+            bubble.innerHTML = `
+              <div class="msg-content">
+                <div class="msg-text">
+                  <strong>${escapeHtml(msg.fromName || "User")}</strong><br>
+                  ${escapeHtml(decrypted)}
+                </div>
+                <div class="message-time">
+                  ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+                  ${ticks}
+                </div>
+              </div>
+            `;
+
+            const wrapper = document.createElement("div");
+            wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
+
+            const avatarImg = document.createElement("img");
+            avatarImg.src = avatar;
+            avatarImg.className = "msg-avatar-img";
+
+            wrapper.appendChild(avatarImg);
+            wrapper.appendChild(bubble);
+            area.appendChild(wrapper);
+          }
+
+          area.scrollTop = area.scrollHeight;
+          renderWithMagnetSupport?.("threadMessages");
+        }, err => {
+          console.error("❌ Thread snapshot error:", err.message || err);
+          alert("❌ Failed to load messages: " + (err.message || err));
+        });
+
+      // ✅ Focus input bar after load
+      setTimeout(() => {
+        document.getElementById("threadInput")?.focus();
+      }, 300);
+    })
+    .catch(err => {
+      console.error("❌ Friend check failed:", err.message || err);
+      alert("❌ Failed to verify friendship.");
+    });
 }
-
-const isSelf = msg.from === currentUser.uid;
-const bubble = document.createElement("div");
-bubble.className = "message-bubble " + (isSelf ? "right" : "left");
-
-bubble.innerHTML = `
-  <div class="msg-content">
-    <div class="msg-text">
-      <strong>${escapeHtml(msg.fromName || "User")}</strong><br>
-      ${escapeHtml(decrypted)}
-    </div>
-    <div class="message-time">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</div>
-  </div>
-`;
-
-const wrapper = document.createElement("div");
-wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
-
-const avatarImg = document.createElement("img");
-avatarImg.src = avatar;
-avatarImg.className = "msg-avatar-img";
-
-wrapper.appendChild(avatarImg);
-wrapper.appendChild(bubble);
-area.appendChild(wrapper);
-
 
 function deleteThread() {
   showModal("Delete this chat?", () => {
