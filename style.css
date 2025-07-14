@@ -307,19 +307,19 @@ body.dark .status-dot.online {
   background: #4caf50;
 }
 
-/* ===== FINAL FIXED DM CHAT VIEW ===== */
+/* ===== FINAL ENHANCED DM CHAT VIEW ===== */
 #threadView {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   display: flex;
   flex-direction: column;
-  height: 100vh;
   background: var(--bg, #fff);
   z-index: 999;
+  height: 100vh;
   overflow: hidden;
 }
 
-/* HEADER STICKY */
+/* === STICKY HEADER === */
 #threadView .chat-header {
   display: flex;
   align-items: center;
@@ -328,10 +328,11 @@ body.dark .status-dot.online {
   border-bottom: 1px solid #ccc;
   position: sticky;
   top: 0;
-  z-index: 5;
+  z-index: 10;
 }
 #threadView .chat-header img {
-  width: 36px; height: 36px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   margin: 0 10px;
   object-fit: cover;
@@ -350,9 +351,11 @@ body.dark .status-dot.online {
   color: #666;
   margin: 0;
 }
-#chatName { display: none; } /* Hide extra label */
+#chatName {
+  display: none;
+}
 
-/* MESSAGE SCROLL AREA */
+/* === MESSAGES AREA === */
 #threadMessages {
   flex: 1;
   overflow-y: auto;
@@ -363,16 +366,18 @@ body.dark .status-dot.online {
   background: #fafafa;
   scroll-behavior: smooth;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* TYPING STATUS */
+/* === TYPING INDICATOR === */
 #threadTypingStatus {
   font-size: 12px;
   color: #888;
   padding: 4px 14px;
+  background: transparent;
 }
 
-/* INPUT BAR FIXED */
+/* === STICKY INPUT BAR === */
 #threadView .input-bar {
   display: flex;
   align-items: center;
@@ -381,7 +386,7 @@ body.dark .status-dot.online {
   border-top: 1px solid #ddd;
   position: sticky;
   bottom: 0;
-  z-index: 5;
+  z-index: 10;
 }
 #threadView .input-bar input {
   flex: 1;
@@ -398,17 +403,21 @@ body.dark .status-dot.online {
   height: 42px;
   font-size: 18px;
   border: none;
+  cursor: pointer;
 }
 
-/* MESSAGE BUBBLE WRAPPER */
+/* === BUBBLE WRAPPER === */
 .message-bubble-wrapper {
   display: flex;
   align-items: flex-end;
   gap: 8px;
 }
-.message-bubble-wrapper.left { flex-direction: row; }
-.message-bubble-wrapper.right { flex-direction: row-reverse; }
-
+.message-bubble-wrapper.left {
+  flex-direction: row;
+}
+.message-bubble-wrapper.right {
+  flex-direction: row-reverse;
+}
 .msg-avatar-img {
   width: 32px;
   height: 32px;
@@ -416,7 +425,7 @@ body.dark .status-dot.online {
   object-fit: cover;
 }
 
-/* DARK MODE FIXES */
+/* === DARK MODE === */
 body.dark #threadView .chat-header {
   background: #1f1f1f;
   border-color: #333;
