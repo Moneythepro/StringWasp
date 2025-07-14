@@ -1791,40 +1791,41 @@ document.addEventListener("DOMContentLoaded", () => {
       modal.style.display = "none";
     };
   }
-
-// ✅ Setup Thread Layout Height
-function fixThreadLayout() {
-  const view = document.getElementById("threadView");
-  if (view) {
-    view.style.height = window.innerHeight + "px";
-  }
 }
+                          
+document.addEventListener("DOMContentLoaded", () => {
+  // Set height on load
+  const threadView = document.getElementById("threadView");
+  if (threadView) {
+    threadView.style.height = window.innerHeight + "px";
+  }
 
-// ✅ Run on load & resize
-window.addEventListener("resize", () => {
-  fixThreadLayout();
-
-  // If focused input, scroll to bottom
+  // Fix on focus
   const input = document.getElementById("threadInput");
-  const messages = document.getElementById("threadMessages");
-  if (document.activeElement === input && messages) {
-    setTimeout(() => {
-      messages.scrollTop = messages.scrollHeight;
-    }, 300);
+  if (input) {
+    input.addEventListener("focus", () => {
+      const area = document.getElementById("threadMessages");
+      setTimeout(() => {
+        area?.scrollTo({ top: area.scrollHeight, behavior: "smooth" });
+      }, 300);
+    });
   }
 });
 
-document.addEventListener("DOMContentLoaded", () => {
-  fixThreadLayout();
+// Resize (keyboard open/close or rotate)
+window.addEventListener("resize", () => {
+  const threadView = document.getElementById("threadView");
+  if (threadView) {
+    threadView.style.height = window.innerHeight + "px";
+  }
 
-  // Scroll to bottom on input focus
   const input = document.getElementById("threadInput");
-  input?.addEventListener("focus", () => {
+  const area = document.getElementById("threadMessages");
+  if (document.activeElement === input && area) {
     setTimeout(() => {
-      const messages = document.getElementById("threadMessages");
-      messages?.scrollTo({ top: messages.scrollHeight, behavior: "smooth" });
+      area.scrollTop = area.scrollHeight;
     }, 300);
-  });
+  }
 });
 
 // ===== Export Chat (Stub) =====
