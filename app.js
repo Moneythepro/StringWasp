@@ -364,53 +364,49 @@ function confirmCrop() {
   
 let currentProfileUID = null;
 
+// ===== View User Profile Modal =====
 function viewUserProfile(uid) {
   currentProfileUID = uid;
 
   db.collection("users").doc(uid).get().then(doc => {
-    if (!doc.exists) {
-      alert("❌ User not found");
-      return;
-    }
+    if (!doc.exists) return alert("❌ User not found");
 
-    const data = doc.data();
-    document.getElementById("viewProfileModal").style.display = "block";
-    document.getElementById("viewProfilePic").src =
-      data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username || "User")}`;
-    document.getElementById("viewProfileName").textContent = data.name || "Unnamed";
-    document.getElementById("viewProfileUsername").textContent = `@${data.username || "unknown"}`;
-    document.getElementById("viewProfileBio").textContent = data.bio || "No bio";
-    document.getElementById("viewProfileEmail").textContent = data.email || "";
-    document.getElementById("viewProfileStatus").textContent = data.status || "";
-  }).catch(err => {
-    console.error("❌ Profile view error:", err.message || err);
-    alert("❌ Failed to view profile.");
-  });
-}
+    const user = doc.data();
+    const avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
 
-window.currentGroupProfileId = null;
+    document.getElementById("viewProfilePic").src = avatar;
+    document.getElementById("viewProfileName").textContent = user.name || "Unnamed";
+    document.getElementById("viewProfileUsername").textContent = `@${user.username || "unknown"}`;
+    document.getElementById("viewProfileBio").textContent = user.bio || "No bio";
+    document.getElementById("viewProfileEmail").textContent = user.email || "";
+    document.getElementById("viewProfileStatus").textContent = user.status || "";
 
-function viewGroupProfile(groupId) {
-  currentGroupProfileId = groupId;
+    document.getElementById("viewProfileModal").style.display = "flex";
 
-  db.collection("groups").doc(groupId).get().then(doc => {
-    if (!doc.exists) {
-      alert("❌ Group not found");
-      return;
-    }
+    // Check if already friends
+    db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).get().then(friendDoc => {
+      const btnGroup = document.querySelector("#viewProfileModal .btn-group");
+      if (!btnGroup) return;
 
-    const g = doc.data();
-    document.getElementById("groupInfoModal").style.display = "block";
+      btnGroup.innerHTML = "";
 
-    document.getElementById("groupIcon").src =
-      g.icon || `https://ui-avatars.com/api/?name=${encodeURIComponent(g.name || "Group")}`;
-    document.getElementById("groupName").textContent = g.name || "Unnamed Group";
-    document.getElementById("groupDesc").textContent = g.description || "No description provided.";
-    document.getElementById("groupOwnerText").textContent = "Owner: " + (g.ownerName || g.owner || "Unknown");
-    document.getElementById("groupMembersText").textContent = "Members: " + (g.members?.length || 0);
-  }).catch(err => {
-    console.error("❌ Group view error:", err.message || err);
-    alert("❌ Failed to load group info.");
+      if (friendDoc.exists) {
+        const unfriendBtn = document.createElement("button");
+        unfriendBtn.textContent = "Unfriend";
+        unfriendBtn.onclick = () => removeFriend(uid);
+        btnGroup.appendChild(unfriendBtn);
+      } else {
+        const addBtn = document.createElement("button");
+        addBtn.textContent = "Add Friend";
+        addBtn.onclick = () => addFriend(uid);
+        btnGroup.appendChild(addBtn);
+      }
+
+      const msgBtn = document.createElement("button");
+      msgBtn.textContent = "Message";
+      msgBtn.onclick = () => openThread(uid, user.username);
+      btnGroup.appendChild(msgBtn);
+    });
   });
 }
 
