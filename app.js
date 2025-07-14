@@ -641,45 +641,29 @@ function sendRoomMessage() {
     });
 }
 
-// === Typing Indicator ===
+// ===== Typing Indicator (Final Cleaned) =====
 function handleTyping(context) {
   const targetId = context === "group" ? currentRoom : currentThreadUser;
   if (!targetId || !currentUser) return;
 
   const inputId = context === "group" ? "roomInput" : "threadInput";
   const input = document.getElementById(inputId);
-  if (!input || !input.value.trim()) return;
+  if (!input) return;
 
-  const typingRef = db.collection("threads").doc(targetId)
-    .collection("typing").doc(currentUser.uid);
+  const text = input.value.trim();
+  if (!text) return;
 
-  typingRef.set({ typing: true }).catch(() => {});
+  const typingRef = db
+    .collection("threads")
+    .doc(targetId)
+    .collection("typing")
+    .doc(currentUser.uid);
 
-  setTimeout(() => {
-    typingRef.delete().catch(() => {});
-  }, 3000);
-}
-
-// ===== Typing Indicator Handler =====
-function handleTyping(context) {
-  const input = context === "thread" ? threadInput.value : roomInput.value;
-  sendTypingStatus(context, input.length > 0);
-}
-
-function handleTyping(context) {
-  const targetId = context === "group" ? currentRoom : currentThreadUser;
-  if (!targetId || !currentUser) return;
-
-  const inputId = context === "group" ? "roomInput" : "threadInput";
-  const input = document.getElementById(inputId);
-  if (!input || !input.value.trim()) return;
-
-  const typingRef = db.collection("threads").doc(targetId).collection("typing").doc(currentUser.uid);
-  typingRef.set({ typing: true }).catch(() => {});
+  typingRef.set({ typing: true }).catch(console.warn);
 
   setTimeout(() => {
-    typingRef.delete().catch(() => {});
-  }, 4000);
+    typingRef.delete().catch(console.warn);
+  }, 4000); // ⏱️ Typing status clears after 4s
 }
 
 function openChatMenu() {
