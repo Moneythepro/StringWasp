@@ -421,22 +421,31 @@ function loadGroups() {
 }
 
 function createGroup() {
-  const groupName = prompt("Enter group name:");
-  if (!groupName || !currentUser) return;
+  const name = prompt("Enter group name:");
+  if (!name || !currentUser) return;
 
-  const id = db.collection("groups").doc().id;
-
-  db.collection("groups").doc(id).set({
-    name: groupName,
-    icon: "",
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  const groupId = uuidv4();
+  const group = {
+    name,
+    owner: currentUser.uid,
+    admins: [currentUser.uid],
     members: [currentUser.uid],
-    owner: currentUser.uid
-  }).then(() => {
-    alert("✅ Group created!");
-    joinRoom(id);
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(), // ✅ Ensure it's added
+    lastMessage: "Group created"
+  };
+
+  db.collection("groups").doc(groupId).set(group).then(() => {
+    // Create associated thread
+    db.collection("threads").doc(groupId).set({
+      messages: [],
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    joinRoom(groupId);
   }).catch(err => {
-    console.error("❌ Failed to create group:", err.message);
+    console.error("❌ Group creation failed:", err.message || err);
+    alert("❌ Failed to create group.");
   });
 }
 
@@ -633,43 +642,37 @@ function loadRoomMessages(groupId) {
 
 // === Send Room Message (Group Chat) ===
 function sendRoomMessage() {
-  if (!currentRoom || !currentUser) return;
-
   const input = document.getElementById("roomInput");
   const text = input?.value.trim();
-  if (!text) return;
+  if (!text || !currentRoom || !currentUser) return;
 
-  const encrypted = CryptoJS.AES.encrypt(text, "yourSecretKey").toString(); // update for real E2E
+  const encrypted = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
+  const fromName = document.getElementById("usernameDisplay").textContent;
 
   const msg = {
     text: encrypted,
     from: currentUser.uid,
-    fromName: currentUser.displayName || currentUser.email,
+    fromName,
     timestamp: firebase.firestore.FieldValue.serverTimestamp()
   };
 
-  db.collection("threads").doc(currentRoom).collection("messages").add(msg)
-    .then(() => {
-      input.value = "";
+  const threadRef = db.collection("threads").doc(currentRoom);
+  const groupRef = db.collection("groups").doc(currentRoom);
 
-      // Update last message in group
-      db.collection("groups").doc(currentRoom).update({
-        lastMessage: {
-          text,
-          from: currentUser.uid,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }
-      });
+  // 🔄 Send message
+  threadRef.collection("messages").add(msg).then(() => {
+    input.value = "";
 
-      // Stop typing
-      db.collection("threads").doc(currentRoom)
-        .collection("typing")
-        .doc(currentUser.uid).delete().catch(() => {});
-    })
-    .catch(err => {
-      console.error("❌ Failed to send message:", err.message);
-      alert("❌ Couldn't send group message.");
-    });
+    // ✅ Update group lastMessage + updatedAt
+    groupRef.set({
+      lastMessage: text,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+  }).catch(err => {
+    console.error("❌ Group message failed:", err.message || err);
+    alert("❌ Failed to send message.");
+  });
 }
 
 // ===== Typing Indicator (Unified Final Version) =====
