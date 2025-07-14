@@ -1301,6 +1301,13 @@ function renderMessage(msg, isOwn) {
   `;
 }
 
+function handleThreadKey(event) {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    sendThreadMessage();
+  }
+}
+
 function listenMessages() {
   const messagesDiv = document.getElementById("groupMessages");
   if (!messagesDiv || !currentRoom) return;
