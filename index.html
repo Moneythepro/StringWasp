@@ -138,8 +138,8 @@
       <button onclick="contactSupport()">Contact Us</button>
     </div>
 
-<!-- 💬 DM View (Final Fixed WhatsApp Style) -->
-<div id="threadView" class="tab thread-container">
+<!-- 💬 DM View (100% Fixed WhatsApp-style Layout) -->
+<div id="threadView" class="thread-container tab">
   <!-- HEADER -->
   <div class="chat-header">
     <button onclick="switchTab('chatTab')"><i data-lucide="arrow-left"></i></button>
@@ -157,19 +157,19 @@
     </div>
   </div>
 
-  <!-- SCROLLABLE AREA -->
-  <div class="chat-scroll-area">
+  <!-- MAIN SCROLLABLE CHAT AREA -->
+  <div class="thread-main">
     <div id="threadMessages" class="chat-body"></div>
     <div id="threadTypingStatus" class="typing-indicator"></div>
-  </div>
 
-  <!-- FIXED INPUT BAR (OUTSIDE SCROLL) -->
-  <div class="chat-input-bar">
-    <button class="icon-btn" onclick="triggerFileInput('thread')"><i data-lucide="paperclip"></i></button>
-    <button class="icon-btn" onclick="shareFileViaTorrent('dm')"><i data-lucide="globe"></i></button>
-    <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" onkeydown="handleThreadKey(event)" />
-    <button class="icon-btn" onclick="sendThreadMessage()"><i data-lucide="send"></i></button>
-    <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
+    <!-- INPUT BAR -->
+    <div class="chat-input-bar">
+      <button class="icon-btn" onclick="triggerFileInput('thread')"><i data-lucide="paperclip"></i></button>
+      <button class="icon-btn" onclick="shareFileViaTorrent('dm')"><i data-lucide="globe"></i></button>
+      <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" onkeydown="handleThreadKey(event)" />
+      <button class="icon-btn" onclick="sendThreadMessage()"><i data-lucide="send"></i></button>
+      <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
+    </div>
   </div>
 </div>
     
