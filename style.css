@@ -317,7 +317,7 @@ body.dark .status-dot.online {
   background: var(--bg, #fff);
   z-index: 999;
   overflow: hidden;
-  height: 100vh;
+  height: 100dvh;
 }
 
 /* === HEADER === */
