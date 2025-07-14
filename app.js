@@ -111,6 +111,7 @@ function loadMainUI() {
     try { loadChatList(); } catch (e) { console.warn("Chats failed", e); }
     try { loadFriends(); } catch (e) { console.warn("Friends failed", e); }
     try { loadGroups?.(); } catch (e) { console.warn("Groups skipped", e); }
+    try { listenInbox(); } catch (e) { console.warn("Inbox failed", e); }  // ✅ added
 
     switchTab("chatTab");
 
