@@ -397,52 +397,35 @@ body.dark .status-dot.online {
   font-size: 16px;
 }
 
-/* === WHATSAPP MESSAGE CONTAINER === */
+/* === WHATSAPP STYLE MESSAGE WRAPPER === */
 .message-bubble-wrapper {
   display: flex;
   align-items: flex-end;
   justify-content: flex-start;
-  margin: 6px 10px;
+  margin: 4px 10px;
   gap: 6px;
   padding: 0 6px;
   position: relative;
 }
 
-/* Left & right alignment */
 .message-bubble-wrapper.left {
   flex-direction: row;
 }
-
 .message-bubble-wrapper.right {
   justify-content: flex-end;
   flex-direction: row-reverse;
 }
 
-/* First & last spacing */
+/* First & last spacing for better vertical rhythm */
 .message-bubble-wrapper:first-child {
   margin-top: 12px;
 }
-
 .message-bubble-wrapper:last-child {
   margin-bottom: 12px;
 }
 
-/* Tooltip on hover showing timestamp */
-.message-bubble-wrapper:hover::after {
-  content: attr(data-time);
-  position: absolute;
-  bottom: 100%;
-  right: 0;
-  font-size: 10px;
-  color: #999;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 2px 6px;
-  border-radius: 4px;
-  white-space: nowrap;
-}
-
-/* Avatar (left only) */
-.msg-avatar-img {
+/* Avatar only on first message of group */
+.message-bubble-wrapper.left .msg-avatar-img {
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -450,56 +433,64 @@ body.dark .status-dot.online {
   background-color: #eee;
   flex-shrink: 0;
 }
+.message-bubble-wrapper.right .msg-avatar-img {
+  display: none;
+}
+.message-bubble-wrapper.left > div:not(:first-child) .msg-avatar-img {
+  visibility: hidden;
+}
 
 /* === MESSAGE BUBBLE === */
 .message-bubble {
   max-width: 75%;
-  min-width: 40px;
   padding: 8px 12px;
   font-size: 14px;
   line-height: 1.4;
   word-break: break-word;
   white-space: pre-wrap;
   position: relative;
-  box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.07);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.05);
   display: inline-flex;
   flex-direction: column;
+  margin-bottom: 2px;
+  border-radius: 8px;
   transition: all 0.2s ease;
 }
 
-/* Sent vs received bubble colors + corners */
+/* INCOMING */
 .message-bubble.left {
-  background: #fff;
-  border-radius: 0 12px 12px 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  color: #000;
+  border-radius: 0 8px 8px 8px;
 }
 
+/* OUTGOING */
 .message-bubble.right {
   background-color: #dcf8c6;
   color: #111;
-  border-radius: 12px 0 12px 12px;
+  border-radius: 8px 0 8px 8px;
   margin-left: auto;
 }
 
-/* === SPEECH BUBBLE TAIL (WhatsApp's notch) === */
-.message-bubble.left::before,
-.message-bubble.right::after {
+/* === SPEECH TAIL ONLY ON FIRST MESSAGE === */
+.message-bubble.left:first-child::before,
+.message-bubble.right:first-child::after {
   content: "";
   position: absolute;
   width: 6px;
   height: 6px;
   bottom: 10px;
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
 }
 
 /* Left bubble tail */
-.message-bubble.left::before {
+.message-bubble.left:first-child::before {
   left: -6px;
   background: #fff;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
 }
 
-/* Right bubble tail (flipped horizontally) */
-.message-bubble.right::after {
+/* Right bubble tail (flipped) */
+.message-bubble.right:first-child::after {
   right: -6px;
   background: #dcf8c6;
   clip-path: polygon(100% 0, 0 50%, 100% 100%);
@@ -517,16 +508,7 @@ body.dark .status-dot.online {
   padding: 0;
 }
 
-/* Embedded images in messages */
-.message-bubble img {
-  max-width: 100%;
-  max-height: 220px;
-  border-radius: 8px;
-  margin-top: 4px;
-  object-fit: cover;
-}
-
-/* Time + ticks */
+/* === MESSAGE TIME + TICKS === */
 .message-bubble .message-time {
   display: flex;
   justify-content: flex-end;
@@ -553,6 +535,22 @@ body.dark .status-dot.online {
 
 .msg-ticks.double {
   color: #4fc3f7;
+}
+
+/* Optional: Subtle hover timestamp tooltip */
+.message-bubble-wrapper:hover::after {
+  content: attr(data-time);
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  font-size: 10px;
+  color: #999;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  transform: translateY(-4px);
+  opacity: 0.8;
 }
 
 /* === DARK MODE === */
