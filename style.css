@@ -288,13 +288,13 @@ body.dark .status-dot.online {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: #4a90e2; /* Telegram-style blue */
-  color: white;
+  background: #f0f0f0; 
+  color: #111;
   height: 56px;
   display: flex;
   align-items: center;
   padding: 0 10px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid #ddd;
 }
 .chat-header img {
   width: 36px;
@@ -324,14 +324,21 @@ body.dark .status-dot.online {
 .menu-btn {
   background: transparent;
   border: none;
-  padding: 8px;
-  color: white;
-  font-size: 20px;
+  padding: 6px;
+  color: #222; /* WhatsApp-style icon color */
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0; /* ✅ Remove rounded pill */
-  box-shadow: none; /* ✅ No shadow */
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.back-btn i,
+.menu-btn i {
+  stroke: #222;
+  width: 20px;
+  height: 20px;
+  stroke-width: 2; /* Slightly bolder */
 }
 
 /* === SCROLLABLE BODY === */
