@@ -139,35 +139,68 @@
     </div>
 
 <!-- 💬 DM View (100% Fixed WhatsApp-style Layout) -->
-<div id="threadView" class="thread-container tab">
+<div id="threadView" class="thread-container tab" role="region" aria-label="Direct Message View">
+
   <!-- HEADER -->
-  <div class="chat-header">
-    <button onclick="switchTab('chatTab')"><i data-lucide="arrow-left"></i></button>
-    <img id="chatProfilePic" class="header-avatar" src="default-avatar.png" />
+  <header class="chat-header">
+    <button onclick="switchTab('chatTab')" aria-label="Back to Chat List">
+      <i data-lucide="arrow-left"></i>
+    </button>
+    <img id="chatProfilePic" class="header-avatar" src="default-avatar.png" alt="Profile Picture" />
     <div class="chat-info">
       <h3 id="threadWithName">Friend Name</h3>
       <p id="chatStatus">Online</p>
     </div>
-    <button onclick="openChatMenu()" class="menu-btn"><i data-lucide="more-vertical"></i></button>
-    <div id="chatOptionsMenu" class="chat-options horizontal-menu">
-      <button title="Block"><i data-lucide="ban"></i></button>
-      <button title="Media"><i data-lucide="image"></i></button>
-      <button title="Export"><i data-lucide="download"></i></button>
-      <button title="Delete"><i data-lucide="trash-2"></i></button>
+    <button onclick="openChatMenu()" class="menu-btn" aria-label="Open Chat Menu">
+      <i data-lucide="more-vertical"></i>
+    </button>
+    
+    <!-- OPTIONS MENU -->
+    <div id="chatOptionsMenu" class="chat-options horizontal-menu" role="menu" aria-label="Chat Options">
+      <button title="Block" aria-label="Block User"><i data-lucide="ban"></i></button>
+      <button title="Media" aria-label="View Media"><i data-lucide="image"></i></button>
+      <button title="Export" aria-label="Export Chat"><i data-lucide="download"></i></button>
+      <button title="Delete" aria-label="Delete Chat"><i data-lucide="trash-2"></i></button>
     </div>
-  </div>
+  </header>
 
-  <!-- MAIN FLEX AREA: Messages + Input -->
+  <!-- MAIN MESSAGE + INPUT AREA -->
   <div class="thread-main">
-    <div id="threadMessages" class="chat-body"></div>
-    <div id="threadTypingStatus" class="typing-indicator"></div>
-    <div class="chat-input-bar">
-      <button class="icon-btn" onclick="triggerFileInput('thread')"><i data-lucide="paperclip"></i></button>
-      <button class="icon-btn" onclick="shareFileViaTorrent('dm')"><i data-lucide="globe"></i></button>
-      <input id="threadInput" placeholder="Type a message..." oninput="handleTyping('thread')" onkeydown="handleThreadKey(event)" />
-      <button class="icon-btn" onclick="sendThreadMessage()"><i data-lucide="send"></i></button>
-      <input type="file" id="threadFile" style="display:none;" onchange="uploadFile('thread')" />
+
+    <!-- Scrollable message area -->
+    <div class="chat-scroll-area">
+      <div id="threadMessages" class="chat-body" role="log" aria-live="polite" aria-label="Messages"></div>
+      <div id="threadTypingStatus" class="typing-indicator" aria-hidden="true"></div>
     </div>
+
+    <!-- Fixed Input -->
+    <footer class="chat-input-bar">
+      <button class="icon-btn" onclick="triggerFileInput('thread')" aria-label="Attach File">
+        <i data-lucide="paperclip"></i>
+      </button>
+      <button class="icon-btn" onclick="shareFileViaTorrent('dm')" aria-label="Send via Torrent">
+        <i data-lucide="globe"></i>
+      </button>
+      <input
+        id="threadInput"
+        placeholder="Type a message..."
+        aria-label="Message input"
+        oninput="handleTyping('thread')"
+        onkeydown="handleThreadKey(event)" />
+
+      <button class="icon-btn" onclick="sendThreadMessage()" aria-label="Send Message">
+        <i data-lucide="send"></i>
+      </button>
+
+      <!-- Hidden File Upload -->
+      <input
+        type="file"
+        id="threadFile"
+        class="visually-hidden"
+        onchange="uploadFile('thread')"
+        aria-hidden="true" />
+    </footer>
+
   </div>
 </div>
     
