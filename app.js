@@ -1262,8 +1262,6 @@ const ticks = isSelf
       <i data-lucide="${isRead || isDelivered ? 'check-check' : 'check'}"></i>
     </span>`
   : '';
-
-            if (decrypted.length > 400) bubble.classList.add("long-msg");
             
             // === Message bubble with wrapper ===
             const wrapper = document.createElement("div");
@@ -1301,6 +1299,11 @@ if (msg.fileURL && msg.fileName) {
 }
 
 bubble.innerHTML = contentHtml;
+
+// ✅ Now safe to add long-msg class for long normal text messages only
+if (!msg.fileURL && decrypted && decrypted.length > 400) {
+  bubble.classList.add("long-msg");
+}
 
             // 📌 Append in order (self right, others left)
             if (isSelf) {
