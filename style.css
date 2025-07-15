@@ -452,24 +452,22 @@ body.dark .status-dot.online {
 .msg-ticks {
   display: inline-flex;
   gap: 2px;
-  font-size: 12px;
+  font-size: 11px;
   color: #777;
   line-height: 1;
   align-items: center;
-}
-.msg-ticks.double {
-  color: #4fc3f7; /* blue ticks */
+  margin-left: 4px;
 }
 .msg-ticks svg {
   width: 16px;
   height: 16px;
   stroke-width: 2.2;
 }
-.msg-ticks.delivered i {
-  color: #999;
+.msg-ticks.delivered svg {
+  stroke: #aaa;
 }
-.msg-ticks.double i {
-  color: #4fc3f7;
+.msg-ticks.double svg {
+  stroke: #4fc3f7;
 }
 
 /* === DARK MODE === */
