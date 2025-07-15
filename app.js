@@ -1335,7 +1335,7 @@ renderWithMagnetSupport?.("threadMessages");
       if (typeof adjustThreadLayout === "function") {
         setTimeout(() => adjustThreadLayout(), 200);
       }
-    })
+   ) });  
     .catch(err => {
       console.error("❌ Friend check failed:", err.message || err);
       alert("❌ Failed to verify friendship.");
