@@ -1180,6 +1180,15 @@ function openThread(uid, name) {
 
       const threadIdStr = threadId(currentUser.uid, uid);
       const area = document.getElementById("threadMessages");
+      if (area) {
+  area.addEventListener("scroll", () => {
+    const maxScroll = area.scrollHeight - area.clientHeight;
+    if (area.scrollTop > maxScroll) {
+      area.scrollTop = maxScroll;
+    }
+  });
+      }
+      
       if (area) area.innerHTML = "";
 
       if (unsubscribeThread) unsubscribeThread();
@@ -1351,6 +1360,21 @@ function handleThreadKey(event) {
     sendThreadMessage();
   }
 }
+
+// ✅ Detect keyboard open/close based on viewport height
+let initialViewportHeight = window.innerHeight;
+
+window.addEventListener("resize", () => {
+  const currentHeight = window.innerHeight;
+
+  if (currentHeight < initialViewportHeight - 100) {
+    // Keyboard is open
+    document.body.classList.add("keyboard-open");
+  } else {
+    // Keyboard is closed
+    document.body.classList.remove("keyboard-open");
+  }
+});
 
 function deleteThread() {
   showModal("Delete this chat?", () => {
