@@ -1257,7 +1257,6 @@ function openThread(uid, name) {
 const isRead = msg.seenBy?.includes(currentThreadUser);
 const isDelivered = msg.seenBy?.length > 1;
 
-// ✅ Generate WhatsApp-style ticks using Lucide
 const ticks = isSelf
   ? `<span class="msg-ticks ${isRead ? 'double' : isDelivered ? 'delivered' : ''}">
       <i data-lucide="${isRead || isDelivered ? 'check-check' : 'check'}"></i>
@@ -1276,12 +1275,11 @@ wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
 bubble.className = "message-bubble " + (isSelf ? "right" : "left");
 bubble.innerHTML = `
   <div class="msg-text">
-  ${escapeHtml(decrypted)}
-  <span class="msg-meta">
-    ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-    ${ticks}
-  </span>
-</div>
+    ${escapeHtml(decrypted)}
+    <span class="msg-meta">
+      ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+      ${ticks}
+    </span>
   </div>
 `;
 
