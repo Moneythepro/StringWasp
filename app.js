@@ -1371,17 +1371,23 @@ function handleThreadKey(event) {
 }
 
 // ✅ Detect keyboard open/close
-let initialViewportHeight = window.innerHeight;
+if (window.visualViewport) {
+  let previousHeight = window.visualViewport.height;
 
-window.addEventListener("resize", () => {
-  const keyboardOpen = window.innerHeight < initialViewportHeight - 150;
-  document.body.classList.toggle("keyboard-open", keyboardOpen);
+  window.visualViewport.addEventListener("resize", () => {
+    const currentHeight = window.visualViewport.height;
 
-  // Optional: scroll to bottom when keyboard opens
-  if (keyboardOpen) {
-    setTimeout(() => scrollToBottomThread(true), 100);
-  }
-});
+    const keyboardOpen = currentHeight < previousHeight - 100;
+
+    document.body.classList.toggle("keyboard-open", keyboardOpen);
+
+    if (keyboardOpen) {
+      setTimeout(() => scrollToBottomThread(true), 100);
+    }
+
+    previousHeight = currentHeight;
+  });
+}
 
 function toggleChatOptions() {
   const menu = document.getElementById("chatOptionsMenu");
