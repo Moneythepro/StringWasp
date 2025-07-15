@@ -1270,16 +1270,16 @@ wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
             avatarImg.className = "msg-avatar-img";
 
             const bubble = document.createElement("div");
-            bubble.className = "message-bubble " + (isSelf ? "right" : "left");
-            bubble.innerHTML = `
-              <div class="msg-content">
-                <div class="msg-text">${escapeHtml(decrypted)}</div>
-                <div class="message-time">
-                  ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-                  ${isSelf ? ticks : ""}
-                </div>
-              </div>
-            `;
+bubble.className = "message-bubble " + (isSelf ? "right" : "left");
+bubble.innerHTML = `
+  <div class="msg-content">
+    <div class="msg-text">${escapeHtml(decrypted)}</div>
+    <div class="message-time">
+      ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+      ${isSelf ? ticks : ""}
+    </div>
+  </div>
+`;
 
             // 📌 Append in order (self right, others left)
             if (isSelf) {
