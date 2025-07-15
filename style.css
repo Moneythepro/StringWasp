@@ -269,8 +269,6 @@ body.dark .status-dot.online {
   background: #4caf50;
 }
 
-/* ===== FINAL DM THREAD VIEW (100% FIXED) ===== */
-
 /* ===== 100% FIXED THREAD VIEW LAYOUT ===== */
 
 #threadMessages {
@@ -289,7 +287,7 @@ body.dark .status-dot.online {
 .chat-header {
   backdrop-filter: blur(10px);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  z-index: 2;
+  z-index: 10;
   position: fixed;
   top: 0;
   left: 0;
@@ -300,7 +298,6 @@ body.dark .status-dot.online {
   align-items: center;
   padding: 0 10px;
   border-bottom: 1px solid #ccc;
-  z-index: 10;
 }
 .chat-header img {
   width: 32px;
@@ -340,14 +337,6 @@ body.dark .status-dot.online {
   gap: 10px;
   background: #fafafa;
   scroll-behavior: smooth;
-}
-
-.chat-scroll-area {
-  background-color: #f0f2f5;
-  scroll-behavior: smooth;
-  overflow-y: auto;
-  padding: 10px;
-  height: 100%;
 }
 
 /* === TYPING STATUS === */
@@ -416,7 +405,6 @@ body.dark .status-dot.online {
   flex-direction: row-reverse;
 }
 
-/* First & last spacing for better vertical rhythm */
 .message-bubble-wrapper:first-child {
   margin-top: 12px;
 }
@@ -424,7 +412,6 @@ body.dark .status-dot.online {
   margin-bottom: 12px;
 }
 
-/* Avatar only on first message of group */
 .message-bubble-wrapper.left .msg-avatar-img {
   width: 32px;
   height: 32px;
@@ -481,15 +468,11 @@ body.dark .status-dot.online {
   height: 6px;
   bottom: 10px;
 }
-
-/* Left bubble tail */
 .message-bubble.left:first-child::before {
   left: -6px;
   background: #fff;
   clip-path: polygon(0 0, 100% 50%, 0 100%);
 }
-
-/* Right bubble tail (flipped) */
 .message-bubble.right:first-child::after {
   right: -6px;
   background: #dcf8c6;
@@ -506,38 +489,36 @@ body.dark .status-dot.online {
 .message-bubble .msg-text {
   margin: 0;
   padding: 0;
+  display: inline;
 }
 
-/* === MESSAGE TIME + TICKS === */
-.message-bubble .message-time {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
+/* === INLINE MESSAGE TIME + TICKS === */
+.message-bubble .msg-meta {
+  display: inline-flex;
   gap: 4px;
   font-size: 11px;
   color: #667781;
-  margin-top: 4px;
-  margin-left: auto;
-  white-space: nowrap;
+  margin-left: 6px;
+  vertical-align: middle;
 }
 
-.message-bubble.right .message-time {
+.message-bubble.right .msg-meta {
   color: #4fc3f7;
 }
 
+/* Add this inside msg-text inline like span */
 .msg-ticks {
-  font-size: 14px;
+  font-size: 12px;
   letter-spacing: -1px;
   line-height: 1;
   display: inline-flex;
   align-items: center;
 }
-
 .msg-ticks.double {
   color: #4fc3f7;
 }
 
-/* Optional: Subtle hover timestamp tooltip */
+/* === HOVER TOOLTIP === */
 .message-bubble-wrapper:hover::after {
   content: attr(data-time);
   position: absolute;
@@ -570,17 +551,14 @@ body.dark .chat-input-bar input {
   color: #eee;
   border-color: #444;
 }
-
 body.dark .msg-ticks {
   color: #82dfff;
 }
-
 body.dark .message-bubble.left {
   background: #2a2a2a;
   color: #ddd;
   border-color: #444;
 }
-
 body.dark .message-bubble.right {
   background: #1f3e2a;
   color: #ddd;
