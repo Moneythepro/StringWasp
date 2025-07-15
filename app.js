@@ -1263,15 +1263,19 @@ const ticks = isSelf
     </span>`
   : '';
             
-            // === Message bubble with wrapper ===
-            const wrapper = document.createElement("div");
+// === Message bubble with wrapper ===
+const wrapper = document.createElement("div");
 wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
-            
-            const avatarImg = document.createElement("img");
-            avatarImg.src = avatar;
-            avatarImg.className = "msg-avatar-img";
 
-            let contentHtml = "";
+const avatarImg = document.createElement("img");
+avatarImg.src = avatar;
+avatarImg.className = "msg-avatar-img";
+
+// ✅ Create bubble element (this was missing)
+const bubble = document.createElement("div");
+bubble.className = "message-bubble " + (isSelf ? "right" : "left");
+
+let contentHtml = "";
 
 if (msg.fileURL && msg.fileName) {
   contentHtml = `
@@ -1300,34 +1304,32 @@ if (msg.fileURL && msg.fileName) {
 
 bubble.innerHTML = contentHtml;
 
-// ✅ Now safe to add long-msg class for long normal text messages only
+// ✅ Add long-msg class only for long plain messages
 if (!msg.fileURL && decrypted && decrypted.length > 400) {
   bubble.classList.add("long-msg");
 }
 
-            // 📌 Append in order (self right, others left)
-            if (isSelf) {
-              wrapper.appendChild(bubble);
-              wrapper.appendChild(avatarImg);
-            } else {
-              wrapper.appendChild(avatarImg);
-              wrapper.appendChild(bubble);
-            }
+// 📌 Append in correct order
+if (isSelf) {
+  wrapper.appendChild(bubble);
+  wrapper.appendChild(avatarImg);
+} else {
+  wrapper.appendChild(avatarImg);
+  wrapper.appendChild(bubble);
+}
 
-            area.appendChild(wrapper);
-          }
+area.appendChild(wrapper);
 
-          if (typeof lucide !== "undefined") {
+// ✅ Render lucide icons (after bubble is added)
+if (typeof lucide !== "undefined") {
   lucide.createIcons();
-          }
+}
+
 console.log("✅ Lucide icons rendered");
-          // ✅ Scroll to bottom after render
-          setTimeout(() => scrollToBottomThread(true), 100);
-          renderWithMagnetSupport?.("threadMessages");
-        }, err => {
-          console.error("❌ Thread snapshot error:", err.message || err);
-          alert("❌ Failed to load messages: " + (err.message || err));
-        });
+
+// ✅ Scroll to bottom after render
+setTimeout(() => scrollToBottomThread(true), 100);
+renderWithMagnetSupport?.("threadMessages");
 
       // ✅ Adjust layout after open
       if (typeof adjustThreadLayout === "function") {
