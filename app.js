@@ -1272,15 +1272,14 @@ function openThread(uid, name) {
             const bubble = document.createElement("div");
             bubble.className = "message-bubble";
             bubble.innerHTML = `
-              <div class="msg-text">
-                <strong>${escapeHtml(msg.fromName || "User")}</strong><br>
-                ${escapeHtml(decrypted)}
-              </div>
-              <div class="message-time">
-                ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-                ${ticks}
-              </div>
-            `;
+  <div class="msg-content">
+    <div class="msg-text">${escapeHtml(decrypted)}</div>
+    <div class="message-time">
+      ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+      ${isSelf ? ticks : ""}
+    </div>
+  </div>
+`;
 
             if (isSelf) {
               wrapper.appendChild(bubble);
