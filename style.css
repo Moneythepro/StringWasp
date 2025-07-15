@@ -505,10 +505,15 @@ input[type="file"]#threadFile {
 
 /* === When Keyboard is Open === */
 body.keyboard-open .chat-body {
-  overscroll-behavior: none;
-  scroll-padding-bottom: 60px;
+  padding-bottom: 66px; /* keep space for input bar */
 }
 
+body.keyboard-open .chat-input-bar {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  z-index: 12;
+}
 .animate-fade-in {
   animation: fadeInUp 0.22s ease-out both;
 }
