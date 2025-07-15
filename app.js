@@ -1263,8 +1263,8 @@ function openThread(uid, name) {
 
             // === Message bubble with wrapper ===
             const wrapper = document.createElement("div");
-            wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
-
+wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
+            
             const avatarImg = document.createElement("img");
             avatarImg.src = avatar;
             avatarImg.className = "msg-avatar-img";
