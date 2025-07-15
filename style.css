@@ -277,7 +277,6 @@ body.dark .status-dot.online {
   flex-direction: column;
   background: var(--bg, #fff);
   z-index: 999;
-  overflow: hidden;
 }
 
 #threadMessages {
@@ -286,16 +285,14 @@ body.dark .status-dot.online {
 
 /* === HEADER === */
 .chat-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: #f0f0f0;
   height: 56px;
+  background: #f0f0f0;
   display: flex;
   align-items: center;
   padding: 0 10px;
   border-bottom: 1px solid #ccc;
   flex-shrink: 0;
+  z-index: 10;
 }
 .chat-header img {
   width: 32px;
@@ -327,7 +324,6 @@ body.dark .status-dot.online {
   gap: 2px;
   background: #fafafa;
   transition: all 0.2s ease;
-  min-height: 0; /* ✅ prevents flex overflow glitch */
 }
 
 /* === FILE LINK === */
@@ -367,7 +363,6 @@ body.dark .status-dot.online {
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
-  z-index: 10;
 }
 .chat-input-bar input {
   flex: 1;
