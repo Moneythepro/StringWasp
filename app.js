@@ -1258,8 +1258,10 @@ function openThread(uid, name) {
             const isDelivered = msg.seenBy?.length > 1;
 
             const ticks = isSelf
-              ? `<span class="msg-ticks">${isRead ? '✔️✔️' : isDelivered ? '✔️✔️' : '✔️'}</span>`
-              : '';
+  ? `<span class="msg-ticks ${isRead ? 'double' : ''}">
+      ${isRead ? '<i data-lucide="check-check"></i>' : '<i data-lucide="check"></i>'}
+     </span>`
+  : '';
 
             // === Message bubble with wrapper ===
             const wrapper = document.createElement("div");
