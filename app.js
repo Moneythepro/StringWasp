@@ -1263,6 +1263,8 @@ const ticks = isSelf
     </span>`
   : '';
 
+            if (decrypted.length > 400) bubble.classList.add("long-msg");
+            
             // === Message bubble with wrapper ===
             const wrapper = document.createElement("div");
 wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
