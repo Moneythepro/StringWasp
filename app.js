@@ -1336,7 +1336,22 @@ unsubscribeThread = db.collection("threads")
       alert("❌ Failed to verify friendship.");
     });
 }  
-  
+
+function handleSendClick() {
+  sendThreadMessage();
+  setTimeout(() => {
+    const input = document.getElementById("threadInput");
+    if (input) input.focus(); // ✅ Restore focus after clicking send button
+  }, 80);
+}
+
+function handleThreadKey(event) {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    sendThreadMessage();
+  }
+}
+
 function deleteThread() {
   showModal("Delete this chat?", () => {
     const docId = threadId(currentUser.uid, currentThreadUser);
