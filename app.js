@@ -1371,13 +1371,16 @@ function handleThreadKey(event) {
 }
 
 // ✅ Detect keyboard open/close
-let initialHeight = window.innerHeight;
+let initialViewportHeight = window.innerHeight;
 
 window.addEventListener("resize", () => {
-  const diff = initialHeight - window.innerHeight;
-  const isKeyboard = diff > 150;
+  const keyboardOpen = window.innerHeight < initialViewportHeight - 150;
+  document.body.classList.toggle("keyboard-open", keyboardOpen);
 
-  document.body.classList.toggle("keyboard-open", isKeyboard);
+  // Optional: scroll to bottom when keyboard opens
+  if (keyboardOpen) {
+    setTimeout(() => scrollToBottomThread(true), 100);
+  }
 });
 
 function deleteThread() {
