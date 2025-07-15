@@ -440,6 +440,33 @@ body.dark .status-dot.online {
   object-fit: cover;
 }
 
+.message-bubble {
+  background: #e0e0e0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  max-width: 75%;
+  font-size: 14px;
+  word-wrap: break-word;
+  line-height: 1.4;
+}
+.message-bubble-wrapper.right .message-bubble {
+  background: #dcf8c6;
+}
+.message-time {
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
+  text-align: right;
+}
+.msg-text {
+  white-space: pre-wrap;
+}
+.msg-ticks {
+  font-size: 12px;
+  margin-left: 6px;
+  color: #0b6;
+}
+
 /* === DARK MODE === */
 body.dark #threadView .chat-header {
   background: #1f1f1f;
