@@ -142,27 +142,30 @@
 <!-- 💬 WhatsApp-style Chat UI -->
 <div id="threadView" class="thread-container tab" role="region" aria-label="Direct Message View">
   <!-- HEADER -->
-  <header class="chat-header">
-    <button onclick="switchTab('chatTab')" aria-label="Back to Chat List">
-      <i data-lucide="arrow-left"></i>
-    </button>
-    <img id="chatProfilePic" class="header-avatar" src="default-avatar.png" alt="Profile Picture" />
-    <div class="chat-info">
-      <h3 id="threadWithName">Friend Name</h3>
-      <p id="chatStatus">Online</p>
-    </div>
-    <button onclick="openChatMenu()" class="menu-btn" aria-label="Open Chat Menu">
-      <i data-lucide="more-vertical"></i>
-    </button>
+<header class="chat-header">
+  <button class="back-btn" onclick="switchTab('chatTab')" aria-label="Back">
+    <i data-lucide="arrow-left"></i>
+  </button>
 
-    <!-- OPTIONS MENU -->
-    <div id="chatOptionsMenu" class="chat-options horizontal-menu" role="menu" aria-label="Chat Options">
-      <button title="Block" aria-label="Block User"><i data-lucide="ban"></i></button>
-      <button title="Media" aria-label="View Media"><i data-lucide="image"></i></button>
-      <button title="Export" aria-label="Export Chat"><i data-lucide="download"></i></button>
-      <button title="Delete" aria-label="Delete Chat"><i data-lucide="trash-2"></i></button>
-    </div>
-  </header>
+  <img id="chatProfilePic" class="header-avatar" src="default-avatar.png" alt="Profile Picture" />
+
+  <div class="chat-info">
+    <h3 id="threadWithName">Friend Name</h3>
+    <p id="chatStatus">last seen recently</p>
+  </div>
+
+  <button class="menu-btn" onclick="toggleChatOptions()" aria-label="Open Menu">
+    <i data-lucide="more-vertical"></i>
+  </button>
+
+  <!-- ✅ Telegram-style horizontal menu -->
+  <div id="chatOptionsMenu" class="chat-options-horizontal" role="menu" aria-label="Chat Options">
+    <span onclick="blockUser()">Block</span>
+    <span onclick="viewMedia()">Media</span>
+    <span onclick="exportChat()">Export</span>
+    <span onclick="deleteChat()">Delete</span>
+  </div>
+</header>
 
   <!-- MAIN CHAT BODY -->
   <div class="thread-main">
