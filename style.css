@@ -417,6 +417,7 @@ body.dark .status-dot.online {
   white-space: pre-wrap;
   position: relative;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  display: inline-block;  /* <- important */
 }
 
 .message-bubble.left {
