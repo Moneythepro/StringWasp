@@ -332,6 +332,25 @@ body.dark .status-dot.online {
   background: #fafafa;
 }
 
+/* === FILE LINK === */
+.file-link {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.file-link:hover {
+  text-decoration: underline;
+}
+
+.msg-text i[data-lucide="file"] {
+  margin-right: 6px;
+  stroke: #555;
+  width: 16px;
+  height: 16px;
+}
+
 /* === TYPING INDICATOR === */
 .typing-indicator {
   position: absolute;
