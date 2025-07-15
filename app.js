@@ -1335,11 +1335,8 @@ unsubscribeThread = db.collection("threads")
   console.error("❌ Friend check failed:", err.message || err);
   alert("❌ Failed to verify friendship.");
 });
-
-
+}
   
-            
-
 function deleteThread() {
   showModal("Delete this chat?", () => {
     const docId = threadId(currentUser.uid, currentThreadUser);
