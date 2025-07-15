@@ -1,4 +1,7 @@
 /* ===== BASE RESET ===== */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
 * {
   margin: 0;
   padding: 0;
@@ -410,6 +413,14 @@ body.dark .status-dot.online {
   flex-shrink: 0;
 }
 
+.message-bubble img {
+  max-width: 100%;
+  max-height: 220px;
+  border-radius: 8px;
+  margin-top: 4px;
+  object-fit: cover;
+}
+
 /* === BUBBLE SHAPE (EXACT WHATSAPP STYLE) === */
 .message-bubble {
   max-width: 75%;
@@ -439,6 +450,12 @@ body.dark .status-dot.online {
   color: #111;
   border-radius: 8px 0 8px 8px; /* Flat right side */
   margin-left: auto;
+}
+
+.message-bubble,
+.chat-input-bar input,
+.chat-input-bar button {
+  transition: all 0.2s ease;
 }
 
 /* === SPEECH BUBBLE TAIL (WhatsApp's small notch) === */
@@ -508,6 +525,22 @@ body.dark .status-dot.online {
 
 .message-bubble-wrapper:last-child {
   margin-bottom: 12px;
+}
+
+.message-bubble-wrapper {
+  position: relative;
+}
+.message-bubble-wrapper:hover::after {
+  content: attr(data-time);
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  font-size: 10px;
+  color: #999;
+  background: rgba(0,0,0,0.6);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
 }
 
 /* === DARK MODE === */
