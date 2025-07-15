@@ -308,16 +308,6 @@ body.dark .status-dot.online {
 }
 
 /* ===== FINAL DM THREAD VIEW (100% FIXED) ===== */
-#threadView.thread-container {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg, #fff);
-  z-index: 999;
-  height: 100dvh;
-  overflow: hidden;
-}
 
 /* HEADER */
 .chat-header {
@@ -353,25 +343,6 @@ body.dark .status-dot.online {
   font-size: 20px !important;
 }
 
-/* MAIN AREA */
-.thread-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* MESSAGE LIST */
-.chat-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: #fafafa;
-  scroll-behavior: smooth;
-}
 
 /* TYPING STATUS */
 .typing-indicator {
@@ -380,15 +351,6 @@ body.dark .status-dot.online {
   padding: 4px 14px;
 }
 
-/* INPUT BAR */
-.chat-input-bar {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  padding: 8px;
-  background: #fff;
-  border-top: 1px solid #ddd;
-}
 .chat-input-bar input {
   flex: 1;
   padding: 8px 14px;
@@ -616,9 +578,10 @@ body.dark #loadingOverlay {
   cursor: not-allowed;
 }
 
-#threadView.thread-container {
+
+.thread-container {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0; bottom: 0; left: 0; right: 0;
   display: flex;
   flex-direction: column;
   background: var(--bg, #fff);
@@ -631,22 +594,22 @@ body.dark #loadingOverlay {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   overflow: hidden;
 }
 
 .chat-body {
   flex: 1;
   overflow-y: auto;
-  padding: 10px 12px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   background: #fafafa;
   scroll-behavior: smooth;
 }
 
 .chat-input-bar {
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   padding: 8px;
