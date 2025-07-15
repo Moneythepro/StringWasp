@@ -114,6 +114,10 @@ body.dark .tabs button.active {
   background: #20b954;
 }
 
+html, body {
+  overscroll-behavior-y: contain;
+}
+
 /* ===== CHAT & INBOX CARDS ===== */
 .chat-card, .inbox-card {
   background: #fff;
