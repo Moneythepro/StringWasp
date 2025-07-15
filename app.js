@@ -1271,17 +1271,34 @@ wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
             avatarImg.src = avatar;
             avatarImg.className = "msg-avatar-img";
 
-            const bubble = document.createElement("div");
-bubble.className = "message-bubble " + (isSelf ? "right" : "left");
-bubble.innerHTML = `
-  <div class="msg-text">
-    ${escapeHtml(decrypted)}
-    <span class="msg-meta">
-      ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-      ${ticks}
-    </span>
-  </div>
-`;
+            let contentHtml = "";
+
+if (msg.fileURL && msg.fileName) {
+  contentHtml = `
+    <div class="msg-text">
+      <i data-lucide="file"></i>
+      <a href="${msg.fileURL}" target="_blank" class="file-link">
+        ${escapeHtml(msg.fileName)}
+      </a>
+      <span class="msg-meta">
+        ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+        ${ticks}
+      </span>
+    </div>
+  `;
+} else {
+  contentHtml = `
+    <div class="msg-text">
+      ${escapeHtml(decrypted)}
+      <span class="msg-meta">
+        ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+        ${ticks}
+      </span>
+    </div>
+  `;
+}
+
+bubble.innerHTML = contentHtml;
 
             // 📌 Append in order (self right, others left)
             if (isSelf) {
