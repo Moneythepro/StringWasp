@@ -396,7 +396,6 @@ body.dark .status-dot.online {
   padding: 0 6px;
   position: relative;
 }
-
 .message-bubble-wrapper.left {
   flex-direction: row;
 }
@@ -404,14 +403,12 @@ body.dark .status-dot.online {
   justify-content: flex-end;
   flex-direction: row-reverse;
 }
-
 .message-bubble-wrapper:first-child {
   margin-top: 12px;
 }
 .message-bubble-wrapper:last-child {
   margin-bottom: 12px;
 }
-
 .message-bubble-wrapper.left .msg-avatar-img {
   width: 32px;
   height: 32px;
@@ -443,15 +440,11 @@ body.dark .status-dot.online {
   border-radius: 8px;
   transition: all 0.2s ease;
 }
-
-/* INCOMING */
 .message-bubble.left {
   background: #ffffff;
   color: #000;
   border-radius: 0 8px 8px 8px;
 }
-
-/* OUTGOING */
 .message-bubble.right {
   background-color: #dcf8c6;
   color: #111;
@@ -459,7 +452,7 @@ body.dark .status-dot.online {
   margin-left: auto;
 }
 
-/* === SPEECH TAIL ONLY ON FIRST MESSAGE === */
+/* === SPEECH TAIL (optional) === */
 .message-bubble.left:first-child::before,
 .message-bubble.right:first-child::after {
   content: "";
@@ -486,32 +479,26 @@ body.dark .status-dot.online {
   gap: 2px;
 }
 
+/* === TEXT + TIMESTAMP INLINE === */
 .message-bubble .msg-text {
-  margin: 0;
-  padding: 0;
-  display: inline;
-  font-size: 14px;
-  line-height: 1.4;
   display: inline-flex;
   align-items: flex-end;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 500;
 }
-
-/* === INLINE TIME + TICKS === */
 .message-bubble .msg-meta {
   display: inline-flex;
+  align-items: center;
   gap: 4px;
   font-size: 11px;
   color: #667781;
-  align-self: flex-end;
-  vertical-align: middle;
   opacity: 0.85;
 }
 .message-bubble.right .msg-meta {
   color: #4fc3f7;
 }
-
 .msg-ticks {
   font-size: 12px;
   letter-spacing: -1px;
@@ -523,7 +510,7 @@ body.dark .status-dot.online {
   color: #4fc3f7;
 }
 
-/* === HOVER TOOLTIP === */
+/* === HOVER TOOLTIP (Optional) === */
 .message-bubble-wrapper:hover::after {
   content: attr(data-time);
   position: absolute;
