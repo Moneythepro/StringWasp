@@ -1298,7 +1298,7 @@ bubble.innerHTML = `
           if (typeof lucide !== "undefined") {
   lucide.createIcons();
           }
-
+console.log("✅ Lucide icons rendered");
           // ✅ Scroll to bottom after render
           setTimeout(() => scrollToBottomThread(true), 100);
           renderWithMagnetSupport?.("threadMessages");
