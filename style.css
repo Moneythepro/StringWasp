@@ -468,22 +468,20 @@ body.dark .status-dot.online {
 }
 
 /* Sent vs received bubble colors + corners */
-  .message-bubble.left {
+.message-bubble.left {
   background: #fff;
   border-radius: 0 12px 12px 12px;
-  padding: 8px 12px;
-  background: #fff;
-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  }
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
 
 .message-bubble.right {
   background-color: #dcf8c6;
   color: #111;
-  border-radius: 8px 0 8px 8px;
+  border-radius: 12px 0 12px 12px;
   margin-left: auto;
 }
 
-/* === SPEECH BUBBLE TAIL (WhatsApp's small notch) === */
+/* === SPEECH BUBBLE TAIL (WhatsApp's notch) === */
 .message-bubble.left::before,
 .message-bubble.right::after {
   content: "";
@@ -533,10 +531,12 @@ box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   font-size: 11px;
   color: #667781;
-  margin-left: 8px;
+  margin-top: 4px;
+  margin-left: auto;
+  white-space: nowrap;
 }
 
 .message-bubble.right .message-time {
@@ -544,8 +544,11 @@ box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .msg-ticks {
-  font-size: 16px;
+  font-size: 14px;
   letter-spacing: -1px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
 }
 
 .msg-ticks.double {
