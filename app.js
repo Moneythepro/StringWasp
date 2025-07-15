@@ -1331,11 +1331,11 @@ unsubscribeThread = db.collection("threads")
     setTimeout(() => adjustThreadLayout(), 150);
   }
 })
-.catch(err => {
-  console.error("❌ Friend check failed:", err.message || err);
-  alert("❌ Failed to verify friendship.");
-});
-}
+  .catch(err => {
+      console.error("❌ Friend check failed:", err.message || err);
+      alert("❌ Failed to verify friendship.");
+    });
+}  
   
 function deleteThread() {
   showModal("Delete this chat?", () => {
