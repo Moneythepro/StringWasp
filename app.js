@@ -1261,21 +1261,7 @@ function openThread(uid, name) {
               ? `<span class="msg-ticks">${isRead ? '✔️✔️' : isDelivered ? '✔️✔️' : '✔️'}</span>`
               : '';
 
-            const bubble = document.createElement("div");
-            bubble.className = "message-bubble " + (isSelf ? "right" : "left");
-            bubble.innerHTML = `
-              <div class="msg-content">
-                <div class="msg-text">
-                  <strong>${escapeHtml(msg.fromName || "User")}</strong><br>
-                  ${escapeHtml(decrypted)}
-                </div>
-                <div class="message-time">
-                  ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-                  ${ticks}
-                </div>
-              </div>
-            `;
-
+            // === Build message bubble ===
             const wrapper = document.createElement("div");
             wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
 
@@ -1283,8 +1269,27 @@ function openThread(uid, name) {
             avatarImg.src = avatar;
             avatarImg.className = "msg-avatar-img";
 
-            wrapper.appendChild(avatarImg);
-            wrapper.appendChild(bubble);
+            const bubble = document.createElement("div");
+            bubble.className = "message-bubble";
+            bubble.innerHTML = `
+              <div class="msg-text">
+                <strong>${escapeHtml(msg.fromName || "User")}</strong><br>
+                ${escapeHtml(decrypted)}
+              </div>
+              <div class="message-time">
+                ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+                ${ticks}
+              </div>
+            `;
+
+            if (isSelf) {
+              wrapper.appendChild(bubble);
+              wrapper.appendChild(avatarImg);
+            } else {
+              wrapper.appendChild(avatarImg);
+              wrapper.appendChild(bubble);
+            }
+
             area.appendChild(wrapper);
           }
 
@@ -1306,7 +1311,7 @@ function openThread(uid, name) {
       alert("❌ Failed to verify friendship.");
     });
 }
-      
+
 function deleteThread() {
   showModal("Delete this chat?", () => {
     const docId = threadId(currentUser.uid, currentThreadUser);
