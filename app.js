@@ -1275,14 +1275,13 @@ wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
             const bubble = document.createElement("div");
 bubble.className = "message-bubble " + (isSelf ? "right" : "left");
 bubble.innerHTML = `
-  <div class="msg-content">
-    <div class="msg-text">
-      ${escapeHtml(decrypted)}
-      <span class="msg-meta">
-        ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-        ${ticks}
-      </span>
-    </div>
+  <div class="msg-text">
+  ${escapeHtml(decrypted)}
+  <span class="msg-meta">
+    ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+    ${ticks}
+  </span>
+</div>
   </div>
 `;
 
