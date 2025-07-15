@@ -1254,9 +1254,10 @@ function openThread(uid, name) {
             }
 
             const isSelf = msg.from === currentUser.uid;
-            const isRead = msg.seenBy?.includes(currentThreadUser);
+const isRead = msg.seenBy?.includes(currentThreadUser);
 const isDelivered = msg.seenBy?.length > 1;
 
+// ✅ Generate WhatsApp-style ticks using Lucide
 const ticks = isSelf
   ? `<span class="msg-ticks ${isRead ? 'double' : isDelivered ? 'delivered' : ''}">
       <i data-lucide="${isRead || isDelivered ? 'check-check' : 'check'}"></i>
@@ -1296,6 +1297,7 @@ bubble.innerHTML = `
 
             area.appendChild(wrapper);
           }
+          lucide.createIcons();
 
           // ✅ Scroll to bottom after render
           setTimeout(() => scrollToBottomThread(true), 100);
