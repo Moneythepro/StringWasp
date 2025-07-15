@@ -1385,10 +1385,7 @@ window.addEventListener("resize", () => {
 
 function toggleChatOptions() {
   const menu = document.getElementById("chatOptionsMenu");
-  menu.style.display = menu.style.display === "flex" ? "none" : "flex";
-  if (menu.style.display === "flex") {
-    menu.style.flexDirection = "row";
-  }
+  menu.classList.toggle("show");
 }
 
 function blockUser() {
