@@ -426,6 +426,7 @@ body.dark .status-dot.online {
   display: flex;
   align-items: flex-end;
   gap: 8px;
+  margin-bottom: 6px;
 }
 
 .message-bubble-wrapper.left {
@@ -438,8 +439,8 @@ body.dark .status-dot.online {
 }
 
 .msg-avatar-img {
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -455,6 +456,7 @@ body.dark .status-dot.online {
   display: inline-block;
   word-break: break-word;
   white-space: pre-wrap;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .message-bubble.left {
@@ -476,19 +478,22 @@ body.dark .status-dot.online {
 
 .message-bubble .msg-text {
   margin-bottom: 4px;
+  word-wrap: break-word;
 }
 
 .message-bubble .message-time {
   font-size: 11px;
   color: #555;
   text-align: right;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .msg-ticks {
-  margin-left: 6px;
+  margin-left: 4px;
   font-size: 12px;
-  vertical-align: middle;
-  color: #4fc3f7; /* WhatsApp blue ticks */
+  color: #4fc3f7; /* WhatsApp blue */
 }
 
 /* === DARK MODE === */
