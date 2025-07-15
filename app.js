@@ -1383,6 +1383,27 @@ window.addEventListener("resize", () => {
   }
 });
 
+function toggleChatOptions() {
+  const menu = document.getElementById("chatOptionsMenu");
+  menu.style.display = menu.style.display === "flex" ? "none" : "flex";
+  if (menu.style.display === "flex") {
+    menu.style.flexDirection = "row";
+  }
+}
+
+function blockUser() {
+  alert("🚫 Block user feature coming soon.");
+}
+function viewMedia() {
+  alert("🖼️ View media feature coming soon.");
+}
+function exportChat() {
+  alert("📁 Export chat feature coming soon.");
+}
+function deleteChat() {
+  alert("🗑️ Delete chat feature coming soon.");
+}
+
 function deleteThread() {
   showModal("Delete this chat?", () => {
     const docId = threadId(currentUser.uid, currentThreadUser);
