@@ -1150,6 +1150,7 @@ function threadId(a, b) {
 }
 
 // ===== DM: Open Thread Chat =====
+
 function openThread(uid, name) {
   if (!currentUser || !uid) return;
 
@@ -1254,88 +1255,88 @@ function openThread(uid, name) {
             }
 
             const isSelf = msg.from === currentUser.uid;
-const isRead = msg.seenBy?.includes(currentThreadUser);
-const isDelivered = msg.seenBy?.length > 1;
+            const isRead = msg.seenBy?.includes(currentThreadUser);
+            const isDelivered = msg.seenBy?.length > 1;
 
-const ticks = isSelf
-  ? `<span class="msg-ticks ${isRead ? 'double' : isDelivered ? 'delivered' : ''}">
-      <i data-lucide="${isRead || isDelivered ? 'check-check' : 'check'}"></i>
-    </span>`
-  : '';
-            
-// === Message bubble with wrapper ===
-const wrapper = document.createElement("div");
-wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
+            const ticks = isSelf
+              ? `<span class="msg-ticks ${isRead ? 'double' : isDelivered ? 'delivered' : ''}">
+                  <i data-lucide="${isRead || isDelivered ? 'check-check' : 'check'}"></i>
+                </span>`
+              : '';
 
-const avatarImg = document.createElement("img");
-avatarImg.src = avatar;
-avatarImg.className = "msg-avatar-img";
+            // === Bubble wrapper ===
+            const wrapper = document.createElement("div");
+            wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
 
-// ✅ Create bubble element (this was missing)
-const bubble = document.createElement("div");
-bubble.className = "message-bubble " + (isSelf ? "right" : "left");
+            const avatarImg = document.createElement("img");
+            avatarImg.src = avatar;
+            avatarImg.className = "msg-avatar-img";
 
-let contentHtml = "";
+            const bubble = document.createElement("div");
+            bubble.className = "message-bubble " + (isSelf ? "right" : "left");
 
-if (msg.fileURL && msg.fileName) {
-  contentHtml = `
-    <div class="msg-text">
-      <i data-lucide="file"></i>
-      <a href="${msg.fileURL}" target="_blank" class="file-link">
-        ${escapeHtml(msg.fileName)}
-      </a>
-      <span class="msg-meta">
-        ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-        ${ticks}
-      </span>
-    </div>
-  `;
-} else {
-  contentHtml = `
-    <div class="msg-text">
-      ${escapeHtml(decrypted)}
-      <span class="msg-meta">
-        ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-        ${ticks}
-      </span>
-    </div>
-  `;
-}
+            let contentHtml = "";
 
-bubble.innerHTML = contentHtml;
+            if (msg.fileURL && msg.fileName) {
+              contentHtml = `
+                <div class="msg-text">
+                  <i data-lucide="file"></i>
+                  <a href="${msg.fileURL}" target="_blank" class="file-link">
+                    ${escapeHtml(msg.fileName)}
+                  </a>
+                  <span class="msg-meta">
+                    ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+                    ${ticks}
+                  </span>
+                </div>
+              `;
+            } else {
+              contentHtml = `
+                <div class="msg-text">
+                  ${escapeHtml(decrypted)}
+                  <span class="msg-meta">
+                    ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+                    ${ticks}
+                  </span>
+                </div>
+              `;
+            }
 
-// ✅ Add long-msg class only for long plain messages
-if (!msg.fileURL && decrypted && decrypted.length > 400) {
-  bubble.classList.add("long-msg");
-}
+            bubble.innerHTML = contentHtml;
 
-// 📌 Append in correct order
-if (isSelf) {
-  wrapper.appendChild(bubble);
-  wrapper.appendChild(avatarImg);
-} else {
-  wrapper.appendChild(avatarImg);
-  wrapper.appendChild(bubble);
-}
+            // ✅ Add long-msg class for long normal text
+            if (!msg.fileURL && decrypted && decrypted.length > 400) {
+              bubble.classList.add("long-msg");
+            }
 
-area.appendChild(wrapper);
+            // ✅ Append
+            if (isSelf) {
+              wrapper.appendChild(bubble);
+              wrapper.appendChild(avatarImg);
+            } else {
+              wrapper.appendChild(avatarImg);
+              wrapper.appendChild(bubble);
+            }
 
-// ✅ Render lucide icons (after bubble is added)
-if (typeof lucide !== "undefined") {
-  lucide.createIcons();
-}
+            area.appendChild(wrapper);
+          }
 
-console.log("✅ Lucide icons rendered");
+          // ✅ Lucide icons render
+          if (typeof lucide !== "undefined") {
+            lucide.createIcons();
+            console.log("✅ Lucide icons rendered");
+          }
 
-// ✅ Scroll to bottom after render
-setTimeout(() => scrollToBottomThread(true), 100);
-renderWithMagnetSupport?.("threadMessages");
-
+          // ✅ Scroll + magnet
+          setTimeout(() => scrollToBottomThread(true), 100);
+          renderWithMagnetSupport?.("threadMessages");
+        });
+      
       // ✅ Adjust layout after open
       if (typeof adjustThreadLayout === "function") {
         setTimeout(() => adjustThreadLayout(), 200);
       }
-   ) });  
+    })
     .catch(err => {
       console.error("❌ Friend check failed:", err.message || err);
       alert("❌ Failed to verify friendship.");
