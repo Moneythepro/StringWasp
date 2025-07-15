@@ -1261,7 +1261,7 @@ function openThread(uid, name) {
               ? `<span class="msg-ticks">${isRead ? '✔️✔️' : isDelivered ? '✔️✔️' : '✔️'}</span>`
               : '';
 
-            // === Build message bubble ===
+            // === Message bubble with wrapper ===
             const wrapper = document.createElement("div");
             wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
 
@@ -1270,17 +1270,18 @@ function openThread(uid, name) {
             avatarImg.className = "msg-avatar-img";
 
             const bubble = document.createElement("div");
-            bubble.className = "message-bubble";
+            bubble.className = "message-bubble " + (isSelf ? "right" : "left");
             bubble.innerHTML = `
-  <div class="msg-content">
-    <div class="msg-text">${escapeHtml(decrypted)}</div>
-    <div class="message-time">
-      ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-      ${isSelf ? ticks : ""}
-    </div>
-  </div>
-`;
+              <div class="msg-content">
+                <div class="msg-text">${escapeHtml(decrypted)}</div>
+                <div class="message-time">
+                  ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+                  ${isSelf ? ticks : ""}
+                </div>
+              </div>
+            `;
 
+            // 📌 Append in order (self right, others left)
             if (isSelf) {
               wrapper.appendChild(bubble);
               wrapper.appendChild(avatarImg);
@@ -1300,7 +1301,7 @@ function openThread(uid, name) {
           alert("❌ Failed to load messages: " + (err.message || err));
         });
 
-      // ✅ Reset scroll view height
+      // ✅ Adjust layout after open
       if (typeof adjustThreadLayout === "function") {
         setTimeout(() => adjustThreadLayout(), 200);
       }
