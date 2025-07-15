@@ -285,20 +285,23 @@ body.dark .status-dot.online {
 
 /* === HEADER === */
 .chat-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #4a90e2; /* Telegram-style blue */
+  color: white;
   height: 56px;
-  background: #f0f0f0;
   display: flex;
   align-items: center;
   padding: 0 10px;
-  border-bottom: 1px solid #ccc;
-  flex-shrink: 0;
-  z-index: 10;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 .chat-header img {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  margin: 0 8px;
+  margin: 0 10px;
+  object-fit: cover;
 }
 .chat-info {
   flex: 1;
@@ -306,14 +309,16 @@ body.dark .status-dot.online {
   flex-direction: column;
 }
 .chat-info h3 {
-  font-size: 15px;
   margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
 }
 .chat-info p {
+  margin: 0;
   font-size: 12px;
-  color: #4fc3f7;
+  color: #d9e7f6;
 }
-
 /* === SCROLLABLE BODY === */
 .chat-body {
   position: absolute;
@@ -733,3 +738,36 @@ body.dark #loadingOverlay {
   cursor: not-allowed;
 }
 
+.chat-options-horizontal {
+  position: absolute;
+  top: 56px;
+  right: 10px;
+  background: white;
+  color: #333;
+  border-radius: 6px;
+  padding: 4px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  font-size: 13px;
+  z-index: 20;
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+.chat-options-horizontal.show {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.chat-options-horizontal span {
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  border-radius: 4px;
+}
+.chat-options-horizontal span:hover {
+  background-color: #f0f0f0;
+}
