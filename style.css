@@ -156,46 +156,6 @@ body.dark .inbox-card {
   background: #1f1f1f;
 }
 
-/* ===== MESSAGES VIEW ===== */
-.messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 60vh;
-}
-.message-bubble {
-  max-width: 75%;
-  padding: 10px 14px;
-  font-size: 14px;
-  border-radius: 16px;
-  word-wrap: break-word;
-  display: flex;
-  flex-direction: column;
-}
-.message-bubble.left {
-  align-self: flex-start;
-  background: #fff;
-  border-radius: 0 18px 18px 18px;
-}
-.message-bubble.right {
-  align-self: flex-end;
-  background: #dcf8c6;
-  border-radius: 18px 0 18px 18px;
-}
-body.dark .message-bubble.left {
-  background: #262626;
-}
-body.dark .message-bubble.right {
-  background: #1e442a;
-}
-.message-time {
-  font-size: 11px;
-  color: #888;
-  margin-top: 4px;
-}
 
 /* ===== SEARCH RESULTS ===== */
 .search-result {
@@ -520,13 +480,15 @@ body.dark .msg-ticks {
 
 body.dark .message-bubble.left {
   background: #2a2a2a;
-  color: #eee;
+  color: #ddd;
   border-color: #444;
 }
+
 body.dark .message-bubble.right {
-  background: #056162;
-  color: #fff;
+  background: #1f3e2a;
+  color: #ddd;
 }
+
 /* ===== MODALS ===== */
 .modal {
   display: none;
