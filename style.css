@@ -764,32 +764,55 @@ body.dark #loadingOverlay {
   position: absolute;
   top: 56px;
   right: 10px;
-  background: white;
-  color: #333;
+  background: #ffffff; /* WhatsApp-style white background */
+  color: #222;          /* Dark gray text like WhatsApp */
   border-radius: 6px;
-  padding: 4px 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 4px 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Soft WhatsApp-style shadow */
   display: flex;
   flex-direction: row;
-  gap: 10px;
+  gap: 8px;
   font-size: 13px;
   z-index: 20;
+
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateY(-8px);
   pointer-events: none;
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
+
 .chat-options-horizontal.show {
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
 }
+
 .chat-options-horizontal span {
-  padding: 6px 12px;
+  padding: 6px 10px;
   cursor: pointer;
   white-space: nowrap;
   border-radius: 4px;
+  transition: background-color 0.2s ease;
+  color: #222;
 }
+
 .chat-options-horizontal span:hover {
-  background-color: #f0f0f0;
+  background-color: #f4f4f4; /* WhatsApp-style hover */
+}
+
+body.dark .chat-options-horizontal {
+  background: #2a2a2a;
+  color: #ddd;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+body.dark .chat-options-horizontal span:hover {
+  background-color: #444;
+}
+
+@media (max-width: 480px) {
+  .chat-options-horizontal {
+    right: 4px;
+    gap: 6px;
+  }
 }
