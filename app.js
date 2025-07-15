@@ -1297,7 +1297,10 @@ bubble.innerHTML = `
 
             area.appendChild(wrapper);
           }
-          lucide.createIcons();
+
+          if (typeof lucide !== "undefined") {
+  lucide.createIcons();
+          }
 
           // ✅ Scroll to bottom after render
           setTimeout(() => scrollToBottomThread(true), 100);
