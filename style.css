@@ -490,23 +490,28 @@ body.dark .status-dot.online {
   margin: 0;
   padding: 0;
   display: inline;
+  font-size: 14px;
+  line-height: 1.4;
+  display: inline-flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
-/* === INLINE MESSAGE TIME + TICKS === */
+/* === INLINE TIME + TICKS === */
 .message-bubble .msg-meta {
   display: inline-flex;
   gap: 4px;
   font-size: 11px;
   color: #667781;
-  margin-left: 6px;
+  align-self: flex-end;
   vertical-align: middle;
+  opacity: 0.85;
 }
-
 .message-bubble.right .msg-meta {
   color: #4fc3f7;
 }
 
-/* Add this inside msg-text inline like span */
 .msg-ticks {
   font-size: 12px;
   letter-spacing: -1px;
