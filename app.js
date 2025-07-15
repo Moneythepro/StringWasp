@@ -1383,11 +1383,18 @@ function sendThreadMessage() {
     from: currentUser.uid,
     fromName,
     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    seenBy: [currentUser.uid]  // ✅ Mark as seen by sender
+    seenBy: [currentUser.uid] // ✅ Mark as seen by sender
   };
 
   threadRef.collection("messages").add(message).then(() => {
+    // ✅ Clear input
     input.value = "";
+
+    // ✅ Restore focus (prevents mobile keyboard from closing)
+    setTimeout(() => input.focus(), 50);
+
+    // ✅ Slight delay to allow DOM to catch up before scrolling
+    setTimeout(() => scrollToBottomThread(true), 80);
 
     threadRef.set({
       participants: [currentUser.uid, currentThreadUser],
