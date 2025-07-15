@@ -319,6 +319,21 @@ body.dark .status-dot.online {
   font-size: 12px;
   color: #d9e7f6;
 }
+
+.back-btn,
+.menu-btn {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  color: white;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0; /* ✅ Remove rounded pill */
+  box-shadow: none; /* ✅ No shadow */
+}
+
 /* === SCROLLABLE BODY === */
 .chat-body {
   position: absolute;
