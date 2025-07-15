@@ -1214,117 +1214,123 @@ function openThread(uid, name) {
       if (area) resizeObserver.observe(area);
 
       // === Load + animate messages ===
-      unsubscribeThread = db.collection("threads")
-        .doc(threadIdStr)
-        .collection("messages")
-        .orderBy("timestamp")
-        .onSnapshot(async snapshot => {
-          if (!area) return;
-          area.innerHTML = "";
+      let lastRenderedMsgIds = new Set();
 
-          for (const doc of snapshot.docs) {
-            const msg = doc.data();
-            if (!msg?.text) continue;
+unsubscribeThread = db.collection("threads")
+  .doc(threadIdStr)
+  .collection("messages")
+  .orderBy("timestamp")
+  .onSnapshot(async snapshot => {
+    if (!area) return;
 
-            let decrypted = "";
-            try {
-              decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
-              if (!decrypted) decrypted = "[Encrypted]";
-            } catch {
-              decrypted = "[Failed to decrypt]";
-            }
+    const shouldScroll =
+      area.scrollHeight - area.scrollTop - area.clientHeight < 100;
 
-            if (!msg.seenBy?.includes(currentUser.uid)) {
-              db.collection("threads").doc(threadIdStr)
-                .collection("messages").doc(doc.id)
-                .update({
-                  seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
-                }).catch(console.warn);
-            }
+    for (const doc of snapshot.docs) {
+      if (lastRenderedMsgIds.has(doc.id)) continue;
 
-            let avatar = "default-avatar.png";
-            try {
-              const userDoc = await db.collection("users").doc(msg.from).get();
-              if (userDoc.exists) {
-                const user = userDoc.data();
-                avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-              }
-            } catch (e) {
-              console.warn("⚠️ Avatar fetch failed:", e.message);
-            }
+      const msg = doc.data();
+      if (!msg?.text) continue;
+      lastRenderedMsgIds.add(doc.id);
 
-            const isSelf = msg.from === currentUser.uid;
-            const isRead = msg.seenBy?.includes(currentThreadUser);
-            const isDelivered = msg.seenBy?.length > 1;
-
-            const ticks = isSelf
-              ? `<span class="msg-ticks ${isRead ? 'double' : isDelivered ? 'delivered' : ''}">
-                  <i data-lucide="${isRead || isDelivered ? 'check-check' : 'check'}"></i>
-                </span>`
-              : '';
-
-            const wrapper = document.createElement("div");
-            wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
-
-            const avatarImg = document.createElement("img");
-            avatarImg.src = avatar;
-            avatarImg.className = "msg-avatar-img";
-
-            const bubble = document.createElement("div");
-            bubble.className = "message-bubble " + (isSelf ? "right" : "left") + " animate-fade-in";
-
-            let contentHtml = "";
-            if (msg.fileURL && msg.fileName) {
-              contentHtml = `
-                <div class="msg-text">
-                  <i data-lucide="file"></i>
-                  <a href="${msg.fileURL}" target="_blank" class="file-link">
-                    ${escapeHtml(msg.fileName)}
-                  </a>
-                  <span class="msg-meta">
-                    ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-                    ${ticks}
-                  </span>
-                </div>`;
-            } else {
-              contentHtml = `
-  <div class="msg-content">
-    <span class="msg-text">${escapeHtml(decrypted)}</span>
-    <span class="msg-meta">
-      ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-      ${ticks}
-    </span>
-  </div>
-`;
-            }
-
-            bubble.innerHTML = contentHtml;
-            if (!msg.fileURL && decrypted.length > 400) {
-              bubble.classList.add("long-msg");
-            }
-
-            isSelf
-              ? (wrapper.appendChild(bubble), wrapper.appendChild(avatarImg))
-              : (wrapper.appendChild(avatarImg), wrapper.appendChild(bubble));
-
-            area.appendChild(wrapper);
-          }
-
-          if (typeof lucide !== "undefined") lucide.createIcons();
-
-          setTimeout(() => scrollToBottomThread(true), 80);
-          renderWithMagnetSupport?.("threadMessages");
-        });
-
-      if (typeof adjustThreadLayout === "function") {
-        setTimeout(() => adjustThreadLayout(), 150);
+      let decrypted = "";
+      try {
+        decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+        if (!decrypted) decrypted = "[Encrypted]";
+      } catch {
+        decrypted = "[Failed to decrypt]";
       }
-    })
-    .catch(err => {
-      console.error("❌ Friend check failed:", err.message || err);
-      alert("❌ Failed to verify friendship.");
-    });
+
+      if (!msg.seenBy?.includes(currentUser.uid)) {
+        db.collection("threads").doc(threadIdStr)
+          .collection("messages").doc(doc.id)
+          .update({
+            seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+          }).catch(console.warn);
+      }
+
+      let avatar = "default-avatar.png";
+      try {
+        const userDoc = await db.collection("users").doc(msg.from).get();
+        if (userDoc.exists) {
+          const user = userDoc.data();
+          avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+        }
+      } catch (e) {
+        console.warn("⚠️ Avatar fetch failed:", e.message);
+      }
+
+      const isSelf = msg.from === currentUser.uid;
+      const isRead = msg.seenBy?.includes(currentThreadUser);
+      const isDelivered = msg.seenBy?.length > 1;
+
+      const ticks = isSelf
+        ? `<span class="msg-ticks ${isRead ? 'double' : isDelivered ? 'delivered' : ''}">
+            <i data-lucide="${isRead || isDelivered ? 'check-check' : 'check'}"></i>
+          </span>`
+        : '';
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
+
+      const avatarImg = document.createElement("img");
+      avatarImg.src = avatar;
+      avatarImg.className = "msg-avatar-img";
+
+      const bubble = document.createElement("div");
+      bubble.className = "message-bubble " + (isSelf ? "right" : "left") + " animate-fade-in";
+
+      let contentHtml = "";
+
+      if (msg.fileURL && msg.fileName) {
+        contentHtml = `
+          <div class="msg-text">
+            <i data-lucide="file"></i>
+            <a href="${msg.fileURL}" target="_blank" class="file-link">
+              ${escapeHtml(msg.fileName)}
+            </a>
+            <span class="msg-meta">
+              ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+              ${ticks}
+            </span>
+          </div>`;
+      } else {
+        contentHtml = `
+          <div class="msg-content">
+            <span class="msg-text">${escapeHtml(decrypted)}</span>
+            <span class="msg-meta">
+              ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+              ${ticks}
+            </span>
+          </div>`;
+      }
+
+      bubble.innerHTML = contentHtml;
+      if (!msg.fileURL && decrypted.length > 400) {
+        bubble.classList.add("long-msg");
+      }
+
+      isSelf
+        ? (wrapper.appendChild(bubble), wrapper.appendChild(avatarImg))
+        : (wrapper.appendChild(avatarImg), wrapper.appendChild(bubble));
+
+      area.appendChild(wrapper);
+    }
+
+    if (typeof lucide !== "undefined") lucide.createIcons();
+
+    if (shouldScroll) {
+      requestAnimationFrame(() => scrollToBottomThread(true));
+    }
+
+    renderWithMagnetSupport?.("threadMessages");
+  });
+       }):
 }
+
+
+  
+            
 
 function deleteThread() {
   showModal("Delete this chat?", () => {
