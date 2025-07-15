@@ -402,6 +402,7 @@ body.dark .status-dot.online {
   align-items: flex-end;
   margin: 2px 6px;
   gap: 4px;
+  word-wrap: break-word;
 }
 .message-bubble-wrapper.left {
   flex-direction: row;
@@ -421,7 +422,7 @@ body.dark .status-dot.online {
 
 /* === MESSAGE BUBBLE === */
 .message-bubble {
-  max-width: 78%;
+  max-width: 85%;
   background: #dcf8c6;
   padding: 6px 10px;
   border-radius: 8px;
@@ -430,6 +431,8 @@ body.dark .status-dot.online {
   position: relative;
   font-size: 13.5px;
   line-height: 1.4;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 .message-bubble.left {
   background: #fff;
@@ -447,27 +450,36 @@ body.dark .status-dot.online {
   justify-content: space-between;
   align-items: flex-end;
   flex-wrap: wrap;
+  word-break: break-word;
+  min-width: 0;
 }
 .msg-text {
+  flex: 1;
   font-size: 14px;
   font-weight: 400;
   line-height: 1.4;
   margin: 0;
-  display: inline;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  min-width: 0;
 }
+
+/* === COMPACT TIMESTAMP & TICKS === */
 .msg-meta {
   display: inline-flex;
   align-items: center;
   font-size: 10px;
   color: #667781;
   gap: 2px;
-  margin-left: 4px;
+  margin-left: 6px;
   white-space: nowrap;
   opacity: 0.85;
+  flex-shrink: 0;
 }
 .message-bubble.right .msg-meta {
   color: #4fc3f7;
 }
+
 .msg-ticks {
   display: inline-flex;
   gap: 2px;
