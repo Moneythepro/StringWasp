@@ -1371,14 +1371,13 @@ function handleThreadKey(event) {
 }
 
 // ✅ Detect keyboard open/close
-let initialViewportHeight = window.innerHeight;
+let initialHeight = window.innerHeight;
+
 window.addEventListener("resize", () => {
-  const currentHeight = window.innerHeight;
-  if (currentHeight < initialViewportHeight - 100) {
-    document.body.classList.add("keyboard-open");
-  } else {
-    document.body.classList.remove("keyboard-open");
-  }
+  const diff = initialHeight - window.innerHeight;
+  const isKeyboard = diff > 150;
+
+  document.body.classList.toggle("keyboard-open", isKeyboard);
 });
 
 function deleteThread() {
