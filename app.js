@@ -1150,7 +1150,6 @@ function threadId(a, b) {
 }
 
 // ===== DM: Open Thread Chat =====
-
 function openThread(uid, name) {
   if (!currentUser || !uid) return;
 
@@ -1168,14 +1167,13 @@ function openThread(uid, name) {
       document.getElementById("threadWithName").textContent = name || "Chat";
       document.getElementById("chatOptionsMenu").style.display = "none";
 
-      const dropdown = document.getElementById("roomDropdown");
-      if (dropdown) dropdown.style.display = "none";
+      ["roomDropdown", "groupInfoButton"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = "none";
+      });
 
       const groupInfo = document.querySelector(".group-info");
       if (groupInfo) groupInfo.style.display = "none";
-
-      const groupButton = document.getElementById("groupInfoButton");
-      if (groupButton) groupButton.style.display = "none";
 
       currentThreadUser = uid;
       currentRoom = null;
@@ -1187,15 +1185,13 @@ function openThread(uid, name) {
       if (unsubscribeThread) unsubscribeThread();
       if (unsubscribeTyping) unsubscribeTyping();
 
-      // === Typing listener ===
       listenToTyping(threadIdStr, "thread");
 
-      // === Mark as read ===
       db.collection("threads").doc(threadIdStr).set({
         unread: { [currentUser.uid]: 0 }
       }, { merge: true });
 
-      // === Live status ===
+      // === Status updates ===
       db.collection("users").doc(uid).onSnapshot(doc => {
         const data = doc.data();
         const status = document.getElementById("chatStatus");
@@ -1211,7 +1207,13 @@ function openThread(uid, name) {
         }
       });
 
-      // === Load messages ===
+      // === Scroll lock observer ===
+      const resizeObserver = new ResizeObserver(() => {
+        scrollToBottomThread(true);
+      });
+      if (area) resizeObserver.observe(area);
+
+      // === Load + animate messages ===
       unsubscribeThread = db.collection("threads")
         .doc(threadIdStr)
         .collection("messages")
@@ -1224,16 +1226,14 @@ function openThread(uid, name) {
             const msg = doc.data();
             if (!msg?.text) continue;
 
-            // 🔐 Decrypt
             let decrypted = "";
             try {
               decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
               if (!decrypted) decrypted = "[Encrypted]";
-            } catch (e) {
+            } catch {
               decrypted = "[Failed to decrypt]";
             }
 
-            // ✅ Mark as seen
             if (!msg.seenBy?.includes(currentUser.uid)) {
               db.collection("threads").doc(threadIdStr)
                 .collection("messages").doc(doc.id)
@@ -1242,7 +1242,6 @@ function openThread(uid, name) {
                 }).catch(console.warn);
             }
 
-            // 👤 Avatar
             let avatar = "default-avatar.png";
             try {
               const userDoc = await db.collection("users").doc(msg.from).get();
@@ -1264,7 +1263,6 @@ function openThread(uid, name) {
                 </span>`
               : '';
 
-            // === Bubble wrapper ===
             const wrapper = document.createElement("div");
             wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
 
@@ -1273,10 +1271,9 @@ function openThread(uid, name) {
             avatarImg.className = "msg-avatar-img";
 
             const bubble = document.createElement("div");
-            bubble.className = "message-bubble " + (isSelf ? "right" : "left");
+            bubble.className = "message-bubble " + (isSelf ? "right" : "left") + " animate-fade-in";
 
             let contentHtml = "";
-
             if (msg.fileURL && msg.fileName) {
               contentHtml = `
                 <div class="msg-text">
@@ -1288,8 +1285,7 @@ function openThread(uid, name) {
                     ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
                     ${ticks}
                   </span>
-                </div>
-              `;
+                </div>`;
             } else {
               contentHtml = `
                 <div class="msg-text">
@@ -1298,43 +1294,29 @@ function openThread(uid, name) {
                     ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
                     ${ticks}
                   </span>
-                </div>
-              `;
+                </div>`;
             }
 
             bubble.innerHTML = contentHtml;
-
-            // ✅ Add long-msg class for long normal text
-            if (!msg.fileURL && decrypted && decrypted.length > 400) {
+            if (!msg.fileURL && decrypted.length > 400) {
               bubble.classList.add("long-msg");
             }
 
-            // ✅ Append
-            if (isSelf) {
-              wrapper.appendChild(bubble);
-              wrapper.appendChild(avatarImg);
-            } else {
-              wrapper.appendChild(avatarImg);
-              wrapper.appendChild(bubble);
-            }
+            isSelf
+              ? (wrapper.appendChild(bubble), wrapper.appendChild(avatarImg))
+              : (wrapper.appendChild(avatarImg), wrapper.appendChild(bubble));
 
             area.appendChild(wrapper);
           }
 
-          // ✅ Lucide icons render
-          if (typeof lucide !== "undefined") {
-            lucide.createIcons();
-            console.log("✅ Lucide icons rendered");
-          }
+          if (typeof lucide !== "undefined") lucide.createIcons();
 
-          // ✅ Scroll + magnet
-          setTimeout(() => scrollToBottomThread(true), 100);
+          setTimeout(() => scrollToBottomThread(true), 80);
           renderWithMagnetSupport?.("threadMessages");
         });
-      
-      // ✅ Adjust layout after open
+
       if (typeof adjustThreadLayout === "function") {
-        setTimeout(() => adjustThreadLayout(), 200);
+        setTimeout(() => adjustThreadLayout(), 150);
       }
     })
     .catch(err => {
