@@ -463,6 +463,11 @@ body.dark .status-dot.online {
   overflow-wrap: break-word;
   min-width: 0;
 }
+.message-bubble.long-msg {
+  font-size: 13px;
+  padding: 5px 8px;
+  line-height: 1.3;
+}
 
 /* === COMPACT TIMESTAMP & TICKS === */
 .msg-meta {
