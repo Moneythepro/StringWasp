@@ -1401,6 +1401,22 @@ function deleteChat() {
   alert("🗑️ Delete chat feature coming soon.");
 }
 
+document.addEventListener("click", (e) => {
+  const menu = document.getElementById("chatOptionsMenu");
+  const menuBtn = document.querySelector(".menu-btn");
+
+  if (!menu || !menuBtn) return;
+
+  // Only hide if menu is open and click was outside both menu & button
+  if (
+    menu.classList.contains("show") &&
+    !menu.contains(e.target) &&
+    !menuBtn.contains(e.target)
+  ) {
+    menu.classList.remove("show");
+  }
+});
+
 function deleteThread() {
   showModal("Delete this chat?", () => {
     const docId = threadId(currentUser.uid, currentThreadUser);
