@@ -513,6 +513,24 @@ input[type="file"]#threadFile {
   stroke: #4fc3f7;
 }
 
+/* === When Keyboard is Open === */
+body.keyboard-open .chat-body {
+  overscroll-behavior: none;
+  scroll-padding-bottom: 60px;
+}
+
+/* Optional: prevent input bar from sliding */
+body.keyboard-open .chat-input-bar {
+  position: fixed;
+  bottom: 0;
+}
+
+/* Optional: prevent header jump */
+body.keyboard-open .chat-header {
+  position: fixed;
+  top: 0;
+}
+
 .animate-fade-in {
   animation: fadeInUp 0.22s ease-out both;
 }
