@@ -1288,13 +1288,14 @@ function openThread(uid, name) {
                 </div>`;
             } else {
               contentHtml = `
-                <div class="msg-text">
-                  ${escapeHtml(decrypted)}
-                  <span class="msg-meta">
-                    ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-                    ${ticks}
-                  </span>
-                </div>`;
+  <div class="msg-content">
+    <span class="msg-text">${escapeHtml(decrypted)}</span>
+    <span class="msg-meta">
+      ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+      ${ticks}
+    </span>
+  </div>
+`;
             }
 
             bubble.innerHTML = contentHtml;
