@@ -582,13 +582,6 @@ body.dark #loadingOverlay {
   overflow: hidden;
 }
 
-.thread-main {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0; /* 💡 Essential */
-}
-
 .chat-body {
   flex: 1;
   overflow-y: auto;
@@ -613,4 +606,18 @@ body.dark #loadingOverlay {
   border: 1px solid #ccc;
   font-size: 14px;
   margin: 0 6px;
+}
+
+#threadView {
+  height: 100dvh; /* fallback */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.thread-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* 💡 fixes input bar pushing out */
 }
