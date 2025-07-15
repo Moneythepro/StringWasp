@@ -311,11 +311,14 @@ body.dark .status-dot.online {
 .chat-info h3 {
   font-size: 15px;
   margin: 0;
-  color: #000; /* ✅ Black name text */
+  font-weight: 600;
+  color: #111; /* WhatsApp-style black */
 }
+
 .chat-info p {
   font-size: 12px;
-  color: #555; /* ✅ Subtle dark gray status text */
+  margin: 0;
+  color: #555; /* Subtle gray like WhatsApp */
 }
 
 .back-btn,
