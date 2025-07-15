@@ -138,6 +138,7 @@
       <button onclick="contactSupport()">Contact Us</button>
     </div>
 
+
 <!-- 💬 WhatsApp-style Chat UI -->
 <div id="threadView" class="thread-container tab" role="region" aria-label="Direct Message View">
   <!-- HEADER -->
@@ -174,31 +175,39 @@
 
     <!-- FIXED INPUT -->
     <footer class="chat-input-bar">
+      <!-- ✅ Attach Button -->
       <button class="icon-btn" onclick="triggerFileInput('thread')" aria-label="Attach File">
         <i data-lucide="paperclip"></i>
       </button>
-      <button class="icon-btn" onclick="shareFileViaTorrent('dm')" aria-label="Send via Torrent">
-        <i data-lucide="globe"></i>
-      </button>
-      <input
-        id="threadInput"
-        placeholder="Type a message..."
-        aria-label="Message input"
-        oninput="handleTyping('thread')"
-        onkeydown="handleThreadKey(event)" />
-      <button class="icon-btn" onclick="sendThreadMessage()" aria-label="Send Message">
-        <i data-lucide="send"></i>
-      </button>
+
+      <!-- ✅ Hidden File Input -->
       <input
         type="file"
         id="threadFile"
         class="visually-hidden"
         onchange="uploadFile('thread')"
         aria-hidden="true" />
+
+      <!-- 🌐 WebTorrent Button -->
+      <button class="icon-btn" onclick="shareFileViaTorrent('dm')" aria-label="Send via Torrent">
+        <i data-lucide="globe"></i>
+      </button>
+
+      <!-- ✏️ Message Input -->
+      <input
+        id="threadInput"
+        placeholder="Type a message..."
+        aria-label="Message input"
+        oninput="handleTyping('thread')"
+        onkeydown="handleThreadKey(event)" />
+
+      <!-- 📤 Send Button -->
+      <button class="icon-btn" onclick="sendThreadMessage()" aria-label="Send Message">
+        <i data-lucide="send"></i>
+      </button>
     </footer>
   </div>
-</div>
-    
+</div>  
     
     <!-- 💬 Group Chat View -->
     <div id="roomView" class="tab" style="display:none;">
