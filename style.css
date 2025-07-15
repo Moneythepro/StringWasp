@@ -273,6 +273,8 @@ body.dark .status-dot.online {
 #threadView.thread-container {
   position: fixed;
   inset: 0;
+  display: flex;
+  flex-direction: column;
   background: var(--bg, #fff);
   z-index: 999;
   overflow: hidden;
@@ -284,15 +286,16 @@ body.dark .status-dot.online {
 
 /* === HEADER === */
 .chat-header {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 56px;
+  position: sticky; /* ✅ Changed from fixed */
+  top: 0;
+  z-index: 10;
   background: #f0f0f0;
+  height: 56px;
   display: flex;
   align-items: center;
   padding: 0 10px;
   border-bottom: 1px solid #ccc;
-  z-index: 10;
+  flex-shrink: 0;
 }
 .chat-header img {
   width: 32px;
