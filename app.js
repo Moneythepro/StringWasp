@@ -1143,15 +1143,6 @@ function loadGroupInfo(groupId) {
   });
 }
 
-// ✅ Scroll to bottom of thread messages
-function scrollToBottomThread(smooth = true) {
-  const area = document.getElementById("threadMessages");
-  if (!area) return;
-  area.scrollTo({
-    top: area.scrollHeight,
-    behavior: smooth ? "smooth" : "auto"
-  });
-}
 
 // ===== DM Utilities =====
 function threadId(a, b) {
@@ -1799,31 +1790,45 @@ document.addEventListener("DOMContentLoaded", () => {
 });
                           
 function adjustThreadLayout() {
-  const view = document.getElementById("threadView");
-  if (view) {
-    view.style.height = window.innerHeight + "px";
+  const threadView = document.getElementById("threadView");
+  if (threadView) {
+    // 💡 Use visual viewport if supported for more accuracy (especially on iOS/Android)
+    const vh = window.visualViewport?.height || window.innerHeight;
+    threadView.style.height = vh + "px";
   }
 }
 
-// Setup once DOM is ready
+// ✅ Smooth scroll to bottom of thread
+function scrollToBottomThread(smooth = true) {
+  const area = document.getElementById("threadMessages");
+  if (area) {
+    area.scrollTo({
+      top: area.scrollHeight,
+      behavior: smooth ? "smooth" : "auto"
+    });
+  }
+}
+
+// ✅ Setup once DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
   adjustThreadLayout();
 
   const input = document.getElementById("threadInput");
   if (input) {
     input.addEventListener("focus", () => {
-      setTimeout(() => scrollToBottomThread(true), 200);
+      // Scroll after keyboard appears
+      setTimeout(() => scrollToBottomThread(true), 300);
     });
   }
 });
 
-// On screen resize or keyboard show/hide
+// ✅ Adjust on viewport resize (keyboard toggle, rotation)
 window.addEventListener("resize", () => {
   adjustThreadLayout();
 
   const input = document.getElementById("threadInput");
   if (document.activeElement === input) {
-    setTimeout(() => scrollToBottomThread(true), 200);
+    setTimeout(() => scrollToBottomThread(true), 300);
   }
 });
 
