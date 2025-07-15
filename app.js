@@ -1371,23 +1371,18 @@ function handleThreadKey(event) {
 }
 
 // ✅ Detect keyboard open/close
-if (window.visualViewport) {
-  let previousHeight = window.visualViewport.height;
+let initialViewportHeight = window.innerHeight;
 
-  window.visualViewport.addEventListener("resize", () => {
-    const currentHeight = window.visualViewport.height;
+window.addEventListener("resize", () => {
+  const isKeyboardOpen = window.innerHeight < initialViewportHeight - 150;
 
-    const keyboardOpen = currentHeight < previousHeight - 100;
+  document.body.classList.toggle("keyboard-open", isKeyboardOpen);
 
-    document.body.classList.toggle("keyboard-open", keyboardOpen);
-
-    if (keyboardOpen) {
-      setTimeout(() => scrollToBottomThread(true), 100);
-    }
-
-    previousHeight = currentHeight;
-  });
-}
+  // Optional: scroll to bottom when keyboard opens
+  if (isKeyboardOpen) {
+    setTimeout(() => scrollToBottomThread(true), 100);
+  }
+});
 
 function toggleChatOptions() {
   const menu = document.getElementById("chatOptionsMenu");
