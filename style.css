@@ -309,15 +309,13 @@ body.dark .status-dot.online {
   flex-direction: column;
 }
 .chat-info h3 {
+  font-size: 15px;
   margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: white;
+  color: #000; /* ✅ Black name text */
 }
 .chat-info p {
-  margin: 0;
   font-size: 12px;
-  color: #d9e7f6;
+  color: #555; /* ✅ Subtle dark gray status text */
 }
 
 .back-btn,
