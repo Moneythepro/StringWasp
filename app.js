@@ -1834,12 +1834,11 @@ function adjustThreadLayout() {
 // ✅ Smooth scroll to bottom of thread
 function scrollToBottomThread(smooth = true) {
   const area = document.getElementById("threadMessages");
-  if (area) {
-    area.scrollTo({
-      top: area.scrollHeight,
-      behavior: smooth ? "smooth" : "auto"
-    });
-  }
+  if (!area) return;
+  area.scrollTo({
+    top: area.scrollHeight,
+    behavior: smooth ? "smooth" : "auto"
+  });
 }
 
 // ✅ Setup once DOM is loaded
