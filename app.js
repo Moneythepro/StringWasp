@@ -1325,8 +1325,16 @@ unsubscribeThread = db.collection("threads")
 
     renderWithMagnetSupport?.("threadMessages");
   });
-       }):
-}
+
+  // ✅ Adjust layout after open
+  if (typeof adjustThreadLayout === "function") {
+    setTimeout(() => adjustThreadLayout(), 150);
+  }
+})
+.catch(err => {
+  console.error("❌ Friend check failed:", err.message || err);
+  alert("❌ Failed to verify friendship.");
+});
 
 
   
