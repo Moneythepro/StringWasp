@@ -456,22 +456,22 @@ input[type="file"]#threadFile {
 
 /* === TEXT + INLINE META === */
 .msg-content {
-  display: flex;
-  justify-content: space-between;
+  display: inline-flex;
   align-items: flex-end;
+  gap: 6px;
   flex-wrap: wrap;
   word-break: break-word;
   min-width: 0;
 }
 .msg-text {
-  flex: 1;
   font-size: 14px;
   font-weight: 400;
   line-height: 1.4;
   margin: 0;
   white-space: pre-wrap;
-  overflow-wrap: break-word;
+  word-break: break-word;
   min-width: 0;
+  flex: 0 1 auto;
 }
 
 /* === COMPACT TIMESTAMP & TICKS === */
@@ -508,6 +508,21 @@ input[type="file"]#threadFile {
 }
 .msg-ticks.double svg {
   stroke: #4fc3f7;
+}
+
+.message-bubble-wrapper {
+  animation: fadeInUp 0.2s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* === DARK MODE === */
