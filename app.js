@@ -1255,12 +1255,12 @@ function openThread(uid, name) {
 
             const isSelf = msg.from === currentUser.uid;
             const isRead = msg.seenBy?.includes(currentThreadUser);
-            const isDelivered = msg.seenBy?.length > 1;
+const isDelivered = msg.seenBy?.length > 1;
 
-            const ticks = isSelf
-  ? `<span class="msg-ticks ${isRead ? 'double' : ''}">
-      ${isRead ? '<i data-lucide="check-check"></i>' : '<i data-lucide="check"></i>'}
-     </span>`
+const ticks = isSelf
+  ? `<span class="msg-ticks ${isRead ? 'double' : isDelivered ? 'delivered' : ''}">
+      <i data-lucide="${isRead || isDelivered ? 'check-check' : 'check'}"></i>
+    </span>`
   : '';
 
             // === Message bubble with wrapper ===
