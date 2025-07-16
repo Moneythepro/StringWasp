@@ -1259,10 +1259,10 @@ function openThread(uid, name) {
             let replyHtml = "";
             if (msg.replyTo?.text) {
               replyHtml = `
-                <div class="msg-reply-preview">
-                  <i data-lucide="corner-up-left"></i>
-                  ${escapeHtml(msg.replyTo.text.slice(0, 50))}
-                </div>`;
+  <div class="msg-reply-preview" onclick="scrollToRepliedMessage('${msg.replyTo.msgId}')">
+    <i data-lucide="corner-up-left"></i>
+    ${escapeHtml(msg.replyTo.text.slice(0, 50))}
+  </div>`;
             }
 
             const isRead = msg.seenBy?.includes(currentThreadUser);
@@ -1286,6 +1286,8 @@ function openThread(uid, name) {
                   ${ticks}
                 </span>
               </div>`;
+
+            bubble.dataset.msgId = msg.id;
 
             // Add interactions
             bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
@@ -2101,6 +2103,23 @@ function scrollToBottomThread(smooth = true) {
     top: scrollArea.scrollHeight,
     behavior: smooth ? "smooth" : "auto"
   });
+}
+
+function scrollToRepliedMessage(msgId) {
+  const msgElements = document.querySelectorAll("#threadMessages .message-bubble-wrapper");
+
+  for (const wrapper of msgElements) {
+    const bubble = wrapper.querySelector(".message-bubble");
+    if (bubble?.dataset?.msgId === msgId) {
+      // Scroll and highlight
+      wrapper.scrollIntoView({ behavior: "smooth", block: "center" });
+      bubble.classList.add("reply-highlight");
+      setTimeout(() => {
+        bubble.classList.remove("reply-highlight");
+      }, 2000);
+      break;
+    }
+  }
 }
 
 // ✅ Setup once DOM is loaded
