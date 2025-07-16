@@ -140,74 +140,64 @@
 
 
 <!-- 💬 WhatsApp-style Chat UI -->
-<div id="threadView" class="thread-container tab" role="region" aria-label="Direct Message View">
+<div id="threadView" class="chat-container tab" role="region" aria-label="Direct Message View">
+
   <!-- HEADER -->
-<header class="chat-header">
-  <button class="back-btn" onclick="switchTab('chatTab')" aria-label="Back">
-    <i data-lucide="arrow-left"></i>
-  </button>
-
-  <img id="chatProfilePic" class="header-avatar" src="default-avatar.png" alt="Profile Picture" />
-
-  <div class="chat-info">
-    <h3 id="threadWithName">Friend Name</h3>
-    <p id="chatStatus">last seen recently</p>
-  </div>
-
-  <button class="menu-btn" onclick="toggleChatOptions()" aria-label="Open Menu">
-    <i data-lucide="more-vertical"></i>
-  </button>
-
-  <!-- ✅ Telegram-style horizontal menu -->
-  <div id="chatOptionsMenu" class="chat-options-horizontal" role="menu" aria-label="Chat Options">
-    <span onclick="blockUser()">Block</span>
-    <span onclick="viewMedia()">Media</span>
-    <span onclick="exportChat()">Export</span>
-    <span onclick="deleteChat()">Delete</span>
-  </div>
-</header>
-
-  <!-- MAIN CHAT BODY -->
-  <div class="thread-main">
-    <div class="chat-scroll-area">
-      <div id="threadMessages" class="chat-body" role="log" aria-live="polite" aria-label="Messages">
-        <!-- Messages will be dynamically injected here -->
-      </div>
-      <div id="threadTypingStatus" class="typing-indicator" aria-hidden="true"></div>
+  <header class="chat-header">
+    <button class="back-btn" onclick="switchTab('chatTab')" aria-label="Back">
+      <i data-lucide="arrow-left"></i>
+    </button>
+    <img id="chatProfilePic" class="header-avatar" src="default-avatar.png" alt="Profile Picture" />
+    <div class="chat-info">
+      <h3 id="threadWithName">Friend Name</h3>
+      <p id="chatStatus">last seen recently</p>
     </div>
+    <button class="menu-btn" onclick="toggleChatOptions()" aria-label="Open Menu">
+      <i data-lucide="more-vertical"></i>
+    </button>
 
-    <!-- FIXED INPUT -->
-    <footer class="chat-input-bar">
-      <!-- ✅ Attach Button -->
-      <button class="icon-btn" onclick="triggerFileInput('thread')" aria-label="Attach File">
-  <i data-lucide="paperclip"></i>
-</button>
+    <!-- MENU -->
+    <div id="chatOptionsMenu" class="chat-options-horizontal" role="menu" aria-label="Chat Options">
+      <span onclick="blockUser()">Block</span>
+      <span onclick="viewMedia()">Media</span>
+      <span onclick="exportChat()">Export</span>
+      <span onclick="deleteChat()">Delete</span>
+    </div>
+  </header>
 
-<input
-  type="file"
-  id="threadFile"
-  class="visually-hidden"
-  onchange="uploadFile('thread')" />
-
-      <!-- 🌐 WebTorrent Button -->
-      <button class="icon-btn" onclick="shareFileViaTorrent('dm')" aria-label="Send via Torrent">
-        <i data-lucide="globe"></i>
-      </button>
-
-      <!-- ✏️ Message Input -->
-      <input
-        id="threadInput"
-        placeholder="Type a message..."
-        aria-label="Message input"
-        oninput="handleTyping('thread')"
-        onkeydown="handleThreadKey(event)" />
-
-      <!-- 📤 Send Button -->
-      <button class="icon-btn" onclick="handleSendClick()" aria-label="Send Message">
-  <i data-lucide="send"></i>
-      </button>
-    </footer>
+  <!-- CHAT MESSAGES SCROLLABLE AREA -->
+  <div class="chat-messages" id="threadMessages" role="log" aria-live="polite" aria-label="Messages">
+    <!-- Messages will be injected here -->
   </div>
+
+  <!-- INPUT AREA -->
+  <footer class="chat-input-bar">
+    <button class="icon-btn" onclick="triggerFileInput('thread')" aria-label="Attach File">
+      <i data-lucide="paperclip"></i>
+    </button>
+
+    <input
+      type="file"
+      id="threadFile"
+      class="visually-hidden"
+      onchange="uploadFile('thread')" />
+
+    <button class="icon-btn" onclick="shareFileViaTorrent('dm')" aria-label="Send via Torrent">
+      <i data-lucide="globe"></i>
+    </button>
+
+    <input
+      id="threadInput"
+      placeholder="Type a message..."
+      aria-label="Message input"
+      oninput="handleTyping('thread')"
+      onkeydown="handleThreadKey(event)" />
+
+    <button class="icon-btn" onclick="handleSendClick()" aria-label="Send Message">
+      <i data-lucide="send"></i>
+    </button>
+  </footer>
+
 </div>  
     
     <!-- 💬 Group Chat View -->
