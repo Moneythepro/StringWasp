@@ -1236,11 +1236,23 @@ function openThread(uid, name) {
 
   const msg = doc.data();
   if (!msg?.text) continue;
-
-  // ✅ NEW: skip if message is deleted for this user
-  if (msg.deletedFor?.[currentUser.uid]) continue;
-
   lastRenderedMsgIds.add(doc.id);
+
+  let isDeletedForMe = msg.deletedFor?.[currentUser.uid];
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "message-bubble-wrapper " + ((msg.from === currentUser.uid) ? "right" : "left");
+
+  if (isDeletedForMe) {
+    const bubble = document.createElement("div");
+    bubble.className = "message-bubble deleted";
+    bubble.textContent = "This message was deleted";
+    wrapper.appendChild(bubble);
+    area.appendChild(wrapper);
+    continue; // skip normal rendering
+  }
+
+  // ... your normal rendering (decrypt, build bubble, ticks etc)
           }
 
             let decrypted = "";
