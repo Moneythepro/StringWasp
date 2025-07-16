@@ -1178,7 +1178,7 @@ function openThread(uid, name) {
       if (area) {
         area.innerHTML = "";
 
-        // Restore previous scroll position
+        // Restore scroll
         const savedScroll = sessionStorage.getItem("threadScroll_" + threadIdStr);
         if (savedScroll) {
           setTimeout(() => {
@@ -1232,124 +1232,143 @@ function openThread(uid, name) {
             area.scrollHeight - area.scrollTop - area.clientHeight < 120;
 
           for (const doc of snapshot.docs) {
-  if (lastRenderedMsgIds.has(doc.id)) continue;
+            if (lastRenderedMsgIds.has(doc.id)) continue;
 
-  const msg = doc.data();
-  if (!msg?.text) continue;
-  lastRenderedMsgIds.add(doc.id);
+            const msg = doc.data();
+            if (!msg?.text) continue;
+            lastRenderedMsgIds.add(doc.id);
 
-  let isDeletedForMe = msg.deletedFor?.[currentUser.uid];
+            let isDeletedForMe = msg.deletedFor?.[currentUser.uid];
 
-  const wrapper = document.createElement("div");
-  wrapper.className = "message-bubble-wrapper " + ((msg.from === currentUser.uid) ? "right" : "left");
+            const wrapper = document.createElement("div");
+            wrapper.className = "message-bubble-wrapper " + ((msg.from === currentUser.uid) ? "right" : "left");
 
-  if (isDeletedForMe) {
-    const bubble = document.createElement("div");
-    bubble.className = "message-bubble deleted";
-    bubble.textContent = "This message was deleted";
-    wrapper.appendChild(bubble);
-    area.appendChild(wrapper);
-    continue; // skip normal rendering
-  }
+            if (isDeletedForMe) {
+              const bubble = document.createElement("div");
+              bubble.className = "message-bubble deleted";
+              bubble.textContent = "This message was deleted";
+              wrapper.appendChild(bubble);
+              area.appendChild(wrapper);
+              continue;
+            }
 
-  // ✅ Normal rendering starts here
-  let decrypted = "";
-  try {
-    decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
-    if (!decrypted) decrypted = "[Encrypted]";
-  } catch {
-    decrypted = "[Failed to decrypt]";
-  }
+            let decrypted = "";
+            try {
+              decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+              if (!decrypted) decrypted = "[Encrypted]";
+            } catch {
+              decrypted = "[Failed to decrypt]";
+            }
 
-  let replyHtml = "";
-  if (msg.replyTo?.text) {
-    replyHtml = `
-      <div class="msg-reply-preview">
-        <i data-lucide="corner-up-left"></i>
-        ${escapeHtml(msg.replyTo.text.slice(0, 50))}
-      </div>
-    `;
-  }
+            let replyHtml = "";
+            if (msg.replyTo?.text) {
+              replyHtml = `
+                <div class="msg-reply-preview">
+                  <i data-lucide="corner-up-left"></i>
+                  ${escapeHtml(msg.replyTo.text.slice(0, 50))}
+                </div>
+              `;
+            }
 
-  const ticks = (msg.from === currentUser.uid)
-    ? `<span class="msg-ticks ${
-        msg.seenBy?.includes(currentThreadUser) ? 'double' :
-        msg.seenBy?.length > 1 ? 'delivered' : ''}">
-        <i data-lucide="${msg.seenBy?.includes(currentThreadUser) || (msg.seenBy?.length > 1) ? 'check-check' : 'check'}"></i>
-      </span>`
-    : '';
+            const isSelf = msg.from === currentUser.uid;
+            const isRead = msg.seenBy?.includes(currentThreadUser);
+            const isDelivered = msg.seenBy?.length > 1;
 
-  let contentHtml = "";
-  if (msg.fileURL && msg.fileName) {
-    contentHtml = `
-      <div class="msg-text">
-        <i data-lucide="file"></i>
-        <a href="${msg.fileURL}" target="_blank" class="file-link">
-          ${escapeHtml(msg.fileName)}
-        </a>
-        <span class="msg-meta">
-          ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-          ${ticks}
-        </span>
-      </div>`;
-  } else {
-    contentHtml = `
-      <div class="msg-content">
-        ${replyHtml}
-        <span class="msg-text">${linkifyText(escapeHtml(decrypted))}</span>
-        <span class="msg-meta">
-          ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-          ${ticks}
-        </span>
-      </div>`;
-  }
+            const ticks = isSelf
+              ? `<span class="msg-ticks ${isRead ? 'double' : isDelivered ? 'delivered' : ''}">
+                  <i data-lucide="${isRead || isDelivered ? 'check-check' : 'check'}"></i>
+                </span>`
+              : '';
 
-  const avatarImg = document.createElement("img");
-  avatarImg.src = "default-avatar.png";
-  avatarImg.className = "msg-avatar-img";
+            let contentHtml = "";
+            if (msg.fileURL && msg.fileName) {
+              contentHtml = `
+                <div class="msg-text">
+                  <i data-lucide="file"></i>
+                  <a href="${msg.fileURL}" target="_blank" class="file-link">
+                    ${escapeHtml(msg.fileName)}
+                  </a>
+                  <span class="msg-meta">
+                    ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+                    ${ticks}
+                  </span>
+                </div>`;
+            } else {
+              contentHtml = `
+                <div class="msg-content">
+                  ${replyHtml}
+                  <span class="msg-text">${linkifyText(escapeHtml(decrypted))}</span>
+                  <span class="msg-meta">
+                    ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+                    ${ticks}
+                  </span>
+                </div>`;
+            }
 
-  try {
-    const userDoc = await db.collection("users").doc(msg.from).get();
-    if (userDoc.exists) {
-      const user = userDoc.data();
-      avatarImg.src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-    }
-  } catch (e) {
-    console.warn("⚠️ Avatar fetch failed:", e.message);
-  }
+            let avatar = "default-avatar.png";
+            try {
+              const userDoc = await db.collection("users").doc(msg.from).get();
+              if (userDoc.exists) {
+                const user = userDoc.data();
+                avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+              }
+            } catch (e) {
+              console.warn("⚠️ Avatar fetch failed:", e.message);
+            }
 
-  const bubble = document.createElement("div");
-  bubble.className = "message-bubble " + ((msg.from === currentUser.uid) ? "right" : "left") + " animate-fade-in";
-  bubble.innerHTML = contentHtml;
-  if (!msg.fileURL && decrypted.length > 400) {
-    bubble.classList.add("long-msg");
-  }
+            const avatarImg = document.createElement("img");
+            avatarImg.src = avatar;
+            avatarImg.className = "msg-avatar-img";
 
-  bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
-  bubble.addEventListener("touchmove", handleTouchMove, { passive: true });
-  bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted), { passive: true });
-  bubble.addEventListener("contextmenu", (e) => {
-    e.preventDefault();
-    handleLongPressMenu(msg, decrypted, msg.from === currentUser.uid);
-  });
+            const bubble = document.createElement("div");
+            bubble.className = "message-bubble " + (isSelf ? "right" : "left") + " animate-fade-in";
+            bubble.innerHTML = contentHtml;
 
-  (msg.from === currentUser.uid)
-    ? (wrapper.appendChild(bubble), wrapper.appendChild(avatarImg))
-    : (wrapper.appendChild(avatarImg), wrapper.appendChild(bubble));
+            if (!msg.fileURL && decrypted.length > 400) {
+              bubble.classList.add("long-msg");
+            }
 
-  area.appendChild(wrapper);
+            // Swipe and long press
+            bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
+            bubble.addEventListener("touchmove", handleTouchMove, { passive: true });
+            bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted), { passive: true });
+            bubble.addEventListener("contextmenu", (e) => {
+              e.preventDefault();
+              handleLongPressMenu(msg, decrypted, isSelf);
+            });
 
-  if (!msg.seenBy?.includes(currentUser.uid)) {
-    db.collection("threads").doc(threadIdStr)
-      .collection("messages").doc(doc.id)
-      .update({
-        seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
-      }).catch(console.warn);
-  }
+            isSelf
+              ? (wrapper.appendChild(bubble), wrapper.appendChild(avatarImg))
+              : (wrapper.appendChild(avatarImg), wrapper.appendChild(bubble));
+
+            area.appendChild(wrapper);
+
+            if (!msg.seenBy?.includes(currentUser.uid)) {
+              db.collection("threads").doc(threadIdStr)
+                .collection("messages").doc(doc.id)
+                .update({
+                  seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+                }).catch(console.warn);
+            }
           }
-        })
-                    })
+
+          if (typeof lucide !== "undefined") lucide.createIcons();
+
+          if (shouldScroll) {
+            requestAnimationFrame(() => scrollToBottomThread(true));
           }
+          renderWithMagnetSupport?.("threadMessages");
+        });
+
+      if (!sessionStorage.getItem("threadScroll_" + threadIdStr)) {
+        setTimeout(() => scrollToBottomThread(false), 150);
+      }
+    })
+    .catch(err => {
+      console.error("❌ Friend check failed:", err.message || err);
+      alert("❌ Failed to verify friendship.");
+    });
+}
 
 
 // ✅ Send button handler
