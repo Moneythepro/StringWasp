@@ -1471,23 +1471,6 @@ function handleTouchMove(evt) {
   }
 }
 
-let replyingTo = null;
-
-function handleSwipeToReply(msg, text) {
-  console.log("Swipe to reply:", text);
-
-  replyingTo = {
-    msgId: msg.id,   // ✅ capital I
-    text: text
-  };
-
-  console.log("replyingTo object:", JSON.stringify(replyingTo));
-
-  document.getElementById("replyText").textContent =
-    text.slice(0, 50) + (text.length > 50 ? "..." : "");
-  document.getElementById("replyPreview").style.display = "flex";
-  if (typeof lucide !== "undefined") lucide.createIcons();
-}
 
 function cancelReply() {
   replyingTo = null;
@@ -1598,6 +1581,28 @@ function renderChatCard(chat) {
 }
 
 // ===== DM: Send Thread Message with AES Encryption =====
+// ✅ Global so both swipe + send can use it
+let replyingTo = null;
+
+// ✅ Handle swipe to reply
+function handleSwipeToReply(msg, text) {
+  console.log("Swipe to reply:", text);
+
+  replyingTo = {
+    msgId: msg.id,   // ✅ capital I, never lowercase
+    text: text
+  };
+
+  console.log("replyingTo object:", JSON.stringify(replyingTo));
+
+  document.getElementById("replyText").textContent =
+    text.slice(0, 50) + (text.length > 50 ? "..." : "");
+  document.getElementById("replyPreview").style.display = "flex";
+
+  if (typeof lucide !== "undefined") lucide.createIcons();
+}
+
+// ✅ Handle send
 function sendThreadMessage() {
   const input = document.getElementById("threadInput");
   const text = input?.value.trim();
@@ -1622,14 +1627,14 @@ function sendThreadMessage() {
   };
 
   if (replyingTo) {
-  console.log("Sending reply to:", JSON.stringify(replyingTo));
-  message.replyTo = {
-    msgId: replyingTo.msgId,  // ✅ not msgld or msgid
-    text: replyingTo.text
-  };
+    console.log("Sending reply to:", JSON.stringify(replyingTo));
+    message.replyTo = {
+      msgId: replyingTo.msgId,  // ✅ capital I
+      text: replyingTo.text
+    };
   }
 
-  cancelReply();
+  cancelReply();  // ✅ clears preview + replyingTo = null
 
   threadRef.collection("messages").add(message)
     .then(() => {
