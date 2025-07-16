@@ -1423,10 +1423,12 @@ function deleteChat() {
   alert("🗑️ Delete chat feature coming soon.");
 }
 
+// 🔗 Make URLs clickable in message text
 function linkifyText(text) {
   return text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="link-text">$1</a>');
 }
 
+// 👉 Swipe detection (for swipe right to reply)
 let xDown = null;
 
 function handleTouchStart(evt) {
@@ -1448,13 +1450,44 @@ function handleTouchMove(evt) {
 }
 
 function handleSwipeToReply(msg, text) {
-  console.log("Swipe to reply:", text);
-  // TODO: open reply input
+  console.log("👉 Swipe to reply:", text);
+  // TODO: show reply input with quote preview
 }
 
+// ✋ Long press to open minimal modal with options
+let selectedMessageForAction = null;
+
 function handleLongPressMenu(msg, text, isSelf) {
-  console.log("Long press:", text, "Self:", isSelf);
-  // TODO: open modal for Edit / Delete
+  console.log("✋ Long press:", text, "Self:", isSelf);
+  selectedMessageForAction = { msg, text, isSelf };
+  document.getElementById("messageOptionsModal").style.display = "block";
+  if (typeof lucide !== "undefined") lucide.createIcons();
+}
+
+// Minimal modal option actions
+function closeOptionsModal() {
+  document.getElementById("messageOptionsModal").style.display = "none";
+}
+
+function editMessage() {
+  closeOptionsModal();
+  if (!selectedMessageForAction) return;
+  alert("✏️ Edit: " + selectedMessageForAction.text);
+  // TODO: show input with existing message
+}
+
+function deleteForMe() {
+  closeOptionsModal();
+  if (!selectedMessageForAction) return;
+  alert("🗑️ Delete only for me: " + selectedMessageForAction.text);
+  // TODO: mark as deleted for this user
+}
+
+function deleteForEveryone() {
+  closeOptionsModal();
+  if (!selectedMessageForAction) return;
+  alert("🚫 Delete for everyone: " + selectedMessageForAction.text);
+  // TODO: delete from Firestore for all
 }
 
 function deleteThread() {
