@@ -1625,9 +1625,13 @@ function sendThreadMessage() {
 
   // ✅ If replying, include replyTo context
   if (replyingTo) {
-    console.log("Sending reply to:", replyingTo);
-    message.replyTo = replyingTo;
+  console.log("Sending reply to:", replyingTo);
+  message.replyTo = {
+    msgId: replyingTo.msgId,
+    text: replyingTo.text
+  };
   }
+  console.log("Sending reply to:", JSON.stringify(replyingTo));
 
   // ✅ Reset reply preview
   cancelReply();
