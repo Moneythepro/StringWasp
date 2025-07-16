@@ -1572,17 +1572,6 @@ function deleteForEveryone() {
     .catch(console.warn);
 }
 
-function deleteThread() {
-  showModal("Delete this chat?", () => {
-    const docId = threadId(currentUser.uid, currentThreadUser);
-    const ref = db.collection("threads").doc(docId).collection("messages");
-
-    ref.get().then(snapshot => {
-      snapshot.forEach(doc => doc.ref.delete());
-      alert("✅ Chat deleted");
-    });
-  });
-}
 
 function renderChatCard(chat) {
   return `
