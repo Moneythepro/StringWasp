@@ -305,7 +305,7 @@ body.dark .status-dot.online {
   align-items: center;
   padding: 0 10px;
   border-bottom: 1px solid #ccc;
-  z-index: 10;
+  z-index: 50; /* ✅ Increase z-index to stay above scroll/input areas */
 }
 .chat-header img {
   width: 36px;
@@ -335,23 +335,24 @@ body.dark .status-dot.online {
 .menu-btn {
   background: transparent;
   border: none;
-  padding: 6px;
+  padding: 8px; /* slightly larger for touch targets */
+  margin: 0 4px;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  z-index: 51; /* ensures it's clickable above content */
+  position: relative; /* needed for z-index to work */
 }
+
 .back-btn i,
-.menu-btn i {
-  stroke: #222;
-  width: 20px;
-  height: 20px;
-  stroke-width: 2;
-}
+.menu-btn i,
 .icon-btn i {
   stroke: #222;
   width: 20px;
   height: 20px;
   stroke-width: 2;
+  pointer-events: none; /* allows click to register on button, not icon */
 }
 
 /* === SCROLLABLE CHAT BODY === */
@@ -777,10 +778,10 @@ body.dark #loadingOverlay {
   top: 56px;
   right: 10px;
   background: #ffffff; /* WhatsApp-style white background */
-  color: #222;          /* Dark gray text like WhatsApp */
+  color: #222;
   border-radius: 6px;
   padding: 4px 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Soft WhatsApp-style shadow */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: row;
   gap: 8px;
@@ -805,13 +806,16 @@ body.dark #loadingOverlay {
   white-space: nowrap;
   border-radius: 4px;
   transition: background-color 0.2s ease;
-  color: #222;
+  color: inherit; /* ✅ auto switch between dark/light */
+  user-select: none;
+  -webkit-tap-highlight-color: transparent; /* ✅ smooth mobile tap */
 }
 
 .chat-options-horizontal span:hover {
-  background-color: #f4f4f4; /* WhatsApp-style hover */
+  background-color: #f4f4f4;
 }
 
+/* === DARK MODE === */
 body.dark .chat-options-horizontal {
   background: #2a2a2a;
   color: #ddd;
@@ -822,11 +826,10 @@ body.dark .chat-options-horizontal span:hover {
   background-color: #444;
 }
 
+/* === MOBILE === */
 @media (max-width: 480px) {
   .chat-options-horizontal span {
     padding: 5px 8px;
     font-size: 12px;
-  }
-}
   }
 }
