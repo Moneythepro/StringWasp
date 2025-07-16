@@ -374,9 +374,38 @@ html, body, #threadView {
 
 /* === TYPING INDICATOR === */
 .typing-indicator {
-  font-size: 11px;
-  color: #888;
-  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  margin-left: 8px;
+}
+
+.typing-indicator span {
+  display: block;
+  width: 6px;
+  height: 6px;
+  background: #999;
+  border-radius: 50%;
+  animation: typingBounce 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingBounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.7;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* === INPUT BAR === */
