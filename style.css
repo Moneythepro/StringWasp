@@ -556,7 +556,7 @@ input[type="file"]#threadFile {
 
 /* === KEYBOARD ADJUSTMENTS === */
 body.keyboard-open .chat-scroll-area {
-  padding-bottom: 66px; /* same as input bar height */
+  padding-bottom: 75px; /* or try 76px if 80 is too much */
 }
 body.keyboard-open .chat-input-bar {
   position: fixed;
