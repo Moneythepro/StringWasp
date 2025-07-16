@@ -1919,11 +1919,11 @@ function adjustThreadLayout() {
 
 // ✅ Smooth scroll to bottom of thread
 function scrollToBottomThread(smooth = true) {
-  const scrollContainer = document.querySelector(".chat-scroll-area");
-  if (!scrollContainer) return;
+  const scrollArea = document.querySelector(".chat-scroll-area");
+  if (!scrollArea) return;
 
-  scrollContainer.scrollTo({
-    top: scrollContainer.scrollHeight,
+  scrollArea.scrollTo({
+    top: scrollArea.scrollHeight,
     behavior: smooth ? "smooth" : "auto"
   });
 }
