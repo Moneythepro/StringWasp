@@ -357,24 +357,26 @@ body.dark .status-dot.online {
 /* === SCROLLABLE CHAT BODY === */
 .chat-scroll-area {
   position: absolute;
-  top: 56px;      /* below fixed header */
-  bottom: 56px;   /* above input bar */
+  top: 56px;       /* Exactly header height */
+  bottom: 56px;    /* Exactly input bar height */
   left: 0;
   right: 0;
   overflow-y: auto;
-  padding: 4px 8px 12px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  scroll-behavior: smooth;
+  justify-content: flex-end;  /* ✅ Ensures messages start at bottom */
   background: #fafafa;
-}
-  #threadMessages {
+  padding: 4px 8px 8px;       /* ✅ Avoid collision with input */
   scroll-behavior: smooth;
+}
+
+#threadMessages {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  }
+  width: 100%;
+  margin-bottom: 8px; /* ✅ small space above input */
+}
 
 /* === TYPING INDICATOR === */
 .typing-indicator {
@@ -551,7 +553,7 @@ input[type="file"]#threadFile {
 
 /* === KEYBOARD ADJUSTMENTS === */
 body.keyboard-open .chat-scroll-area {
-  padding-bottom: 80px; /* or try 76px if 80 is too much */
+  bottom: 66px; /* match input bar + gap when keyboard is visible */
 }
 body.keyboard-open .chat-input-bar {
   position: fixed;
