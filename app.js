@@ -1375,10 +1375,9 @@ let initialViewportHeight = window.innerHeight;
 
 window.addEventListener("resize", () => {
   const isKeyboardOpen = window.innerHeight < initialViewportHeight - 150;
-
   document.body.classList.toggle("keyboard-open", isKeyboardOpen);
 
-  // Optional: scroll to bottom when keyboard opens
+  // Scroll to bottom when keyboard opens
   if (isKeyboardOpen) {
     setTimeout(() => scrollToBottomThread(true), 100);
   }
@@ -1917,13 +1916,14 @@ function adjustThreadLayout() {
 }
 
 // ✅ Smooth scroll to bottom of thread
-function scrollToBottomThread(smooth = true) {
+function scrollToBottomThread(smooth = false) {
   const area = document.getElementById("threadMessages");
-  if (!area) return;
-  area.scrollTo({
-    top: area.scrollHeight,
-    behavior: smooth ? "smooth" : "auto"
-  });
+  if (area) {
+    area.scrollTo({
+      top: area.scrollHeight,
+      behavior: smooth ? "smooth" : "auto"
+    });
+  }
 }
 
 // ✅ Setup once DOM is loaded
