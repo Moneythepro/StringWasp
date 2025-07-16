@@ -292,17 +292,21 @@ html, body, #threadView {
 }
 
 /* === HEADER === */
-.chat-header {
+.chat-header-wrapper {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 56px;
   z-index: 100;
+}
+
+.chat-header {
+  position: relative; /* ✅ This allows the menu inside to be positioned absolutely */
+  height: 56px;
   display: flex;
   align-items: center;
-  background: #f0f0f0;
   padding: 0 10px;
+  background: #f0f0f0;
   border-bottom: 1px solid #ccc;
 }
 .chat-header img {
