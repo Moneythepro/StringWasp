@@ -1141,18 +1141,13 @@ function threadId(a, b) {
 function openThread(uid, name) {
   if (!currentUser || !uid) return;
 
-  db.collection("users").doc(currentUser.uid).collection("friends").doc(uid)
-    .get()
-    .then(friendDoc => {
-      if (!friendDoc.exists) {
-        alert("You must be friends to start a chat.");
-        return;
-      }
+  db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).get()
+    .then(async friendDoc => {
+      if (!friendDoc.exists) return alert("You must be friends to start a chat.");
 
       switchTab("threadView");
       document.getElementById("threadWithName").textContent = name || "Chat";
       document.getElementById("chatOptionsMenu").style.display = "none";
-
       ["roomDropdown", "groupInfoButton"].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = "none";
@@ -1171,13 +1166,21 @@ function openThread(uid, name) {
         area.innerHTML = "";
         const savedScroll = sessionStorage.getItem("threadScroll_" + threadIdStr);
         if (savedScroll) {
-          setTimeout(() => {
-            area.scrollTop = parseInt(savedScroll, 10);
-          }, 100);
+          setTimeout(() => area.scrollTop = parseInt(savedScroll, 10), 100);
         }
         area.addEventListener("scroll", () => {
           sessionStorage.setItem("threadScroll_" + threadIdStr, area.scrollTop);
         });
+      }
+
+      // ✅ Header avatar
+      const friendDoc = await db.collection("users").doc(uid).get();
+      if (friendDoc.exists) {
+        const user = friendDoc.data();
+        const headerImg = document.getElementById("threadHeaderAvatar");
+        if (headerImg) {
+          headerImg.src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+        }
       }
 
       if (unsubscribeThread) unsubscribeThread();
@@ -1204,19 +1207,17 @@ function openThread(uid, name) {
       });
 
       const resizeObserver = new ResizeObserver(() => {
-        setTimeout(() => scrollToBottomThread(true), 100);
+        setTimeout(() => scrollToBottomThread(true), 80);
       });
       if (area) resizeObserver.observe(area);
 
-      unsubscribeThread = db.collection("threads")
-        .doc(threadIdStr)
-        .collection("messages")
-        .orderBy("timestamp")
+      unsubscribeThread = db.collection("threads").doc(threadIdStr)
+        .collection("messages").orderBy("timestamp")
         .onSnapshot(async snapshot => {
           if (!area) return;
 
-          const prevHeight = area.scrollHeight;
           const prevScroll = area.scrollTop;
+          const prevHeight = area.scrollHeight;
 
           area.innerHTML = "";
 
@@ -1241,8 +1242,7 @@ function openThread(uid, name) {
 
             let decrypted = "";
             try {
-              decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
-              if (!decrypted) decrypted = "[Encrypted]";
+              decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
             } catch {
               decrypted = "[Failed to decrypt]";
             }
@@ -1251,33 +1251,22 @@ function openThread(uid, name) {
             avatarImg.className = "msg-avatar-img";
             try {
               const userDoc = await db.collection("users").doc(msg.from).get();
-              if (userDoc.exists) {
-                const user = userDoc.data();
-                avatarImg.src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-              } else {
-                avatarImg.src = "default-avatar.png";
-              }
-            } catch (e) {
+              const user = userDoc.data();
+              avatarImg.src = user?.avatarBase64 || user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.username || "User")}`;
+            } catch {
               avatarImg.src = "default-avatar.png";
             }
 
-            let replyHtml = "";
-            if (msg.replyTo?.text) {
-              replyHtml = `
-                <div class="msg-reply-preview" onclick="scrollToRepliedMessage('${msg.replyTo.msgId}')">
-                  <i data-lucide="corner-up-left"></i>
-                  ${escapeHtml(msg.replyTo.text.slice(0, 50))}
-                </div>`;
-            }
+            const replyHtml = msg.replyTo?.text
+              ? `<div class="msg-reply-preview" onclick="scrollToRepliedMessage('${msg.replyTo.msgId}')">
+                  <i data-lucide="corner-up-left"></i>${escapeHtml(msg.replyTo.text.slice(0, 50))}
+                 </div>` : "";
 
             const isRead = msg.seenBy?.includes(currentThreadUser);
             const isDelivered = msg.seenBy?.length > 1;
-
             const ticks = isSelf
               ? `<span class="msg-ticks ${isRead ? 'double' : isDelivered ? 'delivered' : ''}">
-                  <i data-lucide="${isRead || isDelivered ? 'check-check' : 'check'}"></i>
-                 </span>`
-              : "";
+                  <i data-lucide="${isRead || isDelivered ? 'check-check' : 'check'}"></i></span>` : "";
 
             const bubble = document.createElement("div");
             bubble.className = "message-bubble " + (isSelf ? "right" : "left") + " animate-fade-in";
@@ -1286,11 +1275,9 @@ function openThread(uid, name) {
                 ${replyHtml}
                 <span class="msg-text">${linkifyText(escapeHtml(decrypted))}</span>
                 <span class="msg-meta">
-                  ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-                  ${ticks}
+                  ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}${ticks}
                 </span>
               </div>`;
-
             bubble.dataset.msgId = msg.id;
 
             bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
@@ -1302,29 +1289,23 @@ function openThread(uid, name) {
               handleLongPressMenu(msg, decrypted, isSelf);
             });
 
-            isSelf
-              ? (wrapper.appendChild(bubble), wrapper.appendChild(avatarImg))
-              : (wrapper.appendChild(avatarImg), wrapper.appendChild(bubble));
-
+            isSelf ? (wrapper.appendChild(bubble), wrapper.appendChild(avatarImg))
+                   : (wrapper.appendChild(avatarImg), wrapper.appendChild(bubble));
             area.appendChild(wrapper);
 
             if (!msg.seenBy?.includes(currentUser.uid)) {
-              db.collection("threads").doc(threadIdStr)
-                .collection("messages").doc(doc.id)
-                .update({
-                  seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
-                }).catch(console.warn);
+              db.collection("threads").doc(threadIdStr).collection("messages").doc(doc.id)
+                .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
+                .catch(console.warn);
             }
           }
 
           if (typeof lucide !== "undefined") lucide.createIcons();
 
-          // Smooth scroll if near bottom
           const isNearBottom = (prevHeight - prevScroll - area.clientHeight) < 120;
           if (isNearBottom) {
             requestAnimationFrame(() => scrollToBottomThread(true));
           } else {
-            // Optional: toast for new message
             const toast = document.getElementById("chatToast");
             if (toast) {
               toast.textContent = "New message received";
@@ -1345,7 +1326,6 @@ function openThread(uid, name) {
       alert("❌ Failed to verify friendship.");
     });
 }
-
 
 // ✅ Send button handler
 function handleSendClick() {
@@ -1625,21 +1605,13 @@ function renderChatCard(chat) {
 // ✅ Global for swipe + send
 let replyingTo = null;
 
-// ✅ Handle swipe to reply
 function handleSwipeToReply(msg, text) {
-  replyingTo = {
-    msgId: msg.id,
-    text: text
-  };
-
-  document.getElementById("replyText").textContent =
-    text.slice(0, 50) + (text.length > 50 ? "..." : "");
+  replyingTo = { msgId: msg.id, text };
+  document.getElementById("replyText").textContent = text.slice(0, 50) + (text.length > 50 ? "..." : "");
   document.getElementById("replyPreview").style.display = "flex";
-
   if (typeof lucide !== "undefined") lucide.createIcons();
 }
 
-// ✅ Handle send message
 function sendThreadMessage() {
   const input = document.getElementById("threadInput");
   const text = input?.value.trim();
@@ -1660,7 +1632,6 @@ function sendThreadMessage() {
     seenBy: [currentUser.uid]
   };
 
-  // ✅ Include reply if active
   if (replyingTo?.msgId && replyingTo?.text) {
     message.replyTo = {
       msgId: replyingTo.msgId,
@@ -1668,27 +1639,16 @@ function sendThreadMessage() {
     };
   }
 
-  // ✅ Pre-clear UI before sending
   input.value = "";
   cancelReply();
+  setTimeout(() => input.focus(), 30); // smooth keyboard return
 
-  // ✅ Focus input after small delay to reduce keyboard flicker
-  setTimeout(() => {
-    input.focus();
-  }, 30);
-
-  // ✅ Add message to Firestore
   threadRef.collection("messages").add(message)
     .then(() => {
-      requestAnimationFrame(() => scrollToBottomThread(true)); // Smooth scroll
-
-      // ✅ Update thread meta
+      requestAnimationFrame(() => scrollToBottomThread(true));
       threadRef.set({
         participants: [currentUser.uid, currentThreadUser],
-        names: {
-          [currentUser.uid]: fromName,
-          [currentThreadUser]: toName
-        },
+        names: { [currentUser.uid]: fromName, [currentThreadUser]: toName },
         lastMessage: text,
         unread: {
           [currentUser.uid]: 0,
