@@ -1376,18 +1376,22 @@ window.addEventListener("resize", () => {
   }
 });
 
-function toggleChatOptions() {
+function toggleChatOptions(event) {
+  event.stopPropagation(); // ✅ Prevents document click from firing
   const menu = document.getElementById("chatOptionsMenu");
-  if (!menu) return;
 
   const isShown = menu.classList.contains("show");
+
+  // Close if open
   if (isShown) {
     menu.classList.remove("show");
   } else {
     menu.classList.add("show");
 
-    // Auto-close on outside click
-    document.addEventListener("click", closeMenuOnClickOutside);
+    // ✅ Only attach once
+    setTimeout(() => {
+      document.addEventListener("click", closeMenuOnClickOutside);
+    }, 0);
   }
 }
 
