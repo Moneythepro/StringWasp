@@ -1327,7 +1327,6 @@ function openThread(uid, name) {
           if (shouldScroll) {
   requestAnimationFrame(() => scrollToBottomThread(true));
           }
-console.log("📜 Scrolling to bottom...");
           renderWithMagnetSupport?.("threadMessages");
         });
 
