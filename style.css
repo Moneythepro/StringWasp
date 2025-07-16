@@ -953,3 +953,23 @@ body.dark .chat-options-horizontal span:hover {
   height: 22px;
   cursor: pointer;
 }
+
+.chat-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  z-index: 2000;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.chat-toast.show {
+  display: block;
+  opacity: 1;
+}
