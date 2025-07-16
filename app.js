@@ -1475,8 +1475,12 @@ let replyingTo = null;
 
 function handleSwipeToReply(msg, text) {
   console.log("Swipe to reply:", text);
-  replyingTo = { msgId: msg.id, text };
-  document.getElementById("replyText").textContent = text.slice(0, 50) + (text.length > 50 ? "..." : "");
+  replyingTo = {
+    msgId: msg.id,  // ✅ always capital I
+    text: text
+  };
+  document.getElementById("replyText").textContent =
+    text.slice(0, 50) + (text.length > 50 ? "..." : "");
   document.getElementById("replyPreview").style.display = "flex";
   if (typeof lucide !== "undefined") lucide.createIcons();
 }
@@ -1602,7 +1606,6 @@ function sendThreadMessage() {
   const docId = threadId(currentUser.uid, currentThreadUser);
   const threadRef = db.collection("threads").doc(docId);
 
-  // ✅ Build your message object
   const message = {
     text: encryptedText,
     from: currentUser.uid,
@@ -1611,28 +1614,22 @@ function sendThreadMessage() {
     seenBy: [currentUser.uid]
   };
 
-  // ✅ If replying, include replyTo context
   if (replyingTo) {
-  console.log("Sending reply to:", replyingTo);
-  message.replyTo = {
-    msgId: replyingTo.msgId,
-    text: replyingTo.text
-  };
+    console.log("Sending reply to:", JSON.stringify(replyingTo));
+    message.replyTo = {
+      msgId: replyingTo.msgId,  // ✅ always capital I
+      text: replyingTo.text
+    };
   }
-  console.log("Sending reply to:", JSON.stringify(replyingTo));
 
-  // ✅ Reset reply preview
   cancelReply();
 
-  // ✅ Add the message to Firestore
   threadRef.collection("messages").add(message)
     .then(() => {
-      // ✅ Clear input, focus, scroll
       input.value = "";
       setTimeout(() => input.focus(), 50);
       setTimeout(() => scrollToBottomThread(true), 80);
 
-      // ✅ Update thread document with latest info
       threadRef.set({
         participants: [currentUser.uid, currentThreadUser],
         names: {
@@ -1680,21 +1677,41 @@ function listenMessages() {
       messagesDiv.innerHTML = "";
       snapshot.forEach(doc => {
         const msg = doc.data();
-        const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+        if (!msg?.text) return;
+
+        if (msg.deletedFor?.[currentUser.uid]) {
+          const bubble = document.createElement("div");
+          bubble.className = "message-bubble deleted";
+          bubble.textContent = "This message was deleted";
+          messagesDiv.appendChild(bubble);
+          return;
+        }
+
+        const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
         const bubble = document.createElement("div");
         bubble.className = "message-bubble " + (msg.senderId === currentUser.uid ? "right" : "left");
 
         const sender = document.createElement("div");
         sender.className = "sender-info";
-        sender.innerHTML = `<strong>${msg.senderName || "Unknown"}</strong>`;
+        sender.innerHTML = `<strong>${escapeHtml(msg.senderName || "Unknown")}</strong>`;
         bubble.appendChild(sender);
 
         const textDiv = document.createElement("div");
-        textDiv.innerHTML = decrypted;
+        textDiv.innerHTML = linkifyText(escapeHtml(decrypted));
         bubble.appendChild(textDiv);
+
+        // swipe + long press support
+        bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
+        bubble.addEventListener("touchmove", handleTouchMove, { passive: true });
+        bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted), { passive: true });
+        bubble.addEventListener("contextmenu", (e) => {
+          e.preventDefault();
+          handleLongPressMenu(msg, decrypted, msg.senderId === currentUser.uid);
+        });
 
         messagesDiv.appendChild(bubble);
       });
+
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
       renderWithMagnetSupport("groupMessages");
     });
