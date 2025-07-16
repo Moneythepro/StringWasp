@@ -1286,7 +1286,6 @@ function openThread(uid, name) {
 
             const bubble = document.createElement("div");
             bubble.className = "message-bubble " + (isSelf ? "right" : "left") + " animate-fade-in";
-            bubble.style.animationDelay = `${lastRenderedMsgIds.size * 30}ms`;
 
             let contentHtml = "";
 
