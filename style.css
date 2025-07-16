@@ -281,17 +281,16 @@ body.dark .status-dot.online {
   flex-direction: column;
   background: #fff;
   z-index: 99;
-  height: 100vh; /* or 100dvh */
+  height: 100vh; /* full height */
 }
 
 .thread-main {
-  flex: 1 1 auto;
+  flex: 1;
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
+  overflow: hidden; /* required for scroll area */
 }
-
 /* === HEADER === */
 .chat-header {
   position: fixed;
@@ -356,7 +355,7 @@ body.dark .status-dot.online {
 
 /* === SCROLLABLE CHAT BODY === */
 .chat-scroll-area {
-  flex: 1 1 auto;
+  flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -368,8 +367,7 @@ body.dark .status-dot.online {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  flex-grow: 1;
-  min-height: 100%; /* ensures it fills scroll area */
+  padding-bottom: 12px; /* optional spacing at the bottom */
 }
 
 /* === TYPING INDICATOR === */
