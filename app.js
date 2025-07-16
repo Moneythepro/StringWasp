@@ -1366,30 +1366,33 @@ window.addEventListener("resize", () => {
 });
 
 function toggleChatOptions(event) {
-  event.stopPropagation(); // prevents this click from bubbling to document
+  event.stopPropagation(); // prevent closing immediately on click
 
   const menu = document.getElementById("chatOptionsMenu");
-  const isShown = menu.classList.contains("show");
+  if (!menu) return;
 
-  if (isShown) {
+  const isOpen = menu.classList.contains("show");
+
+  if (isOpen) {
+    // Hide menu
     menu.classList.remove("show");
   } else {
+    // Show menu
     menu.classList.add("show");
 
-    // Wait for the current event loop so this click doesn’t immediately trigger the outside closer
-    setTimeout(() => {
-      const handleOutsideClick = (e) => {
-        // close only if click was truly outside the menu and the menu button
-        if (!menu.contains(e.target) && !e.target.closest(".menu-btn")) {
-          menu.classList.remove("show");
-          document.removeEventListener("click", handleOutsideClick);
-        }
-      };
-
-      document.addEventListener("click", handleOutsideClick);
-    }, 0);
+    // Optional: close if user clicks outside
+    document.addEventListener("click", (e) => {
+      if (!menu.contains(e.target)) {
+        menu.classList.remove("show");
+      }
+    }, { once: true });
   }
 }
+
+// Prevent closing when clicking inside the menu
+document.getElementById("chatOptionsMenu")?.addEventListener("click", (e) => {
+  e.stopPropagation();
+});
 
 // ✅ Placeholder functions
 function blockUser() {
