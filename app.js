@@ -1153,7 +1153,7 @@ function openThread(uid, name) {
     .get()
     .then(friendDoc => {
       if (!friendDoc.exists) {
-        alert("🔒 You must be friends to start a chat.");
+        alert("You must be friends to start a chat.");
         return;
       }
 
@@ -1253,8 +1253,20 @@ function openThread(uid, name) {
             }
 
             const avatarImg = document.createElement("img");
-            avatarImg.src = "default-avatar.png";
-            avatarImg.className = "msg-avatar-img";
+avatarImg.className = "msg-avatar-img";
+
+try {
+  const userDoc = await db.collection("users").doc(msg.from).get();
+  if (userDoc.exists) {
+    const user = userDoc.data();
+    avatarImg.src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+  } else {
+    avatarImg.src = "default-avatar.png";
+  }
+} catch (e) {
+  console.warn("⚠️ Avatar fetch failed:", e.message);
+  avatarImg.src = "default-avatar.png";
+}
 
             let replyHtml = "";
             if (msg.replyTo?.text) {
