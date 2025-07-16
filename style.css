@@ -356,12 +356,14 @@ html, body, #threadView {
 /* === SCROLLABLE CHAT BODY === */
 .chat-scroll-area {
   position: absolute;
-  top: 56px;
-  bottom: 56px;
+  top: 56px;    /* matches your header */
+  bottom: 56px; /* matches your input bar */
   left: 0;
   right: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch; /* smooth iOS scroll */
+  background: #fafafa;
+  padding: 0 8px 8px;
 }
 
 #threadMessages {
