@@ -1348,7 +1348,7 @@ function handleSendClick() {
   setTimeout(() => {
     const input = document.getElementById("threadInput");
     if (input) input.focus();
-  }, 80); // ✅ Keeps keyboard open
+  }, 50); // Keeps keyboard open
 }
 
 // ✅ Enter key handler
@@ -1471,8 +1471,6 @@ function sendThreadMessage() {
   threadRef.collection("messages").add(message).then(() => {
     // ✅ Clear input
     input.value = "";
-
-    // ✅ Restore focus (prevents mobile keyboard from closing)
     setTimeout(() => input.focus(), 50);
 
     // ✅ Slight delay to allow DOM to catch up before scrolling
