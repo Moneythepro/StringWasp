@@ -456,7 +456,6 @@ input[type="file"]#threadFile {
 .message-bubble-wrapper.right .msg-avatar-img {
   display: none;
 }
-
 .message-bubble {
   max-width: 85%;
   background: #dcf8c6;
@@ -483,7 +482,9 @@ input[type="file"]#threadFile {
   padding: 5px 8px;
   line-height: 1.3;
 }
-
+.message-bubble:last-child {
+  margin-bottom: 8px;
+}
 /* === MESSAGE TEXT + META === */
 .msg-content {
   display: inline-flex;
