@@ -354,8 +354,8 @@ body.dark .status-dot.online {
 /* === SCROLLABLE CHAT BODY === */
 .chat-scroll-area {
   position: absolute;
-  top: 56px;       /* below header */
-  bottom: 56px;    /* above input */
+  top: 56px;        /* below header */
+  bottom: 56px;     /* above input bar */
   left: 0;
   right: 0;
   overflow-y: auto;
@@ -363,19 +363,21 @@ body.dark .status-dot.online {
   display: flex;
   flex-direction: column;
 
-  padding: 6px 10px 8px;
+  padding: 6px 10px 8px; /* top, horizontal, bottom */
   background: #fafafa;
   z-index: 1;
 }
 
 #threadMessages {
-  background: rgba(255,0,0,0.1); /* temporary */
   flex: 1 1 auto;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-height: 0;  /* ✅ prevents overflow from pushing it off screen */
   scroll-behavior: smooth;
+
+  background: rgba(255, 0, 0, 0.1); /* temporary test background */
+  border: 1px dashed red;          /* visual debug aid, remove later */
 }
 
 /* === TYPING INDICATOR === */
