@@ -1450,10 +1450,10 @@ function sendThreadMessage() {
   if (!text || !currentThreadUser) return;
 
   const nameEl = document.getElementById("usernameDisplay");
-  const fromName = nameEl ? nameEl.textContent : "User";
+  const fromName = nameEl?.textContent || "User";
 
   const threadNameEl = document.getElementById("threadWithName");
-  const toName = threadNameEl ? threadNameEl.textContent : "Friend";
+  const toName = threadNameEl?.textContent || "Friend";
 
   const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
   const docId = threadId(currentUser.uid, currentThreadUser);
@@ -1464,36 +1464,37 @@ function sendThreadMessage() {
     from: currentUser.uid,
     fromName,
     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    seenBy: [currentUser.uid] // ✅ Mark as seen by sender
+    seenBy: [currentUser.uid]
   };
 
-  threadRef.collection("messages").add(message).then(() => {
-    // ✅ Clear input
-    input.value = "";
+  threadRef.collection("messages").add(message)
+    .then(() => {
+      // ✅ Clear and refocus input
+      input.value = "";
+      setTimeout(() => input.focus(), 50);
 
-    // ✅ Restore focus (prevents mobile keyboard from closing)
-    setTimeout(() => input.focus(), 50);
+      // ✅ Reliable scroll after DOM updates
+      requestAnimationFrame(() => scrollToBottomThread(true));
 
-    // ✅ Slight delay to allow DOM to catch up before scrolling
-    setTimeout(() => scrollToBottomThread(true), 80);
-
-    threadRef.set({
-      participants: [currentUser.uid, currentThreadUser],
-      names: {
-        [currentUser.uid]: fromName,
-        [currentThreadUser]: toName
-      },
-      lastMessage: text,
-      unread: {
-        [currentUser.uid]: 0,
-        [currentThreadUser]: firebase.firestore.FieldValue.increment(1)
-      },
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-  }).catch(err => {
-    console.error("❌ Send failed:", err.message || err);
-    alert("❌ Failed to send message.");
-  });
+      // ✅ Update thread metadata
+      return threadRef.set({
+        participants: [currentUser.uid, currentThreadUser],
+        names: {
+          [currentUser.uid]: fromName,
+          [currentThreadUser]: toName
+        },
+        lastMessage: text,
+        unread: {
+          [currentUser.uid]: 0,
+          [currentThreadUser]: firebase.firestore.FieldValue.increment(1)
+        },
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    })
+    .catch(err => {
+      console.error("❌ Send failed:", err.message || err);
+      alert("❌ Failed to send message.");
+    });
 }
 
 function renderMessage(msg, isOwn) {
