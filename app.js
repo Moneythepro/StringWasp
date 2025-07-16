@@ -1380,27 +1380,26 @@ function toggleChatOptions() {
   const menu = document.getElementById("chatOptionsMenu");
   if (!menu) return;
 
-  // Close all other menus
-  document.querySelectorAll(".chat-options-horizontal").forEach(el => {
-    if (el !== menu) el.classList.remove("show");
-  });
+  const isShown = menu.classList.contains("show");
+  if (isShown) {
+    menu.classList.remove("show");
+  } else {
+    menu.classList.add("show");
 
-  // Toggle this menu
-  menu.classList.toggle("show");
+    // Auto-close on outside click
+    document.addEventListener("click", closeMenuOnClickOutside);
+  }
 }
 
-// ✅ Close when clicking outside
-document.addEventListener("click", (event) => {
+function closeMenuOnClickOutside(e) {
   const menu = document.getElementById("chatOptionsMenu");
-  const trigger = document.querySelector(".menu-btn");
-  if (!menu || !trigger) return;
+  const button = document.querySelector(".menu-btn");
 
-  // Do nothing if clicking the button or menu
-  if (menu.contains(event.target) || trigger.contains(event.target)) return;
-
-  // Otherwise, close the menu
-  menu.classList.remove("show");
-});
+  if (!menu.contains(e.target) && !button.contains(e.target)) {
+    menu.classList.remove("show");
+    document.removeEventListener("click", closeMenuOnClickOutside);
+  }
+}
 
 // ✅ Placeholder functions
 function blockUser() {
