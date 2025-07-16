@@ -779,7 +779,7 @@ body.dark #loadingOverlay {
   flex-direction: row;
   gap: 8px;
   font-size: 13px;
-  z-index: 20;
+  z-index: 9999;
 
   opacity: 0;
   transform: translateY(-8px);
@@ -817,8 +817,10 @@ body.dark .chat-options-horizontal span:hover {
 }
 
 @media (max-width: 480px) {
-  .chat-options-horizontal {
-    right: 4px;
-    gap: 6px;
+  .chat-options-horizontal span {
+    padding: 5px 8px;
+    font-size: 12px;
+  }
+}
   }
 }
