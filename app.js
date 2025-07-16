@@ -1444,12 +1444,15 @@ function cancelReply() {
 let selectedMessageForAction = null;
 
 function handleLongPressMenu(msg, text, isSelf) {
-  console.log("Long press:", text, "Self:", isSelf);
-  selectedMessageForAction = {
-    msg: msg,
-    text: text
-  };
-  document.getElementById("messageOptionsModal").classList.remove("hidden");
+  selectedMessageForAction = { msg, text };
+  const modal = document.getElementById("messageOptionsModal");
+
+  // Only show Edit and Delete for Me if it's your own message
+  modal.querySelector('[onclick="editMessage()"]').style.display = isSelf ? "flex" : "none";
+  modal.querySelector('[onclick="deleteForMe()"]').style.display = isSelf ? "flex" : "none";
+  modal.querySelector('[onclick="deleteForEveryone()"]').style.display = isSelf ? "flex" : "none";
+
+  openOptionsModal(); // your function to show the modal
 }
 
 // Minimal modal option actions
