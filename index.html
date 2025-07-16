@@ -154,17 +154,18 @@
     <p id="chatStatus">last seen recently</p>
   </div>
 
-  <button class="menu-btn" onclick="toggleChatOptions()" aria-label="Open Menu">
-    <i data-lucide="more-vertical"></i>
-  </button>
+  <!-- Menu Button -->
+<button class="menu-btn" onclick="toggleChatOptions()" aria-label="Open Menu" type="button">
+  <i data-lucide="more-vertical"></i>
+</button>
 
-  <!-- ✅ Telegram-style horizontal menu -->
-  <div id="chatOptionsMenu" class="chat-options-horizontal" role="menu" aria-label="Chat Options">
-    <span onclick="blockUser()">Block</span>
-    <span onclick="viewMedia()">Media</span>
-    <span onclick="exportChat()">Export</span>
-    <span onclick="deleteChat()">Delete</span>
-  </div>
+<!-- Options Menu (must be inside .chat-header) -->
+<div id="chatOptionsMenu" class="chat-options-horizontal" role="menu" aria-label="Chat Options">
+  <span role="menuitem" tabindex="0" onclick="blockUser()">Block</span>
+  <span role="menuitem" tabindex="0" onclick="viewMedia()">Media</span>
+  <span role="menuitem" tabindex="0" onclick="exportChat()">Export</span>
+  <span role="menuitem" tabindex="0" onclick="deleteChat()">Delete</span>
+</div>
 </header>
 
   <!-- MAIN CHAT BODY -->
