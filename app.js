@@ -1347,6 +1347,10 @@ function openThread(uid, name) {
       }).catch(console.warn);
   }
           }
+        })
+                    })
+          }
+
 
 // ✅ Send button handler
 function handleSendClick() {
