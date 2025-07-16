@@ -1181,15 +1181,9 @@ function openThread(uid, name) {
       const threadIdStr = threadId(currentUser.uid, uid);
       const area = document.getElementById("threadMessages");
 
-      // 🧹 Reset scroll listener & messages
       if (area) {
         area.innerHTML = "";
-        area.addEventListener("scroll", () => {
-          const maxScroll = area.scrollHeight - area.clientHeight;
-          if (area.scrollTop > maxScroll) {
-            area.scrollTop = maxScroll;
-          }
-        });
+        area.scrollTop = area.scrollHeight; // Scroll immediately to bottom
       }
 
       if (unsubscribeThread) unsubscribeThread();
@@ -1217,11 +1211,9 @@ function openThread(uid, name) {
         }
       });
 
-      // === Scroll lock observer (with debounce)
-      let resizeTimeout;
+      // === Resize Observer (keyboard adjust) ===
       const resizeObserver = new ResizeObserver(() => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => scrollToBottomThread(true), 80);
+        setTimeout(() => scrollToBottomThread(true), 100);
       });
       if (area) resizeObserver.observe(area);
 
@@ -1236,7 +1228,7 @@ function openThread(uid, name) {
           if (!area) return;
 
           const shouldScroll =
-            area.scrollHeight - area.scrollTop - area.clientHeight < 100;
+            area.scrollHeight - area.scrollTop - area.clientHeight < 120;
 
           for (const doc of snapshot.docs) {
             if (lastRenderedMsgIds.has(doc.id)) continue;
@@ -1331,18 +1323,16 @@ function openThread(uid, name) {
 
           if (typeof lucide !== "undefined") lucide.createIcons();
 
+          // ✅ Reliable scroll to bottom on new messages
           if (shouldScroll) {
-            setTimeout(() => scrollToBottomThread(true), 60);
+            requestAnimationFrame(() => scrollToBottomThread(true));
           }
 
           renderWithMagnetSupport?.("threadMessages");
         });
 
-      // ✅ Layout adjust after open
-      if (typeof adjustThreadLayout === "function") {
-        setTimeout(() => adjustThreadLayout(), 150);
-      }
-      setTimeout(() => scrollToBottomThread(false), 150);
+      // ✅ After opening thread, scroll down
+      setTimeout(() => scrollToBottomThread(true), 120);
     })
     .catch(err => {
       console.error("❌ Friend check failed:", err.message || err);
