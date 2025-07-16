@@ -294,7 +294,7 @@ body.dark .status-dot.online {
 
 /* === HEADER === */
 .chat-header {
-  position: fixed;
+  position: relative; /* ✅ Required so the absolute-positioned menu anchors to it */
   top: 0;
   left: 0;
   right: 0;
@@ -305,7 +305,7 @@ body.dark .status-dot.online {
   align-items: center;
   padding: 0 10px;
   border-bottom: 1px solid #ccc;
-  z-index: 50; /* ✅ Increase z-index to stay above scroll/input areas */
+  z-index: 50; /* Keep high to layer above chat body */
 }
 .chat-header img {
   width: 36px;
