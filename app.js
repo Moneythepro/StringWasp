@@ -1501,16 +1501,6 @@ function closeOptionsModal() {
   document.getElementById("messageOptionsModal").style.display = "none";
 }
 
-let editingMessageData = null;
-
-function editMessage() {
-  closeOptionsModal();
-  if (!selectedMessageForAction) return;
-  editingMessageData = selectedMessageForAction;
-  document.getElementById("editMessageInput").value = editingMessageData.text;
-  document.getElementById("editMessageModal").style.display = "flex";
-  if (typeof lucide !== "undefined") lucide.createIcons();
-}
 
 function closeEditModal() {
   editingMessageData = null;
@@ -1545,12 +1535,22 @@ function showToast(message) {
   }, 1800);
 }
 
+let editingMessageData = null;
+
+function editMessage() {
+  closeOptionsModal();
+  if (!selectedMessageForAction) return;
+  editingMessageData = selectedMessageForAction;
+  document.getElementById("editMessageInput").value = editingMessageData.text;
+  document.getElementById("editMessageModal").style.display = "flex";
+  if (typeof lucide !== "undefined") lucide.createIcons();
+}
+
 function deleteForMe() {
   closeOptionsModal();
   if (!selectedMessageForAction) return;
   const msgId = selectedMessageForAction.msg.id;
   const threadIdStr = threadId(currentUser.uid, currentThreadUser);
-
   db.collection("threads").doc(threadIdStr)
     .collection("messages").doc(msgId)
     .update({
@@ -1565,7 +1565,6 @@ function deleteForEveryone() {
   if (!selectedMessageForAction) return;
   const msgId = selectedMessageForAction.msg.id;
   const threadIdStr = threadId(currentUser.uid, currentThreadUser);
-
   db.collection("threads").doc(threadIdStr)
     .collection("messages").doc(msgId)
     .delete()
