@@ -1215,7 +1215,10 @@ function openThread(uid, name) {
         .onSnapshot(async snapshot => {
           if (!area) return;
 
-          area.innerHTML = ""; // ✅ Clear to fully rerender (for edit/delete)
+          const prevHeight = area.scrollHeight;
+          const prevScroll = area.scrollTop;
+
+          area.innerHTML = "";
 
           for (const doc of snapshot.docs) {
             const msg = doc.data();
@@ -1245,26 +1248,26 @@ function openThread(uid, name) {
             }
 
             const avatarImg = document.createElement("img");
-avatarImg.className = "msg-avatar-img";
-
-try {
-  const userDoc = await db.collection("users").doc(msg.from).get();
-  if (userDoc.exists) {
-    const user = userDoc.data();
-    avatarImg.src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-  } 
-} catch (e) {
-  console.warn("⚠️ Avatar fetch failed:", e.message);
-  avatarImg.src = "default-avatar.png";
-}
+            avatarImg.className = "msg-avatar-img";
+            try {
+              const userDoc = await db.collection("users").doc(msg.from).get();
+              if (userDoc.exists) {
+                const user = userDoc.data();
+                avatarImg.src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+              } else {
+                avatarImg.src = "default-avatar.png";
+              }
+            } catch (e) {
+              avatarImg.src = "default-avatar.png";
+            }
 
             let replyHtml = "";
             if (msg.replyTo?.text) {
               replyHtml = `
-  <div class="msg-reply-preview" onclick="scrollToRepliedMessage('${msg.replyTo.msgId}')">
-    <i data-lucide="corner-up-left"></i>
-    ${escapeHtml(msg.replyTo.text.slice(0, 50))}
-  </div>`;
+                <div class="msg-reply-preview" onclick="scrollToRepliedMessage('${msg.replyTo.msgId}')">
+                  <i data-lucide="corner-up-left"></i>
+                  ${escapeHtml(msg.replyTo.text.slice(0, 50))}
+                </div>`;
             }
 
             const isRead = msg.seenBy?.includes(currentThreadUser);
@@ -1278,7 +1281,6 @@ try {
 
             const bubble = document.createElement("div");
             bubble.className = "message-bubble " + (isSelf ? "right" : "left") + " animate-fade-in";
-
             bubble.innerHTML = `
               <div class="msg-content">
                 ${replyHtml}
@@ -1291,7 +1293,6 @@ try {
 
             bubble.dataset.msgId = msg.id;
 
-            // Add interactions
             bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
             bubble.addEventListener("touchmove", handleTouchMove, { passive: true });
             bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted), { passive: true });
@@ -1317,7 +1318,20 @@ try {
           }
 
           if (typeof lucide !== "undefined") lucide.createIcons();
-          requestAnimationFrame(() => scrollToBottomThread(true));
+
+          // Smooth scroll if near bottom
+          const isNearBottom = (prevHeight - prevScroll - area.clientHeight) < 120;
+          if (isNearBottom) {
+            requestAnimationFrame(() => scrollToBottomThread(true));
+          } else {
+            // Optional: toast for new message
+            const toast = document.getElementById("chatToast");
+            if (toast) {
+              toast.textContent = "New message received";
+              toast.style.display = "block";
+              setTimeout(() => (toast.style.display = "none"), 2000);
+            }
+          }
         });
 
       setTimeout(() => {
@@ -1439,9 +1453,12 @@ function handleTouchMove(evt) {
 
 function cancelReply() {
   replyingTo = null;
-  document.getElementById("replyPreview").style.display = "none";
+  const replyPreview = document.getElementById("replyPreview");
+  if (replyPreview) {
+    replyPreview.style.display = "none";
+    replyPreview.querySelector("#replyText").textContent = "";
+  }
 }
-
 // ✋ Long press to open minimal modal with options
 let selectedMessageForAction = null;
 
@@ -1605,7 +1622,7 @@ function renderChatCard(chat) {
 }
 
 // ===== DM: Send Thread Message with AES Encryption =====
-// ✅ Global so both swipe + send can use it
+// ✅ Global for swipe + send
 let replyingTo = null;
 
 // ✅ Handle swipe to reply
@@ -1622,7 +1639,7 @@ function handleSwipeToReply(msg, text) {
   if (typeof lucide !== "undefined") lucide.createIcons();
 }
 
-// ✅ Handle send
+// ✅ Handle send message
 function sendThreadMessage() {
   const input = document.getElementById("threadInput");
   const text = input?.value.trim();
@@ -1643,7 +1660,7 @@ function sendThreadMessage() {
     seenBy: [currentUser.uid]
   };
 
-  // ✅ Add reply context if replying
+  // ✅ Include reply if active
   if (replyingTo?.msgId && replyingTo?.text) {
     message.replyTo = {
       msgId: replyingTo.msgId,
@@ -1651,17 +1668,21 @@ function sendThreadMessage() {
     };
   }
 
-  // ✅ Clear input & reply UI BEFORE sending to prevent flicker
+  // ✅ Pre-clear UI before sending
   input.value = "";
-  input.focus();
   cancelReply();
 
-  // ✅ Add message
+  // ✅ Focus input after small delay to reduce keyboard flicker
+  setTimeout(() => {
+    input.focus();
+  }, 30);
+
+  // ✅ Add message to Firestore
   threadRef.collection("messages").add(message)
     .then(() => {
-      requestAnimationFrame(() => scrollToBottomThread(true));
+      requestAnimationFrame(() => scrollToBottomThread(true)); // Smooth scroll
 
-      // ✅ Update thread metadata
+      // ✅ Update thread meta
       threadRef.set({
         participants: [currentUser.uid, currentThreadUser],
         names: {
