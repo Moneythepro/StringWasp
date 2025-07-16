@@ -347,6 +347,12 @@ body.dark .status-dot.online {
   height: 20px;
   stroke-width: 2;
 }
+.icon-btn i {
+  stroke: #222;
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+}
 
 /* === SCROLLABLE CHAT BODY === */
 .chat-scroll-area {
