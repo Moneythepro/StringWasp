@@ -287,16 +287,12 @@ body.dark .status-dot.online {
   flex: 1;
   display: flex;
   flex-direction: column;
-  position: relative;
   overflow: hidden;
+  position: relative;
 }
 
 /* HEADER */
 .chat-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
   height: 56px;
   display: flex;
   align-items: center;
@@ -332,36 +328,25 @@ body.dark .status-dot.online {
   color: #555;
 }
 
-/* SCROLLABLE CHAT BODY */
+/* SCROLL AREA ✅ (with flex layout) */
 .chat-scroll-area {
-  position: absolute;
-  top: 56px;
-  bottom: 56px;
-  left: 0;
-  right: 0;
-
+  flex: 1;
   overflow-y: auto;
-  padding: 4px 8px 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  padding: 0 8px 8px;
   background: #fafafa;
-  scroll-behavior: smooth;
-  box-sizing: border-box;
 }
 
 #threadMessages {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding-bottom: 12px; /* ✅ prevents last message cutoff */
 }
 
 /* INPUT BAR */
 .chat-input-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
   height: 56px;
   padding: 6px 8px;
   background: #fff;
@@ -378,7 +363,6 @@ body.dark .status-dot.online {
   border: 1px solid #ccc;
   font-size: 13px;
 }
-
 .chat-input-bar button {
   width: 36px;
   height: 36px;
@@ -386,9 +370,35 @@ body.dark .status-dot.online {
   color: white;
   border: none;
   border-radius: 50%;
+  font-size: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* MENU BUTTONS */
+.back-btn,
+.menu-btn {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  margin: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 51;
+  position: relative;
+}
+
+.back-btn i,
+.menu-btn i,
+.icon-btn i {
+  stroke: #222;
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+  pointer-events: none;
 }
 
 /* HIDDEN FILE INPUT */
