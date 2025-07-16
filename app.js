@@ -1138,6 +1138,8 @@ function threadId(a, b) {
 }
 
 // ===== DM: Open Thread Chat =====
+let renderedMessageIds = new Set();
+
 function openThread(uid, name) {
   if (!currentUser || !uid) return;
 
@@ -1164,6 +1166,7 @@ function openThread(uid, name) {
 
       if (area) {
         area.innerHTML = "";
+        renderedMessageIds.clear();
         const savedScroll = sessionStorage.getItem("threadScroll_" + threadIdStr);
         if (savedScroll) {
           setTimeout(() => area.scrollTop = parseInt(savedScroll, 10), 100);
@@ -1173,7 +1176,6 @@ function openThread(uid, name) {
         });
       }
 
-      // ✅ FIXED: renamed this variable to avoid conflict
       const friendUserDoc = await db.collection("users").doc(uid).get();
       if (friendUserDoc.exists) {
         const user = friendUserDoc.data();
@@ -1219,11 +1221,15 @@ function openThread(uid, name) {
           const prevScroll = area.scrollTop;
           const prevHeight = area.scrollHeight;
 
-          area.innerHTML = "";
+          for (const doc of snapshot.docChanges()) {
+            if (doc.type === "removed") continue;
 
-          for (const doc of snapshot.docs) {
-            const msg = doc.data();
-            msg.id = doc.id;
+            const msgDoc = doc.doc;
+            const msg = msgDoc.data();
+            msg.id = msgDoc.id;
+
+            if (renderedMessageIds.has(msg.id)) continue;
+            renderedMessageIds.add(msg.id);
 
             const isSelf = msg.from === currentUser.uid;
             const isDeleted = msg.deletedFor?.[currentUser.uid];
@@ -1294,7 +1300,7 @@ function openThread(uid, name) {
             area.appendChild(wrapper);
 
             if (!msg.seenBy?.includes(currentUser.uid)) {
-              db.collection("threads").doc(threadIdStr).collection("messages").doc(doc.id)
+              db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
                 .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
                 .catch(console.warn);
             }
@@ -1326,6 +1332,7 @@ function openThread(uid, name) {
       alert("❌ Failed to verify friendship.");
     });
 }
+
 
 // ✅ Send button handler
 function handleSendClick() {
