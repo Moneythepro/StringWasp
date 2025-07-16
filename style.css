@@ -553,17 +553,18 @@ body.keyboard-open .chat-input-bar {
 
 /* === ANIMATION === */
 .animate-fade-in {
-  animation: fadeInUp 0.22s ease-out both;
+  animation: fadeInUpSmooth 0.25s cubic-bezier(0.25, 0.8, 0.25, 1) both;
 }
-@keyframes fadeInUp {
-  from {
+@keyframes fadeInUpSmooth {
+  0% {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px) scale(0.98);
   }
-  to {
+  100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
+}
 }
 
 /* === DARK MODE === */
