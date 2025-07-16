@@ -285,11 +285,12 @@ body.dark .status-dot.online {
 }
 
 .thread-main {
+  position: relative;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  flex: 1;
-  position: relative;
-  height: 100%;
+  overflow: hidden; /* ✅ Prevent scroll from leaking outside */
+  height: 100%;     /* ✅ Ensure it fills available space */
 }
 
 /* === HEADER === */
@@ -356,19 +357,19 @@ body.dark .status-dot.online {
 /* === SCROLLABLE CHAT BODY === */
 .chat-scroll-area {
   position: absolute;
-  top: 56px;          /* header height */
-  bottom: 56px;       /* input bar height */
+  top: 56px;          /* Exact height of fixed .chat-header */
+  bottom: 56px;       /* Exact height of fixed .chat-input-bar */
   left: 0;
   right: 0;
 
   overflow-y: auto;
-  padding: 4px 8px 12px 8px;  /* ✅ only slightly increase bottom padding */
+  padding: 0 8px 10px;  /* ✅ No top padding, just bottom to avoid input overlap */
+  margin: 0;
   box-sizing: border-box;
 
   display: flex;
   flex-direction: column;
   gap: 6px;
-
   background: #fafafa;
   scroll-behavior: smooth;
 }
