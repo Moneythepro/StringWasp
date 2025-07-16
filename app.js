@@ -1377,31 +1377,28 @@ window.addEventListener("resize", () => {
 });
 
 function toggleChatOptions(event) {
-  event.stopPropagation(); // ✅ Prevents document click from firing
-  const menu = document.getElementById("chatOptionsMenu");
+  event.stopPropagation(); // prevents this click from bubbling to document
 
+  const menu = document.getElementById("chatOptionsMenu");
   const isShown = menu.classList.contains("show");
 
-  // Close if open
   if (isShown) {
     menu.classList.remove("show");
   } else {
     menu.classList.add("show");
 
-    // ✅ Only attach once
+    // Wait for the current event loop so this click doesn’t immediately trigger the outside closer
     setTimeout(() => {
-      document.addEventListener("click", closeMenuOnClickOutside);
+      const handleOutsideClick = (e) => {
+        // close only if click was truly outside the menu and the menu button
+        if (!menu.contains(e.target) && !e.target.closest(".menu-btn")) {
+          menu.classList.remove("show");
+          document.removeEventListener("click", handleOutsideClick);
+        }
+      };
+
+      document.addEventListener("click", handleOutsideClick);
     }, 0);
-  }
-}
-
-function closeMenuOnClickOutside(e) {
-  const menu = document.getElementById("chatOptionsMenu");
-  const button = document.querySelector(".menu-btn");
-
-  if (!menu.contains(e.target) && !button.contains(e.target)) {
-    menu.classList.remove("show");
-    document.removeEventListener("click", closeMenuOnClickOutside);
   }
 }
 
