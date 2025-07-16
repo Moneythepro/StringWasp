@@ -1165,7 +1165,6 @@ function openThread(uid, name) {
       const threadIdStr = threadId(currentUser.uid, uid);
       const area = document.getElementById("threadMessages");
 
-      // ✅ Only clear DOM if switching threads
       if (area && lastThreadId !== threadIdStr) {
         area.innerHTML = "";
         renderedMessageIds.clear();
@@ -1331,6 +1330,9 @@ function openThread(uid, name) {
           scrollToBottomThread(false);
         }
       }, 150);
+
+      // ✅ Attach input/send events after thread UI is ready
+      setTimeout(() => initThreadInputEvents(), 0);
     })
     .catch(err => {
       console.error("❌ Friend check failed:", err.message || err);
@@ -1338,26 +1340,36 @@ function openThread(uid, name) {
     });
 }
 
-// ✅ Send button handler
-function handleSendClick() {
-  sendThreadMessage();
-  setTimeout(() => {
-    const input = document.getElementById("threadInput");
-    if (input) input.focus();
-  }, 50); // Keeps keyboard open
+// ===== Input + Send Button Events =====
+function initThreadInputEvents() {
+  const input = document.getElementById("threadInput");
+  const sendBtn = document.getElementById("sendButton");
+  if (!input || !sendBtn) return;
+
+  // Avoid duplicate bindings
+  input.removeEventListener("keydown", threadInputHandler);
+  sendBtn.removeEventListener("click", sendBtnHandler);
+
+  input.addEventListener("keydown", threadInputHandler);
+  sendBtn.addEventListener("click", sendBtnHandler);
 }
 
-// ✅ Enter key handler
-function handleThreadKey(event) {
-  if (event.key === "Enter" && !event.shiftKey) {
-    event.preventDefault();
+function threadInputHandler(e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
     sendThreadMessage();
-    setTimeout(() => {
-      const input = document.getElementById("threadInput");
-      if (input) input.focus();
-    }, 80); // ✅ Keeps keyboard open
   }
 }
+
+function sendBtnHandler() {
+  const event = new KeyboardEvent("keydown", {
+    key: "Enter",
+    code: "Enter",
+    bubbles: true
+  });
+  document.getElementById("threadInput")?.dispatchEvent(event);
+}
+
 
 // ✅ Detect keyboard open/close
 let initialViewportHeight = window.innerHeight;
@@ -1643,6 +1655,7 @@ function sendThreadMessage() {
     seenBy: [currentUser.uid]
   };
 
+  // ✅ Add reply info if active
   if (replyingTo?.msgId && replyingTo?.text) {
     message.replyTo = {
       msgId: replyingTo.msgId,
@@ -1650,19 +1663,23 @@ function sendThreadMessage() {
     };
   }
 
+  // ✅ Clear UI input and reply
   input.value = "";
   cancelReply();
 
-  // ✅ Delay + animation-safe focus to avoid flicker
+  // ✅ Prevent keyboard flicker (focus after slight delay)
   requestAnimationFrame(() => {
     setTimeout(() => {
       input.focus();
-    }, 80);
+    }, 50);
   });
 
+  // ✅ Add message
   threadRef.collection("messages").add(message)
     .then(() => {
       requestAnimationFrame(() => scrollToBottomThread(true));
+
+      // ✅ Update thread metadata
       threadRef.set({
         participants: [currentUser.uid, currentThreadUser],
         names: { [currentUser.uid]: fromName, [currentThreadUser]: toName },
