@@ -1469,11 +1469,38 @@ function closeOptionsModal() {
   document.getElementById("messageOptionsModal").style.display = "none";
 }
 
+let editingMessageData = null;
+
 function editMessage() {
   closeOptionsModal();
   if (!selectedMessageForAction) return;
-  alert("✏️ Edit: " + selectedMessageForAction.text);
-  // TODO: show input with existing message
+  editingMessageData = selectedMessageForAction;
+  document.getElementById("editMessageInput").value = editingMessageData.text;
+  document.getElementById("editMessageModal").style.display = "flex";
+  if (typeof lucide !== "undefined") lucide.createIcons();
+}
+
+function closeEditModal() {
+  editingMessageData = null;
+  document.getElementById("editMessageModal").style.display = "none";
+}
+
+function saveEditedMessage() {
+  if (!editingMessageData) return;
+  const newText = document.getElementById("editMessageInput").value.trim();
+  if (!newText) return;
+
+  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+  db.collection("threads").doc(threadIdStr)
+    .collection("messages").doc(editingMessageData.msg.id)
+    .update({
+      text: CryptoJS.AES.encrypt(newText, "yourSecretKey").toString()
+    })
+    .then(() => {
+      showToast("Message edited");
+      closeEditModal();
+    })
+    .catch(console.warn);
 }
 
 function deleteForMe() {
