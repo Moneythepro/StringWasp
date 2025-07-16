@@ -1252,9 +1252,7 @@ try {
   if (userDoc.exists) {
     const user = userDoc.data();
     avatarImg.src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-  } else {
-    avatarImg.src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-  }
+  } 
 } catch (e) {
   console.warn("⚠️ Avatar fetch failed:", e.message);
   avatarImg.src = "default-avatar.png";
@@ -1467,6 +1465,19 @@ function closeOptionsModal(event) {
   }
 }
 
+function openOptionsModal(msg, isSelf) {
+  if (!isSelf) {
+    alert("⚠️ You can only edit or delete your own messages.");
+    return;
+  }
+
+  selectedMessageForAction = msg;
+  const modal = document.getElementById("messageOptionsModal");
+  if (!modal) return;
+
+  modal.classList.remove("hidden");
+  if (typeof lucide !== "undefined") lucide.createIcons();
+}
 
 function closeEditModal() {
   editingMessageData = null;
