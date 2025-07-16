@@ -1139,6 +1139,7 @@ function threadId(a, b) {
 
 // ===== DM: Open Thread Chat =====
 let renderedMessageIds = new Set();
+let lastThreadId = null;
 
 function openThread(uid, name) {
   if (!currentUser || !uid) return;
@@ -1164,13 +1165,17 @@ function openThread(uid, name) {
       const threadIdStr = threadId(currentUser.uid, uid);
       const area = document.getElementById("threadMessages");
 
-      if (area) {
+      // ✅ Only clear DOM if switching threads
+      if (area && lastThreadId !== threadIdStr) {
         area.innerHTML = "";
         renderedMessageIds.clear();
+        lastThreadId = threadIdStr;
+
         const savedScroll = sessionStorage.getItem("threadScroll_" + threadIdStr);
         if (savedScroll) {
-          setTimeout(() => area.scrollTop = parseInt(savedScroll, 10), 100);
+          setTimeout(() => area.scrollTop = parseInt(savedScroll, 10), 50);
         }
+
         area.addEventListener("scroll", () => {
           sessionStorage.setItem("threadScroll_" + threadIdStr, area.scrollTop);
         });
@@ -1209,7 +1214,7 @@ function openThread(uid, name) {
       });
 
       const resizeObserver = new ResizeObserver(() => {
-        setTimeout(() => scrollToBottomThread(true), 80);
+        setTimeout(() => scrollToBottomThread(true), 60);
       });
       if (area) resizeObserver.observe(area);
 
@@ -1332,7 +1337,6 @@ function openThread(uid, name) {
       alert("❌ Failed to verify friendship.");
     });
 }
-
 
 // ✅ Send button handler
 function handleSendClick() {
@@ -1648,7 +1652,13 @@ function sendThreadMessage() {
 
   input.value = "";
   cancelReply();
-  setTimeout(() => input.focus(), 30); // smooth keyboard return
+
+  // ✅ Delay + animation-safe focus to avoid flicker
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      input.focus();
+    }, 80);
+  });
 
   threadRef.collection("messages").add(message)
     .then(() => {
