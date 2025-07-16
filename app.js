@@ -1586,14 +1586,12 @@ let replyingTo = null;
 
 // ✅ Handle swipe to reply
 function handleSwipeToReply(msg, text) {
-  console.log("Swipe to reply:", text);
+  
 
   replyingTo = {
     msgId: msg.id,   // ✅ capital I, never lowercase
     text: text
   };
-console.log("Swipe to reply msg object:", JSON.stringify(msg));
-  console.log("replyingTo object:", JSON.stringify(replyingTo));
 
   document.getElementById("replyText").textContent =
     text.slice(0, 50) + (text.length > 50 ? "..." : "");
