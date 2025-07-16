@@ -1186,7 +1186,7 @@ function openThread(uid, name) {
       if (!area) return;
 
       area.innerHTML = ""; // 🧹 Clear old messages
-      area.scrollTop = area.scrollHeight; // Initial scroll bottom
+      area.scrollTop = area.scrollHeight;
 
       if (unsubscribeThread) unsubscribeThread();
       if (unsubscribeTyping) unsubscribeTyping();
@@ -1214,13 +1214,13 @@ function openThread(uid, name) {
         }
       });
 
-      // === Keyboard-aware scroll
+      // === ResizeObserver for keyboard-aware scroll
       const resizeObserver = new ResizeObserver(() => {
         setTimeout(() => scrollToBottomThread(true), 80);
       });
       resizeObserver.observe(area);
 
-      // === Listen to messages
+      // === Real-time message listener
       unsubscribeThread = db.collection("threads")
         .doc(threadIdStr)
         .collection("messages")
@@ -1228,13 +1228,12 @@ function openThread(uid, name) {
         .onSnapshot(async snapshot => {
           if (!area) return;
 
-          let lastRenderedMsgIds = new Set(); // ✅ Always reset so thread loads fresh
+          area.innerHTML = ""; // ✅ Reset DOM to prevent duplicates
           const shouldScroll = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
 
           for (const doc of snapshot.docs) {
             const msg = doc.data();
-            if (!msg?.text || lastRenderedMsgIds.has(doc.id)) continue;
-            lastRenderedMsgIds.add(doc.id);
+            if (!msg?.text) continue;
 
             let decrypted = "";
             try {
@@ -1244,7 +1243,7 @@ function openThread(uid, name) {
               decrypted = "[Failed to decrypt]";
             }
 
-            // Mark as seen
+            // ✅ Seen status update
             if (!msg.seenBy?.includes(currentUser.uid)) {
               db.collection("threads").doc(threadIdStr)
                 .collection("messages").doc(doc.id)
@@ -1253,7 +1252,7 @@ function openThread(uid, name) {
                 }).catch(console.warn);
             }
 
-            // Fetch avatar
+            // ✅ Avatar
             let avatar = "default-avatar.png";
             try {
               const userDoc = await db.collection("users").doc(msg.from).get();
@@ -1265,7 +1264,6 @@ function openThread(uid, name) {
               console.warn("⚠️ Avatar fetch failed:", e.message);
             }
 
-            // === Render message bubble
             const isSelf = msg.from === currentUser.uid;
             const isRead = msg.seenBy?.includes(currentThreadUser);
             const isDelivered = msg.seenBy?.length > 1;
@@ -1328,13 +1326,15 @@ function openThread(uid, name) {
           if (shouldScroll) {
             setTimeout(() => scrollToBottomThread(true), 60);
           }
+
+          // 🟢 Debug logs
           console.log("🟢 Message area height:", document.getElementById("threadMessages")?.offsetHeight);
-console.log("🟢 Scroll height:", document.querySelector(".chat-scroll-area")?.scrollHeight);
+          console.log("🟢 Scroll height:", document.querySelector(".chat-scroll-area")?.scrollHeight);
 
           renderWithMagnetSupport?.("threadMessages");
         });
 
-      // Final guaranteed scroll to bottom after open
+      // ✅ Final guaranteed scroll
       setTimeout(() => scrollToBottomThread(false), 150);
     })
     .catch(err => {
