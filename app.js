@@ -203,29 +203,40 @@ function escapeHtml(text) {
 
 // ===== Save Profile Data =====
 function saveProfile() {
+  if (!currentUser) return alert("❌ Not logged in.");
+
   const file = document.getElementById("profilePic").files[0];
-  const data = {
-    name: document.getElementById("profileName").value,
-    bio: document.getElementById("profileBio").value,
+  const updates = {
+    name: document.getElementById("profileName").value.trim(),
+    bio: document.getElementById("profileBio").value.trim(),
     gender: document.getElementById("profileGender").value,
-    phone: document.getElementById("profilePhone").value,
-    email: document.getElementById("profileEmail").value,
-    username: document.getElementById("profileUsername").value
+    phone: document.getElementById("profilePhone").value.trim(),
+    publicEmail: document.getElementById("profileEmail").value.trim(),
+    username: document.getElementById("profileUsername").value.trim()
   };
 
+  // ✅ If file selected, read it
   if (file) {
     const reader = new FileReader();
     reader.onload = function (e) {
-      data.photoURL = e.target.result;
-      db.collection("users").doc(currentUser.uid).set(data, { merge: true }).then(() => {
+      updates.avatarBase64 = e.target.result; // Use this for avatar
+      db.collection("users").doc(currentUser.uid).update(updates).then(() => {
         document.getElementById("profilePicPreview").src = e.target.result;
+        document.getElementById("usernameDisplay").textContent = updates.username;
         alert("✅ Profile updated.");
+      }).catch(err => {
+        console.error("❌ Profile save error:", err);
+        alert("❌ Failed to save profile");
       });
     };
     reader.readAsDataURL(file);
   } else {
-    db.collection("users").doc(currentUser.uid).set(data, { merge: true }).then(() => {
+    db.collection("users").doc(currentUser.uid).update(updates).then(() => {
+      document.getElementById("usernameDisplay").textContent = updates.username;
       alert("✅ Profile updated.");
+    }).catch(err => {
+      console.error("❌ Profile save error:", err);
+      alert("❌ Failed to save profile");
     });
   }
 }
@@ -263,25 +274,6 @@ function loadProfile(callback) {
   }, err => {
     console.error("❌ Failed to load profile:", err.message || err);
     if (typeof callback === "function") callback();
-  });
-}
-
-  function saveProfile() {
-  const updates = {
-    name: document.getElementById("profileName").value.trim(),
-    bio: document.getElementById("profileBio").value.trim(),
-    gender: document.getElementById("profileGender").value,
-    phone: document.getElementById("profilePhone").value.trim(),
-    publicEmail: document.getElementById("profileEmail").value.trim(),
-    username: document.getElementById("profileUsername").value.trim()
-  };
-
-  db.collection("users").doc(currentUser.uid).update(updates).then(() => {
-    alert("Profile updated!");
-    document.getElementById("usernameDisplay").textContent = updates.username;
-  }).catch(err => {
-    console.error("Profile save error:", err);
-    alert("Failed to save profile");
   });
 }
 
