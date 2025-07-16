@@ -141,9 +141,9 @@
 
 <!-- 💬 WhatsApp-style Chat UI -->
 <div id="threadView" class="thread-container tab" role="region" aria-label="Direct Message View">
-  <!-- HEADER -->
+<!-- HEADER -->
 <header class="chat-header">
-  <button class="back-btn" onclick="switchTab('chatTab')" aria-label="Back">
+  <button class="back-btn" onclick="switchTab('chatTab')" aria-label="Back" type="button">
     <i data-lucide="arrow-left"></i>
   </button>
 
@@ -155,17 +155,17 @@
   </div>
 
   <!-- Menu Button -->
-<button class="menu-btn" onclick="toggleChatOptions()" aria-label="Open Menu" type="button">
-  <i data-lucide="more-vertical"></i>
-</button>
+  <button class="menu-btn" onclick="toggleChatOptions(event)" aria-label="Open Menu" type="button">
+    <i data-lucide="more-vertical"></i>
+  </button>
 
-<!-- Options Menu (must be inside .chat-header) -->
-<div id="chatOptionsMenu" class="chat-options-horizontal" role="menu" aria-label="Chat Options">
-  <span role="menuitem" tabindex="0" onclick="blockUser()">Block</span>
-  <span role="menuitem" tabindex="0" onclick="viewMedia()">Media</span>
-  <span role="menuitem" tabindex="0" onclick="exportChat()">Export</span>
-  <span role="menuitem" tabindex="0" onclick="deleteChat()">Delete</span>
-</div>
+  <!-- Horizontal Options Menu -->
+  <div id="chatOptionsMenu" class="chat-options-horizontal" role="menu" aria-label="Chat Options">
+    <span role="menuitem" tabindex="0" onclick="blockUser()">Block</span>
+    <span role="menuitem" tabindex="0" onclick="viewMedia()">Media</span>
+    <span role="menuitem" tabindex="0" onclick="exportChat()">Export</span>
+    <span role="menuitem" tabindex="0" onclick="deleteChat()">Delete</span>
+  </div>
 </header>
 
   <!-- MAIN CHAT BODY -->
