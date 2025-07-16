@@ -1466,9 +1466,19 @@ function handleTouchMove(evt) {
   }
 }
 
+let replyingTo = null;
+
 function handleSwipeToReply(msg, text) {
-  console.log("👉 Swipe to reply:", text);
-  // TODO: show reply input with quote preview
+  console.log("Swipe to reply:", text);
+  replyingTo = { msgId: msg.id, text };
+  document.getElementById("replyText").textContent = text.slice(0, 50) + (text.length > 50 ? "..." : "");
+  document.getElementById("replyPreview").style.display = "flex";
+  if (typeof lucide !== "undefined") lucide.createIcons();
+}
+
+function cancelReply() {
+  replyingTo = null;
+  document.getElementById("replyPreview").style.display = "none";
 }
 
 // ✋ Long press to open minimal modal with options
@@ -1607,6 +1617,12 @@ function sendThreadMessage() {
     seenBy: [currentUser.uid] // ✅ Mark as seen by sender
   };
 
+  if (replyingTo) {
+  console.log("Sending reply to:", replyingTo);
+  // TODO: save reply context in Firestore
+}
+cancelReply();
+  
   threadRef.collection("messages").add(message).then(() => {
     // ✅ Clear input
     input.value = "";
