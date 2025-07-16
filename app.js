@@ -739,12 +739,12 @@ function handleTyping(context) {
   }, 3000);
 }
 
-// ===== Typing Indicator Listener (with usernames) =====
+// ===== Typing Indicator Listener (dot dot dot dot) =====
 function listenToTyping(targetId, context) {
   const typingBox = document.getElementById(
     context === "group" ? "groupTypingStatus" : "threadTypingStatus"
   );
-  const statusBox = document.getElementById("chatStatus"); // header
+  const statusBox = document.getElementById("chatStatus"); // header status
 
   if (!typingBox) return;
   if (unsubscribeTyping) unsubscribeTyping();
@@ -753,30 +753,21 @@ function listenToTyping(targetId, context) {
     .doc(targetId)
     .collection("typing")
     .onSnapshot(async snapshot => {
-      const typingUsernames = [];
+      let someoneTyping = false;
 
       for (const doc of snapshot.docs) {
         const data = doc.data();
         if (doc.id !== currentUser.uid && data?.typing) {
-          try {
-            const userSnap = await db.collection("users").doc(doc.id).get();
-            const username = userSnap.exists ? (userSnap.data().username || "Someone") : "Someone";
-            typingUsernames.push(username);
-          } catch {
-            typingUsernames.push("Someone");
-          }
+          someoneTyping = true;
+          break;
         }
       }
 
-      // Show who is typing
-      if (typingUsernames.length === 1) {
-        typingBox.innerText = `✍️ ${typingUsernames[0]} is typing...`;
-        if (context === "thread" && statusBox) statusBox.textContent = "Typing...";
-      } else if (typingUsernames.length > 1) {
-        typingBox.innerText = `✍️ ${typingUsernames.join(", ")} are typing...`;
+      if (someoneTyping) {
+        typingBox.style.display = "flex";
         if (context === "thread" && statusBox) statusBox.textContent = "Typing...";
       } else {
-        typingBox.innerText = "";
+        typingBox.style.display = "none";
         if (context === "thread" && statusBox) statusBox.textContent = "Online";
       }
     });
