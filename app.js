@@ -1342,6 +1342,15 @@ function openThread(uid, name) {
     });
 }
 
+for (let i = 1; i <= 20; i++) {
+  const div = document.createElement("div");
+  div.textContent = "Test message " + i;
+  div.className = "message-bubble-wrapper left";
+  div.style.padding = "8px";
+  div.style.background = "#fff";
+  document.getElementById("threadMessages").appendChild(div);
+}
+
 // ✅ Send button handler
 function handleSendClick() {
   sendThreadMessage();
