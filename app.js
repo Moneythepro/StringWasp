@@ -46,6 +46,9 @@ function switchTab(tabId) {
   document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
   const selected = document.getElementById(tabId);
   if (selected) selected.style.display = "block";
+
+  // ✅ Hide 3-dot horizontal menu if it's open
+  document.getElementById("chatOptionsMenu")?.classList.remove("show");
 }
 
 // ===== Login/Register =====
@@ -1376,14 +1379,28 @@ window.addEventListener("resize", () => {
 
 function toggleChatOptions() {
   const menu = document.getElementById("chatOptionsMenu");
-  menu.classList.toggle("show");
-}
-document.addEventListener("click", (e) => {
-  const menu = document.getElementById("chatOptionsMenu");
-  if (!menu.contains(e.target) && !e.target.closest(".menu-btn")) {
+  if (!menu) return;
+
+  const isShown = menu.classList.contains("show");
+  if (isShown) {
     menu.classList.remove("show");
+  } else {
+    menu.classList.add("show");
+
+    // Auto-close when clicking outside
+    document.addEventListener("click", closeMenuOnClickOutside);
   }
-});
+}
+
+function closeMenuOnClickOutside(event) {
+  const menu = document.getElementById("chatOptionsMenu");
+  const button = document.querySelector(".menu-btn");
+
+  if (!menu.contains(event.target) && !button.contains(event.target)) {
+    menu.classList.remove("show");
+    document.removeEventListener("click", closeMenuOnClickOutside);
+  }
+}
 
 function blockUser() {
   alert("🚫 Block user feature coming soon.");
