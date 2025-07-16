@@ -1173,10 +1173,10 @@ function openThread(uid, name) {
         });
       }
 
-      // ✅ Header avatar
-      const friendDoc = await db.collection("users").doc(uid).get();
-      if (friendDoc.exists) {
-        const user = friendDoc.data();
+      // ✅ FIXED: renamed this variable to avoid conflict
+      const friendUserDoc = await db.collection("users").doc(uid).get();
+      if (friendUserDoc.exists) {
+        const user = friendUserDoc.data();
         const headerImg = document.getElementById("threadHeaderAvatar");
         if (headerImg) {
           headerImg.src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
