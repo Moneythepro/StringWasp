@@ -1168,7 +1168,7 @@ function openThread(uid, name) {
 
       // === UI Setup ===
       document.getElementById("threadWithName").textContent = name || "Chat";
-      document.getElementById("chatOptionsMenu")?.classList.remove("show");
+      document.getElementById("chatOptionsMenu").style.display = "none";
 
       ["roomDropdown", "groupInfoButton"].forEach(id => {
         const el = document.getElementById(id);
@@ -1183,10 +1183,11 @@ function openThread(uid, name) {
 
       const threadIdStr = threadId(currentUser.uid, uid);
       const area = document.getElementById("threadMessages");
-      if (!area) return;
 
-      area.innerHTML = ""; // 🧹 Clear old messages
-      area.scrollTop = area.scrollHeight;
+      if (area) {
+        area.innerHTML = "";
+        area.scrollTop = area.scrollHeight; // Scroll immediately to bottom
+      }
 
       if (unsubscribeThread) unsubscribeThread();
       if (unsubscribeTyping) unsubscribeTyping();
@@ -1201,7 +1202,6 @@ function openThread(uid, name) {
       db.collection("users").doc(uid).onSnapshot(doc => {
         const data = doc.data();
         const status = document.getElementById("chatStatus");
-        if (!status) return;
 
         if (data.typingFor === currentUser.uid) {
           status.textContent = "Typing...";
@@ -1214,132 +1214,132 @@ function openThread(uid, name) {
         }
       });
 
-      // === ResizeObserver for keyboard-aware scroll
+      // === Resize Observer (keyboard adjust) ===
       const resizeObserver = new ResizeObserver(() => {
-        setTimeout(() => scrollToBottomThread(true), 80);
+        setTimeout(() => scrollToBottomThread(true), 100);
       });
-      resizeObserver.observe(area);
+      if (area) resizeObserver.observe(area);
 
-      // === Real-time message listener
-      // Declare outside to retain across snapshots
+      // === Load + animate messages ===
+      let lastRenderedMsgIds = new Set();
 
-let lastRenderedMsgIds = new Set();
+      unsubscribeThread = db.collection("threads")
+        .doc(threadIdStr)
+        .collection("messages")
+        .orderBy("timestamp")
+        .onSnapshot(async snapshot => {
+          if (!area) return;
 
-unsubscribeThread = db.collection("threads")
-  .doc(threadIdStr)
-  .collection("messages")
-  .orderBy("timestamp")
-  .onSnapshot(async snapshot => {
-    if (!area) return;
+          const shouldScroll =
+            area.scrollHeight - area.scrollTop - area.clientHeight < 120;
 
-    const shouldScroll =
-      area.scrollHeight - area.scrollTop - area.clientHeight < 120;
+          for (const doc of snapshot.docs) {
+            if (lastRenderedMsgIds.has(doc.id)) continue;
 
-    snapshot.docChanges().forEach(async change => {
-      if (change.type === "added") {
-        const doc = change.doc;
-        const msg = doc.data();
-        if (!msg?.text || lastRenderedMsgIds.has(doc.id)) return;
+            const msg = doc.data();
+            if (!msg?.text) continue;
+            lastRenderedMsgIds.add(doc.id);
 
-        lastRenderedMsgIds.add(doc.id);
+            let decrypted = "";
+            try {
+              decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+              if (!decrypted) decrypted = "[Encrypted]";
+            } catch {
+              decrypted = "[Failed to decrypt]";
+            }
 
-        // Decrypt
-        let decrypted = "";
-        try {
-          decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
-          if (!decrypted) decrypted = "[Encrypted]";
-        } catch {
-          decrypted = "[Failed to decrypt]";
-        }
+            if (!msg.seenBy?.includes(currentUser.uid)) {
+              db.collection("threads").doc(threadIdStr)
+                .collection("messages").doc(doc.id)
+                .update({
+                  seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+                }).catch(console.warn);
+            }
 
-        // Mark seen
-        if (!msg.seenBy?.includes(currentUser.uid)) {
-          db.collection("threads").doc(threadIdStr)
-            .collection("messages").doc(doc.id)
-            .update({
-              seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
-            }).catch(console.warn);
-        }
+            let avatar = "default-avatar.png";
+            try {
+              const userDoc = await db.collection("users").doc(msg.from).get();
+              if (userDoc.exists) {
+                const user = userDoc.data();
+                avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+              }
+            } catch (e) {
+              console.warn("⚠️ Avatar fetch failed:", e.message);
+            }
 
-        // Avatar
-        let avatar = "default-avatar.png";
-        try {
-          const userDoc = await db.collection("users").doc(msg.from).get();
-          if (userDoc.exists) {
-            const user = userDoc.data();
-            avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+            const isSelf = msg.from === currentUser.uid;
+            const isRead = msg.seenBy?.includes(currentThreadUser);
+            const isDelivered = msg.seenBy?.length > 1;
+
+            const ticks = isSelf
+              ? `<span class="msg-ticks ${isRead ? 'double' : isDelivered ? 'delivered' : ''}">
+                  <i data-lucide="${isRead || isDelivered ? 'check-check' : 'check'}"></i>
+                </span>`
+              : '';
+
+            const wrapper = document.createElement("div");
+            wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
+
+            const avatarImg = document.createElement("img");
+            avatarImg.src = avatar;
+            avatarImg.className = "msg-avatar-img";
+
+            const bubble = document.createElement("div");
+            bubble.className = "message-bubble " + (isSelf ? "right" : "left") + " animate-fade-in";
+
+            let contentHtml = "";
+
+            if (msg.fileURL && msg.fileName) {
+              contentHtml = `
+                <div class="msg-text">
+                  <i data-lucide="file"></i>
+                  <a href="${msg.fileURL}" target="_blank" class="file-link">
+                    ${escapeHtml(msg.fileName)}
+                  </a>
+                  <span class="msg-meta">
+                    ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+                    ${ticks}
+                  </span>
+                </div>`;
+            } else {
+              contentHtml = `
+                <div class="msg-content">
+                  <span class="msg-text">${escapeHtml(decrypted)}</span>
+                  <span class="msg-meta">
+                    ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+                    ${ticks}
+                  </span>
+                </div>`;
+            }
+
+            bubble.innerHTML = contentHtml;
+            if (!msg.fileURL && decrypted.length > 400) {
+              bubble.classList.add("long-msg");
+            }
+
+            isSelf
+              ? (wrapper.appendChild(bubble), wrapper.appendChild(avatarImg))
+              : (wrapper.appendChild(avatarImg), wrapper.appendChild(bubble));
+
+            area.appendChild(wrapper);
           }
-        } catch (e) {
-          console.warn("⚠️ Avatar fetch failed:", e.message);
-        }
 
-        const isSelf = msg.from === currentUser.uid;
-        const isRead = msg.seenBy?.includes(currentThreadUser);
-        const isDelivered = msg.seenBy?.length > 1;
+          if (typeof lucide !== "undefined") lucide.createIcons();
 
-        const ticks = isSelf
-          ? `<span class="msg-ticks ${isRead ? 'double' : isDelivered ? 'delivered' : ''}">
-              <i data-lucide="${isRead || isDelivered ? 'check-check' : 'check'}"></i>
-            </span>` : '';
+          // ✅ Reliable scroll to bottom on new messages
+          if (shouldScroll) {
+  requestAnimationFrame(() => scrollToBottomThread(true));
+          }
+          renderWithMagnetSupport?.("threadMessages");
+        });
 
-        const wrapper = document.createElement("div");
-        wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
-
-        const avatarImg = document.createElement("img");
-        avatarImg.src = avatar;
-        avatarImg.className = "msg-avatar-img";
-
-        const bubble = document.createElement("div");
-        bubble.className = "message-bubble " + (isSelf ? "right" : "left") + " animate-fade-in";
-
-        let contentHtml = "";
-
-        if (msg.fileURL && msg.fileName) {
-          contentHtml = `
-            <div class="msg-text">
-              <i data-lucide="file"></i>
-              <a href="${msg.fileURL}" target="_blank" class="file-link">
-                ${escapeHtml(msg.fileName)}
-              </a>
-              <span class="msg-meta">
-                ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-                ${ticks}
-              </span>
-            </div>`;
-        } else {
-          contentHtml = `
-            <div class="msg-content">
-              <span class="msg-text">${escapeHtml(decrypted)}</span>
-              <span class="msg-meta">
-                ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-                ${ticks}
-              </span>
-            </div>`;
-        }
-
-        bubble.innerHTML = contentHtml;
-        if (!msg.fileURL && decrypted.length > 400) {
-          bubble.classList.add("long-msg");
-        }
-
-        isSelf
-          ? (wrapper.appendChild(bubble), wrapper.appendChild(avatarImg))
-          : (wrapper.appendChild(avatarImg), wrapper.appendChild(bubble));
-
-        area.appendChild(wrapper);
-        if (typeof lucide !== "undefined") lucide.createIcons();
-      }
+      // ✅ After opening thread, scroll down
+      setTimeout(() => scrollToBottomThread(false), 150);
+    })
+    .catch(err => {
+      console.error("❌ Friend check failed:", err.message || err);
+      alert("❌ Failed to verify friendship.");
     });
-
-    if (shouldScroll) {
-      setTimeout(() => scrollToBottomThread(true), 80);
-    }
-
-    console.log("🟢 Message area height:", area?.offsetHeight);
-    console.log("🟢 Scroll height:", document.querySelector(".chat-scroll-area")?.scrollHeight);
-
-    renderWithMagnetSupport?.("threadMessages");
-  });
 }
 
 // ✅ Send button handler
@@ -1451,10 +1451,10 @@ function sendThreadMessage() {
   if (!text || !currentThreadUser) return;
 
   const nameEl = document.getElementById("usernameDisplay");
-  const fromName = nameEl?.textContent || "User";
+  const fromName = nameEl ? nameEl.textContent : "User";
 
   const threadNameEl = document.getElementById("threadWithName");
-  const toName = threadNameEl?.textContent || "Friend";
+  const toName = threadNameEl ? threadNameEl.textContent : "Friend";
 
   const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
   const docId = threadId(currentUser.uid, currentThreadUser);
@@ -1465,37 +1465,36 @@ function sendThreadMessage() {
     from: currentUser.uid,
     fromName,
     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    seenBy: [currentUser.uid]
+    seenBy: [currentUser.uid] // ✅ Mark as seen by sender
   };
 
-  threadRef.collection("messages").add(message)
-    .then(() => {
-      // ✅ Clear and refocus input
-      input.value = "";
-      setTimeout(() => input.focus(), 50);
+  threadRef.collection("messages").add(message).then(() => {
+    // ✅ Clear input
+    input.value = "";
 
-      // ✅ Reliable scroll after DOM updates
-      requestAnimationFrame(() => scrollToBottomThread(true));
+    // ✅ Restore focus (prevents mobile keyboard from closing)
+    setTimeout(() => input.focus(), 50);
 
-      // ✅ Update thread metadata
-      return threadRef.set({
-        participants: [currentUser.uid, currentThreadUser],
-        names: {
-          [currentUser.uid]: fromName,
-          [currentThreadUser]: toName
-        },
-        lastMessage: text,
-        unread: {
-          [currentUser.uid]: 0,
-          [currentThreadUser]: firebase.firestore.FieldValue.increment(1)
-        },
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-    })
-    .catch(err => {
-      console.error("❌ Send failed:", err.message || err);
-      alert("❌ Failed to send message.");
-    });
+    // ✅ Slight delay to allow DOM to catch up before scrolling
+    setTimeout(() => scrollToBottomThread(true), 80);
+
+    threadRef.set({
+      participants: [currentUser.uid, currentThreadUser],
+      names: {
+        [currentUser.uid]: fromName,
+        [currentThreadUser]: toName
+      },
+      lastMessage: text,
+      unread: {
+        [currentUser.uid]: 0,
+        [currentThreadUser]: firebase.firestore.FieldValue.increment(1)
+      },
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+  }).catch(err => {
+    console.error("❌ Send failed:", err.message || err);
+    alert("❌ Failed to send message.");
+  });
 }
 
 function renderMessage(msg, isOwn) {

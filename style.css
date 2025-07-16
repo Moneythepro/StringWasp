@@ -281,15 +281,11 @@ body.dark .status-dot.online {
   flex-direction: column;
   background: #fff;
   z-index: 99;
-  height: 100vh;
-  overflow: hidden;
+  height: 100dvh;
 }
-
 .thread-main {
-  position: relative;
   flex: 1;
-  display: flex;
-  flex-direction: column;
+  position: relative;
   overflow: hidden;
 }
 
@@ -300,15 +296,13 @@ body.dark .status-dot.online {
   left: 0;
   right: 0;
   height: 56px;
-  background: #f0f0f0;
+  z-index: 100;
   display: flex;
   align-items: center;
+  background: #f0f0f0;
   padding: 0 10px;
   border-bottom: 1px solid #ccc;
-  z-index: 100;
-  overflow: visible;
 }
-
 .chat-header img {
   width: 36px;
   height: 36px;
@@ -317,7 +311,6 @@ body.dark .status-dot.online {
   object-fit: cover;
   box-shadow: 0 0 0 1px #ccc;
 }
-
 .chat-info {
   flex: 1;
   display: flex;
@@ -338,15 +331,16 @@ body.dark .status-dot.online {
 .menu-btn {
   background: transparent;
   border: none;
-  padding: 8px;
+  padding: 8px; /* slightly larger for touch targets */
   margin: 0 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 101;
-  position: relative;
+  z-index: 51; /* ensures it's clickable above content */
+  position: relative; /* needed for z-index to work */
 }
+
 .back-btn i,
 .menu-btn i,
 .icon-btn i {
@@ -354,42 +348,31 @@ body.dark .status-dot.online {
   width: 20px;
   height: 20px;
   stroke-width: 2;
-  pointer-events: none;
+  pointer-events: none; /* allows click to register on button, not icon */
 }
 
 /* === SCROLLABLE CHAT BODY === */
 .chat-scroll-area {
   position: absolute;
-  top: 56px;
-  bottom: 56px;
+  top: 56px;       /* header height */
+  bottom: 56px;    /* input bar height */
   left: 0;
   right: 0;
-  overflow-y: auto;
 
-  padding: 4px 8px 20px;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
 
+  padding: 0 8px 8px;
   background: #fafafa;
-  scroll-behavior: smooth;
 }
 
 #threadMessages {
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-#threadMessages {
-  outline: 1px solid red;
-  background: rgba(255, 0, 0, 0.05); /* light red */
-}
-.message-bubble-wrapper {
-  background: rgba(0, 255, 0, 0.1);  /* light green */
-}
-.message-bubble {
-  background: #fff !important;
-  border: 1px solid #ccc;
+  flex-grow: 1;
+  min-height: 100%; /* ensures it fills scroll area */
 }
 
 /* === TYPING INDICATOR === */
@@ -408,9 +391,10 @@ body.dark .status-dot.online {
   height: 56px;
   padding: 6px 8px;
   background: #fff;
+  border-top: 1px solid #ddd;
   display: flex;
   align-items: center;
-  border-top: 1px solid #ddd;
+  gap: 6px;
   z-index: 100;
 }
 .chat-input-bar input {
@@ -494,7 +478,6 @@ input[type="file"]#threadFile {
 .message-bubble:last-child {
   margin-bottom: 8px;
 }
-
 /* === MESSAGE TEXT + META === */
 .msg-content {
   display: inline-flex;
@@ -567,7 +550,7 @@ input[type="file"]#threadFile {
 
 /* === KEYBOARD ADJUSTMENTS === */
 body.keyboard-open .chat-scroll-area {
-  bottom: 100px; /* allow for taller keyboard input space */
+  bottom: 66px; /* match input bar + gap when keyboard is visible */
 }
 body.keyboard-open .chat-input-bar {
   position: fixed;
@@ -576,7 +559,7 @@ body.keyboard-open .chat-input-bar {
 
 /* === ANIMATION === */
 .animate-fade-in {
-  animation: fadeInUpSmooth 0.25s ease both;
+  animation: fadeInUpSmooth 0.25s cubic-bezier(0.25, 0.8, 0.25, 1) both;
 }
 @keyframes fadeInUpSmooth {
   0% {
@@ -587,6 +570,7 @@ body.keyboard-open .chat-input-bar {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
 }
 
 /* === DARK MODE === */
