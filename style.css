@@ -273,6 +273,7 @@ body.dark .status-dot.online {
   background: #4caf50;
 }
 
+/* ===== Thread View ===== */
 #threadView.thread-container {
   position: fixed;
   inset: 0;
@@ -280,28 +281,28 @@ body.dark .status-dot.online {
   flex-direction: column;
   background: #fff;
   z-index: 99;
-  height: 100vh;
+  height: 100dvh;
 }
-
 .thread-main {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
   position: relative;
+  /* Remove overflow: hidden so content can scroll */
 }
 
-/* HEADER */
+/* === HEADER === */
 .chat-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 56px;
+  z-index: 100;
   display: flex;
   align-items: center;
   background: #f0f0f0;
   padding: 0 10px;
   border-bottom: 1px solid #ccc;
-  z-index: 100;
 }
-
 .chat-header img {
   width: 36px;
   height: 36px;
@@ -310,7 +311,6 @@ body.dark .status-dot.online {
   object-fit: cover;
   box-shadow: 0 0 0 1px #ccc;
 }
-
 .chat-info {
   flex: 1;
   display: flex;
@@ -327,26 +327,63 @@ body.dark .status-dot.online {
   margin: 0;
   color: #555;
 }
-
-/* SCROLL AREA ✅ (with flex layout) */
-.chat-scroll-area {
-  flex: 1;
-  overflow-y: auto;
+.back-btn,
+.menu-btn {
+  background: transparent;
+  border: none;
+  padding: 8px; /* slightly larger for touch targets */
+  margin: 0 4px;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 51; /* ensures it's clickable above content */
+  position: relative; /* needed for z-index to work */
+}
+
+.back-btn i,
+.menu-btn i,
+.icon-btn i {
+  stroke: #222;
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+  pointer-events: none; /* allows click to register on button, not icon */
+}
+
+/* === SCROLLABLE CHAT BODY === */
+.chat-scroll-area {
+  position: absolute;
+  top: 56px;               /* header height */
+  bottom: 56px;            /* input bar height */
+  left: 0;
+  right: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* smooth iOS scroll */
   padding: 0 8px 8px;
   background: #fafafa;
 }
 
 #threadMessages {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-bottom: 12px; /* ✅ prevents last message cutoff */
+display: flex;
+flex-direction: column;
+gap: 4px;
+padding-bottom: 12px;
 }
 
-/* INPUT BAR */
+/* === TYPING INDICATOR === */
+.typing-indicator {
+  font-size: 11px;
+  color: #888;
+  padding: 4px 12px;
+}
+
+/* === INPUT BAR === */
 .chat-input-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   height: 56px;
   padding: 6px 8px;
   background: #fff;
@@ -354,8 +391,8 @@ body.dark .status-dot.online {
   display: flex;
   align-items: center;
   gap: 6px;
+  z-index: 100;
 }
-
 .chat-input-bar input {
   flex: 1;
   padding: 8px 12px;
@@ -376,32 +413,7 @@ body.dark .status-dot.online {
   justify-content: center;
 }
 
-/* MENU BUTTONS */
-.back-btn,
-.menu-btn {
-  background: transparent;
-  border: none;
-  padding: 8px;
-  margin: 0 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 51;
-  position: relative;
-}
-
-.back-btn i,
-.menu-btn i,
-.icon-btn i {
-  stroke: #222;
-  width: 20px;
-  height: 20px;
-  stroke-width: 2;
-  pointer-events: none;
-}
-
-/* HIDDEN FILE INPUT */
+/* === HIDDEN FILE INPUT === */
 input[type="file"]#threadFile {
   position: absolute !important;
   left: -9999px !important;
@@ -410,19 +422,13 @@ input[type="file"]#threadFile {
   pointer-events: none;
 }
 
-/* TYPING INDICATOR */
-.typing-indicator {
-  font-size: 11px;
-  color: #888;
-  padding: 4px 12px;
-}
-
-/* MESSAGE BUBBLES */
+/* === MESSAGES === */
 .message-bubble-wrapper {
   display: flex;
   align-items: flex-end;
   margin: 2px 6px;
   gap: 4px;
+  word-wrap: break-word;
 }
 .message-bubble-wrapper.left {
   flex-direction: row;
@@ -449,6 +455,7 @@ input[type="file"]#threadFile {
   font-size: 13.5px;
   line-height: 1.4;
   word-break: break-word;
+  transition: all 0.25s ease;
 }
 .message-bubble.left {
   background: #fff;
@@ -467,8 +474,7 @@ input[type="file"]#threadFile {
 .message-bubble:last-child {
   margin-bottom: 8px;
 }
-
-/* MESSAGE CONTENT + META */
+/* === MESSAGE TEXT + META === */
 .msg-content {
   display: inline-flex;
   align-items: flex-end;
@@ -479,18 +485,24 @@ input[type="file"]#threadFile {
 }
 .msg-text {
   font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
+  min-width: 0;
   flex: 0 1 auto;
 }
 .msg-meta {
-  font-size: 10px;
-  color: #667781;
-  white-space: nowrap;
-  opacity: 0.85;
   display: inline-flex;
   align-items: center;
+  font-size: 10px;
+  color: #667781;
+  gap: 2px;
   margin-left: 6px;
+  white-space: nowrap;
+  opacity: 0.85;
+  flex-shrink: 0;
 }
 .message-bubble.right .msg-meta {
   color: #4fc3f7;
@@ -500,6 +512,8 @@ input[type="file"]#threadFile {
   gap: 2px;
   font-size: 11px;
   color: #777;
+  align-items: center;
+  margin-left: 4px;
 }
 .msg-ticks svg {
   width: 16px;
@@ -513,11 +527,12 @@ input[type="file"]#threadFile {
   stroke: #4fc3f7;
 }
 
-/* FILE LINK */
+/* === FILE LINK === */
 .file-link {
   color: #007bff;
   text-decoration: none;
   font-weight: 500;
+  word-break: break-word;
 }
 .file-link:hover {
   text-decoration: underline;
@@ -529,14 +544,15 @@ input[type="file"]#threadFile {
   height: 16px;
 }
 
-
-/* KEYBOARD ADJUST */
+/* === KEYBOARD ADJUSTMENTS === */
 body.keyboard-open .chat-scroll-area {
-  bottom: 66px;
+  bottom: 66px; /* match input bar + gap when keyboard is visible */
 }
 body.keyboard-open .chat-input-bar {
-  margin-bottom: env(keyboard-inset-height, 0px);
+  position: fixed;
+  bottom: 0;
 }
+
 /* === ANIMATION === */
 .animate-fade-in {
   animation: fadeInUpSmooth 0.25s cubic-bezier(0.25, 0.8, 0.25, 1) both;
@@ -751,6 +767,11 @@ body.dark #loadingOverlay {
   color: #666 !important;
   cursor: not-allowed;
 }
+
+.menu-btn {
+  touch-action: manipulation;
+}
+
 
 .chat-options-horizontal {
   position: absolute;
