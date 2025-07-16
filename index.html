@@ -258,6 +258,17 @@
     <i data-lucide="x"></i> Cancel
   </div>
 </div>
+
+    <div id="editMessageModal" class="edit-modal" style="display: none;">
+  <div class="edit-header">
+    <i data-lucide="edit-3"></i> Edit Message
+  </div>
+  <textarea id="editMessageInput" rows="2" placeholder="Edit your message"></textarea>
+  <div class="edit-actions">
+    <i data-lucide="check" onclick="saveEditedMessage()"></i>
+    <i data-lucide="x" onclick="closeEditModal()"></i>
+  </div>
+    </div>
     
     <!-- 📸 Crop Modal -->
 <div id="cropModal" class="modal" style="display:none;">
