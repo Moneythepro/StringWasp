@@ -1177,14 +1177,12 @@ function openThread(uid, name) {
 
       if (area) {
         area.innerHTML = "";
-
         const savedScroll = sessionStorage.getItem("threadScroll_" + threadIdStr);
         if (savedScroll) {
           setTimeout(() => {
             area.scrollTop = parseInt(savedScroll, 10);
           }, 100);
         }
-
         area.addEventListener("scroll", () => {
           sessionStorage.setItem("threadScroll_" + threadIdStr, area.scrollTop);
         });
@@ -1218,8 +1216,6 @@ function openThread(uid, name) {
       });
       if (area) resizeObserver.observe(area);
 
-      let lastRenderedMsgIds = new Set();
-
       unsubscribeThread = db.collection("threads")
         .doc(threadIdStr)
         .collection("messages")
@@ -1227,24 +1223,19 @@ function openThread(uid, name) {
         .onSnapshot(async snapshot => {
           if (!area) return;
 
-          const shouldScroll =
-            area.scrollHeight - area.scrollTop - area.clientHeight < 120;
+          area.innerHTML = ""; // ✅ Clear to fully rerender (for edit/delete)
 
           for (const doc of snapshot.docs) {
-            if (lastRenderedMsgIds.has(doc.id)) continue;
-
             const msg = doc.data();
-            msg.id = doc.id;  // ✅ CRITICAL LINE so swipe to reply works
-            lastRenderedMsgIds.add(doc.id);
+            msg.id = doc.id;
 
-            if (!msg?.text) continue;
-
-            let isDeletedForMe = msg.deletedFor?.[currentUser.uid];
+            const isSelf = msg.from === currentUser.uid;
+            const isDeleted = msg.deletedFor?.[currentUser.uid];
 
             const wrapper = document.createElement("div");
-            wrapper.className = "message-bubble-wrapper " + ((msg.from === currentUser.uid) ? "right" : "left");
+            wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
 
-            if (isDeletedForMe) {
+            if (isDeleted) {
               const bubble = document.createElement("div");
               bubble.className = "message-bubble deleted";
               bubble.textContent = "This message was deleted";
@@ -1261,79 +1252,48 @@ function openThread(uid, name) {
               decrypted = "[Failed to decrypt]";
             }
 
+            const avatarImg = document.createElement("img");
+            avatarImg.src = "default-avatar.png";
+            avatarImg.className = "msg-avatar-img";
+
             let replyHtml = "";
             if (msg.replyTo?.text) {
               replyHtml = `
                 <div class="msg-reply-preview">
                   <i data-lucide="corner-up-left"></i>
                   ${escapeHtml(msg.replyTo.text.slice(0, 50))}
-                </div>
-              `;
+                </div>`;
             }
 
-            const isSelf = msg.from === currentUser.uid;
             const isRead = msg.seenBy?.includes(currentThreadUser);
             const isDelivered = msg.seenBy?.length > 1;
 
             const ticks = isSelf
               ? `<span class="msg-ticks ${isRead ? 'double' : isDelivered ? 'delivered' : ''}">
                   <i data-lucide="${isRead || isDelivered ? 'check-check' : 'check'}"></i>
-                </span>`
-              : '';
-
-            let contentHtml = "";
-            if (msg.fileURL && msg.fileName) {
-              contentHtml = `
-                <div class="msg-text">
-                  <i data-lucide="file"></i>
-                  <a href="${msg.fileURL}" target="_blank" class="file-link">
-                    ${escapeHtml(msg.fileName)}
-                  </a>
-                  <span class="msg-meta">
-                    ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-                    ${ticks}
-                  </span>
-                </div>`;
-            } else {
-              contentHtml = `
-                <div class="msg-content">
-                  ${replyHtml}
-                  <span class="msg-text">${linkifyText(escapeHtml(decrypted))}</span>
-                  <span class="msg-meta">
-                    ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-                    ${ticks}
-                  </span>
-                </div>`;
-            }
-
-            let avatar = "default-avatar.png";
-            try {
-              const userDoc = await db.collection("users").doc(msg.from).get();
-              if (userDoc.exists) {
-                const user = userDoc.data();
-                avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-              }
-            } catch (e) {
-              console.warn("⚠️ Avatar fetch failed:", e.message);
-            }
-
-            const avatarImg = document.createElement("img");
-            avatarImg.src = avatar;
-            avatarImg.className = "msg-avatar-img";
+                 </span>`
+              : "";
 
             const bubble = document.createElement("div");
             bubble.className = "message-bubble " + (isSelf ? "right" : "left") + " animate-fade-in";
-            bubble.innerHTML = contentHtml;
 
-            if (!msg.fileURL && decrypted.length > 400) {
-              bubble.classList.add("long-msg");
-            }
+            bubble.innerHTML = `
+              <div class="msg-content">
+                ${replyHtml}
+                <span class="msg-text">${linkifyText(escapeHtml(decrypted))}</span>
+                <span class="msg-meta">
+                  ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+                  ${ticks}
+                </span>
+              </div>`;
 
+            // Add interactions
             bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
             bubble.addEventListener("touchmove", handleTouchMove, { passive: true });
             bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted), { passive: true });
             bubble.addEventListener("contextmenu", (e) => {
               e.preventDefault();
+              selectedMessageForAction = { msg, text: decrypted };
               handleLongPressMenu(msg, decrypted, isSelf);
             });
 
@@ -1353,16 +1313,14 @@ function openThread(uid, name) {
           }
 
           if (typeof lucide !== "undefined") lucide.createIcons();
-
-          if (shouldScroll) {
-            requestAnimationFrame(() => scrollToBottomThread(true));
-          }
-          renderWithMagnetSupport?.("threadMessages");
+          requestAnimationFrame(() => scrollToBottomThread(true));
         });
 
-      if (!sessionStorage.getItem("threadScroll_" + threadIdStr)) {
-        setTimeout(() => scrollToBottomThread(false), 150);
-      }
+      setTimeout(() => {
+        if (!sessionStorage.getItem("threadScroll_" + threadIdStr)) {
+          scrollToBottomThread(false);
+        }
+      }, 150);
     })
     .catch(err => {
       console.error("❌ Friend check failed:", err.message || err);
@@ -1533,37 +1491,71 @@ let editingMessageData = null;
 function editMessage() {
   closeOptionsModal();
   if (!selectedMessageForAction) return;
-const msgId = selectedMessageForAction.msg.id;
+
   editingMessageData = selectedMessageForAction;
   document.getElementById("editMessageInput").value = editingMessageData.text;
   document.getElementById("editMessageModal").style.display = "flex";
-  if (typeof lucide !== "undefined") lucide.createIcons();
+}
+
+function saveEditedMessage() {
+  const newText = document.getElementById("editMessageInput").value.trim();
+  if (!newText || !editingMessageData) return;
+
+  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+
+  db.collection("threads").doc(threadIdStr)
+    .collection("messages").doc(editingMessageData.msg.id)
+    .update({
+      text: CryptoJS.AES.encrypt(newText, "yourSecretKey").toString()
+    })
+    .then(() => {
+      showToast("✅ Message edited");
+      closeEditModal();
+    })
+    .catch(console.error);
+}
+
+function closeEditModal() {
+  editingMessageData = null;
+  document.getElementById("editMessageModal").style.display = "none";
 }
 
 function deleteForMe() {
   closeOptionsModal();
   if (!selectedMessageForAction) return;
-  const msgId = selectedMessageForAction.msg.id;
+
   const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+  const msgId = selectedMessageForAction.msg.id;
+
   db.collection("threads").doc(threadIdStr)
     .collection("messages").doc(msgId)
     .update({
       [`deletedFor.${currentUser.uid}`]: true
     })
-    .then(() => showToast("Deleted for you"))
-    .catch(console.warn);
+    .then(() => showToast("🗑️ Message deleted for you"))
+    .catch(console.error);
 }
 
 function deleteForEveryone() {
   closeOptionsModal();
   if (!selectedMessageForAction) return;
-  const msgId = selectedMessageForAction.msg.id;
+
   const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+  const msgId = selectedMessageForAction.msg.id;
+
+  const deletedFor = {
+    [currentUser.uid]: true,
+    [currentThreadUser]: true
+  };
+
   db.collection("threads").doc(threadIdStr)
     .collection("messages").doc(msgId)
-    .delete()
-    .then(() => showToast("Deleted for everyone"))
-    .catch(console.warn);
+    .update({
+      text: "",  // optional: blank content
+      deletedFor
+    })
+    .then(() => showToast("✅ Message deleted for everyone"))
+    .catch(console.error);
 }
 
 
