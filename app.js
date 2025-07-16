@@ -744,33 +744,35 @@ function listenToTyping(targetId, context) {
   const typingBox = document.getElementById(
     context === "group" ? "groupTypingStatus" : "threadTypingStatus"
   );
-  const statusBox = document.getElementById("chatStatus"); // header status
+  const statusBox = document.getElementById("chatStatus");
 
   if (!typingBox) return;
   if (unsubscribeTyping) unsubscribeTyping();
 
-  unsubscribeTyping = db.collection("threads")
-    .doc(targetId)
-    .collection("typing")
-    .onSnapshot(async snapshot => {
-      let someoneTyping = false;
+  unsubscribeTyping = db.collection(
+    context === "group" ? "groups" : "threads"
+  )
+  .doc(targetId)
+  .collection("typing")
+  .onSnapshot(async snapshot => {
+    let someoneTyping = false;
 
-      for (const doc of snapshot.docs) {
-        const data = doc.data();
-        if (doc.id !== currentUser.uid && data?.typing) {
-          someoneTyping = true;
-          break;
-        }
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      if (doc.id !== currentUser.uid && data?.typing) {
+        someoneTyping = true;
+        break;
       }
+    }
 
-      if (someoneTyping) {
-        typingBox.style.display = "flex";
-        if (context === "thread" && statusBox) statusBox.textContent = "Typing...";
-      } else {
-        typingBox.style.display = "none";
-        if (context === "thread" && statusBox) statusBox.textContent = "Online";
-      }
-    });
+    if (someoneTyping) {
+      typingBox.style.display = "flex";
+      if (context === "thread" && statusBox) statusBox.textContent = "Typing...";
+    } else {
+      typingBox.style.display = "none";
+      if (context === "thread" && statusBox) statusBox.textContent = "Online";
+    }
+  });
 }
 
 function openChatMenu() {
