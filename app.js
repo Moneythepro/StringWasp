@@ -1166,7 +1166,6 @@ function openThread(uid, name) {
 
       switchTab("threadView");
 
-      // === UI Setup ===
       document.getElementById("threadWithName").textContent = name || "Chat";
       document.getElementById("chatOptionsMenu").style.display = "none";
 
@@ -1186,7 +1185,7 @@ function openThread(uid, name) {
 
       if (area) {
         area.innerHTML = "";
-        area.scrollTop = area.scrollHeight; // Scroll immediately to bottom
+        area.scrollTop = area.scrollHeight;
       }
 
       if (unsubscribeThread) unsubscribeThread();
@@ -1198,7 +1197,7 @@ function openThread(uid, name) {
         unread: { [currentUser.uid]: 0 }
       }, { merge: true });
 
-      // === Status updates ===
+      // Real-time status updates
       db.collection("users").doc(uid).onSnapshot(doc => {
         const data = doc.data();
         const status = document.getElementById("chatStatus");
@@ -1214,13 +1213,11 @@ function openThread(uid, name) {
         }
       });
 
-      // === Resize Observer (keyboard adjust) ===
       const resizeObserver = new ResizeObserver(() => {
         setTimeout(() => scrollToBottomThread(true), 100);
       });
       if (area) resizeObserver.observe(area);
 
-      // === Load + animate messages ===
       let lastRenderedMsgIds = new Set();
 
       unsubscribeThread = db.collection("threads")
@@ -1248,6 +1245,7 @@ function openThread(uid, name) {
               decrypted = "[Failed to decrypt]";
             }
 
+            // Mark as seen
             if (!msg.seenBy?.includes(currentUser.uid)) {
               db.collection("threads").doc(threadIdStr)
                 .collection("messages").doc(doc.id)
@@ -1256,6 +1254,7 @@ function openThread(uid, name) {
                 }).catch(console.warn);
             }
 
+            // Fetch avatar
             let avatar = "default-avatar.png";
             try {
               const userDoc = await db.collection("users").doc(msg.from).get();
@@ -1317,23 +1316,26 @@ function openThread(uid, name) {
               bubble.classList.add("long-msg");
             }
 
-            isSelf
-              ? (wrapper.appendChild(bubble), wrapper.appendChild(avatarImg))
-              : (wrapper.appendChild(avatarImg), wrapper.appendChild(bubble));
+            if (isSelf) {
+              wrapper.appendChild(bubble);
+              wrapper.appendChild(avatarImg);
+            } else {
+              wrapper.appendChild(avatarImg);
+              wrapper.appendChild(bubble);
+            }
 
             area.appendChild(wrapper);
           }
 
           if (typeof lucide !== "undefined") lucide.createIcons();
 
-          // ✅ Reliable scroll to bottom on new messages
           if (shouldScroll) {
-  requestAnimationFrame(() => scrollToBottomThread(true));
+            requestAnimationFrame(() => scrollToBottomThread(true));
           }
+
           renderWithMagnetSupport?.("threadMessages");
         });
 
-      // ✅ After opening thread, scroll down
       setTimeout(() => scrollToBottomThread(false), 150);
     })
     .catch(err => {
