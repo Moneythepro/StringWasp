@@ -1387,6 +1387,12 @@ function toggleChatOptions() {
   const menu = document.getElementById("chatOptionsMenu");
   menu.classList.toggle("show");
 }
+document.addEventListener("click", (e) => {
+  const menu = document.getElementById("chatOptionsMenu");
+  if (!menu.contains(e.target) && !e.target.closest(".menu-btn")) {
+    menu.classList.remove("show");
+  }
+});
 
 function blockUser() {
   alert("🚫 Block user feature coming soon.");
