@@ -1446,37 +1446,43 @@ function cancelReply() {
 let selectedMessageForAction = null;
 
 function handleLongPressMenu(msg, text, isSelf) {
-  selectedMessageForAction = { msg, text };
-  const modal = document.getElementById("messageOptionsModal");
-
-  // Only show Edit and Delete for Me if it's your own message
-  modal.querySelector('[onclick="editMessage()"]').style.display = isSelf ? "flex" : "none";
-  modal.querySelector('[onclick="deleteForMe()"]').style.display = isSelf ? "flex" : "none";
-  modal.querySelector('[onclick="deleteForEveryone()"]').style.display = isSelf ? "flex" : "none";
-
-  openOptionsModal(); // your function to show the modal
-}
-
-// Minimal modal option actions
-function closeOptionsModal(event) {
-  const modal = document.getElementById("messageOptionsModal");
-  if (!event || event.target === modal) {
-    modal.classList.add("hidden");
-  }
-}
-
-function openOptionsModal(msg, isSelf) {
   if (!isSelf) {
     alert("⚠️ You can only edit or delete your own messages.");
     return;
   }
 
-  selectedMessageForAction = msg;
+  selectedMessageForAction = { msg, text };
+
+  const modal = document.getElementById("messageOptionsModal");
+
+  // Show/hide options based on permission
+  modal.querySelector('[onclick="editMessage()"]').style.display = "flex";
+  modal.querySelector('[onclick="deleteForMe()"]').style.display = "flex";
+  modal.querySelector('[onclick="deleteForEveryone()"]').style.display = "flex";
+
+  openOptionsModal();
+}
+
+function openOptionsModal() {
   const modal = document.getElementById("messageOptionsModal");
   if (!modal) return;
 
   modal.classList.remove("hidden");
+
+  // Optional: close if tapped outside
+  modal.addEventListener("click", closeOptionsModal);
+
   if (typeof lucide !== "undefined") lucide.createIcons();
+}
+
+function closeOptionsModal(event) {
+  const modal = document.getElementById("messageOptionsModal");
+  if (!modal) return;
+
+  if (!event || event.target === modal) {
+    modal.classList.add("hidden");
+    modal.removeEventListener("click", closeOptionsModal);
+  }
 }
 
 function closeEditModal() {
