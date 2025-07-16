@@ -1232,11 +1232,16 @@ function openThread(uid, name) {
             area.scrollHeight - area.scrollTop - area.clientHeight < 120;
 
           for (const doc of snapshot.docs) {
-            if (lastRenderedMsgIds.has(doc.id)) continue;
+  if (lastRenderedMsgIds.has(doc.id)) continue;
 
-            const msg = doc.data();
-            if (!msg?.text) continue;
-            lastRenderedMsgIds.add(doc.id);
+  const msg = doc.data();
+  if (!msg?.text) continue;
+
+  // ✅ NEW: skip if message is deleted for this user
+  if (msg.deletedFor?.[currentUser.uid]) continue;
+
+  lastRenderedMsgIds.add(doc.id);
+          }
 
             let decrypted = "";
             try {
@@ -1501,6 +1506,16 @@ function saveEditedMessage() {
       closeEditModal();
     })
     .catch(console.warn);
+}
+
+function showToast(message) {
+  const toast = document.getElementById("chatToast");
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add("show");
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 1800);
 }
 
 function deleteForMe() {
