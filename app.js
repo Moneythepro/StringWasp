@@ -1592,7 +1592,7 @@ function handleSwipeToReply(msg, text) {
     msgId: msg.id,   // ✅ capital I, never lowercase
     text: text
   };
-
+console.log("Swipe to reply msg object:", JSON.stringify(msg));
   console.log("replyingTo object:", JSON.stringify(replyingTo));
 
   document.getElementById("replyText").textContent =
