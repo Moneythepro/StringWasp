@@ -1158,8 +1158,6 @@ function openThread(uid, name) {
       }
 
       switchTab("threadView");
-
-      // === UI Setup ===
       document.getElementById("threadWithName").textContent = name || "Chat";
       document.getElementById("chatOptionsMenu").style.display = "none";
 
@@ -1179,7 +1177,18 @@ function openThread(uid, name) {
 
       if (area) {
         area.innerHTML = "";
-        area.scrollTop = area.scrollHeight; // Scroll immediately to bottom
+
+        // Restore previous scroll position
+        const savedScroll = sessionStorage.getItem("threadScroll_" + threadIdStr);
+        if (savedScroll) {
+          setTimeout(() => {
+            area.scrollTop = parseInt(savedScroll, 10);
+          }, 100);
+        }
+
+        area.addEventListener("scroll", () => {
+          sessionStorage.setItem("threadScroll_" + threadIdStr, area.scrollTop);
+        });
       }
 
       if (unsubscribeThread) unsubscribeThread();
@@ -1191,11 +1200,9 @@ function openThread(uid, name) {
         unread: { [currentUser.uid]: 0 }
       }, { merge: true });
 
-      // === Status updates ===
       db.collection("users").doc(uid).onSnapshot(doc => {
         const data = doc.data();
         const status = document.getElementById("chatStatus");
-
         if (data.typingFor === currentUser.uid) {
           status.textContent = "Typing...";
         } else if (data.status === "online") {
@@ -1207,13 +1214,11 @@ function openThread(uid, name) {
         }
       });
 
-      // === Resize Observer (keyboard adjust) ===
       const resizeObserver = new ResizeObserver(() => {
         setTimeout(() => scrollToBottomThread(true), 100);
       });
       if (area) resizeObserver.observe(area);
 
-      // === Load + animate messages ===
       let lastRenderedMsgIds = new Set();
 
       unsubscribeThread = db.collection("threads")
@@ -1281,7 +1286,6 @@ function openThread(uid, name) {
             bubble.className = "message-bubble " + (isSelf ? "right" : "left") + " animate-fade-in";
 
             let contentHtml = "";
-
             if (msg.fileURL && msg.fileName) {
               contentHtml = `
                 <div class="msg-text">
@@ -1297,7 +1301,7 @@ function openThread(uid, name) {
             } else {
               contentHtml = `
                 <div class="msg-content">
-                  <span class="msg-text">${escapeHtml(decrypted)}</span>
+                  <span class="msg-text">${linkifyText(escapeHtml(decrypted))}</span>
                   <span class="msg-meta">
                     ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
                     ${ticks}
@@ -1310,6 +1314,15 @@ function openThread(uid, name) {
               bubble.classList.add("long-msg");
             }
 
+            // Swipe to reply and long press
+            bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
+            bubble.addEventListener("touchmove", handleTouchMove, { passive: true });
+            bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted), { passive: true });
+            bubble.addEventListener("contextmenu", (e) => {
+              e.preventDefault();
+              handleLongPressMenu(msg, decrypted, isSelf);
+            });
+
             isSelf
               ? (wrapper.appendChild(bubble), wrapper.appendChild(avatarImg))
               : (wrapper.appendChild(avatarImg), wrapper.appendChild(bubble));
@@ -1319,21 +1332,22 @@ function openThread(uid, name) {
 
           if (typeof lucide !== "undefined") lucide.createIcons();
 
-          // ✅ Reliable scroll to bottom on new messages
           if (shouldScroll) {
-  requestAnimationFrame(() => scrollToBottomThread(true));
+            requestAnimationFrame(() => scrollToBottomThread(true));
           }
           renderWithMagnetSupport?.("threadMessages");
         });
 
-      // ✅ After opening thread, scroll down
-      setTimeout(() => scrollToBottomThread(false), 150);
+      // ✅ After opening thread, only scroll if not restoring
+      if (!sessionStorage.getItem("threadScroll_" + threadIdStr)) {
+        setTimeout(() => scrollToBottomThread(false), 150);
+      }
     })
     .catch(err => {
       console.error("❌ Friend check failed:", err.message || err);
       alert("❌ Failed to verify friendship.");
     });
-}
+}      
 
 // ✅ Send button handler
 function handleSendClick() {
@@ -1407,6 +1421,40 @@ function exportChat() {
 }
 function deleteChat() {
   alert("🗑️ Delete chat feature coming soon.");
+}
+
+function linkifyText(text) {
+  return text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="link-text">$1</a>');
+}
+
+let xDown = null;
+
+function handleTouchStart(evt) {
+  const firstTouch = evt.touches[0];
+  xDown = firstTouch.clientX;
+}
+
+function handleTouchMove(evt) {
+  if (!xDown) return;
+  const xUp = evt.touches[0].clientX;
+  const xDiff = xDown - xUp;
+  if (xDiff > 60) {
+    xDown = null;
+    evt.target.dispatchEvent(new CustomEvent("swipeleft"));
+  } else if (xDiff < -60) {
+    xDown = null;
+    evt.target.dispatchEvent(new CustomEvent("swiperight"));
+  }
+}
+
+function handleSwipeToReply(msg, text) {
+  console.log("Swipe to reply:", text);
+  // TODO: open reply input
+}
+
+function handleLongPressMenu(msg, text, isSelf) {
+  console.log("Long press:", text, "Self:", isSelf);
+  // TODO: open modal for Edit / Delete
 }
 
 function deleteThread() {
