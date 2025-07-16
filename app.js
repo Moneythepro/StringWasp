@@ -1262,6 +1262,25 @@ function openThread(uid, name) {
             } catch {
               decrypted = "[Failed to decrypt]";
             }
+          
+          let replyHtml = "";
+if (msg.replyTo?.text) {
+  replyHtml = `
+    <div class="msg-reply-preview">
+      <i data-lucide="corner-up-left"></i>
+      ${escapeHtml(msg.replyTo.text.slice(0, 50))}
+    </div>
+  `;
+}
+          contentHtml = `
+  <div class="msg-content">
+    ${replyHtml}
+    <span class="msg-text">${linkifyText(escapeHtml(decrypted))}</span>
+    <span class="msg-meta">
+      ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+      ${ticks}
+    </span>
+  </div>`;
 
             if (!msg.seenBy?.includes(currentUser.uid)) {
               db.collection("threads").doc(threadIdStr)
@@ -1609,45 +1628,51 @@ function sendThreadMessage() {
   const docId = threadId(currentUser.uid, currentThreadUser);
   const threadRef = db.collection("threads").doc(docId);
 
+  // ✅ Build your message object
   const message = {
     text: encryptedText,
     from: currentUser.uid,
     fromName,
     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    seenBy: [currentUser.uid] // ✅ Mark as seen by sender
+    seenBy: [currentUser.uid]
   };
 
+  // ✅ If replying, include replyTo context
   if (replyingTo) {
-  console.log("Sending reply to:", replyingTo);
-  // TODO: save reply context in Firestore
-}
-cancelReply();
-  
-  threadRef.collection("messages").add(message).then(() => {
-    // ✅ Clear input
-    input.value = "";
-    setTimeout(() => input.focus(), 50);
+    console.log("Sending reply to:", replyingTo);
+    message.replyTo = replyingTo;
+  }
 
-    // ✅ Slight delay to allow DOM to catch up before scrolling
-    setTimeout(() => scrollToBottomThread(true), 80);
+  // ✅ Reset reply preview
+  cancelReply();
 
-    threadRef.set({
-      participants: [currentUser.uid, currentThreadUser],
-      names: {
-        [currentUser.uid]: fromName,
-        [currentThreadUser]: toName
-      },
-      lastMessage: text,
-      unread: {
-        [currentUser.uid]: 0,
-        [currentThreadUser]: firebase.firestore.FieldValue.increment(1)
-      },
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-  }).catch(err => {
-    console.error("❌ Send failed:", err.message || err);
-    alert("❌ Failed to send message.");
-  });
+  // ✅ Add the message to Firestore
+  threadRef.collection("messages").add(message)
+    .then(() => {
+      // ✅ Clear input, focus, scroll
+      input.value = "";
+      setTimeout(() => input.focus(), 50);
+      setTimeout(() => scrollToBottomThread(true), 80);
+
+      // ✅ Update thread document with latest info
+      threadRef.set({
+        participants: [currentUser.uid, currentThreadUser],
+        names: {
+          [currentUser.uid]: fromName,
+          [currentThreadUser]: toName
+        },
+        lastMessage: text,
+        unread: {
+          [currentUser.uid]: 0,
+          [currentThreadUser]: firebase.firestore.FieldValue.increment(1)
+        },
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    })
+    .catch(err => {
+      console.error("❌ Send failed:", err.message || err);
+      alert("❌ Failed to send message.");
+    });
 }
 
 function renderMessage(msg, isOwn) {
