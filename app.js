@@ -1506,15 +1506,29 @@ function saveEditedMessage() {
 function deleteForMe() {
   closeOptionsModal();
   if (!selectedMessageForAction) return;
-  alert("🗑️ Delete only for me: " + selectedMessageForAction.text);
-  // TODO: mark as deleted for this user
+  const msgId = selectedMessageForAction.msg.id;
+  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+
+  db.collection("threads").doc(threadIdStr)
+    .collection("messages").doc(msgId)
+    .update({
+      [`deletedFor.${currentUser.uid}`]: true
+    })
+    .then(() => showToast("Deleted for you"))
+    .catch(console.warn);
 }
 
 function deleteForEveryone() {
   closeOptionsModal();
   if (!selectedMessageForAction) return;
-  alert("🚫 Delete for everyone: " + selectedMessageForAction.text);
-  // TODO: delete from Firestore for all
+  const msgId = selectedMessageForAction.msg.id;
+  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+
+  db.collection("threads").doc(threadIdStr)
+    .collection("messages").doc(msgId)
+    .delete()
+    .then(() => showToast("Deleted for everyone"))
+    .catch(console.warn);
 }
 
 function deleteThread() {
