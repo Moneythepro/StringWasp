@@ -1342,6 +1342,7 @@ function openThread(uid, name) {
       if (typeof adjustThreadLayout === "function") {
         setTimeout(() => adjustThreadLayout(), 150);
       }
+      setTimeout(() => scrollToBottomThread(false), 120);
     })
     .catch(err => {
       console.error("❌ Friend check failed:", err.message || err);
@@ -1922,14 +1923,13 @@ function adjustThreadLayout() {
 }
 
 // ✅ Smooth scroll to bottom of thread
-function scrollToBottomThread(smooth = false) {
+function scrollToBottomThread(smooth = true) {
   const area = document.getElementById("threadMessages");
-  if (area) {
-    area.scrollTo({
-      top: area.scrollHeight,
-      behavior: smooth ? "smooth" : "auto"
-    });
-  }
+  if (!area) return;
+  area.scrollTo({
+    top: area.scrollHeight,
+    behavior: smooth ? "smooth" : "auto"
+  });
 }
 
 // ✅ Setup once DOM is loaded
