@@ -535,10 +535,8 @@ body.keyboard-open .chat-scroll-area {
   bottom: 66px;
 }
 body.keyboard-open .chat-input-bar {
-  position: fixed;
-  bottom: 0;
+  margin-bottom: env(keyboard-inset-height, 0px);
 }
-
 /* === ANIMATION === */
 .animate-fade-in {
   animation: fadeInUpSmooth 0.25s cubic-bezier(0.25, 0.8, 0.25, 1) both;
