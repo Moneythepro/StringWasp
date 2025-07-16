@@ -1583,10 +1583,8 @@ let replyingTo = null;
 
 // ✅ Handle swipe to reply
 function handleSwipeToReply(msg, text) {
-  
-
   replyingTo = {
-    msgId: msg.id,   // ✅ capital I, never lowercase
+    msgId: msg.id,
     text: text
   };
 
@@ -1603,15 +1601,12 @@ function sendThreadMessage() {
   const text = input?.value.trim();
   if (!text || !currentThreadUser) return;
 
-  const nameEl = document.getElementById("usernameDisplay");
-  const fromName = nameEl ? nameEl.textContent : "User";
-
-  const threadNameEl = document.getElementById("threadWithName");
-  const toName = threadNameEl ? threadNameEl.textContent : "Friend";
+  const fromName = document.getElementById("usernameDisplay")?.textContent || "User";
+  const toName = document.getElementById("threadWithName")?.textContent || "Friend";
+  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+  const threadRef = db.collection("threads").doc(threadIdStr);
 
   const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
-  const docId = threadId(currentUser.uid, currentThreadUser);
-  const threadRef = db.collection("threads").doc(docId);
 
   const message = {
     text: encryptedText,
@@ -1621,22 +1616,25 @@ function sendThreadMessage() {
     seenBy: [currentUser.uid]
   };
 
-  if (replyingTo) {
-    console.log("Sending reply to:", JSON.stringify(replyingTo));
+  // ✅ Add reply context if replying
+  if (replyingTo?.msgId && replyingTo?.text) {
     message.replyTo = {
-      msgId: replyingTo.msgId,  // ✅ capital I
+      msgId: replyingTo.msgId,
       text: replyingTo.text
     };
   }
 
-  cancelReply();  // ✅ clears preview + replyingTo = null
+  // ✅ Clear input & reply UI BEFORE sending to prevent flicker
+  input.value = "";
+  input.focus();
+  cancelReply();
 
+  // ✅ Add message
   threadRef.collection("messages").add(message)
     .then(() => {
-      input.value = "";
-      setTimeout(() => input.focus(), 50);
-      setTimeout(() => scrollToBottomThread(true), 80);
+      requestAnimationFrame(() => scrollToBottomThread(true));
 
+      // ✅ Update thread metadata
       threadRef.set({
         participants: [currentUser.uid, currentThreadUser],
         names: {
