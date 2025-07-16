@@ -1328,6 +1328,8 @@ function openThread(uid, name) {
           if (shouldScroll) {
             setTimeout(() => scrollToBottomThread(true), 60);
           }
+          console.log("🟢 Message area height:", document.getElementById("threadMessages")?.offsetHeight);
+console.log("🟢 Scroll height:", document.querySelector(".chat-scroll-area")?.scrollHeight);
 
           renderWithMagnetSupport?.("threadMessages");
         });
