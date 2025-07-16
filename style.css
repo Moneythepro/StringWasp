@@ -343,6 +343,12 @@ border-bottom: 1px solid #ccc;
   z-index: 51; /* ensures it's clickable above content */
   position: relative; /* needed for z-index to work */
 }
+#chatOptionsMenu {
+  position: fixed; /* or absolute, depending on behavior you want */
+  top: 56px;
+  right: 12px;
+  ...
+}
 
 .back-btn i,
 .menu-btn i,
