@@ -1449,12 +1449,15 @@ function handleLongPressMenu(msg, text, isSelf) {
     msg: msg,
     text: text
   };
-  document.getElementById("messageOptionsModal").style.display = "flex";
+  document.getElementById("messageOptionsModal").classList.remove("hidden");
 }
 
 // Minimal modal option actions
-function closeOptionsModal() {
-  document.getElementById("messageOptionsModal").style.display = "none";
+function closeOptionsModal(event) {
+  const modal = document.getElementById("messageOptionsModal");
+  if (!event || event.target === modal) {
+    modal.classList.add("hidden");
+  }
 }
 
 
