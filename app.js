@@ -1333,9 +1333,9 @@ function openThread(uid, name) {
             bubble.addEventListener("touchmove", handleTouchMove, { passive: true });
             bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted), { passive: true });
             bubble.addEventListener("contextmenu", (e) => {
-              e.preventDefault();
-              handleLongPressMenu(msg, decrypted, isSelf);
-            });
+  e.preventDefault();
+  handleLongPressMenu(msg, decrypted, isSelf);
+});
 
             isSelf
               ? (wrapper.appendChild(bubble), wrapper.appendChild(avatarImg))
@@ -1476,9 +1476,10 @@ let replyingTo = null;
 function handleSwipeToReply(msg, text) {
   console.log("Swipe to reply:", text);
   replyingTo = {
-    msgId: msg.id,  // ✅ always capital I
+    msgId: msg.id,   // ✅ IMPORTANT: always capital I
     text: text
   };
+  console.log("replyingTo object:", JSON.stringify(replyingTo));
   document.getElementById("replyText").textContent =
     text.slice(0, 50) + (text.length > 50 ? "..." : "");
   document.getElementById("replyPreview").style.display = "flex";
@@ -1494,10 +1495,12 @@ function cancelReply() {
 let selectedMessageForAction = null;
 
 function handleLongPressMenu(msg, text, isSelf) {
-  console.log("✋ Long press:", text, "Self:", isSelf);
-  selectedMessageForAction = { msg, text, isSelf };
-  document.getElementById("messageOptionsModal").style.display = "block";
-  if (typeof lucide !== "undefined") lucide.createIcons();
+  console.log("Long press:", text, "Self:", isSelf);
+  selectedMessageForAction = {
+    msg: msg,
+    text: text
+  };
+  document.getElementById("messageOptionsModal").style.display = "flex";
 }
 
 // Minimal modal option actions
@@ -1544,6 +1547,7 @@ let editingMessageData = null;
 function editMessage() {
   closeOptionsModal();
   if (!selectedMessageForAction) return;
+const msgId = selectedMessageForAction.msg.id;
   editingMessageData = selectedMessageForAction;
   document.getElementById("editMessageInput").value = editingMessageData.text;
   document.getElementById("editMessageModal").style.display = "flex";
@@ -1615,11 +1619,11 @@ function sendThreadMessage() {
   };
 
   if (replyingTo) {
-    console.log("Sending reply to:", JSON.stringify(replyingTo));
-    message.replyTo = {
-      msgId: replyingTo.msgId,  // ✅ always capital I
-      text: replyingTo.text
-    };
+  console.log("Sending reply to:", JSON.stringify(replyingTo));
+  message.replyTo = {
+    msgId: replyingTo.msgId,  // ✅ not msgld or msgid
+    text: replyingTo.text
+  };
   }
 
   cancelReply();
