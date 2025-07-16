@@ -1475,11 +1475,14 @@ let replyingTo = null;
 
 function handleSwipeToReply(msg, text) {
   console.log("Swipe to reply:", text);
+
   replyingTo = {
-    msgId: msg.id,   // ✅ IMPORTANT: always capital I
+    msgId: msg.id,   // ✅ capital I
     text: text
   };
+
   console.log("replyingTo object:", JSON.stringify(replyingTo));
+
   document.getElementById("replyText").textContent =
     text.slice(0, 50) + (text.length > 50 ? "..." : "");
   document.getElementById("replyPreview").style.display = "flex";
