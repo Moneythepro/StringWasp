@@ -1655,7 +1655,6 @@ function sendThreadMessage() {
     seenBy: [currentUser.uid]
   };
 
-  // ✅ Add reply info if active
   if (replyingTo?.msgId && replyingTo?.text) {
     message.replyTo = {
       msgId: replyingTo.msgId,
@@ -1663,23 +1662,13 @@ function sendThreadMessage() {
     };
   }
 
-  // ✅ Clear UI input and reply
+  // Clear input immediately but avoid layout shifts
   input.value = "";
   cancelReply();
 
-  // ✅ Prevent keyboard flicker (focus after slight delay)
-  requestAnimationFrame(() => {
-    setTimeout(() => {
-      input.focus();
-    }, 50);
-  });
-
-  // ✅ Add message
+  // Do NOT focus yet – wait for layout to settle first
   threadRef.collection("messages").add(message)
     .then(() => {
-      requestAnimationFrame(() => scrollToBottomThread(true));
-
-      // ✅ Update thread metadata
       threadRef.set({
         participants: [currentUser.uid, currentThreadUser],
         names: { [currentUser.uid]: fromName, [currentThreadUser]: toName },
@@ -1690,6 +1679,18 @@ function sendThreadMessage() {
         },
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
+
+      // Delay focus to avoid flicker (keyboard stays open)
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          input.focus({ preventScroll: true }); // ✅ Keeps keyboard without jumping
+        }, 100);
+      });
+
+      // Delay scroll until after keyboard is confirmed open
+      setTimeout(() => {
+        scrollToBottomThread(true);
+      }, 120);
     })
     .catch(err => {
       console.error("❌ Send failed:", err.message || err);
