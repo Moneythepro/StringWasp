@@ -274,6 +274,9 @@ body.dark .status-dot.online {
 }
 
 /* ===== Thread View ===== */
+html, body, #threadView {
+  height: 100%;
+}
 #threadView.thread-container {
   position: fixed;
   inset: 0;
@@ -284,9 +287,8 @@ body.dark .status-dot.online {
   height: 100dvh;
 }
 .thread-main {
-  flex: 1;
   position: relative;
-  /* Remove overflow: hidden so content can scroll */
+  height: 100%;
 }
 
 /* === HEADER === */
@@ -359,9 +361,7 @@ body.dark .status-dot.online {
   left: 0;
   right: 0;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  display: flex;
-  flex-direction: column;
+  -webkit-overflow-scrolling: touch; /* smooth iOS scroll */
 }
 
 #threadMessages {
