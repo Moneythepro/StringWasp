@@ -1012,3 +1012,14 @@ body.dark .chat-options-horizontal span:hover {
   align-items: center;
   gap: 6px;
 }
+.reply-highlight {
+  animation: highlightFlash 2s ease;
+  background-color: #fff59d !important; /* yellow flash */
+  transition: background-color 1s ease;
+}
+
+@keyframes highlightFlash {
+  0%   { background-color: #fff59d; }
+  50%  { background-color: #fff9c4; }
+  100% { background-color: inherit; }
+}
