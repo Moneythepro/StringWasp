@@ -1168,7 +1168,7 @@ function openThread(uid, name) {
 
       // === UI Setup ===
       document.getElementById("threadWithName").textContent = name || "Chat";
-      document.getElementById("chatOptionsMenu").style.display = "none";
+      document.getElementById("chatOptionsMenu")?.classList.remove("show");
 
       ["roomDropdown", "groupInfoButton"].forEach(id => {
         const el = document.getElementById(id);
@@ -1183,11 +1183,10 @@ function openThread(uid, name) {
 
       const threadIdStr = threadId(currentUser.uid, uid);
       const area = document.getElementById("threadMessages");
+      if (!area) return;
 
-      if (area) {
-        area.innerHTML = "";
-        area.scrollTop = area.scrollHeight; // Scroll immediately to bottom
-      }
+      area.innerHTML = ""; // 🧹 Clear old messages
+      area.scrollTop = area.scrollHeight; // Initial scroll bottom
 
       if (unsubscribeThread) unsubscribeThread();
       if (unsubscribeTyping) unsubscribeTyping();
@@ -1202,6 +1201,7 @@ function openThread(uid, name) {
       db.collection("users").doc(uid).onSnapshot(doc => {
         const data = doc.data();
         const status = document.getElementById("chatStatus");
+        if (!status) return;
 
         if (data.typingFor === currentUser.uid) {
           status.textContent = "Typing...";
@@ -1214,15 +1214,13 @@ function openThread(uid, name) {
         }
       });
 
-      // === Resize Observer (keyboard adjust) ===
+      // === Keyboard-aware scroll
       const resizeObserver = new ResizeObserver(() => {
-        setTimeout(() => scrollToBottomThread(true), 100);
+        setTimeout(() => scrollToBottomThread(true), 80);
       });
-      if (area) resizeObserver.observe(area);
+      resizeObserver.observe(area);
 
-      // === Load + animate messages ===
-      let lastRenderedMsgIds = new Set();
-
+      // === Listen to messages
       unsubscribeThread = db.collection("threads")
         .doc(threadIdStr)
         .collection("messages")
@@ -1230,14 +1228,12 @@ function openThread(uid, name) {
         .onSnapshot(async snapshot => {
           if (!area) return;
 
-          const shouldScroll =
-            area.scrollHeight - area.scrollTop - area.clientHeight < 120;
+          let lastRenderedMsgIds = new Set(); // ✅ Always reset so thread loads fresh
+          const shouldScroll = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
 
           for (const doc of snapshot.docs) {
-            if (lastRenderedMsgIds.has(doc.id)) continue;
-
             const msg = doc.data();
-            if (!msg?.text) continue;
+            if (!msg?.text || lastRenderedMsgIds.has(doc.id)) continue;
             lastRenderedMsgIds.add(doc.id);
 
             let decrypted = "";
@@ -1248,6 +1244,7 @@ function openThread(uid, name) {
               decrypted = "[Failed to decrypt]";
             }
 
+            // Mark as seen
             if (!msg.seenBy?.includes(currentUser.uid)) {
               db.collection("threads").doc(threadIdStr)
                 .collection("messages").doc(doc.id)
@@ -1256,6 +1253,7 @@ function openThread(uid, name) {
                 }).catch(console.warn);
             }
 
+            // Fetch avatar
             let avatar = "default-avatar.png";
             try {
               const userDoc = await db.collection("users").doc(msg.from).get();
@@ -1267,6 +1265,7 @@ function openThread(uid, name) {
               console.warn("⚠️ Avatar fetch failed:", e.message);
             }
 
+            // === Render message bubble
             const isSelf = msg.from === currentUser.uid;
             const isRead = msg.seenBy?.includes(currentThreadUser);
             const isDelivered = msg.seenBy?.length > 1;
@@ -1326,29 +1325,20 @@ function openThread(uid, name) {
 
           if (typeof lucide !== "undefined") lucide.createIcons();
 
-          // ✅ Reliable scroll to bottom on new messages
           if (shouldScroll) {
-  requestAnimationFrame(() => scrollToBottomThread(true));
+            setTimeout(() => scrollToBottomThread(true), 60);
           }
+
           renderWithMagnetSupport?.("threadMessages");
         });
 
-      // ✅ After opening thread, scroll down
+      // Final guaranteed scroll to bottom after open
       setTimeout(() => scrollToBottomThread(false), 150);
     })
     .catch(err => {
       console.error("❌ Friend check failed:", err.message || err);
       alert("❌ Failed to verify friendship.");
     });
-}
-
-for (let i = 1; i <= 20; i++) {
-  const div = document.createElement("div");
-  div.textContent = "Test message " + i;
-  div.className = "message-bubble-wrapper left";
-  div.style.padding = "8px";
-  div.style.background = "#fff";
-  document.getElementById("threadMessages").appendChild(div);
 }
 
 // ✅ Send button handler
