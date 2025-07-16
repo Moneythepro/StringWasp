@@ -194,15 +194,15 @@
   <i data-lucide="x" onclick="cancelReply()"></i>
 </div>
       
-      <input
-        id="threadInput"
-        placeholder="Type a message..."
-        oninput="handleTyping('thread')"
-        onkeydown="handleThreadKey(event)" />
+      <input id="threadInput" type="text"
+  placeholder="Type a message…"
+  autocomplete="off"
+  autocapitalize="sentences"
+  enterkeyhint="send" />
 
-      <button type="button" class="icon-btn" onclick="handleSendClick()" aria-label="Send">
+<button type="button" class="icon-btn" id="sendButton" aria-label="Send">
   <i data-lucide="send"></i>
-      </button>
+</button>
     </footer>
   </div>
 </div>
