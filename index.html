@@ -244,6 +244,21 @@
   </div>
 </div>
 
+<div id="messageOptionsModal" class="message-options-modal" style="display: none;">
+  <div class="option" onclick="editMessage()">
+    <i data-lucide="edit-3"></i> Edit Message
+  </div>
+  <div class="option" onclick="deleteForMe()">
+    <i data-lucide="trash-2"></i> Delete for Me
+  </div>
+  <div class="option" onclick="deleteForEveryone()">
+    <i data-lucide="slash"></i> Delete for Everyone
+  </div>
+  <div class="option cancel" onclick="closeOptionsModal()">
+    <i data-lucide="x"></i> Cancel
+  </div>
+</div>
+    
     <!-- 📸 Crop Modal -->
 <div id="cropModal" class="modal" style="display:none;">
   <div class="modal-content" style="max-width: 90%; padding: 10px;">
