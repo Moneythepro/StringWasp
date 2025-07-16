@@ -1178,7 +1178,6 @@ function openThread(uid, name) {
       if (area) {
         area.innerHTML = "";
 
-        // Restore scroll
         const savedScroll = sessionStorage.getItem("threadScroll_" + threadIdStr);
         if (savedScroll) {
           setTimeout(() => {
@@ -1235,8 +1234,10 @@ function openThread(uid, name) {
             if (lastRenderedMsgIds.has(doc.id)) continue;
 
             const msg = doc.data();
-            if (!msg?.text) continue;
+            msg.id = doc.id;  // ✅ CRITICAL LINE so swipe to reply works
             lastRenderedMsgIds.add(doc.id);
+
+            if (!msg?.text) continue;
 
             let isDeletedForMe = msg.deletedFor?.[currentUser.uid];
 
@@ -1328,14 +1329,13 @@ function openThread(uid, name) {
               bubble.classList.add("long-msg");
             }
 
-            // Swipe and long press
             bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
             bubble.addEventListener("touchmove", handleTouchMove, { passive: true });
             bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted), { passive: true });
             bubble.addEventListener("contextmenu", (e) => {
-  e.preventDefault();
-  handleLongPressMenu(msg, decrypted, isSelf);
-});
+              e.preventDefault();
+              handleLongPressMenu(msg, decrypted, isSelf);
+            });
 
             isSelf
               ? (wrapper.appendChild(bubble), wrapper.appendChild(avatarImg))
