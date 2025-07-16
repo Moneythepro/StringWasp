@@ -1381,27 +1381,29 @@ function toggleChatOptions() {
   const menu = document.getElementById("chatOptionsMenu");
   if (!menu) return;
 
-  const isShown = menu.classList.contains("show");
-  if (isShown) {
-    menu.classList.remove("show");
-  } else {
-    menu.classList.add("show");
+  // Close all other menus
+  document.querySelectorAll(".chat-options-horizontal").forEach(el => {
+    if (el !== menu) el.classList.remove("show");
+  });
 
-    // Auto-close when clicking outside
-    document.addEventListener("click", closeMenuOnClickOutside);
-  }
+  // Toggle this menu
+  menu.classList.toggle("show");
 }
 
-function closeMenuOnClickOutside(event) {
+// ✅ Close when clicking outside
+document.addEventListener("click", (event) => {
   const menu = document.getElementById("chatOptionsMenu");
-  const button = document.querySelector(".menu-btn");
+  const trigger = document.querySelector(".menu-btn");
+  if (!menu || !trigger) return;
 
-  if (!menu.contains(event.target) && !button.contains(event.target)) {
-    menu.classList.remove("show");
-    document.removeEventListener("click", closeMenuOnClickOutside);
-  }
-}
+  // Do nothing if clicking the button or menu
+  if (menu.contains(event.target) || trigger.contains(event.target)) return;
 
+  // Otherwise, close the menu
+  menu.classList.remove("show");
+});
+
+// ✅ Placeholder functions
 function blockUser() {
   alert("🚫 Block user feature coming soon.");
 }
@@ -1414,22 +1416,6 @@ function exportChat() {
 function deleteChat() {
   alert("🗑️ Delete chat feature coming soon.");
 }
-
-document.addEventListener("click", (e) => {
-  const menu = document.getElementById("chatOptionsMenu");
-  const menuBtn = document.querySelector(".menu-btn");
-
-  if (!menu || !menuBtn) return;
-
-  // Only hide if menu is open and click was outside both menu & button
-  if (
-    menu.classList.contains("show") &&
-    !menu.contains(e.target) &&
-    !menuBtn.contains(e.target)
-  ) {
-    menu.classList.remove("show");
-  }
-});
 
 function deleteThread() {
   showModal("Delete this chat?", () => {
