@@ -1261,7 +1261,7 @@ try {
     const user = userDoc.data();
     avatarImg.src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
   } else {
-    avatarImg.src = "default-avatar.png";
+    avatarImg.src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
   }
 } catch (e) {
   console.warn("⚠️ Avatar fetch failed:", e.message);
