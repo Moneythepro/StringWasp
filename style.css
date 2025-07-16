@@ -982,3 +982,21 @@ body.dark .chat-options-horizontal span:hover {
   display: block;
   opacity: 1;
 }
+
+.reply-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f1f1f1;
+  border-left: 4px solid #007bff;
+  padding: 6px 8px;
+  margin: 4px 6px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.reply-preview i {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
