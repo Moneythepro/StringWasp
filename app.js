@@ -1325,14 +1325,14 @@ function openThread(uid, name) {
 
           // ✅ Reliable scroll to bottom on new messages
           if (shouldScroll) {
-            requestAnimationFrame(() => scrollToBottomThread(true));
+  requestAnimationFrame(() => scrollToBottomThread(true));
           }
-
+console.log("📜 Scrolling to bottom...");
           renderWithMagnetSupport?.("threadMessages");
         });
 
       // ✅ After opening thread, scroll down
-      setTimeout(() => scrollToBottomThread(true), 120);
+      setTimeout(() => scrollToBottomThread(false), 150);
     })
     .catch(err => {
       console.error("❌ Friend check failed:", err.message || err);
