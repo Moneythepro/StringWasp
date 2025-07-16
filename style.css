@@ -356,13 +356,14 @@ body.dark .status-dot.online {
 /* === SCROLLABLE CHAT BODY === */
 .chat-scroll-area {
   position: absolute;
-  top: 56px;
-  bottom: 56px;
+  top: 56px;          /* header height */
+  bottom: 56px;       /* input bar height */
   left: 0;
   right: 0;
 
   overflow-y: auto;
-  padding: 4px 8px 20px;  /* ⬅️ changed from 10px to 20px for breathing room */
+  padding: 4px 8px 12px 8px;  /* ✅ only slightly increase bottom padding */
+  box-sizing: border-box;
 
   display: flex;
   flex-direction: column;
