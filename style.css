@@ -280,31 +280,28 @@ body.dark .status-dot.online {
   display: flex;
   flex-direction: column;
   background: #fff;
-  z-index: 999;
+  z-index: 99;
   height: 100dvh;
 }
-
 .thread-main {
+  flex: 1;
   position: relative;
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden; /* prevents scroll bleed */
+  overflow: hidden;
 }
 
 /* === HEADER === */
 .chat-header {
-  position: relative;  /* ✅ Anchors dropdown correctly */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 56px;
-  background: #f0f0f0;
-  color: #111;
+  z-index: 100;
   display: flex;
   align-items: center;
+  background: #f0f0f0;
   padding: 0 10px;
   border-bottom: 1px solid #ccc;
-  z-index: 100;
-  overflow: visible;
 }
 .chat-header img {
   width: 36px;
@@ -357,17 +354,16 @@ body.dark .status-dot.online {
 /* === SCROLLABLE CHAT BODY === */
 .chat-scroll-area {
   position: absolute;
-  top: 56px;       /* Exactly header height */
-  bottom: 56px;    /* Exactly input bar height */
+  top: 56px;       /* exact header height */
+  bottom: 56px;    /* exact input bar height */
   left: 0;
   right: 0;
   overflow-y: auto;
+  padding: 0 8px 8px;
+  background: #fafafa;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;  /* ✅ Ensures messages start at bottom */
-  background: #fafafa;
-  padding: 4px 8px 8px;       /* ✅ Avoid collision with input */
-  scroll-behavior: smooth;
+  justify-content: flex-end;
 }
 
 #threadMessages {
@@ -375,7 +371,9 @@ body.dark .status-dot.online {
   flex-direction: column;
   gap: 4px;
   width: 100%;
-  margin-bottom: 8px; /* ✅ small space above input */
+  flex-grow: 1;
+  margin-top: 0;       /* important! */
+  padding-top: 0;      /* important! */
 }
 
 /* === TYPING INDICATOR === */
@@ -398,7 +396,7 @@ body.dark .status-dot.online {
   display: flex;
   align-items: center;
   gap: 6px;
-  z-index: 10;
+  z-index: 100;
 }
 .chat-input-bar input {
   flex: 1;
