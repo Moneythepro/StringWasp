@@ -367,7 +367,7 @@ body.dark .status-dot.online {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  flex: 1;
+  min-height: 100%;
 }
 
 /* === TYPING INDICATOR === */
