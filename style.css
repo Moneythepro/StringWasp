@@ -294,10 +294,7 @@ body.dark .status-dot.online {
 
 /* === HEADER === */
 .chat-header {
-  position: fixed; /* ⛳ Must be fixed to stay visible */
-  top: 0;
-  left: 0;
-  right: 0;
+  position: relative;  /* ✅ Anchors dropdown correctly */
   height: 56px;
   background: #f0f0f0;
   color: #111;
@@ -305,8 +302,8 @@ body.dark .status-dot.online {
   align-items: center;
   padding: 0 10px;
   border-bottom: 1px solid #ccc;
-  z-index: 100;         /* ✅ Ensure this is above scroll area */
-  overflow: visible;    /* ✅ Allows menu to be visible */
+  z-index: 100;
+  overflow: visible;
 }
 .chat-header img {
   width: 36px;
@@ -557,7 +554,7 @@ input[type="file"]#threadFile {
 
 /* === KEYBOARD ADJUSTMENTS === */
 body.keyboard-open .chat-scroll-area {
-  padding-bottom: 75px; /* or try 76px if 80 is too much */
+  padding-bottom: 80px; /* or try 76px if 80 is too much */
 }
 body.keyboard-open .chat-input-bar {
   position: fixed;
@@ -783,7 +780,7 @@ body.dark #loadingOverlay {
   position: absolute;
   top: 56px;
   right: 10px;
-  background: #ffffff; /* WhatsApp-style white background */
+  background: #ffffff;
   color: #222;
   border-radius: 6px;
   padding: 4px 8px;
@@ -804,7 +801,6 @@ body.dark #loadingOverlay {
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
-  touch-action: manipulation; /* ✅ Prevent mobile ghost tap delay */
 }
 
 .chat-options-horizontal span {
