@@ -138,7 +138,7 @@
       <button onclick="contactSupport()">Contact Us</button>
     </div>
 
-<!-- 💬 WhatsApp-style Chat UI -->
+    <!-- 💬 WhatsApp-style Chat UI -->
 <div id="threadView" class="thread-container tab" role="region" aria-label="Direct Message View">
 
   <!-- HEADER -->
@@ -154,12 +154,10 @@
       <p id="chatStatus">last seen recently</p>
     </div>
 
-    <!-- Menu Button -->
     <button class="menu-btn" onclick="toggleChatOptions(event)" aria-label="Open Menu" type="button">
       <i data-lucide="more-vertical"></i>
     </button>
 
-    <!-- Horizontal Options Menu -->
     <div id="chatOptionsMenu" class="chat-options-horizontal" role="menu" aria-label="Chat Options">
       <span role="menuitem" tabindex="0" onclick="blockUser()">Block</span>
       <span role="menuitem" tabindex="0" onclick="viewMedia()">Media</span>
@@ -168,20 +166,15 @@
     </div>
   </header>
 
-  <!-- MAIN WRAPPER: holds scroll + input -->
+  <!-- MAIN WRAPPER -->
   <div class="thread-main">
-    
-    <!-- SCROLL AREA (only this should scroll) -->
     <div class="chat-scroll-area" id="chatScrollArea">
-      <div id="threadMessages" class="chat-body" role="log" aria-live="polite" aria-label="Messages">
-        <!-- Messages will be injected here -->
-      </div>
+      <div id="threadMessages" role="log" aria-live="polite" aria-label="Messages"></div>
       <div id="threadTypingStatus" class="typing-indicator" aria-hidden="true"></div>
     </div>
 
-    <!-- INPUT BAR (fixed at bottom) -->
+    <!-- INPUT BAR -->
     <footer class="chat-input-bar">
-      <!-- Attach File -->
       <button class="icon-btn" onclick="triggerFileInput('thread')" aria-label="Attach File">
         <i data-lucide="paperclip"></i>
       </button>
@@ -192,12 +185,10 @@
         class="visually-hidden"
         onchange="uploadFile('thread')" />
 
-      <!-- WebTorrent -->
       <button class="icon-btn" onclick="shareFileViaTorrent('dm')" aria-label="Send via Torrent">
         <i data-lucide="globe"></i>
       </button>
 
-      <!-- Message Input -->
       <input
         id="threadInput"
         placeholder="Type a message..."
@@ -205,15 +196,13 @@
         oninput="handleTyping('thread')"
         onkeydown="handleThreadKey(event)" />
 
-      <!-- Send Button -->
       <button class="icon-btn" onclick="handleSendClick()" aria-label="Send Message">
         <i data-lucide="send"></i>
       </button>
     </footer>
+  </div>
 
-  </div> <!-- end of thread-main -->
-
-</div>  
+</div>
     
     <!-- 💬 Group Chat View -->
     <div id="roomView" class="tab" style="display:none;">
