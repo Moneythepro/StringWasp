@@ -354,21 +354,20 @@ body.dark .status-dot.online {
 /* === SCROLLABLE CHAT BODY === */
 .chat-scroll-area {
   position: absolute;
-  top: 56px;               /* header height */
-  bottom: 56px;            /* input bar height */
+  top: 56px;
+  bottom: 56px;
   left: 0;
   right: 0;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch; /* smooth iOS scroll */
-  padding: 0 8px 8px;
-  background: #fafafa;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
 }
 
 #threadMessages {
-display: flex;
-flex-direction: column;
-gap: 4px;
-padding-bottom: 12px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
 }
 
 /* === TYPING INDICATOR === */
