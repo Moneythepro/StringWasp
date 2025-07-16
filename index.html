@@ -139,11 +139,9 @@
     </div>
 
 <!-- 💬 WhatsApp-style Chat UI -->
-<div id="threadView" class="thread-container tab" role="region" aria-label="Direct Message View">
-  
-  <!-- HEADER -->
+<div id="threadView" class="thread-container tab" role="region">
   <header class="chat-header">
-    <button class="back-btn" onclick="switchTab('chatTab')" aria-label="Back" type="button">
+    <button class="back-btn" onclick="switchTab('chatTab')" aria-label="Back">
       <i data-lucide="arrow-left"></i>
     </button>
 
@@ -154,30 +152,26 @@
       <p id="chatStatus">last seen recently</p>
     </div>
 
-    <!-- Menu Button -->
-    <button class="menu-btn" onclick="toggleChatOptions(event)" aria-label="Open Menu" type="button">
+    <button class="menu-btn" onclick="toggleChatOptions(event)" aria-label="Menu">
       <i data-lucide="more-vertical"></i>
     </button>
 
-    <!-- Options Menu -->
-    <div id="chatOptionsMenu" class="chat-options-horizontal" role="menu" aria-label="Chat Options">
-      <span role="menuitem" tabindex="0" onclick="blockUser()">Block</span>
-      <span role="menuitem" tabindex="0" onclick="viewMedia()">Media</span>
-      <span role="menuitem" tabindex="0" onclick="exportChat()">Export</span>
-      <span role="menuitem" tabindex="0" onclick="deleteChat()">Delete</span>
+    <div id="chatOptionsMenu" class="chat-options-horizontal" role="menu">
+      <span onclick="blockUser()">Block</span>
+      <span onclick="viewMedia()">Media</span>
+      <span onclick="exportChat()">Export</span>
+      <span onclick="deleteChat()">Delete</span>
     </div>
   </header>
 
-  <!-- MAIN CHAT BODY -->
   <div class="thread-main">
     <div class="chat-scroll-area">
-      <div id="threadMessages" role="log" aria-live="polite" aria-label="Messages">
-        <!-- Messages will be injected here -->
+      <div id="threadMessages" role="log" aria-live="polite">
+        <!-- Messages will appear here -->
       </div>
       <div id="threadTypingStatus" class="typing-indicator" aria-hidden="true"></div>
     </div>
 
-    <!-- INPUT BAR -->
     <footer class="chat-input-bar">
       <button class="icon-btn" onclick="triggerFileInput('thread')" aria-label="Attach File">
         <i data-lucide="paperclip"></i>
@@ -196,16 +190,15 @@
       <input
         id="threadInput"
         placeholder="Type a message..."
-        aria-label="Message input"
         oninput="handleTyping('thread')"
         onkeydown="handleThreadKey(event)" />
 
-      <button class="icon-btn" onclick="handleSendClick()" aria-label="Send Message">
+      <button class="icon-btn" onclick="handleSendClick()" aria-label="Send">
         <i data-lucide="send"></i>
       </button>
     </footer>
   </div>
-</div>  
+</div>
     
     <!-- 💬 Group Chat View -->
     <div id="roomView" class="tab" style="display:none;">
