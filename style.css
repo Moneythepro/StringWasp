@@ -611,6 +611,14 @@ input[type="file"]#threadFile {
   height: 18px;
 }
 
+.link-text {
+  color: #007bff;
+  text-decoration: none;
+}
+.link-text:hover {
+  text-decoration: underline;
+}
+
 /* === KEYBOARD ADJUSTMENTS === */
 body.keyboard-open .chat-scroll-area {
   bottom: 66px; /* match input bar + gap when keyboard is visible */
