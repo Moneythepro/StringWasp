@@ -138,64 +138,61 @@
       <button onclick="contactSupport()">Contact Us</button>
     </div>
 
-
 <!-- 💬 WhatsApp-style Chat UI -->
 <div id="threadView" class="thread-container tab" role="region" aria-label="Direct Message View">
-<!-- HEADER -->
-<header class="chat-header">
-  <button class="back-btn" onclick="switchTab('chatTab')" aria-label="Back" type="button">
-    <i data-lucide="arrow-left"></i>
-  </button>
+  
+  <!-- HEADER -->
+  <header class="chat-header">
+    <button class="back-btn" onclick="switchTab('chatTab')" aria-label="Back" type="button">
+      <i data-lucide="arrow-left"></i>
+    </button>
 
-  <img id="chatProfilePic" class="header-avatar" src="default-avatar.png" alt="Profile Picture" />
+    <img id="chatProfilePic" class="header-avatar" src="default-avatar.png" alt="Profile Picture" />
 
-  <div class="chat-info">
-    <h3 id="threadWithName">Friend Name</h3>
-    <p id="chatStatus">last seen recently</p>
-  </div>
+    <div class="chat-info">
+      <h3 id="threadWithName">Friend Name</h3>
+      <p id="chatStatus">last seen recently</p>
+    </div>
 
-  <!-- Menu Button -->
-  <button class="menu-btn" onclick="toggleChatOptions(event)" aria-label="Open Menu" type="button">
-    <i data-lucide="more-vertical"></i>
-  </button>
+    <!-- Menu Button -->
+    <button class="menu-btn" onclick="toggleChatOptions(event)" aria-label="Open Menu" type="button">
+      <i data-lucide="more-vertical"></i>
+    </button>
 
-  <!-- Horizontal Options Menu -->
-  <div id="chatOptionsMenu" class="chat-options-horizontal" role="menu" aria-label="Chat Options">
-    <span role="menuitem" tabindex="0" onclick="blockUser()">Block</span>
-    <span role="menuitem" tabindex="0" onclick="viewMedia()">Media</span>
-    <span role="menuitem" tabindex="0" onclick="exportChat()">Export</span>
-    <span role="menuitem" tabindex="0" onclick="deleteChat()">Delete</span>
-  </div>
-</header>
+    <!-- Options Menu -->
+    <div id="chatOptionsMenu" class="chat-options-horizontal" role="menu" aria-label="Chat Options">
+      <span role="menuitem" tabindex="0" onclick="blockUser()">Block</span>
+      <span role="menuitem" tabindex="0" onclick="viewMedia()">Media</span>
+      <span role="menuitem" tabindex="0" onclick="exportChat()">Export</span>
+      <span role="menuitem" tabindex="0" onclick="deleteChat()">Delete</span>
+    </div>
+  </header>
 
   <!-- MAIN CHAT BODY -->
   <div class="thread-main">
     <div class="chat-scroll-area">
-      <div id="threadMessages" class="chat-body" role="log" aria-live="polite" aria-label="Messages">
-        <!-- Messages will be dynamically injected here -->
+      <div id="threadMessages" role="log" aria-live="polite" aria-label="Messages">
+        <!-- Messages will be injected here -->
       </div>
       <div id="threadTypingStatus" class="typing-indicator" aria-hidden="true"></div>
     </div>
 
-    <!-- FIXED INPUT -->
+    <!-- INPUT BAR -->
     <footer class="chat-input-bar">
-      <!-- ✅ Attach Button -->
       <button class="icon-btn" onclick="triggerFileInput('thread')" aria-label="Attach File">
-  <i data-lucide="paperclip"></i>
-</button>
+        <i data-lucide="paperclip"></i>
+      </button>
 
-<input
-  type="file"
-  id="threadFile"
-  class="visually-hidden"
-  onchange="uploadFile('thread')" />
+      <input
+        type="file"
+        id="threadFile"
+        class="visually-hidden"
+        onchange="uploadFile('thread')" />
 
-      <!-- 🌐 WebTorrent Button -->
       <button class="icon-btn" onclick="shareFileViaTorrent('dm')" aria-label="Send via Torrent">
         <i data-lucide="globe"></i>
       </button>
 
-      <!-- ✏️ Message Input -->
       <input
         id="threadInput"
         placeholder="Type a message..."
@@ -203,9 +200,8 @@
         oninput="handleTyping('thread')"
         onkeydown="handleThreadKey(event)" />
 
-      <!-- 📤 Send Button -->
       <button class="icon-btn" onclick="handleSendClick()" aria-label="Send Message">
-  <i data-lucide="send"></i>
+        <i data-lucide="send"></i>
       </button>
     </footer>
   </div>
