@@ -487,6 +487,15 @@ input[type="file"]#threadFile {
   word-break: break-word;
   transition: all 0.25s ease;
 }
+.message-bubble.deleted {
+  background: #eee;
+  color: #555;
+  font-style: italic;
+  padding: 8px 12px;
+  border-radius: 12px;
+  max-width: 75%;
+  font-size: 13px;
+}
 .message-bubble.left {
   background: #fff;
   border-radius: 0 8px 8px 8px;
