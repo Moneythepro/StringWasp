@@ -1031,16 +1031,35 @@ body.dark .chat-options-horizontal span:hover {
   opacity: 1;
 }
 
+.reply-preview.hidden {
+  display: none;
+}
+
 .reply-preview {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
   background: #f1f1f1;
-  border-left: 4px solid #007bff;
-  padding: 6px 8px;
-  margin: 4px 6px;
-  border-radius: 8px;
-  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-right: 4px;
+}
+
+.cancel-reply-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.chat-input-bar {
+  display: flex;
+  align-items: center;
+  padding: 6px;
+  gap: 6px;
+  border-top: 1px solid #ddd;
+  background: #fff;
 }
 
 .reply-preview i {
