@@ -1354,31 +1354,26 @@ function initThreadInputEvents() {
   const sendBtn = document.getElementById("sendButton");
   if (!input || !sendBtn) return;
 
-  // Avoid duplicate bindings
+  // Clean up old listeners
   input.removeEventListener("keydown", threadInputHandler);
   sendBtn.removeEventListener("click", sendBtnHandler);
 
+  // Add fresh ones
   input.addEventListener("keydown", threadInputHandler);
   sendBtn.addEventListener("click", sendBtnHandler);
 }
 
+// ✅ Handles Enter key press inside input
 function threadInputHandler(e) {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
-    sendThreadMessage();
+    sendThreadMessage(); // Direct call keeps input focused
   }
 }
 
+// ✅ Handles tap on send button — direct call
 function sendBtnHandler() {
-  const input = document.getElementById("threadInput");
-  if (!input) return;
-
-  const event = new KeyboardEvent("keydown", {
-    key: "Enter",
-    code: "Enter",
-    bubbles: true
-  });
-  input.dispatchEvent(event);
+  sendThreadMessage(); // No fake key events = no keyboard flicker
 }
 
 // ===== Send Thread Message =====
