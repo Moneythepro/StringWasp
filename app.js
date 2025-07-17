@@ -1437,7 +1437,6 @@ async function openThread(uid, name) {
 
           const isSelf = msg.from === currentUser.uid;
 
-          // 🔁 Remove old message
           const old = area.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`);
           if (old?.parentElement) old.parentElement.remove();
 
@@ -1469,22 +1468,29 @@ async function openThread(uid, name) {
           bubble.className = "message-bubble " + (isSelf ? "right" : "left");
           bubble.dataset.msgId = msg.id;
 
+          const textPreview = decrypted.length > 300
+            ? `<span class="msg-preview">${escapeHtml(decrypted.slice(0, 300))}...</span><span class="show-more" onclick="this.previousElementSibling.textContent='${escapeHtml(decrypted)}'; this.remove();">Show more</span>`
+            : `<span class="msg-preview">${escapeHtml(decrypted)}</span>`;
+
+          const replyHtml = msg.replyTo && !isDeleted
+            ? `<div class="reply-to">↪️ ${escapeHtml(msg.replyTo.text || "")}</div>`
+            : "";
+
+          const meta = `
+            <span class="msg-time">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</span>
+            ${msg.edited ? `<span class="edited-tag">(edited)</span>` : ""}
+            ${isSelf && !isDeleted ? '<i data-lucide="check-check" class="tick-icon tick-sent"></i>' : ""}
+          `;
+
           bubble.innerHTML = `
             <div class="msg-content ${isDeleted ? "msg-deleted" : ""}">
-              <span class="msg-text">${escapeHtml(decrypted)}</span>
-              ${
-                msg.replyTo && !isDeleted
-                  ? `<div class="reply-to">↪️ ${escapeHtml(msg.replyTo.text || "")}</div>`
-                  : ""
-              }
-              <span class="msg-meta">
-                ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
-                ${isSelf && !isDeleted ? '<i data-lucide="check-check" class="tick-icon"></i>' : ""}
-              </span>
+              ${replyHtml}
+              <span class="msg-text">${textPreview}</span>
+              <div class="msg-meta">${meta}</div>
             </div>
           `;
 
-          if (!isDeleted && isSelf) {
+          if (!isDeleted) {
             bubble.addEventListener("contextmenu", e => {
               e.preventDefault();
               handleLongPressMenu(msg, decrypted, isSelf);
