@@ -1810,31 +1810,23 @@ function saveEditedMessage() {
   const newText = document.getElementById("editMessageInput").value.trim();
   if (!newText || !editingMessageData) return;
 
-  const { msg } = editingMessageData;
-  if (msg.from !== currentUser.uid) {
-    alert("⚠️ You can only edit your own messages.");
-    return;
-  }
-
   const encrypted = CryptoJS.AES.encrypt(newText, "yourSecretKey").toString();
   const threadIdStr = threadId(currentUser.uid, currentThreadUser);
 
   db.collection("threads").doc(threadIdStr)
-    .collection("messages").doc(msg.id)
-    .update({ text: encrypted })
-    .then(() => {
-      showToast("✅ Message edited");
-      closeEditModal();
-
-      // Force UI update by removing old message element
-      const bubble = document.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`);
-      if (bubble?.parentElement) {
-        bubble.parentElement.remove();
-      }
-
-      renderedMessageIds.delete(msg.id); // allow it to re-render in next snapshot
+    .collection("messages").doc(editingMessageData.msg.id)
+    .update({
+      text: encrypted,
+      edited: true
     })
-    .catch(console.error);
+    .then(() => {
+      showToast(" Message edited");
+      closeEditModal();
+      editingMessageData = null;
+    })
+    .catch(err => {
+      console.error("❌ Failed to edit:", err);
+    });
 }
 
 function closeEditModal() {
@@ -2393,14 +2385,15 @@ document.addEventListener("DOMContentLoaded", () => {
   // ✅ Adjust thread view height
   adjustThreadLayout();
 
-  // ✅ Thread input scroll
-  const input = document.getElementById("threadInput");
-  if (input) {
-    input.addEventListener("focus", () => {
-      setTimeout(() => scrollToBottomThread(true), 300);
+  function focusThreadInput() {
+    requestAnimationFrame(() => {
+      const input = document.getElementById("threadInput");
+      if (input) {
+        input.focus({ preventScroll: false });
+      }
     });
-  }
-
+  }  // <-- Changed period to semicolon or removed entirely
+  
   // ✅ Viewport resize: mobile keyboard, rotation
   window.addEventListener("resize", () => {
     adjustThreadLayout();
@@ -2409,7 +2402,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => scrollToBottomThread(true), 300);
     }
   });
-}); // <-- ✅ Closing the DOMContentLoaded listener
+})
 
 // ✅ Set thread layout height
 function adjustThreadLayout() {
@@ -2423,13 +2416,8 @@ function adjustThreadLayout() {
 // ✅ Smooth scroll to thread bottom
 function scrollToBottomThread(smooth = true) {
   const area = document.getElementById("threadMessages");
-  if (!area) return;
-
-  try {
+  if (area) {
     area.scrollTo({ top: area.scrollHeight, behavior: smooth ? "smooth" : "auto" });
-  } catch (e) {
-    console.warn("Scroll error:", e);
-    area.scrollTop = area.scrollHeight;
   }
 }
 
@@ -2447,19 +2435,6 @@ function scrollToRepliedMessage(msgId) {
   }
 }
 
-// ✅ Scroll to replied message
-function scrollToRepliedMessage(msgId) {
-  const msgElements = document.querySelectorAll("#threadMessages .message-bubble-wrapper");
-  for (const wrapper of msgElements) {
-    const bubble = wrapper.querySelector(".message-bubble");
-    if (bubble?.dataset?.msgId === msgId) {
-      wrapper.scrollIntoView({ behavior: "smooth", block: "center" });
-      bubble.classList.add("reply-highlight");
-      setTimeout(() => bubble.classList.remove("reply-highlight"), 2000);
-      break;
-    }
-  }
-}
 
 // ✅ Toggle theme
 function toggleTheme() {
