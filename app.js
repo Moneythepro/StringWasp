@@ -1342,19 +1342,24 @@ async function openThread(uid, name) {
 
     switchTab("threadView");
 
+    // Setup listeners for input/send button (once)
     setTimeout(() => {
       const input = document.getElementById("threadInput");
-      if (input) {
+      if (input && !input.dataset.bound) {
         input.addEventListener("keydown", (e) => {
           if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             sendThreadMessage();
           }
         });
+        input.dataset.bound = "true";
       }
 
       const sendBtn = document.getElementById("sendButton");
-      if (sendBtn) sendBtn.addEventListener("click", sendThreadMessage);
+      if (sendBtn && !sendBtn.dataset.bound) {
+        sendBtn.addEventListener("click", sendThreadMessage);
+        sendBtn.dataset.bound = "true";
+      }
     }, 200);
 
     document.getElementById("threadWithName").textContent =
@@ -1372,19 +1377,15 @@ async function openThread(uid, name) {
     if (area && lastThreadId !== threadIdStr) {
       area.innerHTML = "";
       lastThreadId = threadIdStr;
-
-      const savedScroll = sessionStorage.getItem("threadScroll_" + threadIdStr);
-      if (savedScroll) {
-        setTimeout(() => {
-          area.scrollTop = parseInt(savedScroll, 10);
-        }, 50);
-      }
-
-      area.onscroll = null;
-      area.onscroll = () => {
-        sessionStorage.setItem("threadScroll_" + threadIdStr, area.scrollTop);
-      };
     }
+
+    // Scroll always to bottom when opening thread
+    setTimeout(() => scrollToBottomThread(true), 100);
+
+    // Persist scroll position
+    area.onscroll = () => {
+      sessionStorage.setItem("threadScroll_" + threadIdStr, area.scrollTop);
+    };
 
     try {
       const friendUserDoc = await db.collection("users").doc(uid).get();
@@ -1425,40 +1426,40 @@ async function openThread(uid, name) {
       }
     });
 
-    const resizeObserver = new ResizeObserver(() => {
-      setTimeout(() => scrollToBottomThread(true), 60);
-    });
-    if (area) resizeObserver.observe(area);
-
     unsubscribeThread = db.collection("threads").doc(threadIdStr)
       .collection("messages").orderBy("timestamp")
       .onSnapshot(snapshot => {
         if (!area) return;
 
-        const prevScroll = area.scrollTop;
-        const prevHeight = area.scrollHeight;
-        const isNearBottom = prevHeight - prevScroll - area.clientHeight < 120;
+        const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
 
         snapshot.docChanges().forEach(change => {
           const msgDoc = change.doc;
           const msg = msgDoc.data();
           msg.id = msgDoc.id;
 
-          // 🔁 Always remove old message element if exists
-          const oldBubble = area.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`);
-          if (oldBubble && oldBubble.parentElement) {
-            oldBubble.parentElement.remove();
-          }
-
           const isSelf = msg.from === currentUser.uid;
 
+          // 🧹 Remove old rendered message if exists
+          const old = area.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`);
+          if (old?.parentElement) old.parentElement.remove();
+
+          if (msg.deletedFor?.[currentUser.uid]) return;
+
           let decrypted = "";
+          let isDeleted = false;
+
           if (typeof msg.text === "string") {
-            try {
-              const bytes = CryptoJS.AES.decrypt(msg.text, "yourSecretKey");
-              decrypted = bytes.toString(CryptoJS.enc.Utf8) || "[Encrypted]";
-            } catch {
-              decrypted = "[Decryption failed]";
+            if (msg.text === "") {
+              isDeleted = true;
+              decrypted = "🗑️ Message deleted";
+            } else {
+              try {
+                const bytes = CryptoJS.AES.decrypt(msg.text, "yourSecretKey");
+                decrypted = bytes.toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+              } catch {
+                decrypted = "[Decryption error]";
+              }
             }
           } else {
             decrypted = "[Invalid text]";
@@ -1472,14 +1473,18 @@ async function openThread(uid, name) {
           bubble.dataset.msgId = msg.id;
 
           bubble.innerHTML = `
-            <div class="msg-content">
+            <div class="msg-content ${isDeleted ? "msg-deleted" : ""}">
               <span class="msg-text">${escapeHtml(decrypted)}</span>
-              ${msg.replyTo ? `<div class="reply-to">↪️ ${escapeHtml(msg.replyTo.text || "")}</div>` : ""}
+              ${
+                msg.replyTo && !isDeleted
+                  ? `<div class="reply-to">↪️ ${escapeHtml(msg.replyTo.text || "")}</div>`
+                  : ""
+              }
               <span class="msg-meta">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</span>
             </div>
           `;
 
-          if (isSelf) {
+          if (!isDeleted && isSelf) {
             bubble.addEventListener("contextmenu", e => {
               e.preventDefault();
               handleLongPressMenu(msg, decrypted, isSelf);
@@ -1500,7 +1505,7 @@ async function openThread(uid, name) {
         });
 
         if (isNearBottom) {
-          requestAnimationFrame(() => scrollToBottomThread(true));
+          setTimeout(() => scrollToBottomThread(true), 80);
         } else {
           const toast = document.getElementById("chatToast");
           if (toast) {
