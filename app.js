@@ -1462,7 +1462,14 @@ async function openThread(uid, name) {
       lastThreadId = threadIdStr;
     }
 
-    setTimeout(() => scrollToBottomThread(true), 200);
+    const savedScroll = sessionStorage.getItem("threadScroll_" + threadIdStr);
+    if (savedScroll !== null && !isNaN(savedScroll)) {
+      setTimeout(() => {
+        area.scrollTop = parseInt(savedScroll);
+      }, 300);
+    } else {
+      setTimeout(() => scrollToBottomThread(true), 200);
+    }
 
     area.onscroll = () => {
       sessionStorage.setItem("threadScroll_" + threadIdStr, area.scrollTop);
@@ -1575,10 +1582,11 @@ async function openThread(uid, name) {
 
           const textPreview = `<span class="msg-preview">${linkifyText(escapeHtml(decrypted))}</span>${linkPreviewHTML}`;
 
+          const seenClass = msg.seenBy?.includes(currentThreadUser) ? "tick-seen" : "tick-sent";
           const meta = `
             <span class="msg-time">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</span>
             ${msg.edited ? '<span class="edited-tag">(edited)</span>' : ""}
-            ${isSelf && !isDeleted ? '<i data-lucide="check-check" class="tick-icon tick-sent"></i>' : ""}
+            ${isSelf && !isDeleted ? `<i data-lucide="check-check" class="tick-icon ${seenClass}"></i>` : ""}
           `;
 
           bubble.innerHTML = `
