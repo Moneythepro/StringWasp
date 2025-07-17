@@ -1342,7 +1342,6 @@ async function openThread(uid, name) {
 
     switchTab("threadView");
 
-    // Setup listeners for input/send button (once)
     setTimeout(() => {
       const input = document.getElementById("threadInput");
       if (input && !input.dataset.bound) {
@@ -1379,10 +1378,8 @@ async function openThread(uid, name) {
       lastThreadId = threadIdStr;
     }
 
-    // Scroll always to bottom when opening thread
     setTimeout(() => scrollToBottomThread(true), 100);
 
-    // Persist scroll position
     area.onscroll = () => {
       sessionStorage.setItem("threadScroll_" + threadIdStr, area.scrollTop);
     };
@@ -1440,7 +1437,7 @@ async function openThread(uid, name) {
 
           const isSelf = msg.from === currentUser.uid;
 
-          // 🧹 Remove old rendered message if exists
+          // 🔁 Remove old message
           const old = area.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`);
           if (old?.parentElement) old.parentElement.remove();
 
@@ -1480,7 +1477,10 @@ async function openThread(uid, name) {
                   ? `<div class="reply-to">↪️ ${escapeHtml(msg.replyTo.text || "")}</div>`
                   : ""
               }
-              <span class="msg-meta">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</span>
+              <span class="msg-meta">
+                ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}
+                ${isSelf && !isDeleted ? '<i data-lucide="check-check" class="tick-icon"></i>' : ""}
+              </span>
             </div>
           `;
 
@@ -1503,6 +1503,8 @@ async function openThread(uid, name) {
               .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) }).catch(() => {});
           }
         });
+
+        if (typeof lucide !== "undefined") lucide.createIcons();
 
         if (isNearBottom) {
           setTimeout(() => scrollToBottomThread(true), 80);
