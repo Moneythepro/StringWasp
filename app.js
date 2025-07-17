@@ -1371,8 +1371,10 @@ function sendBtnHandler() {
 // ===== Send Message =====
 function sendThreadMessage() {
   const input = document.getElementById("threadInput");
-  const text = input?.value.trim();
-  if (!text || !currentThreadUser) return;
+  if (!input || !currentThreadUser) return;
+
+  const text = input.value.trim();
+  if (!text) return;
 
   const fromName = document.getElementById("usernameDisplay")?.textContent || "User";
   const toName = document.getElementById("threadWithName")?.textContent || "Friend";
@@ -1396,6 +1398,7 @@ function sendThreadMessage() {
     };
   }
 
+  // Don't blur, just clear text
   input.value = "";
   cancelReply();
 
@@ -1403,7 +1406,10 @@ function sendThreadMessage() {
     .then(() => {
       threadRef.set({
         participants: [currentUser.uid, currentThreadUser],
-        names: { [currentUser.uid]: fromName, [currentThreadUser]: toName },
+        names: {
+          [currentUser.uid]: fromName,
+          [currentThreadUser]: toName
+        },
         lastMessage: text,
         unread: {
           [currentUser.uid]: 0,
@@ -1412,9 +1418,12 @@ function sendThreadMessage() {
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
 
-      // ✅ Prevent flicker: refocus softly after DOM updates
+      // ✅ Refocus input WITHOUT triggering keyboard flicker
+      // - Use double requestAnimationFrame to ensure input isn't blurred by layout shift
       requestAnimationFrame(() => {
-        setTimeout(() => input.focus({ preventScroll: true }), 80);
+        requestAnimationFrame(() => {
+          input.focus({ preventScroll: true });
+        });
       });
 
       setTimeout(() => scrollToBottomThread(true), 100);
@@ -1428,7 +1437,7 @@ function sendThreadMessage() {
 let selectedMessageForAction = null;
 let editingMessageData = null;
 
-// ===== Chat Options Toggle =====
+// ===== Toggle Chat Options Menu =====
 function toggleChatOptions(event) {
   event.stopPropagation();
   const menu = document.getElementById("chatOptionsMenu");
@@ -1444,21 +1453,21 @@ function toggleChatOptions(event) {
 }
 
 document.getElementById("chatOptionsMenu")?.addEventListener("click", (e) => {
-  e.stopPropagation(); // prevent outside click closing
+  e.stopPropagation(); // prevent menu click from closing
 });
 
-// ===== Placeholder Menu Features =====
+// ===== Placeholder Chat Options =====
 function blockUser()     { alert("🚫 Block user feature coming soon."); }
 function viewMedia()     { alert("🖼️ View media feature coming soon."); }
 function exportChat()    { alert("📁 Export chat feature coming soon."); }
 function deleteChat()    { alert("🗑️ Delete chat feature coming soon."); }
 
-// ===== Linkify URLs =====
+// ===== Linkify URLs in Text =====
 function linkifyText(text) {
   return text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="link-text">$1</a>');
 }
 
-// ===== Swipe Detection =====
+// ===== Swipe to Reply Detection =====
 let xDown = null;
 
 function handleTouchStart(evt) {
@@ -1477,27 +1486,34 @@ function handleTouchMove(evt) {
   }
 }
 
-// ===== Reply Preview =====
-function cancelReply() {
-  replyingTo = null;
-  const preview = document.getElementById("replyPreview");
-  if (preview) {
-    preview.style.display = "none";
-    preview.querySelector("#replyText").textContent = "";
-  }
-}
-
+// ===== Handle Swipe to Reply =====
 function handleSwipeToReply(msg, text) {
   replyingTo = { msgId: msg.id, text };
+  const replyBox = document.getElementById("replyPreview");
   document.getElementById("replyText").textContent =
     text.slice(0, 50) + (text.length > 50 ? "..." : "");
-  document.getElementById("replyPreview").style.display = "flex";
+  replyBox.style.display = "flex";
+
   if (typeof lucide !== "undefined") lucide.createIcons();
 }
 
-// ===== Long Press Menu =====
+function cancelReply() {
+  replyingTo = null;
+  const box = document.getElementById("replyPreview");
+  if (box) {
+    box.style.display = "none";
+    box.querySelector("#replyText").textContent = "";
+  }
+}
+
+// ===== Handle Long Press Options Modal =====
 function handleLongPressMenu(msg, text, isSelf) {
-  selectedMessageForAction = { msg, text };
+  selectedMessageForAction = {
+    id: msg.id,
+    text,
+    isSelf
+  };
+
   const modal = document.getElementById("messageOptionsModal");
   if (!modal) return;
 
@@ -1514,8 +1530,11 @@ function editMessage() {
   if (!selectedMessageForAction) return;
 
   editingMessageData = selectedMessageForAction;
-  document.getElementById("editMessageInput").value = editingMessageData.text;
+
+  const input = document.getElementById("editMessageInput");
+  input.value = editingMessageData.text;
   document.getElementById("editMessageModal").style.display = "flex";
+  input.focus();
 }
 
 function saveEditedMessage() {
@@ -1526,7 +1545,7 @@ function saveEditedMessage() {
   const encrypted = CryptoJS.AES.encrypt(newText, "yourSecretKey").toString();
 
   db.collection("threads").doc(threadIdStr)
-    .collection("messages").doc(editingMessageData.msg.id)
+    .collection("messages").doc(editingMessageData.id)
     .update({
       text: encrypted,
       editedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1543,13 +1562,13 @@ function closeEditModal() {
   document.getElementById("editMessageModal").style.display = "none";
 }
 
-// ===== Delete For Me =====
+// ===== Delete Message (For Me / Everyone) =====
 function deleteForMe() {
   closeOptionsModal();
   if (!selectedMessageForAction) return;
 
   const threadIdStr = threadId(currentUser.uid, currentThreadUser);
-  const msgId = selectedMessageForAction.msg.id;
+  const msgId = selectedMessageForAction.id;
 
   db.collection("threads").doc(threadIdStr)
     .collection("messages").doc(msgId)
@@ -1560,13 +1579,12 @@ function deleteForMe() {
     .catch(console.error);
 }
 
-// ===== Delete For Everyone =====
 function deleteForEveryone() {
   closeOptionsModal();
-  if (!selectedMessageForAction) return;
+  if (!selectedMessageForAction || !selectedMessageForAction.isSelf) return;
 
   const threadIdStr = threadId(currentUser.uid, currentThreadUser);
-  const msgId = selectedMessageForAction.msg.id;
+  const msgId = selectedMessageForAction.id;
 
   const deletedFor = {
     [currentUser.uid]: true,
@@ -1576,7 +1594,7 @@ function deleteForEveryone() {
   db.collection("threads").doc(threadIdStr)
     .collection("messages").doc(msgId)
     .update({
-      text: "", // blank for everyone
+      text: "", // blank out text
       deletedFor,
       deletedBy: currentUser.uid,
       deletedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1585,23 +1603,13 @@ function deleteForEveryone() {
     .catch(console.error);
 }
 
-// ===== Toast Utility =====
-function showToast(message) {
-  const toast = document.getElementById("chatToast");
-  if (!toast) return;
-  toast.textContent = message;
-  toast.classList.add("show");
-  setTimeout(() => {
-    toast.classList.remove("show");
-  }, 1800);
-}
-
-// ===== Modal Open/Close =====
+// ===== Modal Handling =====
 function openOptionsModal() {
   const modal = document.getElementById("messageOptionsModal");
   if (!modal) return;
   modal.classList.remove("hidden");
   modal.addEventListener("click", closeOptionsModal);
+
   if (typeof lucide !== "undefined") lucide.createIcons();
 }
 
@@ -1614,10 +1622,20 @@ function closeOptionsModal(event) {
   }
 }
 
-// ===== Render Friend Chat Card =====
+// ===== Toast Utility =====
+function showToast(message) {
+  const toast = document.getElementById("chatToast");
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 1800);
+}
+
+// ===== Render Chat Card (Safely) =====
 function renderChatCard(chat) {
+  const safeName = chat.name.replace(/'/g, "\\'");
   return `
-    <div class="chat-card" onclick="openThread('${chat.uid}', '${chat.name.replace(/'/g, "\\'")}')">
+    <div class="chat-card" onclick="openThread('${chat.uid}', '${safeName}')">
       <img src="${chat.photo || 'default-avatar.png'}" class="friend-avatar" />
       <div class="details">
         <div class="name">${chat.name}</div>
@@ -1626,7 +1644,7 @@ function renderChatCard(chat) {
       <div class="meta">${chat.timestamp || ""}</div>
     </div>
   `;
-    }
+}
 
 function renderMessage(msg, isOwn) {
   return `
