@@ -1191,37 +1191,54 @@ body.dark .chat-options-horizontal span:hover {
 }
 
 .reply-box {
-  padding: 8px;
-  border-left: 4px solid var(--primary-color, #4fc3f7);
-  background: #f1f1f1;
-  border-radius: 6px;
-  margin: 4px 0;
-  font-size: 13px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  background: var(--card-bg, #f1f1f1);
+  border-left: 4px solid var(--primary, #4CAF50);
+  padding: 6px 10px;
+  border-radius: 6px 6px 0 0;
+  margin: 0 8px;
+  position: relative;
+  animation: slideInReply 0.2s ease;
 }
 
 .reply-box-inner {
   display: flex;
-  flex-direction: column;
-  flex: 1;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
 }
 
 .reply-label {
+  font-size: 13px;
+  color: var(--primary, #4CAF50);
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-weight: 500;
-  color: #333;
 }
 
 .reply-text {
-  font-size: 13px;
-  color: #666;
-  word-break: break-word;
+  flex: 1;
+  font-size: 14px;
+  color: var(--text, #333);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .reply-close {
-  margin-left: 8px;
+  background: transparent;
+  border: none;
   font-size: 16px;
   cursor: pointer;
-  color: #777;
+  color: var(--text-muted, #888);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+@keyframes slideInReply {
+  from { transform: translateX(-12px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+    }
