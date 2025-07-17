@@ -1315,7 +1315,7 @@ async function openThread(uid, name) {
   try {
     const friendDoc = await db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).get();
     if (!friendDoc.exists) {
-      alert("You must be friends to start a chat.");
+      alert("⚠️ You must be friends to start a chat.");
       return;
     }
 
@@ -1331,7 +1331,7 @@ async function openThread(uid, name) {
 
     const threadIdStr = threadId(currentUser.uid, uid);
     const area = document.getElementById("threadMessages");
-    renderedMessageIds = new Set(); // Reset
+    renderedMessageIds = new Set();
 
     if (area && lastThreadId !== threadIdStr) {
       area.innerHTML = "";
@@ -1349,7 +1349,7 @@ async function openThread(uid, name) {
       });
     }
 
-    // Load profile image
+    // Load profile picture
     try {
       const friendUserDoc = await db.collection("users").doc(uid).get();
       if (friendUserDoc.exists) {
@@ -1461,13 +1461,10 @@ async function openThread(uid, name) {
           }
         }
       });
+
   } catch (err) {
     console.error("❌ openThread error:", err);
-    alert("❌ Could not open chat.");
-    .catch(error => {
-  console.error("openThread error:", error);
-  alert("❌ Failed to open chat: " + (error.message || "Unknown error"));
-});
+    alert("❌ Could not open chat: " + (err.message || JSON.stringify(err)));
   }
 }
 
