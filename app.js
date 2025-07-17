@@ -1339,7 +1339,7 @@ function handleTouchMove(e) {
 }
 
 function handleSwipeToReply(msg, decrypted) {
-  const deltaX = touchStartX - touchMoveX;
+  const deltaX = touchMoveX - touchStartX;
   if (deltaX > 35 && deltaX < 150) {
     const wrapper = event.target.closest(".message-bubble-wrapper");
     if (wrapper) {
@@ -1348,7 +1348,7 @@ function handleSwipeToReply(msg, decrypted) {
 
       replyingTo = {
         msgId: msg.id,
-        text: decrypted.slice(0, 120)
+        text: decrypted.slice(0, 120),
       };
 
       const replyBox = document.getElementById("replyPreview");
@@ -1356,11 +1356,11 @@ function handleSwipeToReply(msg, decrypted) {
         replyBox.innerHTML = `
           <div class="reply-box-inner">
             <span class="reply-label">
-              <i data-lucide="corner-up-left"></i> Replying to
+              <i data-lucide="corner-up-left" style="width:14px;height:14px;"></i> Replying to
             </span>
             <div class="reply-text">${escapeHtml(replyingTo.text)}</div>
             <button class="reply-close" onclick="cancelReply()" aria-label="Cancel reply">
-              <i data-lucide="x"></i>
+              <i data-lucide="x" style="width:14px;height:14px;"></i>
             </button>
           </div>
         `;
@@ -1371,6 +1371,29 @@ function handleSwipeToReply(msg, decrypted) {
       const input = document.getElementById("threadInput");
       if (input) input.focus();
     }
+  }
+}
+
+function scrollToBottomThread(smooth = false) {
+  const area = document.getElementById("threadMessages");
+  if (area) {
+    area.scrollTo({ top: area.scrollHeight, behavior: smooth ? "smooth" : "auto" });
+  }
+}
+
+function extractFirstURL(text) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const match = text.match(urlRegex);
+  return match ? match[0] : null;
+}
+
+async function fetchLinkPreview(url) {
+  try {
+    const res = await fetch(`https://api.linkpreview.net/?key=your_api_key&q=${encodeURIComponent(url)}`);
+    return await res.json();
+  } catch (e) {
+    console.warn("Preview fetch failed:", e);
+    return null;
   }
 }
 
@@ -1419,7 +1442,7 @@ async function openThread(uid, name) {
       lastThreadId = threadIdStr;
     }
 
-    setTimeout(() => scrollToBottomThread(true), 150);
+    setTimeout(() => scrollToBottomThread(true), 200);
 
     area.onscroll = () => {
       sessionStorage.setItem("threadScroll_" + threadIdStr, area.scrollTop);
@@ -1466,12 +1489,12 @@ async function openThread(uid, name) {
 
     unsubscribeThread = db.collection("threads").doc(threadIdStr)
       .collection("messages").orderBy("timestamp")
-      .onSnapshot(snapshot => {
+      .onSnapshot(async snapshot => {
         if (!area) return;
 
         const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
 
-        snapshot.docChanges().forEach(change => {
+        for (const change of snapshot.docChanges()) {
           const msgDoc = change.doc;
           const msg = msgDoc.data();
           msg.id = msgDoc.id;
@@ -1481,7 +1504,7 @@ async function openThread(uid, name) {
           const old = area.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`);
           if (old?.parentElement) old.parentElement.remove();
 
-          if (msg.deletedFor?.[currentUser.uid]) return;
+          if (msg.deletedFor?.[currentUser.uid]) continue;
 
           let decrypted = "";
           let isDeleted = false;
@@ -1509,17 +1532,31 @@ async function openThread(uid, name) {
           bubble.className = "message-bubble " + (isSelf ? "right" : "left");
           bubble.dataset.msgId = msg.id;
 
-          const textPreview = decrypted.length > 300
-            ? `<span class="msg-preview">${escapeHtml(decrypted.slice(0, 300))}...</span><span class="show-more" onclick="this.previousElementSibling.textContent='${escapeHtml(decrypted)}'; this.remove();">Show more</span>`
-            : `<span class="msg-preview">${linkifyText(escapeHtml(decrypted))}</span>`;
-
           const replyHtml = msg.replyTo && !isDeleted
             ? `<div class="reply-to"><i data-lucide="corner-up-left"></i> ${escapeHtml(msg.replyTo.text || "")}</div>`
             : "";
 
+          const url = extractFirstURL(decrypted);
+          let linkPreviewHTML = "";
+          if (url) {
+            const preview = await fetchLinkPreview(url);
+            if (preview?.title || preview?.image) {
+              linkPreviewHTML = `
+                <div class="link-preview">
+                  ${preview.image ? `<img src="${preview.image}" alt="Preview" class="preview-img">` : ""}
+                  <div class="preview-text">
+                    <div class="preview-title">${escapeHtml(preview.title || "")}</div>
+                    <div class="preview-url">${url}</div>
+                  </div>
+                </div>
+              `;
+            }
+          }
+
+          const textPreview = `<span class="msg-preview">${linkifyText(escapeHtml(decrypted))}</span>${linkPreviewHTML}`;
+
           const meta = `
             <span class="msg-time">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</span>
-            ${msg.edited ? `<span class="edited-tag">(edited)</span>` : ""}
             ${isSelf && !isDeleted ? '<i data-lucide="check-check" class="tick-icon tick-sent"></i>' : ""}
           `;
 
@@ -1532,18 +1569,14 @@ async function openThread(uid, name) {
           `;
 
           if (!isDeleted) {
+            bubble.addEventListener("touchstart", handleTouchStart);
+            bubble.addEventListener("touchmove", handleTouchMove);
+            bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted));
             if (isSelf) {
               bubble.addEventListener("contextmenu", e => {
                 e.preventDefault();
                 handleLongPressMenu(msg, decrypted, true);
               });
-              bubble.addEventListener("touchstart", handleTouchStart);
-              bubble.addEventListener("touchmove", handleTouchMove);
-              bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted));
-            } else {
-              bubble.addEventListener("touchstart", handleTouchStart);
-              bubble.addEventListener("touchmove", handleTouchMove);
-              bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted));
             }
           }
 
@@ -1554,10 +1587,9 @@ async function openThread(uid, name) {
             db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
               .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) }).catch(() => {});
           }
-        });
+        }
 
         if (typeof lucide !== "undefined") lucide.createIcons();
-
         if (isNearBottom) {
           setTimeout(() => scrollToBottomThread(true), 100);
         }
