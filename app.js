@@ -1581,13 +1581,22 @@ function handleTouchMove(evt) {
 
 // Long press modal
 let selectedMessageForAction = null;
+
 function handleLongPressMenu(msg, text, isSelf) {
   if (!isSelf) return alert("⚠️ You can only edit or delete your own messages.");
   selectedMessageForAction = { msg, text };
+
   const modal = document.getElementById("messageOptionsModal");
-  modal.querySelector('[onclick="editMessage()"]').style.display = "flex";
-  modal.querySelector('[onclick="deleteForMe()"]').style.display = "flex";
-  modal.querySelector('[onclick="deleteForEveryone()"]').style.display = "flex";
+  if (!modal) return;
+
+  const editBtn = modal.querySelector('[onclick="editMessage()"]');
+  const deleteMeBtn = modal.querySelector('[onclick="deleteForMe()"]');
+  const deleteEveryoneBtn = modal.querySelector('[onclick="deleteForEveryone()"]');
+
+  if (editBtn) editBtn.style.display = "flex";
+  if (deleteMeBtn) deleteMeBtn.style.display = "flex";
+  if (deleteEveryoneBtn) deleteEveryoneBtn.style.display = "flex";
+
   openOptionsModal();
 }
 
@@ -1606,6 +1615,25 @@ function closeOptionsModal(event) {
     modal.classList.add("hidden");
     modal.removeEventListener("click", closeOptionsModal);
   }
+}
+
+function renderMessage(msg, isOwn) {
+  let decrypted = "[Encrypted]";
+  try {
+    decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+    if (!decrypted) decrypted = "[Encrypted]";
+  } catch (e) {
+    decrypted = "[Error decoding]";
+  }
+
+  const escaped = escapeHtml(decrypted);
+  return `
+    <div class="message-bubble ${isOwn ? 'right' : 'left'}" 
+         oncontextmenu="handleLongPressMenu(${JSON.stringify(msg)}, \`${escaped}\`, ${isOwn}); return false;">
+      <span class="msg-text">${linkifyText(escaped)}</span>
+      <span class="msg-meta">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</span>
+    </div>
+  `;
 }
 
 // Edit message modal
@@ -1772,16 +1800,6 @@ console.log("Thread to:", currentThreadUser, "Text:", input.value);
     });
 }
 
-function renderMessage(msg, isOwn) {
-  const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
-  const escaped = escapeHtml(decrypted);
-  return `
-    <div class="message-bubble ${isOwn ? 'right' : 'left'}">
-      <span class="msg-text">${linkifyText(escaped)}</span>
-      <span class="msg-meta">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</span>
-    </div>
-  `;
-}
 
 function handleThreadKey(event) {
   if (event.key === "Enter" && !event.shiftKey) {
