@@ -440,7 +440,7 @@ function viewUserProfile(uid) {
 
 // ===== Contact Support Shortcut =====
 function contactSupport() {
-  alert("Contact us at: "moneythepro7@gmail.com");
+  alert("Contact us at: moneythepro7@gmail.com");
 }
 
 // ===== Logout & Reset App =====
@@ -2198,16 +2198,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ✅ Adjust thread view height
-  adjustThreadLayout();
+adjustThreadLayout();
 
-  // ✅ Thread input scroll
-  const input = document.getElementById("threadInput");
-  if (input) {
-    input.addEventListener("focus", () => {
-      setTimeout(() => scrollToBottomThread(true), 300);
-    });
-  }
-});
+// ✅ Thread input scroll
+const input = document.getElementById("threadInput");
+if (input) {
+  input.addEventListener("focus", () => {
+    setTimeout(() => scrollToBottomThread(true), 300);
+  });
+}
+  
 
 // ✅ Viewport resize: mobile keyboard, rotation
 window.addEventListener("resize", () => {
