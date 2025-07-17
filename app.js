@@ -1141,36 +1141,25 @@ function threadId(a, b) {
 // ===== GLOBALS =====
 let replyingTo = null;
 let lastThreadId = null;
-const renderedMessageIds = new Set();
 
 async function openThread(uid, name) {
   if (!currentUser || !uid) return;
 
-  // Step 1: Verify friendship
   const friendDoc = await db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).get();
-  if (!friendDoc.exists) {
-    alert("You must be friends to start a chat.");
-    return;
-  }
+  if (!friendDoc.exists) return alert("You must be friends to start a chat.");
 
-  // Step 2: Set up UI
   switchTab("threadView");
-  document.getElementById("threadWithName").textContent =
-    typeof name === "string" ? name : (name?.username || "Chat");
-
+  document.getElementById("threadWithName").textContent = typeof name === "string" ? name : (name?.username || "Chat");
   document.getElementById("chatOptionsMenu").style.display = "none";
-  const groupInfo = document.querySelector(".group-info");
-  if (groupInfo) groupInfo.style.display = "none";
 
   currentThreadUser = uid;
   currentRoom = null;
+
   const threadIdStr = threadId(currentUser.uid, uid);
   const area = document.getElementById("threadMessages");
 
-  // Step 3: Clear previous thread content
   if (area && lastThreadId !== threadIdStr) {
     area.innerHTML = "";
-    renderedMessageIds.clear();
     lastThreadId = threadIdStr;
 
     const savedScroll = sessionStorage.getItem("threadScroll_" + threadIdStr);
@@ -1183,23 +1172,18 @@ async function openThread(uid, name) {
     });
   }
 
-  // Step 4: Load friend's profile/avatar
+  // Load avatar
   try {
     const friendUserDoc = await db.collection("users").doc(uid).get();
     if (friendUserDoc.exists) {
       const user = friendUserDoc.data();
       const headerImg = document.getElementById("chatProfilePic");
       if (headerImg) {
-        headerImg.src =
-          user.avatarBase64 || user.photoURL ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+        headerImg.src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
       }
     }
-  } catch (e) {
-    console.warn("⚠️ Failed to load user avatar", e);
-  }
+  } catch {}
 
-  // Step 5: Set up listeners
   if (unsubscribeThread) unsubscribeThread();
   if (unsubscribeTyping) unsubscribeTyping();
 
@@ -1212,7 +1196,6 @@ async function openThread(uid, name) {
   db.collection("users").doc(uid).onSnapshot(doc => {
     const data = doc.data();
     const status = document.getElementById("chatStatus");
-
     if (data.typingFor === currentUser.uid) {
       status.textContent = "Typing...";
     } else if (data.status === "online") {
@@ -1224,13 +1207,12 @@ async function openThread(uid, name) {
     }
   });
 
-  // Step 6: Watch scroll height and auto-scroll
   const resizeObserver = new ResizeObserver(() => {
     setTimeout(() => scrollToBottomThread(true), 60);
   });
   if (area) resizeObserver.observe(area);
 
-  // Step 7: Message listener
+  // 👇 LIVE listener with full rerendering
   unsubscribeThread = db.collection("threads").doc(threadIdStr)
     .collection("messages").orderBy("timestamp")
     .onSnapshot(async snapshot => {
@@ -1239,22 +1221,18 @@ async function openThread(uid, name) {
       const prevScroll = area.scrollTop;
       const prevHeight = area.scrollHeight;
 
-      for (const doc of snapshot.docChanges()) {
-        if (doc.type === "removed") continue;
+      area.innerHTML = "";
 
-        const msgDoc = doc.doc;
-        const msg = msgDoc.data();
-        msg.id = msgDoc.id;
-
-        if (renderedMessageIds.has(msg.id)) continue;
-        renderedMessageIds.add(msg.id);
+      for (const doc of snapshot.docs) {
+        const msg = doc.data();
+        msg.id = doc.id;
 
         const isSelf = msg.from === currentUser.uid;
-        const isDeletedForYou = msg.deletedFor?.[currentUser.uid];
-        const isDeletedForEveryone = msg.text === "";
-
         const wrapper = document.createElement("div");
         wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
+
+        const isDeletedForYou = msg.deletedFor?.[currentUser.uid];
+        const isDeletedForEveryone = msg.text === "";
 
         if (isDeletedForYou || isDeletedForEveryone) {
           const bubble = document.createElement("div");
@@ -1277,8 +1255,7 @@ async function openThread(uid, name) {
         try {
           const userDoc = await db.collection("users").doc(msg.from).get();
           const user = userDoc.data();
-          avatarImg.src = user?.avatarBase64 || user?.photoURL ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.username || "User")}`;
+          avatarImg.src = user?.avatarBase64 || user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.username || "User")}`;
         } catch {
           avatarImg.src = "default-avatar.png";
         }
@@ -1307,7 +1284,6 @@ async function openThread(uid, name) {
           </div>`;
         bubble.dataset.msgId = msg.id;
 
-        // Add gesture handlers
         bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
         bubble.addEventListener("touchmove", handleTouchMove, { passive: true });
         bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted), { passive: true });
@@ -1323,7 +1299,6 @@ async function openThread(uid, name) {
 
         area.appendChild(wrapper);
 
-        // Mark as seen
         if (!msg.seenBy?.includes(currentUser.uid)) {
           db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
             .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
@@ -1346,14 +1321,12 @@ async function openThread(uid, name) {
       }
     });
 
-  // Scroll to bottom if no previous scroll state
   setTimeout(() => {
     if (!sessionStorage.getItem("threadScroll_" + threadIdStr)) {
       scrollToBottomThread(false);
     }
-  }, 120);
+  }, 100);
 
-  // Bind input handlers (no flicker)
   setTimeout(() => initThreadInputEvents(), 0);
 }
 
