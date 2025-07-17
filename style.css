@@ -1031,28 +1031,62 @@ body.dark .chat-options-horizontal span:hover {
   opacity: 1;
 }
 
-.reply-preview.hidden {
-  display: none;
-}
-
+/* 🔁 Reply Preview in Input */
+#replyPreview,
 .reply-preview {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: #f1f1f1;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  margin-right: 4px;
+  justify-content: space-between;
+  background: var(--chat-bg-light, #f0f0f0);
+  border-left: 4px solid var(--accent, #25d366);
+  padding: 6px 10px;
+  margin: 6px 0;
+  border-radius: 8px;
+  font-size: 13px;
+  max-width: 100%;
 }
-
+.reply-preview.hidden {
+  display: none;
+}
+.reply-box-inner,
+.reply-preview .reply-box-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: space-between;
+}
+.reply-label {
+  color: #25d366;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+.reply-text {
+  flex: 1;
+  font-size: 13px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.reply-close,
 .cancel-reply-btn {
   background: none;
   border: none;
-  font-size: 1rem;
   cursor: pointer;
+  padding: 2px;
+  margin-left: 8px;
+  color: #888;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* 🗨️ Chat input bar */
 .chat-input-bar {
   display: flex;
   align-items: center;
@@ -1062,14 +1096,51 @@ body.dark .chat-options-horizontal span:hover {
   background: #fff;
 }
 
-.reply-preview i {
-  cursor: pointer;
-  width: 18px;
-  height: 18px;
+/* 🔗 Link Preview Block */
+.link-preview {
+  display: flex;
+  flex-direction: row;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 6px;
+  background: #fff;
+  font-size: 13px;
 }
-.msg-reply-preview {
+.preview-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.preview-info {
+  padding: 6px 8px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.preview-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: #222;
+  line-height: 1.2;
+  max-height: 2.4em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.preview-url {
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
+  word-break: break-all;
+}
+
+/* 🔁 Message Reply Preview (inside bubble) */
+.msg-reply-preview,
+.reply-to {
   background: #e9e9e9;
-  border-left: 3px solid #007bff;
+  border-left: 3px solid var(--primary-color, #4fc3f7);
   padding: 4px 6px;
   margin-bottom: 4px;
   font-size: 12px;
@@ -1079,25 +1150,27 @@ body.dark .chat-options-horizontal span:hover {
   align-items: center;
   gap: 6px;
 }
+
+/* ✨ Reply highlight flash */
 .reply-highlight {
   animation: highlightFlash 2s ease;
-  background-color: #fff59d !important; /* yellow flash */
+  background-color: #fff59d !important;
   transition: background-color 1s ease;
 }
-
 @keyframes highlightFlash {
   0%   { background-color: #fff59d; }
   50%  { background-color: #fff9c4; }
   100% { background-color: inherit; }
 }
 
+/* ❌ Deleted message */
 .msg-deleted {
   color: gray;
   font-style: italic;
   opacity: 0.7;
 }
 
-/* ✅ Tick icons for sent/delivered */
+/* ✅ Tick icons */
 .tick-icon {
   width: 14px;
   height: 14px;
@@ -1109,10 +1182,10 @@ body.dark .chat-options-horizontal span:hover {
   color: #999;
 }
 .tick-delivered {
-  color: #4fc3f7; /* Light blue for delivered */
+  color: #4fc3f7;
 }
 
-/* ✅ Edited label */
+/* ✏️ Edited label */
 .edited-tag {
   font-size: 10px;
   color: #999;
@@ -1120,18 +1193,7 @@ body.dark .chat-options-horizontal span:hover {
   vertical-align: middle;
 }
 
-/* ✅ Swipe to reply preview */
-.reply-to {
-  background-color: rgba(0, 0, 0, 0.05);
-  border-left: 3px solid var(--primary-color, #4fc3f7);
-  padding: 4px 8px;
-  margin-bottom: 4px;
-  font-size: 13px;
-  color: #555;
-  border-radius: 4px;
-}
-
-/* ✅ "Show more" link */
+/* ☝️ Show more for long messages */
 .show-more {
   display: inline-block;
   color: var(--primary-color, #4fc3f7);
@@ -1141,7 +1203,7 @@ body.dark .chat-options-horizontal span:hover {
   font-weight: 500;
 }
 
-/* ✅ Clickable links in messages */
+/* 🔗 Hyperlink style inside message */
 .msg-text a {
   color: #2979ff;
   text-decoration: underline;
@@ -1151,7 +1213,7 @@ body.dark .chat-options-horizontal span:hover {
   text-decoration: underline dotted;
 }
 
-/* ✅ Small meta area */
+/* 🕒 Meta info under message */
 .msg-meta {
   font-size: 11px;
   color: #999;
@@ -1161,35 +1223,48 @@ body.dark .chat-options-horizontal span:hover {
   margin-top: 4px;
 }
 
-/* ✅ Preview limit and layout */
+/* 📜 Message text preview */
 .msg-preview {
   display: inline;
   white-space: pre-wrap;
   word-break: break-word;
 }
-
-/* ✅ Ensure bubble doesn't overflow on long links or words */
-.message-bubble {
-  max-width: 90%;
+.msg-text {
   word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
 }
 
-/* Wrapper for swipe gesture */
+/* 💬 Message bubble styles */
+.message-bubble {
+  position: relative;
+  padding: 6px 10px;
+  border-radius: 12px;
+  max-width: 80%;
+  background-color: var(--msg-bg, #e1ffc7);
+  margin: 4px 0;
+  font-size: 14px;
+  will-change: transform;
+}
+.message-bubble.left {
+  background-color: #fff;
+  align-self: flex-start;
+}
+.message-bubble.right {
+  background-color: #dcf8c6;
+  align-self: flex-end;
+}
+
+/* 👆 Bubble container swipe wrapper */
 .message-bubble-wrapper {
   transition: transform 0.25s ease;
   position: relative;
 }
-
-/* When swiped */
 .message-bubble-wrapper.swiped {
-  transform: translateX(-50px);
+  transform: translateX(12px);
 }
 
-/* Prevent swipe from affecting layout */
-.message-bubble {
-  will-change: transform;
-}
-
+/* 📦 Reply preview input animation */
 .reply-box {
   display: flex;
   flex-direction: column;
@@ -1201,44 +1276,7 @@ body.dark .chat-options-horizontal span:hover {
   position: relative;
   animation: slideInReply 0.2s ease;
 }
-
-.reply-box-inner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: space-between;
-}
-
-.reply-label {
-  font-size: 13px;
-  color: var(--primary, #4CAF50);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-weight: 500;
-}
-
-.reply-text {
-  flex: 1;
-  font-size: 14px;
-  color: var(--text, #333);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.reply-close {
-  background: transparent;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-  color: var(--text-muted, #888);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 @keyframes slideInReply {
   from { transform: translateX(-12px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
-    }
+}
