@@ -882,25 +882,6 @@ function listenToTyping(targetId, context) {
   });
 }
 
-function openChatMenu() {
-  const menu = document.getElementById("chatOptionsMenu");
-  if (!menu) return;
-
-  const isVisible = menu.style.display === "flex";
-  menu.style.display = isVisible ? "none" : "flex";
-  document.addEventListener("click", (e) => {
-  const menu = document.getElementById("chatOptionsMenu");
-  if (!menu) return;
-
-  const toggleBtn = document.getElementById("chatMenuToggle"); // your trigger
-  if (!toggleBtn || toggleBtn.contains(e.target)) return;
-
-  if (!menu.contains(e.target)) {
-    menu.style.display = "none";
-  }
-});
-}
-
 function escapeHtml(text) {
   return text?.replace(/[&<>"']/g, m => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
