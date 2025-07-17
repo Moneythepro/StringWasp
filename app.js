@@ -1138,6 +1138,7 @@ function threadId(a, b) {
 }
 
 // ===== DM: Open Thread Chat =====
+// ===== DM: Open Thread Chat =====
 let renderedMessageIds = new Set();
 let lastThreadId = null;
 
@@ -1165,6 +1166,7 @@ function openThread(uid, name) {
       const threadIdStr = threadId(currentUser.uid, uid);
       const area = document.getElementById("threadMessages");
 
+      // ✅ Only clear if switching threads
       if (area && lastThreadId !== threadIdStr) {
         area.innerHTML = "";
         renderedMessageIds.clear();
@@ -1331,7 +1333,7 @@ function openThread(uid, name) {
         }
       }, 150);
 
-      // ✅ Attach input/send events after thread UI is ready
+      // ✅ Input bindings after UI loads
       setTimeout(() => initThreadInputEvents(), 0);
     })
     .catch(err => {
@@ -1362,27 +1364,75 @@ function threadInputHandler(e) {
 }
 
 function sendBtnHandler() {
+  const input = document.getElementById("threadInput");
+  if (!input) return;
+
   const event = new KeyboardEvent("keydown", {
     key: "Enter",
     code: "Enter",
     bubbles: true
   });
-  document.getElementById("threadInput")?.dispatchEvent(event);
+  input.dispatchEvent(event);
 }
 
+// ===== Send Thread Message =====
+let replyingTo = null;
 
-// ✅ Detect keyboard open/close
-let initialViewportHeight = window.innerHeight;
+function sendThreadMessage() {
+  const input = document.getElementById("threadInput");
+  const text = input?.value.trim();
+  if (!text || !currentThreadUser) return;
 
-window.addEventListener("resize", () => {
-  const isKeyboardOpen = window.innerHeight < initialViewportHeight - 150;
-  document.body.classList.toggle("keyboard-open", isKeyboardOpen);
+  const fromName = document.getElementById("usernameDisplay")?.textContent || "User";
+  const toName = document.getElementById("threadWithName")?.textContent || "Friend";
+  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+  const threadRef = db.collection("threads").doc(threadIdStr);
 
-  // Scroll to bottom when keyboard opens
-  if (isKeyboardOpen) {
-    setTimeout(() => scrollToBottomThread(true), 100);
+  const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
+
+  const message = {
+    text: encryptedText,
+    from: currentUser.uid,
+    fromName,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    seenBy: [currentUser.uid]
+  };
+
+  if (replyingTo?.msgId && replyingTo?.text) {
+    message.replyTo = {
+      msgId: replyingTo.msgId,
+      text: replyingTo.text
+    };
   }
-});
+
+  input.value = "";
+  cancelReply();
+
+  threadRef.collection("messages").add(message)
+    .then(() => {
+      threadRef.set({
+        participants: [currentUser.uid, currentThreadUser],
+        names: { [currentUser.uid]: fromName, [currentThreadUser]: toName },
+        lastMessage: text,
+        unread: {
+          [currentUser.uid]: 0,
+          [currentThreadUser]: firebase.firestore.FieldValue.increment(1)
+        },
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      // ✅ Delayed refocus to prevent keyboard flicker
+      requestAnimationFrame(() => {
+        setTimeout(() => input.focus({ preventScroll: true }), 100);
+      });
+
+      setTimeout(() => scrollToBottomThread(true), 120);
+    })
+    .catch(err => {
+      console.error("❌ Send failed:", err.message || err);
+      alert("❌ Failed to send message.");
+    });
+}
 
 function toggleChatOptions(event) {
   event.stopPropagation(); // prevent closing immediately on click
@@ -1635,68 +1685,6 @@ function handleSwipeToReply(msg, text) {
   if (typeof lucide !== "undefined") lucide.createIcons();
 }
 
-function sendThreadMessage() {
-  const input = document.getElementById("threadInput");
-  const text = input?.value.trim();
-  if (!text || !currentThreadUser) return;
-
-  const fromName = document.getElementById("usernameDisplay")?.textContent || "User";
-  const toName = document.getElementById("threadWithName")?.textContent || "Friend";
-  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
-  const threadRef = db.collection("threads").doc(threadIdStr);
-
-  const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
-
-  const message = {
-    text: encryptedText,
-    from: currentUser.uid,
-    fromName,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    seenBy: [currentUser.uid]
-  };
-
-  if (replyingTo?.msgId && replyingTo?.text) {
-    message.replyTo = {
-      msgId: replyingTo.msgId,
-      text: replyingTo.text
-    };
-  }
-
-  // Clear input immediately but avoid layout shifts
-  input.value = "";
-  cancelReply();
-
-  // Do NOT focus yet – wait for layout to settle first
-  threadRef.collection("messages").add(message)
-    .then(() => {
-      threadRef.set({
-        participants: [currentUser.uid, currentThreadUser],
-        names: { [currentUser.uid]: fromName, [currentThreadUser]: toName },
-        lastMessage: text,
-        unread: {
-          [currentUser.uid]: 0,
-          [currentThreadUser]: firebase.firestore.FieldValue.increment(1)
-        },
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-
-      // Delay focus to avoid flicker (keyboard stays open)
-      requestAnimationFrame(() => {
-        setTimeout(() => {
-          input.focus({ preventScroll: true }); // ✅ Keeps keyboard without jumping
-        }, 100);
-      });
-
-      // Delay scroll until after keyboard is confirmed open
-      setTimeout(() => {
-        scrollToBottomThread(true);
-      }, 120);
-    })
-    .catch(err => {
-      console.error("❌ Send failed:", err.message || err);
-      alert("❌ Failed to send message.");
-    });
-}
 
 function renderMessage(msg, isOwn) {
   return `
