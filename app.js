@@ -1138,192 +1138,144 @@ function threadId(a, b) {
 }
 
 // ===== DM: Open Thread Chat =====
-function openThread(uid, name) {
+async function openThread(uid, name) {
   if (!currentUser || !uid) return;
 
-  db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).get()
-    .then(async friendDoc => {
-      if (!friendDoc.exists) return alert("You must be friends to start a chat.");
+  const friendDoc = await db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).get();
+  if (!friendDoc.exists) return alert("You must be friends to start a chat.");
 
-      switchTab("threadView");
-      document.getElementById("threadWithName").textContent = name || "Chat";
-      document.getElementById("chatOptionsMenu").style.display = "none";
-      ["roomDropdown", "groupInfoButton"].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = "none";
-      });
+  switchTab("threadView");
+  document.getElementById("threadWithName").textContent = typeof name === "string" ? name : (name?.username || "Chat");
+  document.getElementById("chatOptionsMenu").style.display = "none";
 
-      const groupInfo = document.querySelector(".group-info");
-      if (groupInfo) groupInfo.style.display = "none";
+  currentThreadUser = uid;
+  currentRoom = null;
 
-      currentThreadUser = uid;
-      currentRoom = null;
+  const threadIdStr = threadId(currentUser.uid, uid);
+  const area = document.getElementById("threadMessages");
 
-      const threadIdStr = threadId(currentUser.uid, uid);
-      const area = document.getElementById("threadMessages");
+  renderedMessageIds = new Set(); // ✅ Reset rendered state
 
-      if (area) {
-        area.innerHTML = "";
-        const savedScroll = sessionStorage.getItem("threadScroll_" + threadIdStr);
-        if (savedScroll) {
-          setTimeout(() => area.scrollTop = parseInt(savedScroll, 10), 100);
+  if (area && lastThreadId !== threadIdStr) {
+    area.innerHTML = "";
+    lastThreadId = threadIdStr;
+
+    const savedScroll = sessionStorage.getItem("threadScroll_" + threadIdStr);
+    if (savedScroll) {
+      setTimeout(() => (area.scrollTop = parseInt(savedScroll, 10)), 50);
+    }
+
+    area.addEventListener("scroll", () => {
+      sessionStorage.setItem("threadScroll_" + threadIdStr, area.scrollTop);
+    });
+  }
+
+  // Load avatar
+  try {
+    const friendUserDoc = await db.collection("users").doc(uid).get();
+    if (friendUserDoc.exists) {
+      const user = friendUserDoc.data();
+      const headerImg = document.getElementById("chatProfilePic");
+      if (headerImg) {
+        headerImg.src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+      }
+    }
+  } catch {}
+
+  if (unsubscribeThread) unsubscribeThread();
+  if (unsubscribeTyping) unsubscribeTyping();
+
+  listenToTyping(threadIdStr, "thread");
+
+  db.collection("threads").doc(threadIdStr).set({
+    unread: { [currentUser.uid]: 0 }
+  }, { merge: true });
+
+  db.collection("users").doc(uid).onSnapshot(doc => {
+    const data = doc.data();
+    const status = document.getElementById("chatStatus");
+    if (data.typingFor === currentUser.uid) {
+      status.textContent = "Typing...";
+    } else if (data.status === "online") {
+      status.textContent = "Online";
+    } else if (data.lastSeen?.toDate) {
+      status.textContent = "Last seen " + timeSince(data.lastSeen.toDate());
+    } else {
+      status.textContent = "Offline";
+    }
+  });
+
+  const resizeObserver = new ResizeObserver(() => {
+    setTimeout(() => scrollToBottomThread(true), 60);
+  });
+  if (area) resizeObserver.observe(area);
+
+  // 👇 LIVE listener with append-only render
+  unsubscribeThread = db.collection("threads").doc(threadIdStr)
+    .collection("messages")
+    .orderBy("timestamp")
+    .onSnapshot(async snapshot => {
+      if (!area) return;
+
+      const prevScroll = area.scrollTop;
+      const prevHeight = area.scrollHeight;
+
+      const isNearBottom = prevHeight - prevScroll - area.clientHeight < 120;
+
+      for (const doc of snapshot.docChanges()) {
+        const msgDoc = doc.doc;
+        const msg = msgDoc.data();
+        msg.id = msgDoc.id;
+
+        if (!msg.text || typeof msg.text !== "string") msg.text = "";
+
+        if (renderedMessageIds.has(msg.id)) continue;
+        renderedMessageIds.add(msg.id);
+
+        const isSelf = msg.from === currentUser.uid;
+
+        let decrypted = "";
+        try {
+          decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+        } catch {
+          decrypted = "[Failed to decrypt]";
         }
-        area.addEventListener("scroll", () => {
-          sessionStorage.setItem("threadScroll_" + threadIdStr, area.scrollTop);
-        });
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
+
+        const bubble = document.createElement("div");
+        bubble.className = "message-bubble " + (isSelf ? "right" : "left");
+        bubble.dataset.msgId = msg.id;
+        bubble.innerHTML = `
+          <div class="msg-content">
+            <span class="msg-text">${escapeHtml(decrypted)}</span>
+            <span class="msg-meta">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</span>
+          </div>
+        `;
+
+        wrapper.appendChild(bubble);
+        area.appendChild(wrapper);
+
+        if (!msg.seenBy?.includes(currentUser.uid)) {
+          db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
+            .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
+            .catch(() => {});
+        }
       }
 
-      // ✅ FIXED: renamed this variable to avoid conflict
-      const friendUserDoc = await db.collection("users").doc(uid).get();
-      if (friendUserDoc.exists) {
-        const user = friendUserDoc.data();
-        const headerImg = document.getElementById("threadHeaderAvatar");
-        if (headerImg) {
-          headerImg.src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+      if (typeof lucide !== "undefined") lucide.createIcons();
+
+      if (isNearBottom) {
+        requestAnimationFrame(() => scrollToBottomThread(true));
+      } else {
+        const toast = document.getElementById("chatToast");
+        if (toast) {
+          toast.textContent = "New message received";
+          toast.style.display = "block";
+          setTimeout(() => (toast.style.display = "none"), 2000);
         }
       }
-
-      if (unsubscribeThread) unsubscribeThread();
-      if (unsubscribeTyping) unsubscribeTyping();
-
-      listenToTyping(threadIdStr, "thread");
-
-      db.collection("threads").doc(threadIdStr).set({
-        unread: { [currentUser.uid]: 0 }
-      }, { merge: true });
-
-      db.collection("users").doc(uid).onSnapshot(doc => {
-        const data = doc.data();
-        const status = document.getElementById("chatStatus");
-        if (data.typingFor === currentUser.uid) {
-          status.textContent = "Typing...";
-        } else if (data.status === "online") {
-          status.textContent = "Online";
-        } else if (data.lastSeen?.toDate) {
-          status.textContent = "Last seen " + timeSince(data.lastSeen.toDate());
-        } else {
-          status.textContent = "Offline";
-        }
-      });
-
-      const resizeObserver = new ResizeObserver(() => {
-        setTimeout(() => scrollToBottomThread(true), 80);
-      });
-      if (area) resizeObserver.observe(area);
-
-      unsubscribeThread = db.collection("threads").doc(threadIdStr)
-        .collection("messages").orderBy("timestamp")
-        .onSnapshot(async snapshot => {
-          if (!area) return;
-
-          const prevScroll = area.scrollTop;
-          const prevHeight = area.scrollHeight;
-
-          area.innerHTML = "";
-
-          for (const doc of snapshot.docs) {
-            const msg = doc.data();
-            msg.id = doc.id;
-
-            const isSelf = msg.from === currentUser.uid;
-            const isDeleted = msg.deletedFor?.[currentUser.uid];
-
-            const wrapper = document.createElement("div");
-            wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
-
-            if (isDeleted) {
-              const bubble = document.createElement("div");
-              bubble.className = "message-bubble deleted";
-              bubble.textContent = "This message was deleted";
-              wrapper.appendChild(bubble);
-              area.appendChild(wrapper);
-              continue;
-            }
-
-            let decrypted = "";
-            try {
-              decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
-            } catch {
-              decrypted = "[Failed to decrypt]";
-            }
-
-            const avatarImg = document.createElement("img");
-            avatarImg.className = "msg-avatar-img";
-            try {
-              const userDoc = await db.collection("users").doc(msg.from).get();
-              const user = userDoc.data();
-              avatarImg.src = user?.avatarBase64 || user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.username || "User")}`;
-            } catch {
-              avatarImg.src = "default-avatar.png";
-            }
-
-            const replyHtml = msg.replyTo?.text
-              ? `<div class="msg-reply-preview" onclick="scrollToRepliedMessage('${msg.replyTo.msgId}')">
-                  <i data-lucide="corner-up-left"></i>${escapeHtml(msg.replyTo.text.slice(0, 50))}
-                 </div>` : "";
-
-            const isRead = msg.seenBy?.includes(currentThreadUser);
-            const isDelivered = msg.seenBy?.length > 1;
-            const ticks = isSelf
-              ? `<span class="msg-ticks ${isRead ? 'double' : isDelivered ? 'delivered' : ''}">
-                  <i data-lucide="${isRead || isDelivered ? 'check-check' : 'check'}"></i></span>` : "";
-
-            const bubble = document.createElement("div");
-            bubble.className = "message-bubble " + (isSelf ? "right" : "left") + " animate-fade-in";
-            bubble.innerHTML = `
-              <div class="msg-content">
-                ${replyHtml}
-                <span class="msg-text">${linkifyText(escapeHtml(decrypted))}</span>
-                <span class="msg-meta">
-                  ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}${ticks}
-                </span>
-              </div>`;
-            bubble.dataset.msgId = msg.id;
-
-            bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
-            bubble.addEventListener("touchmove", handleTouchMove, { passive: true });
-            bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted), { passive: true });
-            bubble.addEventListener("contextmenu", (e) => {
-              e.preventDefault();
-              selectedMessageForAction = { msg, text: decrypted };
-              handleLongPressMenu(msg, decrypted, isSelf);
-            });
-
-            isSelf ? (wrapper.appendChild(bubble), wrapper.appendChild(avatarImg))
-                   : (wrapper.appendChild(avatarImg), wrapper.appendChild(bubble));
-            area.appendChild(wrapper);
-
-            if (!msg.seenBy?.includes(currentUser.uid)) {
-              db.collection("threads").doc(threadIdStr).collection("messages").doc(doc.id)
-                .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
-                .catch(console.warn);
-            }
-          }
-
-          if (typeof lucide !== "undefined") lucide.createIcons();
-
-          const isNearBottom = (prevHeight - prevScroll - area.clientHeight) < 120;
-          if (isNearBottom) {
-            requestAnimationFrame(() => scrollToBottomThread(true));
-          } else {
-            const toast = document.getElementById("chatToast");
-            if (toast) {
-              toast.textContent = "New message received";
-              toast.style.display = "block";
-              setTimeout(() => (toast.style.display = "none"), 2000);
-            }
-          }
-        });
-
-      setTimeout(() => {
-        if (!sessionStorage.getItem("threadScroll_" + threadIdStr)) {
-          scrollToBottomThread(false);
-        }
-      }, 150);
-    })
-    .catch(err => {
-      console.error("❌ Friend check failed:", err.message || err);
-      alert("❌ Failed to verify friendship.");
     });
 }
 
@@ -1614,8 +1566,10 @@ function handleSwipeToReply(msg, text) {
 
 function sendThreadMessage() {
   const input = document.getElementById("threadInput");
-  const text = input?.value.trim();
-  if (!text || !currentThreadUser) return;
+  if (!input || !currentThreadUser) return;
+
+  const text = input.value.trim();
+  if (!text) return;
 
   const fromName = document.getElementById("usernameDisplay")?.textContent || "User";
   const toName = document.getElementById("threadWithName")?.textContent || "Friend";
@@ -1641,14 +1595,15 @@ function sendThreadMessage() {
 
   input.value = "";
   cancelReply();
-  setTimeout(() => input.focus(), 30); // smooth keyboard return
 
   threadRef.collection("messages").add(message)
     .then(() => {
-      requestAnimationFrame(() => scrollToBottomThread(true));
       threadRef.set({
         participants: [currentUser.uid, currentThreadUser],
-        names: { [currentUser.uid]: fromName, [currentThreadUser]: toName },
+        names: {
+          [currentUser.uid]: fromName,
+          [currentThreadUser]: toName
+        },
         lastMessage: text,
         unread: {
           [currentUser.uid]: 0,
@@ -1656,6 +1611,15 @@ function sendThreadMessage() {
         },
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
+
+      // ✅ Refocus input without keyboard flicker
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          input.focus({ preventScroll: true });
+        });
+      });
+
+      setTimeout(() => scrollToBottomThread(true), 100);
     })
     .catch(err => {
       console.error("❌ Send failed:", err.message || err);
