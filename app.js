@@ -1334,11 +1334,9 @@ let touchMoveX = 0;
 function handleTouchStart(e) {
   touchStartX = e.touches[0].clientX;
 }
-
 function handleTouchMove(e) {
   touchMoveX = e.touches[0].clientX;
 }
-
 function handleSwipeToReply(msg, decrypted) {
   const deltaX = touchMoveX - touchStartX;
   if (deltaX > 35 && deltaX < 150) {
@@ -1349,19 +1347,19 @@ function handleSwipeToReply(msg, decrypted) {
 
       replyingTo = {
         msgId: msg.id,
-        text: decrypted.slice(0, 120),
+        text: decrypted
       };
 
       const replyBox = document.getElementById("replyPreview");
       if (replyBox) {
         replyBox.innerHTML = `
-          <div class="reply-box-inner">
+          <div class="reply-box-inner" onclick="scrollToReplyMessage('${msg.id}')">
             <span class="reply-label">
               <i data-lucide="corner-up-left" style="width:14px;height:14px;"></i> Replying to
             </span>
-            <div class="reply-text">${escapeHtml(replyingTo.text)}</div>
+            <div class="reply-text clamp-text">${escapeHtml(decrypted)}</div>
             <button class="reply-close" onclick="cancelReply()" aria-label="Cancel reply">
-              <i data-lucide="x" style="width:14px;height:14px;"></i>
+              <i data-lucide="x" style="width:16px;height:16px;"></i>
             </button>
           </div>
         `;
@@ -1374,6 +1372,24 @@ function handleSwipeToReply(msg, decrypted) {
         requestAnimationFrame(() => input.focus({ preventScroll: true }));
       }
     }
+  }
+}
+
+function cancelReply() {
+  replyingTo = null;
+  const box = document.getElementById("replyPreview");
+  if (box) {
+    box.style.display = "none";
+    box.innerHTML = "";
+  }
+}
+
+function scrollToReplyMessage(msgId) {
+  const el = document.querySelector(`.message-bubble[data-msg-id="${msgId}"]`);
+  if (el) {
+    el.classList.add("highlighted-reply");
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => el.classList.remove("highlighted-reply"), 2000);
   }
 }
 
@@ -1861,11 +1877,6 @@ function renderChatCard(chat) {
   `;
 }
 
-function cancelReply() {
-  replyingTo = null;
-  const replyBox = document.getElementById("replyPreview");
-  if (replyBox) replyBox.style.display = "none";
-}
 
 // ===== DM: Send Thread Message with AES Encryption ====
 async function sendThreadMessage() {
@@ -2424,21 +2435,6 @@ function scrollToBottomThread(smooth = true) {
     area.scrollTo({ top: area.scrollHeight, behavior: smooth ? "smooth" : "auto" });
   }
 }
-
-// ✅ Scroll to replied message
-function scrollToRepliedMessage(msgId) {
-  const msgElements = document.querySelectorAll("#threadMessages .message-bubble-wrapper");
-  for (const wrapper of msgElements) {
-    const bubble = wrapper.querySelector(".message-bubble");
-    if (bubble?.dataset?.msgId === msgId) {
-      wrapper.scrollIntoView({ behavior: "smooth", block: "center" });
-      bubble.classList.add("reply-highlight");
-      setTimeout(() => bubble.classList.remove("reply-highlight"), 2000);
-      break;
-    }
-  }
-}
-
 
 // ✅ Toggle theme
 function toggleTheme() {
