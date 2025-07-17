@@ -1512,24 +1512,112 @@ function cancelReply() {
   }
 }
 // ✋ Long press to open minimal modal with options
+// ====== Global Variables ======
 let selectedMessageForAction = null;
+let editingMessageData = null;
 
+// ====== Handle Long Press Menu ======
 function handleLongPressMenu(msg, text, isSelf) {
-  if (!isSelf) {
-    alert("⚠️ You can only edit or delete your own messages.");
-    return;
-  }
-
   selectedMessageForAction = { msg, text };
 
   const modal = document.getElementById("messageOptionsModal");
 
-  // Show/hide options based on permission
-  modal.querySelector('[onclick="editMessage()"]').style.display = "flex";
+  // Show options only if sender
+  modal.querySelector('[onclick="editMessage()"]').style.display = isSelf ? "flex" : "none";
   modal.querySelector('[onclick="deleteForMe()"]').style.display = "flex";
-  modal.querySelector('[onclick="deleteForEveryone()"]').style.display = "flex";
+  modal.querySelector('[onclick="deleteForEveryone()"]').style.display = isSelf ? "flex" : "none";
 
-  openOptionsModal();
+  openOptionsModal(); // Show the modal
+}
+
+// ====== Edit Message ======
+function editMessage() {
+  closeOptionsModal();
+  if (!selectedMessageForAction) return;
+
+  editingMessageData = selectedMessageForAction;
+
+  document.getElementById("editMessageInput").value = editingMessageData.text;
+  document.getElementById("editMessageModal").style.display = "flex";
+}
+
+function saveEditedMessage() {
+  const newText = document.getElementById("editMessageInput").value.trim();
+  if (!newText || !editingMessageData) return;
+
+  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+  const encrypted = CryptoJS.AES.encrypt(newText, "yourSecretKey").toString();
+
+  db.collection("threads").doc(threadIdStr)
+    .collection("messages").doc(editingMessageData.msg.id)
+    .update({
+      text: encrypted,
+      editedAt: firebase.firestore.FieldValue.serverTimestamp()
+    })
+    .then(() => {
+      showToast("✏️ Message edited");
+      closeEditModal();
+    })
+    .catch(console.error);
+}
+
+function closeEditModal() {
+  editingMessageData = null;
+  document.getElementById("editMessageModal").style.display = "none";
+}
+
+// ====== Delete For Me ======
+function deleteForMe() {
+  closeOptionsModal();
+  if (!selectedMessageForAction) return;
+
+  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+  const msgId = selectedMessageForAction.msg.id;
+
+  db.collection("threads").doc(threadIdStr)
+    .collection("messages").doc(msgId)
+    .update({
+      [`deletedFor.${currentUser.uid}`]: true
+    })
+    .then(() => showToast("🗑️ Message deleted for you"))
+    .catch(console.error);
+}
+
+// ====== Delete For Everyone ======
+function deleteForEveryone() {
+  closeOptionsModal();
+  if (!selectedMessageForAction) return;
+
+  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+  const msgId = selectedMessageForAction.msg.id;
+
+  const deletedFor = {
+    [currentUser.uid]: true,
+    [currentThreadUser]: true
+  };
+
+  db.collection("threads").doc(threadIdStr)
+    .collection("messages").doc(msgId)
+    .update({
+      text: "", // optional: clear content
+      deletedFor,
+      deletedBy: currentUser.uid,
+      deletedAt: firebase.firestore.FieldValue.serverTimestamp()
+    })
+    .then(() => showToast("🗑️ Message deleted for everyone"))
+    .catch(console.error);
+}
+
+// ====== Toast Utility ======
+function showToast(message) {
+  const toast = document.getElementById("chatToast");
+  if (!toast) return;
+
+  toast.textContent = message;
+  toast.classList.add("show");
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 1800);
 }
 
 function openOptionsModal() {
@@ -1553,112 +1641,6 @@ function closeOptionsModal(event) {
     modal.removeEventListener("click", closeOptionsModal);
   }
 }
-
-function closeEditModal() {
-  editingMessageData = null;
-  document.getElementById("editMessageModal").style.display = "none";
-}
-
-function saveEditedMessage() {
-  if (!editingMessageData) return;
-  const newText = document.getElementById("editMessageInput").value.trim();
-  if (!newText) return;
-
-  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
-  db.collection("threads").doc(threadIdStr)
-    .collection("messages").doc(editingMessageData.msg.id)
-    .update({
-      text: CryptoJS.AES.encrypt(newText, "yourSecretKey").toString()
-    })
-    .then(() => {
-      showToast("Message edited");
-      closeEditModal();
-    })
-    .catch(console.warn);
-}
-
-function showToast(message) {
-  const toast = document.getElementById("chatToast");
-  if (!toast) return;
-  toast.textContent = message;
-  toast.classList.add("show");
-  setTimeout(() => {
-    toast.classList.remove("show");
-  }, 1800);
-}
-
-let editingMessageData = null;
-
-function editMessage() {
-  closeOptionsModal();
-  if (!selectedMessageForAction) return;
-
-  editingMessageData = selectedMessageForAction;
-  document.getElementById("editMessageInput").value = editingMessageData.text;
-  document.getElementById("editMessageModal").style.display = "flex";
-}
-
-function saveEditedMessage() {
-  const newText = document.getElementById("editMessageInput").value.trim();
-  if (!newText || !editingMessageData) return;
-
-  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
-
-  db.collection("threads").doc(threadIdStr)
-    .collection("messages").doc(editingMessageData.msg.id)
-    .update({
-      text: CryptoJS.AES.encrypt(newText, "yourSecretKey").toString()
-    })
-    .then(() => {
-      showToast("✅ Message edited");
-      closeEditModal();
-    })
-    .catch(console.error);
-}
-
-function closeEditModal() {
-  editingMessageData = null;
-  document.getElementById("editMessageModal").style.display = "none";
-}
-
-function deleteForMe() {
-  closeOptionsModal();
-  if (!selectedMessageForAction) return;
-
-  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
-  const msgId = selectedMessageForAction.msg.id;
-
-  db.collection("threads").doc(threadIdStr)
-    .collection("messages").doc(msgId)
-    .update({
-      [`deletedFor.${currentUser.uid}`]: true
-    })
-    .then(() => showToast("🗑️ Message deleted for you"))
-    .catch(console.error);
-}
-
-function deleteForEveryone() {
-  closeOptionsModal();
-  if (!selectedMessageForAction) return;
-
-  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
-  const msgId = selectedMessageForAction.msg.id;
-
-  const deletedFor = {
-    [currentUser.uid]: true,
-    [currentThreadUser]: true
-  };
-
-  db.collection("threads").doc(threadIdStr)
-    .collection("messages").doc(msgId)
-    .update({
-      text: "",  // optional: blank content
-      deletedFor
-    })
-    .then(() => showToast("✅ Message deleted for everyone"))
-    .catch(console.error);
-}
-
 
 function renderChatCard(chat) {
   return `
