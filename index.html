@@ -170,7 +170,7 @@
         <!-- Messages will appear here -->
       </div>
       <div id="threadTypingStatus" class="typing-indicator" aria-hidden="true">
-  <span></span><span></span><span></span>
+        <span></span><span></span><span></span>
       </div>
     </div>
 
@@ -189,20 +189,29 @@
         <i data-lucide="globe"></i>
       </button>
 
-      <div id="replyPreview" class="reply-preview" style="display: none;">
-  <span id="replyText"></span>
-  <i data-lucide="x" onclick="cancelReply()"></i>
-</div>
-      
-      <input id="threadInput" type="text"
-  placeholder="Type a message…"
-  autocomplete="off"
-  autocapitalize="sentences"
-  enterkeyhint="send" />
+      <div id="replyPreview" class="reply-preview hidden">
+        <span id="replyText"></span>
+        <button class="cancel-reply-btn" onclick="cancelReply()" aria-label="Cancel reply">×</button>
+      </div>
 
-<button type="button" class="icon-btn" id="sendButton" aria-label="Send">
-  <i data-lucide="send"></i>
-</button>
+      <input
+        id="threadInput"
+        type="text"
+        placeholder="Type a message…"
+        autocomplete="off"
+        autocapitalize="sentences"
+        enterkeyhint="send"
+        aria-label="Message input"
+      />
+
+      <button
+        type="button"
+        id="sendButton"
+        class="icon-btn"
+        aria-label="Send"
+      >
+        <i data-lucide="send"></i>
+      </button>
     </footer>
   </div>
 </div>
