@@ -1389,12 +1389,13 @@ function extractFirstURL(text) {
 
 async function fetchLinkPreview(url) {
   try {
-    const res = await fetch(`https://api.linkpreview.net/?key=your_api_key&q=${encodeURIComponent(url)}`);
-    return await res.json();
+    const res = await fetch(`https://api.linkpreview.net/?key=89175199788eee7477f5ac45e693cb53&q=${encodeURIComponent(url)}`);
+    const data = await res.json();
+    if (data && data.title && data.url) return data;
   } catch (e) {
-    console.warn("Preview fetch failed:", e);
-    return null;
+    console.warn("🔗 Link preview fetch failed:", e);
   }
+  return null;
 }
 
 async function openThread(uid, name) {
@@ -1680,19 +1681,53 @@ function closeOptionsModal(event) {
 
 function renderMessage(msg, isOwn) {
   let decrypted = "[Encrypted]";
+  let isDeleted = false;
+
   try {
     decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
     if (!decrypted) decrypted = "[Encrypted]";
-  } catch (e) {
+  } catch {
     decrypted = "[Error decoding]";
   }
 
+  if (msg.text === "") {
+    decrypted = '<i data-lucide="trash-2"></i> Message deleted';
+    isDeleted = true;
+  }
+
   const escaped = escapeHtml(decrypted);
+  const replyHtml = msg.replyTo && !isDeleted
+    ? `<div class="reply-to"><i data-lucide="corner-up-left"></i> ${escapeHtml(msg.replyTo.text || "")}</div>`
+    : "";
+
+  const meta = `
+    <span class="msg-time">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</span>
+    ${msg.edited ? `<span class="edited-tag">(edited)</span>` : ""}
+    ${isOwn && !isDeleted ? '<i data-lucide="check-check" class="tick-icon tick-sent"></i>' : ""}
+  `;
+
+  const linkPreviewHtml = msg.preview && !isDeleted
+    ? `
+      <div class="link-preview">
+        ${msg.preview.image ? `<img src="${msg.preview.image}" alt="Link image" class="preview-img">` : ""}
+        <div class="preview-info">
+          <div class="preview-title">${escapeHtml(msg.preview.title)}</div>
+          <div class="preview-url">${escapeHtml(msg.preview.url)}</div>
+        </div>
+      </div>
+    `
+    : "";
+
   return `
     <div class="message-bubble ${isOwn ? 'right' : 'left'}" 
-         oncontextmenu="handleLongPressMenu(${JSON.stringify(msg)}, \`${escaped}\`, ${isOwn}); return false;">
-      <span class="msg-text">${linkifyText(escaped)}</span>
-      <span class="msg-meta">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</span>
+         oncontextmenu="handleLongPressMenu(${JSON.stringify(msg)}, \`${escaped}\`, ${isOwn}); return false;"
+         data-msg-id="${msg.id}">
+      <div class="msg-content ${isDeleted ? 'msg-deleted' : ''}">
+        ${replyHtml}
+        <span class="msg-text">${linkifyText(escaped)}</span>
+        ${linkPreviewHtml}
+        <div class="msg-meta">${meta}</div>
+      </div>
     </div>
   `;
 }
@@ -1837,7 +1872,7 @@ function cancelReply() {
 }
 
 // ===== DM: Send Thread Message with AES Encryption ====
-function sendThreadMessage() {
+async function sendThreadMessage() {
   const input = document.getElementById("threadInput");
   if (!input || !currentThreadUser) return;
 
@@ -1861,6 +1896,7 @@ function sendThreadMessage() {
     seenBy: [currentUser.uid]
   };
 
+  // Handle reply
   if (replyingTo?.msgId && replyingTo?.text?.trim()) {
     message.replyTo = {
       msgId: replyingTo.msgId,
@@ -1868,6 +1904,20 @@ function sendThreadMessage() {
     };
   }
 
+  // 🔍 Detect link & fetch preview
+  const urlMatch = text.match(/https?:\/\/[^\s]+/);
+  if (urlMatch) {
+    const preview = await fetchLinkPreview(urlMatch[0]);
+    if (preview?.title) {
+      message.preview = {
+        title: preview.title,
+        image: preview.image || "",
+        url: preview.url
+      };
+    }
+  }
+
+  // Clear input and reply
   input.value = "";
   cancelReply();
 
@@ -1893,8 +1943,7 @@ function sendThreadMessage() {
         });
       });
 
-      console.log("Thread to:", currentThreadUser, "Text:", text);
-console.log("📨 Sending thread message:", text);
+      console.log("📨 Thread message sent to:", currentThreadUser, "Text:", text);
       setTimeout(() => scrollToBottomThread(true), 100);
     })
     .catch(err => {
