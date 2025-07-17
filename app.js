@@ -1790,6 +1790,18 @@ function handleThreadKey(event) {
   }
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("threadInput");
+  if (input) {
+    input.addEventListener("keydown", handleThreadKey);
+  }
+
+  const sendBtn = document.getElementById("sendButton");
+  if (sendBtn) {
+    sendBtn.addEventListener("click", sendThreadMessage);
+  }
+});
+
 function listenMessages() {
   const messagesDiv = document.getElementById("groupMessages");
   if (!messagesDiv || !currentRoom) return;
