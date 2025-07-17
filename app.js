@@ -1341,19 +1341,21 @@ async function openThread(uid, name) {
     }
 
     switchTab("threadView");
-    
-    setTimeout(() => {
-  const input = document.getElementById("threadInput");
-  if (input) input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendThreadMessage();
-    }
-  });
 
-  const sendBtn = document.getElementById("sendButton");
-  if (sendBtn) sendBtn.addEventListener("click", sendThreadMessage);
-}, 200);
+    setTimeout(() => {
+      const input = document.getElementById("threadInput");
+      if (input) {
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendThreadMessage();
+          }
+        });
+      }
+
+      const sendBtn = document.getElementById("sendButton");
+      if (sendBtn) sendBtn.addEventListener("click", sendThreadMessage);
+    }, 200);
 
     document.getElementById("threadWithName").textContent =
       typeof name === "string" ? name : (name?.username || "Chat");
@@ -1378,7 +1380,6 @@ async function openThread(uid, name) {
         }, 50);
       }
 
-      // Remove previous scroll listener if any
       area.onscroll = null;
       area.onscroll = () => {
         sessionStorage.setItem("threadScroll_" + threadIdStr, area.scrollTop);
@@ -1443,8 +1444,11 @@ async function openThread(uid, name) {
           const msg = msgDoc.data();
           msg.id = msgDoc.id;
 
-          if (renderedMessageIds.has(msg.id)) return;
-          renderedMessageIds.add(msg.id);
+          // 🔁 Always remove old message element if exists
+          const oldBubble = area.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`);
+          if (oldBubble && oldBubble.parentElement) {
+            oldBubble.parentElement.remove();
+          }
 
           const isSelf = msg.from === currentUser.uid;
 
@@ -1475,16 +1479,16 @@ async function openThread(uid, name) {
             </div>
           `;
 
-          // ✅ Long press / right-click for options
-          bubble.addEventListener("contextmenu", e => {
-            e.preventDefault();
-            handleLongPressMenu(msg, decrypted, isSelf);
-          });
+          if (isSelf) {
+            bubble.addEventListener("contextmenu", e => {
+              e.preventDefault();
+              handleLongPressMenu(msg, decrypted, isSelf);
+            });
 
-          // ✅ Swipe to reply (mobile)
-          bubble.addEventListener("touchstart", handleTouchStart);
-          bubble.addEventListener("touchmove", handleTouchMove);
-          bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted));
+            bubble.addEventListener("touchstart", handleTouchStart);
+            bubble.addEventListener("touchmove", handleTouchMove);
+            bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted));
+          }
 
           wrapper.appendChild(bubble);
           area.appendChild(wrapper);
@@ -1597,19 +1601,16 @@ function handleTouchMove(evt) {
 let selectedMessageForAction = null;
 
 function handleLongPressMenu(msg, text, isSelf) {
-  if (!isSelf) return alert("⚠️ You can only edit or delete your own messages.");
+  if (!isSelf) {
+    alert("⚠️ You can only edit or delete your own messages.");
+    return;
+  }
   selectedMessageForAction = { msg, text };
 
   const modal = document.getElementById("messageOptionsModal");
-  if (!modal) return;
-
-  const editBtn = modal.querySelector('[onclick="editMessage()"]');
-  const deleteMeBtn = modal.querySelector('[onclick="deleteForMe()"]');
-  const deleteEveryoneBtn = modal.querySelector('[onclick="deleteForEveryone()"]');
-
-  if (editBtn) editBtn.style.display = "flex";
-  if (deleteMeBtn) deleteMeBtn.style.display = "flex";
-  if (deleteEveryoneBtn) deleteEveryoneBtn.style.display = "flex";
+  modal.querySelector('[onclick="editMessage()"]').style.display = "flex";
+  modal.querySelector('[onclick="deleteForMe()"]').style.display = "flex";
+  modal.querySelector('[onclick="deleteForEveryone()"]').style.display = "flex";
 
   openOptionsModal();
 }
@@ -1656,61 +1657,108 @@ let editingMessageData = null;
 function editMessage() {
   closeOptionsModal();
   if (!selectedMessageForAction) return;
+
+  const { msg } = selectedMessageForAction;
+  if (msg.from !== currentUser.uid) {
+    alert("⚠️ You can only edit your own messages.");
+    return;
+  }
+
   editingMessageData = selectedMessageForAction;
   document.getElementById("editMessageInput").value = editingMessageData.text;
   document.getElementById("editMessageModal").style.display = "flex";
 }
 
-function closeEditModal() {
-  editingMessageData = null;
-  document.getElementById("editMessageModal").style.display = "none";
-}
-
-function saveEditedMessage() {
-  const newText = document.getElementById("editMessageInput").value.trim();
-  if (!newText || !editingMessageData) return;
-  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
-  db.collection("threads").doc(threadIdStr)
-    .collection("messages").doc(editingMessageData.msg.id)
-    .update({
-      text: CryptoJS.AES.encrypt(newText, "yourSecretKey").toString()
-    })
-    .then(() => {
-      showToast("✅ Message edited");
-      closeEditModal();
-    })
-    .catch(console.error);
-}
-
-// Delete actions
 function deleteForMe() {
   closeOptionsModal();
   if (!selectedMessageForAction) return;
+
+  const { msg } = selectedMessageForAction;
   const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+
   db.collection("threads").doc(threadIdStr)
-    .collection("messages").doc(selectedMessageForAction.msg.id)
+    .collection("messages").doc(msg.id)
     .update({
       [`deletedFor.${currentUser.uid}`]: true
     })
-    .then(() => showToast("🗑️ Message deleted for you"))
+    .then(() => {
+      showToast("🗑️ Message deleted for you");
+
+      // Immediately hide message in DOM
+      const bubble = document.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`);
+      if (bubble?.parentElement) {
+        bubble.parentElement.remove();
+      }
+    })
     .catch(console.error);
 }
 
 function deleteForEveryone() {
   closeOptionsModal();
   if (!selectedMessageForAction) return;
+
+  const { msg } = selectedMessageForAction;
+  if (msg.from !== currentUser.uid) {
+    alert("⚠️ You can only delete your own messages for everyone.");
+    return;
+  }
+
   const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+
   db.collection("threads").doc(threadIdStr)
-    .collection("messages").doc(selectedMessageForAction.msg.id)
+    .collection("messages").doc(msg.id)
     .update({
-      text: "",  // optional: erase text
+      text: "",  // Optionally wipe out text
       deletedFor: {
         [currentUser.uid]: true,
         [currentThreadUser]: true
       }
     })
-    .then(() => showToast("✅ Message deleted for everyone"))
+    .then(() => {
+      showToast("✅ Message deleted for everyone");
+
+      const bubble = document.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`);
+      if (bubble?.parentElement) {
+        bubble.parentElement.remove();
+      }
+    })
     .catch(console.error);
+}
+
+function saveEditedMessage() {
+  const newText = document.getElementById("editMessageInput").value.trim();
+  if (!newText || !editingMessageData) return;
+
+  const { msg } = editingMessageData;
+  if (msg.from !== currentUser.uid) {
+    alert("⚠️ You can only edit your own messages.");
+    return;
+  }
+
+  const encrypted = CryptoJS.AES.encrypt(newText, "yourSecretKey").toString();
+  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+
+  db.collection("threads").doc(threadIdStr)
+    .collection("messages").doc(msg.id)
+    .update({ text: encrypted })
+    .then(() => {
+      showToast("✅ Message edited");
+      closeEditModal();
+
+      // Force UI update by removing old message element
+      const bubble = document.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`);
+      if (bubble?.parentElement) {
+        bubble.parentElement.remove();
+      }
+
+      renderedMessageIds.delete(msg.id); // allow it to re-render in next snapshot
+    })
+    .catch(console.error);
+}
+
+function closeEditModal() {
+  editingMessageData = null;
+  document.getElementById("editMessageModal").style.display = "none";
 }
 
 // Toast display
