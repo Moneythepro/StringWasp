@@ -1143,205 +1143,218 @@ let replyingTo = null;
 let lastThreadId = null;
 const renderedMessageIds = new Set();
 
-function openThread(uid, name) {
+async function openThread(uid, name) {
   if (!currentUser || !uid) return;
 
-  db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).get()
-    .then(async friendDoc => {
-      if (!friendDoc.exists) return alert("You must be friends to start a chat.");
+  // Step 1: Verify friendship
+  const friendDoc = await db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).get();
+  if (!friendDoc.exists) {
+    alert("You must be friends to start a chat.");
+    return;
+  }
 
-      switchTab("threadView");
-      document.getElementById("threadWithName").textContent = name || "Chat";
-      document.getElementById("chatOptionsMenu").style.display = "none";
+  // Step 2: Set up UI
+  switchTab("threadView");
+  document.getElementById("threadWithName").textContent =
+    typeof name === "string" ? name : (name?.username || "Chat");
 
-      const groupInfo = document.querySelector(".group-info");
-      if (groupInfo) groupInfo.style.display = "none";
+  document.getElementById("chatOptionsMenu").style.display = "none";
+  const groupInfo = document.querySelector(".group-info");
+  if (groupInfo) groupInfo.style.display = "none";
 
-      currentThreadUser = uid;
-      currentRoom = null;
+  currentThreadUser = uid;
+  currentRoom = null;
+  const threadIdStr = threadId(currentUser.uid, uid);
+  const area = document.getElementById("threadMessages");
 
-      const threadIdStr = threadId(currentUser.uid, uid);
-      const area = document.getElementById("threadMessages");
+  // Step 3: Clear previous thread content
+  if (area && lastThreadId !== threadIdStr) {
+    area.innerHTML = "";
+    renderedMessageIds.clear();
+    lastThreadId = threadIdStr;
 
-      // ✅ Only clear messages if switching threads
-      if (area && lastThreadId !== threadIdStr) {
-        area.innerHTML = "";
-        renderedMessageIds.clear();
-        lastThreadId = threadIdStr;
+    const savedScroll = sessionStorage.getItem("threadScroll_" + threadIdStr);
+    if (savedScroll) {
+      setTimeout(() => (area.scrollTop = parseInt(savedScroll, 10)), 50);
+    }
 
-        const savedScroll = sessionStorage.getItem("threadScroll_" + threadIdStr);
-        if (savedScroll) {
-          setTimeout(() => (area.scrollTop = parseInt(savedScroll, 10)), 50);
-        }
-
-        area.addEventListener("scroll", () => {
-          sessionStorage.setItem("threadScroll_" + threadIdStr, area.scrollTop);
-        });
-      }
-
-      // ✅ Load header avatar
-      const friendUserDoc = await db.collection("users").doc(uid).get();
-      if (friendUserDoc.exists) {
-        const user = friendUserDoc.data();
-        const headerImg = document.getElementById("chatProfilePic");
-        if (headerImg) {
-          headerImg.src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-        }
-      }
-
-      if (unsubscribeThread) unsubscribeThread();
-      if (unsubscribeTyping) unsubscribeTyping();
-
-      listenToTyping(threadIdStr, "thread");
-
-      db.collection("threads").doc(threadIdStr).set({
-        unread: { [currentUser.uid]: 0 }
-      }, { merge: true });
-
-      db.collection("users").doc(uid).onSnapshot(doc => {
-        const data = doc.data();
-        const status = document.getElementById("chatStatus");
-        if (data.typingFor === currentUser.uid) {
-          status.textContent = "Typing...";
-        } else if (data.status === "online") {
-          status.textContent = "Online";
-        } else if (data.lastSeen?.toDate) {
-          status.textContent = "Last seen " + timeSince(data.lastSeen.toDate());
-        } else {
-          status.textContent = "Offline";
-        }
-      });
-
-      // ✅ Resize scroll fix
-      const resizeObserver = new ResizeObserver(() => {
-        setTimeout(() => scrollToBottomThread(true), 60);
-      });
-      if (area) resizeObserver.observe(area);
-
-      // ✅ Real-time message listener
-      unsubscribeThread = db.collection("threads").doc(threadIdStr)
-        .collection("messages").orderBy("timestamp")
-        .onSnapshot(async snapshot => {
-          if (!area) return;
-
-          const prevScroll = area.scrollTop;
-          const prevHeight = area.scrollHeight;
-
-          for (const doc of snapshot.docChanges()) {
-            if (doc.type === "removed") continue;
-
-            const msgDoc = doc.doc;
-            const msg = msgDoc.data();
-            msg.id = msgDoc.id;
-
-            if (renderedMessageIds.has(msg.id)) continue;
-            renderedMessageIds.add(msg.id);
-
-            const isSelf = msg.from === currentUser.uid;
-            const wrapper = document.createElement("div");
-            wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
-
-            const isDeletedForYou = msg.deletedFor?.[currentUser.uid];
-            const isDeletedForEveryone = msg.text === "";
-
-            if (isDeletedForYou || isDeletedForEveryone) {
-              const bubble = document.createElement("div");
-              bubble.className = "message-bubble deleted";
-              bubble.textContent = "This message was deleted";
-              wrapper.appendChild(bubble);
-              area.appendChild(wrapper);
-              continue;
-            }
-
-            let decrypted = "";
-            try {
-              decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
-            } catch {
-              decrypted = "[Failed to decrypt]";
-            }
-
-            const avatarImg = document.createElement("img");
-            avatarImg.className = "msg-avatar-img";
-            try {
-              const userDoc = await db.collection("users").doc(msg.from).get();
-              const user = userDoc.data();
-              avatarImg.src = user?.avatarBase64 || user?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.username || "User")}`;
-            } catch {
-              avatarImg.src = "default-avatar.png";
-            }
-
-            const replyHtml = msg.replyTo?.text
-              ? `<div class="msg-reply-preview" onclick="scrollToRepliedMessage('${msg.replyTo.msgId}')">
-                  <i data-lucide="corner-up-left"></i>${escapeHtml(msg.replyTo.text.slice(0, 50))}
-                </div>` : "";
-
-            const isRead = msg.seenBy?.includes(currentThreadUser);
-            const isDelivered = msg.seenBy?.length > 1;
-            const ticks = isSelf
-              ? `<span class="msg-ticks ${isRead ? 'double' : isDelivered ? 'delivered' : ''}">
-                  <i data-lucide="${isRead || isDelivered ? 'check-check' : 'check'}"></i></span>` : "";
-
-            const bubble = document.createElement("div");
-            bubble.className = "message-bubble " + (isSelf ? "right" : "left") + " animate-fade-in";
-            bubble.innerHTML = `
-              <div class="msg-content">
-                ${replyHtml}
-                <span class="msg-text">${linkifyText(escapeHtml(decrypted))}</span>
-                <span class="msg-meta">
-                  ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}${ticks}
-                </span>
-              </div>`;
-            bubble.dataset.msgId = msg.id;
-
-            bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
-            bubble.addEventListener("touchmove", handleTouchMove, { passive: true });
-            bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted), { passive: true });
-            bubble.addEventListener("contextmenu", (e) => {
-              e.preventDefault();
-              selectedMessageForAction = { msg, text: decrypted };
-              handleLongPressMenu(msg, decrypted, isSelf);
-            });
-
-            isSelf
-              ? (wrapper.appendChild(bubble), wrapper.appendChild(avatarImg))
-              : (wrapper.appendChild(avatarImg), wrapper.appendChild(bubble));
-            area.appendChild(wrapper);
-
-            if (!msg.seenBy?.includes(currentUser.uid)) {
-              db.collection("threads").doc(threadIdStr)
-                .collection("messages").doc(msg.id)
-                .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
-                .catch(console.warn);
-            }
-          }
-
-          if (typeof lucide !== "undefined") lucide.createIcons();
-
-          const isNearBottom = (prevHeight - prevScroll - area.clientHeight) < 120;
-          if (isNearBottom) {
-            requestAnimationFrame(() => scrollToBottomThread(true));
-          } else {
-            const toast = document.getElementById("chatToast");
-            if (toast) {
-              toast.textContent = "New message received";
-              toast.style.display = "block";
-              setTimeout(() => (toast.style.display = "none"), 2000);
-            }
-          }
-        });
-
-      setTimeout(() => {
-        if (!sessionStorage.getItem("threadScroll_" + threadIdStr)) {
-          scrollToBottomThread(false);
-        }
-      }, 150);
-
-      setTimeout(() => initThreadInputEvents(), 0);
-    })
-    .catch(err => {
-      console.error("❌ Friend check failed:", err.message || err);
-      alert("❌ Failed to verify friendship.");
+    area.addEventListener("scroll", () => {
+      sessionStorage.setItem("threadScroll_" + threadIdStr, area.scrollTop);
     });
+  }
+
+  // Step 4: Load friend's profile/avatar
+  try {
+    const friendUserDoc = await db.collection("users").doc(uid).get();
+    if (friendUserDoc.exists) {
+      const user = friendUserDoc.data();
+      const headerImg = document.getElementById("chatProfilePic");
+      if (headerImg) {
+        headerImg.src =
+          user.avatarBase64 || user.photoURL ||
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+      }
+    }
+  } catch (e) {
+    console.warn("⚠️ Failed to load user avatar", e);
+  }
+
+  // Step 5: Set up listeners
+  if (unsubscribeThread) unsubscribeThread();
+  if (unsubscribeTyping) unsubscribeTyping();
+
+  listenToTyping(threadIdStr, "thread");
+
+  db.collection("threads").doc(threadIdStr).set({
+    unread: { [currentUser.uid]: 0 }
+  }, { merge: true });
+
+  db.collection("users").doc(uid).onSnapshot(doc => {
+    const data = doc.data();
+    const status = document.getElementById("chatStatus");
+
+    if (data.typingFor === currentUser.uid) {
+      status.textContent = "Typing...";
+    } else if (data.status === "online") {
+      status.textContent = "Online";
+    } else if (data.lastSeen?.toDate) {
+      status.textContent = "Last seen " + timeSince(data.lastSeen.toDate());
+    } else {
+      status.textContent = "Offline";
+    }
+  });
+
+  // Step 6: Watch scroll height and auto-scroll
+  const resizeObserver = new ResizeObserver(() => {
+    setTimeout(() => scrollToBottomThread(true), 60);
+  });
+  if (area) resizeObserver.observe(area);
+
+  // Step 7: Message listener
+  unsubscribeThread = db.collection("threads").doc(threadIdStr)
+    .collection("messages").orderBy("timestamp")
+    .onSnapshot(async snapshot => {
+      if (!area) return;
+
+      const prevScroll = area.scrollTop;
+      const prevHeight = area.scrollHeight;
+
+      for (const doc of snapshot.docChanges()) {
+        if (doc.type === "removed") continue;
+
+        const msgDoc = doc.doc;
+        const msg = msgDoc.data();
+        msg.id = msgDoc.id;
+
+        if (renderedMessageIds.has(msg.id)) continue;
+        renderedMessageIds.add(msg.id);
+
+        const isSelf = msg.from === currentUser.uid;
+        const isDeletedForYou = msg.deletedFor?.[currentUser.uid];
+        const isDeletedForEveryone = msg.text === "";
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
+
+        if (isDeletedForYou || isDeletedForEveryone) {
+          const bubble = document.createElement("div");
+          bubble.className = "message-bubble deleted";
+          bubble.textContent = "This message was deleted";
+          wrapper.appendChild(bubble);
+          area.appendChild(wrapper);
+          continue;
+        }
+
+        let decrypted = "";
+        try {
+          decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+        } catch {
+          decrypted = "[Failed to decrypt]";
+        }
+
+        const avatarImg = document.createElement("img");
+        avatarImg.className = "msg-avatar-img";
+        try {
+          const userDoc = await db.collection("users").doc(msg.from).get();
+          const user = userDoc.data();
+          avatarImg.src = user?.avatarBase64 || user?.photoURL ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.username || "User")}`;
+        } catch {
+          avatarImg.src = "default-avatar.png";
+        }
+
+        const replyHtml = msg.replyTo?.text
+          ? `<div class="msg-reply-preview" onclick="scrollToRepliedMessage('${msg.replyTo.msgId}')">
+              <i data-lucide="corner-up-left"></i>${escapeHtml(msg.replyTo.text.slice(0, 50))}
+            </div>` : "";
+
+        const isRead = msg.seenBy?.includes(currentThreadUser);
+        const isDelivered = msg.seenBy?.length > 1;
+        const ticks = isSelf
+          ? `<span class="msg-ticks ${isRead ? 'double' : isDelivered ? 'delivered' : ''}">
+              <i data-lucide="${isRead || isDelivered ? 'check-check' : 'check'}"></i>
+            </span>` : "";
+
+        const bubble = document.createElement("div");
+        bubble.className = "message-bubble " + (isSelf ? "right" : "left") + " animate-fade-in";
+        bubble.innerHTML = `
+          <div class="msg-content">
+            ${replyHtml}
+            <span class="msg-text">${linkifyText(escapeHtml(decrypted))}</span>
+            <span class="msg-meta">
+              ${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}${ticks}
+            </span>
+          </div>`;
+        bubble.dataset.msgId = msg.id;
+
+        // Add gesture handlers
+        bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
+        bubble.addEventListener("touchmove", handleTouchMove, { passive: true });
+        bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted), { passive: true });
+        bubble.addEventListener("contextmenu", (e) => {
+          e.preventDefault();
+          selectedMessageForAction = { msg, text: decrypted };
+          handleLongPressMenu(msg, decrypted, isSelf);
+        });
+
+        isSelf
+          ? (wrapper.appendChild(bubble), wrapper.appendChild(avatarImg))
+          : (wrapper.appendChild(avatarImg), wrapper.appendChild(bubble));
+
+        area.appendChild(wrapper);
+
+        // Mark as seen
+        if (!msg.seenBy?.includes(currentUser.uid)) {
+          db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
+            .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
+            .catch(console.warn);
+        }
+      }
+
+      if (typeof lucide !== "undefined") lucide.createIcons();
+
+      const isNearBottom = (prevHeight - prevScroll - area.clientHeight) < 120;
+      if (isNearBottom) {
+        requestAnimationFrame(() => scrollToBottomThread(true));
+      } else {
+        const toast = document.getElementById("chatToast");
+        if (toast) {
+          toast.textContent = "New message received";
+          toast.style.display = "block";
+          setTimeout(() => (toast.style.display = "none"), 2000);
+        }
+      }
+    });
+
+  // Scroll to bottom if no previous scroll state
+  setTimeout(() => {
+    if (!sessionStorage.getItem("threadScroll_" + threadIdStr)) {
+      scrollToBottomThread(false);
+    }
+  }, 120);
+
+  // Bind input handlers (no flicker)
+  setTimeout(() => initThreadInputEvents(), 0);
 }
 
 // ===== Input + Send Button Events =====
