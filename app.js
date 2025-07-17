@@ -1236,20 +1236,21 @@ function openThread(uid, name) {
             if (renderedMessageIds.has(msg.id)) continue;
             renderedMessageIds.add(msg.id);
 
-            const isSelf = msg.from === currentUser.uid;
-            const isDeleted = msg.deletedFor?.[currentUser.uid];
-
+          
             const wrapper = document.createElement("div");
             wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
 
-            if (isDeleted) {
-              const bubble = document.createElement("div");
-              bubble.className = "message-bubble deleted";
-              bubble.textContent = "This message was deleted";
-              wrapper.appendChild(bubble);
-              area.appendChild(wrapper);
-              continue;
-            }
+            const isDeletedForYou = msg.deletedFor?.[currentUser.uid];
+const isDeletedForEveryone = msg.text === "";
+
+if (isDeletedForYou || isDeletedForEveryone) {
+  const bubble = document.createElement("div");
+  bubble.className = "message-bubble deleted";
+  bubble.textContent = "This message was deleted";
+  wrapper.appendChild(bubble);
+  area.appendChild(wrapper);
+  continue;
+}
 
             let decrypted = "";
             try {
