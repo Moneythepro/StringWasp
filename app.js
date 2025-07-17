@@ -1464,6 +1464,10 @@ async function openThread(uid, name) {
   } catch (err) {
     console.error("❌ openThread error:", err);
     alert("❌ Could not open chat.");
+    .catch(error => {
+  console.error("openThread error:", error);
+  alert("❌ Failed to open chat: " + (error.message || "Unknown error"));
+});
   }
 }
 
