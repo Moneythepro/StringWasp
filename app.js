@@ -1309,11 +1309,15 @@ function threadId(a, b) {
 }
 
 // ===== DM: Open Thread Chat =====
+let replyingTo = null;
+
 async function openThread(uid, name) {
   if (!currentUser || !uid) return;
 
   try {
-    const friendDoc = await db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).get();
+    const friendDoc = await db.collection("users").doc(currentUser.uid)
+      .collection("friends").doc(uid).get();
+
     if (!friendDoc.exists) {
       alert("⚠️ You must be friends to start a chat.");
       return;
@@ -1349,14 +1353,14 @@ async function openThread(uid, name) {
       });
     }
 
-    // Load profile picture
     try {
       const friendUserDoc = await db.collection("users").doc(uid).get();
       if (friendUserDoc.exists) {
         const user = friendUserDoc.data();
         const headerImg = document.getElementById("chatProfilePic");
         if (headerImg) {
-          headerImg.src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+          headerImg.src = user.avatarBase64 || user.photoURL ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
         }
       }
     } catch (e) {
@@ -1394,8 +1398,7 @@ async function openThread(uid, name) {
     if (area) resizeObserver.observe(area);
 
     unsubscribeThread = db.collection("threads").doc(threadIdStr)
-      .collection("messages")
-      .orderBy("timestamp")
+      .collection("messages").orderBy("timestamp")
       .onSnapshot(snapshot => {
         if (!area) return;
 
@@ -1432,12 +1435,25 @@ async function openThread(uid, name) {
           const bubble = document.createElement("div");
           bubble.className = "message-bubble " + (isSelf ? "right" : "left");
           bubble.dataset.msgId = msg.id;
+
           bubble.innerHTML = `
             <div class="msg-content">
               <span class="msg-text">${escapeHtml(decrypted)}</span>
+              ${msg.replyTo ? `<div class="reply-to">↪️ ${escapeHtml(msg.replyTo.text || "")}</div>` : ""}
               <span class="msg-meta">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</span>
             </div>
           `;
+
+          // ✅ Long press / right-click for options
+          bubble.addEventListener("contextmenu", e => {
+            e.preventDefault();
+            handleLongPressMenu(msg, decrypted, isSelf);
+          });
+
+          // ✅ Swipe to reply (mobile)
+          bubble.addEventListener("touchstart", handleTouchStart);
+          bubble.addEventListener("touchmove", handleTouchMove);
+          bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted));
 
           wrapper.appendChild(bubble);
           area.appendChild(wrapper);
@@ -1447,8 +1463,6 @@ async function openThread(uid, name) {
               .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) }).catch(() => {});
           }
         });
-
-        if (typeof lucide !== "undefined") lucide.createIcons();
 
         if (isNearBottom) {
           requestAnimationFrame(() => scrollToBottomThread(true));
@@ -1546,13 +1560,6 @@ function handleTouchMove(evt) {
     xDown = null;
     evt.target.dispatchEvent(new CustomEvent("swiperight"));
   }
-}
-
-// Cancel reply preview
-function cancelReply() {
-  const box = document.getElementById("replyPreview");
-  if (box) box.style.display = "none";
-  replyingTo = null;
 }
 
 // Long press modal
@@ -1670,14 +1677,20 @@ function renderChatCard(chat) {
   `;
 }
 
-// ===== DM: Send Thread Message with AES Encryption =====
-let replyingTo = null;
+// ===== DM: Send Thread Message with AES Encryption ====
 
 function handleSwipeToReply(msg, text) {
   replyingTo = { msgId: msg.id, text };
-  document.getElementById("replyText").textContent = escapeHtml(text.slice(0, 50)) + (text.length > 50 ? "..." : "");
-  document.getElementById("replyPreview").style.display = "flex";
-  if (typeof lucide !== "undefined") lucide.createIcons();
+  const bar = document.getElementById("replyPreview");
+  if (bar) {
+    bar.querySelector(".reply-text").textContent = text;
+    bar.style.display = "flex";
+  }
+}
+
+function cancelReply() {
+  const bar = document.getElementById("replyPreview");
+  if (bar) bar.style.display = "none";
 }
 
 function sendThreadMessage() {
@@ -1733,7 +1746,7 @@ function sendThreadMessage() {
           input.focus({ preventScroll: true });
         });
       });
-
+console.log("Thread to:", currentThreadUser, "Text:", input.value);
       setTimeout(() => scrollToBottomThread(true), 100);
     })
     .catch(err => {
