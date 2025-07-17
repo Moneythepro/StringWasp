@@ -1599,12 +1599,12 @@ const textPreview = `
           `;
 
           bubble.innerHTML = `
-            <div class="msg-content ${isDeleted ? "msg-deleted" : ""}">
-              ${replyHtml}
-              <span class="msg-text">${textPreview}</span>
-              <div class="msg-meta">${meta}</div>
-            </div>
-          `;
+  <div class="msg-content ${isDeleted ? "msg-deleted" : ""}">
+    ${replyHtml}
+    <div class="msg-text">${textPreview}</div>
+    <div class="msg-meta">${meta}</div>
+  </div>
+`;
 
           if (!isDeleted) {
             bubble.addEventListener("touchstart", handleTouchStart);
