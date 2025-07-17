@@ -1815,7 +1815,7 @@ function sendThreadMessage() {
       });
 
       console.log("Thread to:", currentThreadUser, "Text:", text);
-
+console.log("📨 Sending thread message:", text);
       setTimeout(() => scrollToBottomThread(true), 100);
     })
     .catch(err => {
