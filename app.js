@@ -1580,7 +1580,16 @@ async function openThread(uid, name) {
             }
           }
 
-          const textPreview = `<span class="msg-preview">${linkifyText(escapeHtml(decrypted))}</span>${linkPreviewHTML}`;
+          let textHtml = escapeHtml(decrypted);
+let shortText = textHtml.slice(0, 500);
+let hasLong = textHtml.length > 500;
+
+const textPreview = `
+  <span class="msg-preview" data-full="${textHtml}" data-short="${shortText}">
+    ${hasLong ? shortText + '<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>' : linkifyText(textHtml)}
+  </span>
+  ${linkPreviewHTML}
+`;
 
           const seenClass = msg.seenBy?.includes(currentThreadUser) ? "tick-seen" : "tick-sent";
           const meta = `
