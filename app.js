@@ -32,99 +32,144 @@ let unsubscribeThreads = null;
 let unsubscribeGroups = null;
 
 // ===== Loading Overlay =====
-function showLoading() {
+function showLoading(message = "Loading...") {
   const overlay = document.getElementById("loadingOverlay");
+  const text = document.getElementById("loadingText");
   if (overlay) overlay.style.display = "flex";
+  if (text) text.textContent = message;
 }
+
 function hideLoading() {
   const overlay = document.getElementById("loadingOverlay");
   if (overlay) overlay.style.display = "none";
 }
 
-// ===== Switch UI Tabs =====
 function switchTab(tabId) {
   document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
+
   const selected = document.getElementById(tabId);
   if (selected) selected.style.display = "block";
 
-  // ✅ Hide 3-dot horizontal menu if it's open
-  document.getElementById("chatOptionsMenu")?.classList.remove("show");
+  // ✅ Hide 3-dot chat options menu
+  const menu = document.getElementById("chatOptionsMenu");
+  if (menu) menu.classList.remove("show");
+
+  // ✅ Optionally hide keyboard on mobile
+  document.activeElement?.blur?.();
 }
 
 // ===== Login/Register =====
 function login() {
   const email = document.getElementById("email")?.value.trim();
   const password = document.getElementById("password")?.value.trim();
-  if (!email || !password) return alert("Enter email & password");
 
-  showLoading();
+  if (!email || !password) {
+    alert("Please enter both email and password.");
+    return;
+  }
+
+  showLoading("Logging in...");
+
   auth.signInWithEmailAndPassword(email, password)
-    .catch(err => alert("Login failed: " + err.message))
-    .finally(() => hideLoading());
+    .then(() => {
+      console.log("✅ Logged in");
+    })
+    .catch(err => {
+      console.error("❌ Login failed:", err.message);
+      alert("❌ Login failed: " + err.message);
+    })
+    .finally(hideLoading);
 }
 
 function register() {
   const email = document.getElementById("email")?.value.trim();
   const password = document.getElementById("password")?.value.trim();
-  if (!email || !password) return alert("Enter email & password");
 
-  showLoading();
+  if (!email || !password) {
+    alert("Please enter both email and password.");
+    return;
+  }
+
+  showLoading("Creating account...");
+
   auth.createUserWithEmailAndPassword(email, password)
     .then(() => {
+      console.log("✅ Registered");
       switchTab("usernameDialog");
+      setTimeout(() => document.getElementById("newUsername")?.focus(), 100);
     })
-    .catch(err => alert("❌ Registration failed: " + err.message))
-    .finally(() => hideLoading());
+    .catch(err => {
+      console.error("❌ Registration failed:", err.message);
+      alert("❌ Registration failed: " + err.message);
+    })
+    .finally(hideLoading);
 }
 
-// ===== Username Save After Register =====
 function saveUsername() {
   const username = document.getElementById("newUsername")?.value.trim();
-  if (!username) return alert("Enter a username");
+
+  if (!username) {
+    alert("Please enter a username.");
+    return;
+  }
+
+  showLoading("Saving username...");
 
   db.collection("users").doc(currentUser.uid).set({
     username,
     email: currentUser.email,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true }).then(() => {
-    document.getElementById("usernameDisplay").textContent = username;
-    loadMainUI();
-  });
+  }, { merge: true })
+    .then(() => {
+      document.getElementById("usernameDisplay").textContent = username;
+      loadMainUI();
+    })
+    .catch(err => {
+      console.error("❌ Username save error:", err.message);
+      alert("❌ Failed to save username");
+    })
+    .finally(hideLoading);
 }
 
-// ===== Confirm Username Before Load =====
 function checkUsername() {
-  db.collection("users").doc(currentUser.uid).get().then(doc => {
-    if (!doc.exists || !doc.data().username) {
-      switchTab("usernameDialog");
-    } else {
-      document.getElementById("usernameDisplay").textContent = doc.data().username;
-      loadMainUI();
-    }
-  });
+  showLoading("Checking profile...");
+
+  db.collection("users").doc(currentUser.uid).get()
+    .then(doc => {
+      const data = doc.data();
+      if (!doc.exists || !data?.username) {
+        switchTab("usernameDialog");
+      } else {
+        document.getElementById("usernameDisplay").textContent = data.username;
+        loadMainUI();
+      }
+    })
+    .catch(err => {
+      console.error("❌ Username check failed:", err.message);
+      alert("❌ Failed to load user profile.");
+    })
+    .finally(hideLoading);
 }
 
 // ===== Main App Load UI =====
 function loadMainUI() {
-  showLoading();
+  showLoading("Loading your dashboard...");
 
-  document.getElementById("appPage").style.display = "block";
+  const appPage = document.getElementById("appPage");
+  if (appPage) appPage.style.display = "block";
 
   loadProfile(() => {
-    try { loadChatList(); } catch (e) { console.warn("Chats failed", e); }
-    try { loadFriends(); } catch (e) { console.warn("Friends failed", e); }
-    try { loadGroups?.(); } catch (e) { console.warn("Groups skipped", e); }
-    try { listenInbox(); } catch (e) { console.warn("Inbox failed", e); }  // ✅ added
+    try { loadChatList(); } catch (e) { console.warn("⚠️ Chats failed", e); }
+    try { loadFriends(); } catch (e) { console.warn("⚠️ Friends failed", e); }
+    try { loadGroups?.(); } catch (e) { console.warn("⚠️ Groups skipped", e); }
+    try { listenInbox(); } catch (e) { console.warn("⚠️ Inbox failed", e); }
 
     switchTab("chatTab");
 
-    setTimeout(() => {
-      hideLoading();
-    }, 300);
+    setTimeout(hideLoading, 300);
   });
 }
 
-// ===== Load App After Login =====
 auth.onAuthStateChanged(async user => {
   if (!user) {
     switchTab("loginPage");
@@ -133,28 +178,28 @@ auth.onAuthStateChanged(async user => {
   }
 
   currentUser = user;
-
-  // ✅ Set online status and last seen updater
   const userRef = db.collection("users").doc(user.uid);
+
   try {
+    // ✅ Mark user as online
     await userRef.update({
       status: "online",
       lastSeen: firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    // 🔁 Automatically set lastSeen on tab close / refresh
+    // ✅ Update last seen on tab close
     window.addEventListener("beforeunload", () => {
-      navigator.sendBeacon(`/offline?uid=${user.uid}`);
-      userRef.update({
-        status: "offline",
-        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-      }).catch(() => {});
+      try {
+        userRef.update({
+          status: "offline",
+          lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } catch (e) {
+        console.warn("⚠️ Unload update failed");
+      }
     });
-  } catch (e) {
-    console.warn("⚠️ Could not update user presence:", e.message);
-  }
 
-  try {
+    // ✅ Get user document
     const doc = await userRef.get();
     const data = doc.data();
 
@@ -166,25 +211,26 @@ auth.onAuthStateChanged(async user => {
 
     document.getElementById("usernameDisplay").textContent = data.username;
 
-    document.querySelector(".profile-edit-label").onclick = () => {
-      document.getElementById("profilePic").click();
-    };
+    // ✅ Avatar edit trigger
+    const label = document.querySelector(".profile-edit-label");
+    if (label) label.onclick = () => document.getElementById("profilePic")?.click();
 
     loadMainUI();
 
+    // ✅ Handle group invite via joinGroupId (optional)
     if (joinGroupId) {
       try {
         await tryJoinGroup(joinGroupId);
       } catch (e) {
-        console.warn("Group join failed:", e);
+        console.warn("⚠️ Auto group join failed:", e);
       }
     }
 
     switchTab("chatTab");
 
   } catch (err) {
-    console.error("❌ User load error:", err.message || err);
-    alert("❌ Failed to load user info: " + (err.message || JSON.stringify(err)));
+    console.error("❌ Failed to load user:", err.message);
+    alert("❌ Could not load user info: " + (err.message || "Unknown error"));
   } finally {
     hideLoading();
   }
@@ -205,7 +251,7 @@ function escapeHtml(text) {
 function saveProfile() {
   if (!currentUser) return alert("❌ Not logged in.");
 
-  const file = document.getElementById("profilePic").files[0];
+  const file = document.getElementById("profilePic")?.files?.[0];
   const updates = {
     name: document.getElementById("profileName").value.trim(),
     bio: document.getElementById("profileBio").value.trim(),
@@ -215,44 +261,47 @@ function saveProfile() {
     username: document.getElementById("profileUsername").value.trim()
   };
 
-  // ✅ If file selected, read it
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      updates.avatarBase64 = e.target.result; // Use this for avatar
-      db.collection("users").doc(currentUser.uid).update(updates).then(() => {
-        document.getElementById("profilePicPreview").src = e.target.result;
+  const userRef = db.collection("users").doc(currentUser.uid);
+
+  const updateFirestore = (extra = {}) => {
+    userRef.update({ ...updates, ...extra })
+      .then(() => {
+        if (extra.avatarBase64) {
+          document.getElementById("profilePicPreview").src = extra.avatarBase64;
+        }
         document.getElementById("usernameDisplay").textContent = updates.username;
         alert("✅ Profile updated.");
-      }).catch(err => {
-        console.error("❌ Profile save error:", err);
-        alert("❌ Failed to save profile");
+      })
+      .catch(err => {
+        console.error("❌ Profile save error:", err.message || err);
+        alert("❌ Failed to save profile.");
       });
+  };
+
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      updateFirestore({ avatarBase64: e.target.result });
     };
     reader.readAsDataURL(file);
   } else {
-    db.collection("users").doc(currentUser.uid).update(updates).then(() => {
-      document.getElementById("usernameDisplay").textContent = updates.username;
-      alert("✅ Profile updated.");
-    }).catch(err => {
-      console.error("❌ Profile save error:", err);
-      alert("❌ Failed to save profile");
-    });
+    updateFirestore();
   }
 }
 
-// ===== Load Profile UI =====
 function loadProfile(callback) {
   if (!currentUser?.uid) {
     console.warn("🔒 No authenticated user to load profile.");
-    if (typeof callback === "function") callback();
+    callback?.();
     return;
   }
 
-  db.collection("users").doc(currentUser.uid).onSnapshot(doc => {
+  const userRef = db.collection("users").doc(currentUser.uid);
+
+  userRef.onSnapshot(doc => {
     if (!doc.exists) {
-      console.warn("⚠️ User profile document not found.");
-      if (typeof callback === "function") callback();
+      console.warn("⚠️ Profile not found.");
+      callback?.();
       return;
     }
 
@@ -262,20 +311,21 @@ function loadProfile(callback) {
     document.getElementById("profileBio").value = data.bio || "";
     document.getElementById("profileGender").value = data.gender || "";
     document.getElementById("profilePhone").value = data.phone || "";
-    document.getElementById("profileEmail").value = data.email || "";
+    document.getElementById("profileEmail").value = data.publicEmail || data.email || "";
     document.getElementById("profileUsername").value = data.username || "";
 
-    const avatarUrl = data.avatar?.trim()
+    const preview = document.getElementById("profilePicPreview");
+    preview.src = data.avatarBase64
+      || data.photoURL
       || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username || "User")}&background=random`;
 
-    document.getElementById("profilePicPreview").src = avatarUrl;
-
-    if (typeof callback === "function") callback();
+    callback?.();
   }, err => {
-    console.error("❌ Failed to load profile:", err.message || err);
-    if (typeof callback === "function") callback();
+    console.error("❌ Profile load error:", err.message || err);
+    callback?.();
   });
 }
+
 
 function triggerProfileUpload() {
   document.getElementById("profilePic").addEventListener("change", uploadProfilePic);
@@ -401,7 +451,7 @@ function viewUserProfile(uid) {
 
 // ===== Contact Support Shortcut =====
 function contactSupport() {
-  alert("Contact us at: support@stringwasp.com");
+  alert("Contact us at: "moneythepro7@gmail.com");
 }
 
 // ===== Logout & Reset App =====
@@ -415,10 +465,10 @@ function logout() {
   }
 
   firebase.auth().signOut().then(() => {
-    window.location.reload();
-  });
+  currentUser = null;
+  window.location.reload();
+});
 }
-
 // ===== Group List for Dropdowns =====
 function loadGroups() {
   const dropdown = document.getElementById("roomDropdown");
@@ -507,8 +557,10 @@ function loadRealtimeGroups() {
     .where("members", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
     .onSnapshot(snapshot => {
+      list.innerHTML = ""; // ✅ Clear previous content
+
       if (snapshot.empty) {
-        console.log("ℹ No groups found.");
+        list.innerHTML = `<div class="no-results">No group chats found.</div>`;
         return;
       }
 
@@ -518,38 +570,40 @@ function loadRealtimeGroups() {
         const name = group.name || "Group";
         const unread = group.unread?.[currentUser.uid] || 0;
 
-        let lastMsg = "[No message]";
+        let lastMsg = "[No messages]";
         if (typeof group.lastMessage === "string") {
           lastMsg = group.lastMessage;
         } else if (typeof group.lastMessage === "object") {
-          lastMsg = group.lastMessage?.text || "[No message]";
+          lastMsg = group.lastMessage?.text || "[No messages]";
         }
+
+        const updatedTime = group.updatedAt?.toDate?.()
+          ? timeSince(group.updatedAt.toDate())
+          : "";
 
         const card = document.createElement("div");
         card.className = "chat-card group-chat";
-        card.onclick = () => joinRoom(doc.id);
+        card.onclick = () => openGroupChat(doc.id); // ✅ Use actual handler
+
         card.innerHTML = `
           <img class="group-avatar" src="${icon}" />
           <div class="details">
-            <div class="name">#${escapeHtml(name)}</div>
+            <div class="name-row">
+              <span class="name">#${escapeHtml(name)}</span>
+              <span class="time">${updatedTime}</span>
+            </div>
             <div class="last-message">${escapeHtml(lastMsg)}</div>
           </div>
           ${unread > 0 ? `<span class="badge">${unread}</span>` : ""}
         `;
+
         list.appendChild(card);
       });
     }, err => {
       console.error("❌ Group snapshot error:", err.message || err);
+      list.innerHTML = `<div class="no-results">Failed to load group chats.</div>`;
     });
-  setTimeout(() => {
-  const list = document.getElementById("chatList");
-  if (list && list.children.length === 0) {
-    list.innerHTML = `<div class="no-results">No chats found.</div>`;
-  }
-}, 1500);
-  
 }
-
 // ===== Direct Message Threads =====
 function loadFriendThreads() {
   const list = document.getElementById("chatList");
@@ -561,34 +615,47 @@ function loadFriendThreads() {
     .where("participants", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
     .onSnapshot(async snapshot => {
+      list.innerHTML = ""; // ✅ Clear previous content
+
       if (snapshot.empty) {
-        console.log("ℹ No threads found.");
+        list.innerHTML = `<div class="no-results">No personal chats found.</div>`;
         return;
       }
 
-      for (const doc of snapshot.docs) {
+      const userCache = {};
+
+      // Process all threads in parallel (faster)
+      const promises = snapshot.docs.map(async doc => {
         const thread = doc.data();
         const otherUid = thread.participants.find(uid => uid !== currentUser.uid);
-        if (!otherUid) continue;
+        if (!otherUid) return null;
 
-        let user;
-        try {
-          const userDoc = await db.collection("users").doc(otherUid).get();
-          if (!userDoc.exists) continue;
-          user = userDoc.data();
-        } catch {
-          continue;
+        // 🧠 Use cache if already fetched
+        let user = userCache[otherUid];
+        if (!user) {
+          try {
+            const userDoc = await db.collection("users").doc(otherUid).get();
+            if (!userDoc.exists) return null;
+            user = userDoc.data();
+            userCache[otherUid] = user;
+          } catch {
+            return null;
+          }
         }
 
         const avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
         const name = user.username || "Friend";
 
-        let lastMsg = "[No message]";
+        let lastMsg = "[No messages]";
         if (typeof thread.lastMessage === "string") {
           lastMsg = thread.lastMessage;
         } else if (typeof thread.lastMessage === "object") {
-          lastMsg = thread.lastMessage?.text || "[No message]";
+          lastMsg = thread.lastMessage?.text || "[No messages]";
         }
+
+        const updatedTime = thread.updatedAt?.toDate?.()
+          ? timeSince(thread.updatedAt.toDate())
+          : "";
 
         const unread = thread.unread?.[currentUser.uid] || 0;
 
@@ -598,70 +665,142 @@ function loadFriendThreads() {
         card.innerHTML = `
           <img class="friend-avatar" src="${avatar}" />
           <div class="details">
-            <div class="name">${escapeHtml(name)}</div>
+            <div class="name-row">
+              <span class="name">${escapeHtml(name)}</span>
+              <span class="time">${updatedTime}</span>
+            </div>
             <div class="last-message">${escapeHtml(lastMsg)}</div>
           </div>
           ${unread > 0 ? `<span class="badge">${unread}</span>` : ""}
         `;
-        list.appendChild(card);
-      }
+
+        return card;
+      });
+
+      // Wait for all cards to build, then render
+      const cards = await Promise.all(promises);
+      cards.filter(Boolean).forEach(card => list.appendChild(card));
     }, err => {
       console.error("❌ Thread snapshot error:", err.message || err);
+      list.innerHTML = `<div class="no-results">Failed to load personal chats.</div>`;
     });
-  setTimeout(() => {
-  const list = document.getElementById("chatList");
-  if (list && list.children.length === 0) {
-    list.innerHTML = `<div class="no-results">No chats found.</div>`;
-  }
-}, 1500);
-  
 }
 
 // ===== Chat Filter (Local search) =====
 function searchChats(term) {
+  const normalized = term.trim().toLowerCase();
   const chats = document.querySelectorAll(".chat-card");
+
+  let anyVisible = false;
+
   chats.forEach(chat => {
-    const text = chat.textContent.toLowerCase();
-    chat.style.display = text.includes(term.toLowerCase()) ? "block" : "none";
+    const name = chat.querySelector(".name")?.textContent?.toLowerCase() || "";
+    const lastMsg = chat.querySelector(".last-message")?.textContent?.toLowerCase() || "";
+
+    const match = name.includes(normalized) || lastMsg.includes(normalized);
+    chat.style.display = match ? "flex" : "none";
+    if (match) anyVisible = true;
   });
+
+  const list = document.getElementById("chatList");
+  const noResult = document.getElementById("noResultsMsg");
+
+  if (!anyVisible) {
+    if (!noResult) {
+      const msg = document.createElement("div");
+      msg.id = "noResultsMsg";
+      msg.className = "no-results";
+      msg.textContent = "No chats match your search.";
+      list.appendChild(msg);
+    }
+  } else {
+    if (noResult) noResult.remove();
+  }
 }
 
 // ===== Load Messages in Group =====
-function loadRoomMessages(groupId) {
-  const box = document.getElementById("roomMessages");
+function loadGroupMessages(groupId) {
+  const box = document.getElementById("groupMessages");
   if (!groupId || !currentUser || !box) return;
 
   box.innerHTML = "";
 
-  db.collection("threads").doc(groupId).collection("messages")
+  db.collection("groups").doc(groupId).collection("messages")
     .orderBy("timestamp", "asc")
     .onSnapshot(snapshot => {
       box.innerHTML = "";
-
       snapshot.forEach(doc => {
-        const m = doc.data();
-        const fromSelf = m.from === currentUser.uid;
-        const msgText = m.text || "";
+        const msg = doc.data();
+        const isSelf = msg.senderId === currentUser.uid;
+        const msgText = msg.text || "";
         let decrypted = "";
 
         try {
-          decrypted = CryptoJS.AES.decrypt(msgText, "yourSecretKey").toString(CryptoJS.enc.Utf8);
+          if (typeof msgText === "string") {
+            decrypted = CryptoJS.AES.decrypt(msgText, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+          } else {
+            decrypted = "[Invalid]";
+          }
         } catch {
-          decrypted = "[Encrypted]";
+          decrypted = "[Decryption error]";
         }
 
+        // Skip if deleted for this user
+        if (msg.deletedFor?.[currentUser.uid]) return;
+
         const bubble = document.createElement("div");
-        bubble.className = `message-bubble ${fromSelf ? "right" : "left"}`;
-        bubble.innerHTML = `
-          <div class="msg-content">${escapeHtml(decrypted)}</div>
-          <div class="message-time">${timeSince(m.timestamp?.toDate?.() || new Date())}</div>
-        `;
+        bubble.className = `message-bubble ${isSelf ? "right" : "left"}`;
+
+        // ✅ Support reply
+        if (msg.replyTo?.text) {
+          const reply = document.createElement("div");
+          reply.className = "reply-preview";
+          reply.textContent = `↪ ${msg.replyTo.text.slice(0, 50)}...`;
+          bubble.appendChild(reply);
+        }
+
+        // ✅ Sender name
+        const sender = document.createElement("div");
+        sender.className = "sender-info";
+        sender.innerHTML = `<strong>${escapeHtml(msg.senderName || "User")}</strong>`;
+        bubble.appendChild(sender);
+
+        // ✅ Message content
+        const content = document.createElement("div");
+        content.className = "msg-content";
+        content.innerHTML = linkifyText(escapeHtml(decrypted));
+        bubble.appendChild(content);
+
+        // ✅ Timestamp
+        const time = document.createElement("div");
+        time.className = "message-time";
+        time.textContent = timeSince(msg.timestamp?.toDate?.() || new Date());
+        bubble.appendChild(time);
+
+        // ✅ Touch / right-click handlers
+        bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
+        bubble.addEventListener("touchmove", handleTouchMove, { passive: true });
+        bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted), { passive: true });
+        bubble.addEventListener("contextmenu", e => {
+          e.preventDefault();
+          handleLongPressMenu(msg, decrypted, isSelf);
+        });
+
         box.appendChild(bubble);
+
+        // ✅ Mark as seen
+        if (!msg.seenBy?.includes(currentUser.uid)) {
+          db.collection("groups").doc(groupId).collection("messages")
+            .doc(doc.id)
+            .update({
+              seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+            }).catch(() => {});
+        }
       });
 
       box.scrollTop = box.scrollHeight;
     }, err => {
-      console.error("❌ Room message load failed:", err.message || err);
+      console.error("❌ Group message load failed:", err.message || err);
     });
 }
 
@@ -671,64 +810,50 @@ function sendRoomMessage() {
   const text = input?.value.trim();
   if (!text || !currentRoom || !currentUser) return;
 
-  const encrypted = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
-  const fromName = document.getElementById("usernameDisplay").textContent;
+  const fromName = document.getElementById("usernameDisplay")?.textContent || "User";
+  const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
 
-  const msg = {
-    text: encrypted,
-    from: currentUser.uid,
-    fromName,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  const message = {
+    text: encryptedText,
+    senderId: currentUser.uid,
+    senderName: fromName,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    seenBy: [currentUser.uid]
   };
 
-  const threadRef = db.collection("threads").doc(currentRoom);
+  if (replyingTo?.msgId && replyingTo?.text) {
+    message.replyTo = {
+      msgId: replyingTo.msgId,
+      text: replyingTo.text
+    };
+  }
+
   const groupRef = db.collection("groups").doc(currentRoom);
 
-  // 🔄 Send message
-  threadRef.collection("messages").add(msg).then(() => {
+  groupRef.collection("messages").add(message).then(() => {
     input.value = "";
+    cancelReply();
 
-    // ✅ Update group lastMessage + updatedAt
     groupRef.set({
       lastMessage: text,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
 
+    // ✅ Keep input focused
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        input.focus({ preventScroll: true });
+      });
+    });
+
+    setTimeout(() => {
+      const msgArea = document.getElementById("groupMessages");
+      if (msgArea) msgArea.scrollTop = msgArea.scrollHeight;
+    }, 100);
   }).catch(err => {
-    console.error("❌ Group message failed:", err.message || err);
+    console.error("❌ Failed to send group message:", err.message || err);
     alert("❌ Failed to send message.");
   });
-}
-
-// ===== Typing Indicator (Unified Final Version) =====
-function handleTyping(context) {
-  if (!currentUser) return;
-
-  let typingRef;
-  if (context === "group" && currentRoom) {
-    typingRef = db.collection("groups")
-      .doc(currentRoom)
-      .collection("typing")
-      .doc(currentUser.uid);
-  } else if (context === "thread" && currentThreadUser) {
-    const thread = threadId(currentUser.uid, currentThreadUser);
-    typingRef = db.collection("threads")
-      .doc(thread)
-      .collection("typing")
-      .doc(currentUser.uid);
-  } else {
-    return;
-  }
-
-  typingRef.set({
-    typing: true,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  }).catch(console.warn);
-
-  // Auto-clear after 3 seconds
-  setTimeout(() => {
-    typingRef.delete().catch(() => {});
-  }, 3000);
 }
 
 // ===== Typing Indicator Listener (dot dot dot dot) =====
@@ -738,55 +863,73 @@ function listenToTyping(targetId, context) {
   );
   const statusBox = document.getElementById("chatStatus");
 
-  if (!typingBox) return;
+  if (!typingBox || !targetId || !currentUser) return;
+
   if (unsubscribeTyping) unsubscribeTyping();
 
-  unsubscribeTyping = db.collection(
-    context === "group" ? "groups" : "threads"
-  )
-  .doc(targetId)
-  .collection("typing")
-  .onSnapshot(async snapshot => {
+  const path = db.collection(context === "group" ? "groups" : "threads")
+    .doc(targetId)
+    .collection("typing");
+
+  unsubscribeTyping = path.onSnapshot(snapshot => {
     let someoneTyping = false;
 
-    for (const doc of snapshot.docs) {
+    snapshot.forEach(doc => {
       const data = doc.data();
       if (doc.id !== currentUser.uid && data?.typing) {
         someoneTyping = true;
-        break;
       }
-    }
+    });
 
-    if (someoneTyping) {
-      typingBox.style.display = "flex";
-      if (context === "thread" && statusBox) statusBox.textContent = "Typing...";
-    } else {
-      typingBox.style.display = "none";
-      if (context === "thread" && statusBox) statusBox.textContent = "Online";
+    // ✅ Update typing display
+    typingBox.style.display = someoneTyping ? "flex" : "none";
+
+    // ✅ Thread-specific "Typing..." indicator
+    if (context === "thread" && statusBox) {
+      statusBox.textContent = someoneTyping ? "Typing..." : "Online";
     }
+  }, err => {
+    console.warn("❌ Typing listener error:", err.message || err);
   });
 }
 
 function openChatMenu() {
   const menu = document.getElementById("chatOptionsMenu");
-  menu.style.display = (menu.style.display === "flex") ? "none" : "flex";
+  if (!menu) return;
+
+  const isVisible = menu.style.display === "flex";
+  menu.style.display = isVisible ? "none" : "flex";
+  document.addEventListener("click", (e) => {
+  const menu = document.getElementById("chatOptionsMenu");
+  if (!menu) return;
+
+  const toggleBtn = document.getElementById("chatMenuToggle"); // your trigger
+  if (!toggleBtn || toggleBtn.contains(e.target)) return;
+
+  if (!menu.contains(e.target)) {
+    menu.style.display = "none";
+  }
+});
 }
 
 function timeSince(date) {
   if (!date) return "";
-  const seconds = Math.floor((new Date() - date) / 1000);
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+
   const intervals = [
-    [31536000, 'y'],
-    [2592000, 'mo'],
-    [86400, 'd'],
-    [3600, 'h'],
-    [60, 'm'],
-    [1, 's']
+    [31536000, "y"],
+    [2592000, "mo"],
+    [86400, "d"],
+    [3600, "h"],
+    [60, "m"],
+    [1, "s"]
   ];
+
   for (const [secs, label] of intervals) {
-    const interval = Math.floor(seconds / secs);
-    if (interval >= 1) return `${interval}${label}`;
+    const count = Math.floor(seconds / secs);
+    if (count >= 1) return `${count}${label}`;
   }
+
   return "just now";
 }
 
@@ -797,7 +940,7 @@ function listenInbox() {
   const badge = document.getElementById("inboxBadge");
   if (!list || !currentUser) return;
 
-  if (unsubscribeInbox) unsubscribeInbox(); // clear previous listener
+  if (unsubscribeInbox) unsubscribeInbox(); // Remove old listener
 
   unsubscribeInbox = db.collection("inbox")
     .doc(currentUser.uid)
@@ -808,48 +951,63 @@ function listenInbox() {
         list.innerHTML = "";
         let unreadCount = 0;
 
+        const senderCache = {};
+
         for (const doc of snapshot.docs) {
           const data = doc.data();
           if (!data) continue;
 
-          // Count unread
+          // 🔴 Unread count
           if (!data.read) unreadCount++;
 
-          // Get sender info
+          // 📤 Sender info
           let senderName = "Unknown";
           let fromUID = "";
           let avatarURL = "default-avatar.png";
 
           if (typeof data.from === "string") {
             fromUID = data.from;
-            try {
-              const senderDoc = await db.collection("users").doc(fromUID).get();
-              if (senderDoc.exists) {
-                const senderData = senderDoc.data();
-                senderName = senderData.username || senderData.name || "Unknown";
-                avatarURL = senderData.photoURL || `https://ui-avatars.com/api/?name=${senderName}`;
+            if (!senderCache[fromUID]) {
+              try {
+                const senderDoc = await db.collection("users").doc(fromUID).get();
+                if (senderDoc.exists) {
+                  const senderData = senderDoc.data();
+                  senderCache[fromUID] = {
+                    name: senderData.username || senderData.name || "Unknown",
+                    avatar: senderData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderData.username || "User")}`
+                  };
+                }
+              } catch (e) {
+                console.warn("⚠️ Failed to fetch sender:", e.message);
               }
-            } catch (e) {
-              console.warn("⚠️ Sender fetch failed:", e.message);
             }
+
+            if (senderCache[fromUID]) {
+              senderName = senderCache[fromUID].name;
+              avatarURL = senderCache[fromUID].avatar;
+            }
+
           } else if (data.from?.uid) {
             fromUID = data.from.uid;
             senderName = data.from.name || "Unknown";
           }
 
-          const typeText = data.type === "friend"
-            ? "👤 Friend request from @" + senderName
-            : data.type === "group"
-              ? `📣 Group invite: ${data.groupName || "Unnamed Group"}`
+          // 🏷️ Message type
+          const typeText =
+            data.type === "friend"
+              ? `👤 Friend request from @${senderName}`
+              : data.type === "group"
+              ? `📣 Group invite: ${escapeHtml(data.groupName || "Unnamed Group")}`
               : "📩 Notification";
 
+          // 💌 Create card
           const card = document.createElement("div");
           card.className = "inbox-card";
           card.innerHTML = `
             <img src="${avatarURL}" alt="Avatar" />
-            <div style="flex:1">
-              <div style="font-weight:bold;">${typeText}</div>
-              <div style="font-size:12px; color:#777;">${timeSince(data.timestamp?.toDate?.() || new Date())}</div>
+            <div class="inbox-meta">
+              <div class="inbox-title">${escapeHtml(typeText)}</div>
+              <div class="inbox-time">${timeSince(data.timestamp?.toDate?.() || new Date())}</div>
             </div>
             <div class="btn-group">
               <button onclick="acceptInbox('${doc.id}', '${data.type}', '${fromUID}')">Accept</button>
@@ -859,17 +1017,17 @@ function listenInbox() {
           list.appendChild(card);
         }
 
+        // 🔔 Badge
         if (badge) {
           badge.textContent = unreadCount ? unreadCount : "";
-          badge.style.display = unreadCount ? "inline-block" : "none";
+          badge.style.display = unreadCount > 0 ? "inline-block" : "none";
         }
-
       } catch (err) {
-        console.error("❌ Inbox render error:", err.message);
+        console.error("❌ Inbox render error:", err.message || err);
         alert("❌ Failed to load inbox");
       }
-    }, err => {
-      console.error("❌ Inbox listener error:", err.message);
+    }, (err) => {
+      console.error("❌ Inbox listener error:", err.message || err);
       alert("❌ Inbox loading failed");
     });
 }
@@ -877,15 +1035,20 @@ function listenInbox() {
 function updateInboxBadge() {
   if (!currentUser) return;
 
+  const badge = document.getElementById("inboxBadge");
+  if (!badge) return;
+
   db.collection("inbox").doc(currentUser.uid).collection("items")
-    .where("timestamp", ">", new Date(Date.now() - 86400000)) // recent 1 day
+    .where("read", "==", false)
     .get().then(snapshot => {
-      const badge = document.getElementById("inboxBadge");
-      badge.textContent = snapshot.size ? snapshot.size : "";
+      const count = snapshot.size;
+      badge.textContent = count ? count : "";
+      badge.style.display = count > 0 ? "inline-block" : "none";
+    }).catch(err => {
+      console.warn("⚠️ Inbox badge fetch failed:", err.message || err);
     });
 }
 
-// ===== Accept Inbox Item =====
 function acceptInbox(id, type, fromUID) {
   if (!currentUser || !id || !type || !fromUID) return;
 
@@ -894,15 +1057,11 @@ function acceptInbox(id, type, fromUID) {
   if (type === "friend") {
     const batch = db.batch();
 
-    const userRef = db.collection("users")
-      .doc(currentUser.uid)
-      .collection("friends")
-      .doc(fromUID);
+    const userRef = db.collection("users").doc(currentUser.uid)
+      .collection("friends").doc(fromUID);
 
-    const otherRef = db.collection("users")
-      .doc(fromUID)
-      .collection("friends")
-      .doc(currentUser.uid);
+    const otherRef = db.collection("users").doc(fromUID)
+      .collection("friends").doc(currentUser.uid);
 
     batch.set(userRef, { since: Date.now() });
     batch.set(otherRef, { since: Date.now() });
@@ -910,14 +1069,9 @@ function acceptInbox(id, type, fromUID) {
 
     batch.commit().then(() => {
       alert("✅ Friend added!");
-      
-      // ✅ Optional: auto-open DM thread
       openThread(fromUID, "Friend");
-
-      // ✅ Optional: reload updated UI
       loadFriends?.();
       loadChatList?.();
-
     }).catch(err => {
       console.error("❌ Friend accept failed:", err.message || err);
       alert("❌ Failed to accept friend.");
@@ -929,8 +1083,7 @@ function acceptInbox(id, type, fromUID) {
     }).then(() => {
       inboxRef.delete();
       alert("✅ Joined the group!");
-
-      joinRoom(fromUID); // ✅ Optional: enter group chat
+      joinRoom(fromUID);
       loadChatList?.();
     }).catch(err => {
       console.error("❌ Group join failed:", err.message || err);
@@ -939,22 +1092,18 @@ function acceptInbox(id, type, fromUID) {
   }
 }
 
-
-// ===== Decline Inbox Item =====
 function declineInbox(id) {
   if (!currentUser || !id) return;
 
-  db.collection("inbox").doc(currentUser.uid).collection("items").doc(id).delete()
-    .then(() => {
-      alert("❌ Request declined.");
-    })
-    .catch(err => {
-      console.error("❌ Decline failed:", err.message);
-      alert("❌ Failed to decline request.");
-    });
+  const ref = db.collection("inbox").doc(currentUser.uid).collection("items").doc(id);
+  ref.delete().then(() => {
+    alert("❌ Request declined.");
+  }).catch(err => {
+    console.error("❌ Decline failed:", err.message || err);
+    alert("❌ Could not decline request.");
+  });
 }
 
-// ===== Mark All as Read =====
 function markAllRead() {
   if (!currentUser) return;
 
@@ -963,28 +1112,32 @@ function markAllRead() {
   inboxRef.get().then(snapshot => {
     const batch = db.batch();
     snapshot.forEach(doc => {
-      const ref = inboxRef.doc(doc.id);
-      batch.update(ref, { read: true });
+      batch.update(inboxRef.doc(doc.id), { read: true });
     });
     return batch.commit();
   }).then(() => {
     alert("📬 All inbox items marked as read.");
+    updateInboxBadge();
   }).catch(err => {
-    console.error("❌ Failed to mark all read:", err.message);
+    console.error("❌ Mark-all-read failed:", err.message || err);
     alert("❌ Could not mark all as read.");
   });
 }
 
 function renderInboxCard(data) {
+  const name = escapeHtml(data.name || "Unknown");
+  const msg = escapeHtml(data.message || "Notification");
+  const photo = data.photo || "default-avatar.png";
+
   return `
     <div class="inbox-card">
-      <img src="${data.photo || 'default-avatar.png'}" />
+      <img src="${photo}" />
       <div style="flex:1;">
-        <strong>${data.name || "Unknown"}</strong><br/>
-        <small>${data.message || "Notification"}</small>
+        <strong>${name}</strong><br/>
+        <small>${msg}</small>
       </div>
       <div class="btn-group">
-        <button onclick="acceptInbox('${data.id}')">✔</button>
+        <button onclick="acceptInbox('${data.id}', '${data.type}', '${data.fromUID || ""}')">✔</button>
         <button onclick="declineInbox('${data.id}')">✖</button>
       </div>
     </div>
@@ -1016,10 +1169,11 @@ function loadFriends() {
 
           const user = friendDoc.data();
           const avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-          const isOnline = user.status === "online"; // Optional: status check
+          const isOnline = user.status === "online";
 
           const card = document.createElement("div");
           card.className = "friend-card";
+          card.onclick = () => viewUserProfile(friendId);
 
           card.innerHTML = `
             <img src="${avatar}" alt="Avatar" />
@@ -1027,30 +1181,41 @@ function loadFriends() {
               <div class="name">${escapeHtml(user.username || "User")}</div>
               <div class="bio">${escapeHtml(user.bio || "")}</div>
             </div>
-            <div class="status-dot ${isOnline ? "online" : ""}"></div>
+            <div class="status-dot ${isOnline ? "online" : "offline"}" title="${isOnline ? "Online" : "Offline"}"></div>
             <button class="chat-start-btn" onclick="event.stopPropagation(); openThread('${friendId}', '${escapeHtml(user.username || "User")}')">💬 Chat</button>
           `;
 
-          card.onclick = () => viewUserProfile(friendId); // Tap card = view profile
           container.appendChild(card);
         } catch (err) {
-          console.warn("❌ Friend load error:", err.message || err);
+          console.warn("❌ Failed to load friend data:", err.message || err);
         }
       }
+    }, err => {
+      console.error("❌ Friend snapshot failed:", err.message || err);
+      container.innerHTML = `<div class="error">Error loading friends.</div>`;
     });
 }
 
 function removeFriend(uid) {
   if (!currentUser || !uid) return;
 
-  if (confirm("❌ Remove this friend?")) {
-    db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).delete()
+  if (confirm("❌ Are you sure you want to remove this friend?")) {
+    const ownRef = db.collection("users").doc(currentUser.uid).collection("friends").doc(uid);
+    const otherRef = db.collection("users").doc(uid).collection("friends").doc(currentUser.uid);
+
+    const batch = db.batch();
+    batch.delete(ownRef);
+    batch.delete(otherRef);
+
+    batch.commit()
       .then(() => alert("✅ Friend removed"))
-      .catch(err => alert("❌ Failed: " + err.message));
+      .catch(err => {
+        console.error("❌ Remove friend failed:", err.message);
+        alert("❌ Failed to remove friend");
+      });
   }
 }
 
-// ==== Add Friend Shortcut ====
 function addFriend(uid) {
   if (!uid || !currentUser) return;
 
@@ -1067,7 +1232,7 @@ function addFriend(uid) {
       return;
     }
 
-    // Check if request already sent
+    // 🔍 Check if friend request already sent
     db.collection("inbox").doc(uid).collection("items")
       .where("type", "==", "friend")
       .where("from.uid", "==", currentUser.uid)
@@ -1079,7 +1244,7 @@ function addFriend(uid) {
           return;
         }
 
-        // ✅ Send friend request
+        // 📤 Send friend request
         db.collection("inbox").doc(uid).collection("items").add({
           type: "friend",
           from: {
@@ -1091,17 +1256,18 @@ function addFriend(uid) {
         }).then(() => {
           alert("✅ Friend request sent!");
         }).catch(err => {
-          console.error("❌ Inbox write error:", err);
-          alert("❌ Could not send friend request (inbox write failed)");
+          console.error("❌ Inbox write error:", err.message || err);
+          alert("❌ Failed to send request");
         });
+
       }).catch(err => {
-        console.error("❌ Inbox check error:", err);
-        alert("❌ Could not verify existing request");
+        console.error("❌ Friend request check failed:", err.message || err);
+        alert("❌ Could not verify request status");
       });
 
   }).catch(err => {
-    console.error("❌ Friend check error:", err);
-    alert("❌ Could not verify friend status");
+    console.error("❌ Friend existence check failed:", err.message || err);
+    alert("❌ Could not check friendship");
   });
 }
 
@@ -1109,25 +1275,59 @@ function addFriend(uid) {
 function loadGroupInfo(groupId) {
   if (!groupId) return;
 
+  const ownerLabel = document.getElementById("groupOwner");
+  const adminsLabel = document.getElementById("groupAdmins");
+  const memberList = document.getElementById("groupMembers");
+
+  if (!ownerLabel || !adminsLabel || !memberList) return;
+
+  // Reset UI
+  ownerLabel.textContent = "Owner: ...";
+  adminsLabel.textContent = "Admins: ...";
+  memberList.innerHTML = `<div class="loading">Loading members...</div>`;
+
   db.collection("groups").doc(groupId).get().then(doc => {
-    if (!doc.exists) return;
+    if (!doc.exists) {
+      ownerLabel.textContent = "Owner: Unknown";
+      adminsLabel.textContent = "Admins: Unknown";
+      memberList.innerHTML = `<div class="error">Group not found.</div>`;
+      return;
+    }
 
     const data = doc.data();
-    document.getElementById("groupOwner").textContent = "Owner: " + (data.createdBy || "Unknown");
-    document.getElementById("groupAdmins").textContent = "Admins: " + (data.admins || []).join(", ");
+    const admins = data.admins || [];
+    const members = data.members || [];
 
-    const memberList = document.getElementById("groupMembers");
+    ownerLabel.textContent = "Owner: " + (data.createdBy || "Unknown");
+    adminsLabel.textContent = "Admins: " + (admins.length ? admins.join(", ") : "None");
+
     memberList.innerHTML = "";
 
-    (data.members || []).forEach(uid => {
+    members.forEach(uid => {
       db.collection("users").doc(uid).get().then(userDoc => {
         const user = userDoc.data();
+        const name = user?.username || uid;
+        const isAdmin = admins.includes(uid);
+        const isOwner = uid === data.createdBy;
+
         const div = document.createElement("div");
         div.className = "member-entry";
-        div.textContent = user?.username || uid;
+        div.innerHTML = `
+          <span>${escapeHtml(name)}</span>
+          ${isOwner ? `<span class="badge owner-badge">Owner</span>` : ""}
+          ${isAdmin && !isOwner ? `<span class="badge admin-badge">Admin</span>` : ""}
+        `;
         memberList.appendChild(div);
+      }).catch(err => {
+        console.warn("⚠️ Failed to fetch user:", err.message);
       });
     });
+
+  }).catch(err => {
+    console.error("❌ Group info fetch failed:", err.message);
+    ownerLabel.textContent = "Owner: Error";
+    adminsLabel.textContent = "Admins: Error";
+    memberList.innerHTML = `<div class="error">Failed to load group info.</div>`;
   });
 }
 
