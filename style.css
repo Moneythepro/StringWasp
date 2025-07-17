@@ -1047,7 +1047,7 @@ body.dark .chat-options-horizontal span:hover {
   box-shadow: 0 -1px 2px rgba(0,0,0,0.08);
 }
 
-/* ✂️ Restrict reply text to 3 lines with fade */
+/* ✂️ Restrict reply text to 3 lines with fade in preview */
 #replyPreview .reply-text {
   position: relative;
   font-weight: 500;
@@ -1063,8 +1063,6 @@ body.dark .chat-options-horizontal span:hover {
   max-height: calc(1.3em * 3);
   white-space: normal;
 }
-
-/* ✨ Fade gradient at bottom of reply */
 #replyPreview .reply-text::after {
   content: '';
   position: absolute;
@@ -1099,40 +1097,33 @@ body.dark .chat-options-horizontal span:hover {
   gap: 4px;
 }
 
-.reply-text {
-  flex: 1;
-  color: #333;
-  font-size: 13px;
+/* 🧵 Reply inside bubble - limit to 3 lines */
+.reply-to {
+  background: #e9e9e9;
+  border-left: 3px solid #4caf50;
+  padding: 4px 6px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: #555;
+  border-radius: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  white-space: nowrap;
   text-overflow: ellipsis;
-  margin-right: 6px;
+  line-height: 1.3em;
+  max-height: calc(1.3em * 3);
+  white-space: normal;
+  position: relative;
 }
-.reply-close {
-  background: #e0e0e0;
-  border: none;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-left: auto;
-  font-size: 14px;
-  color: #555;
-  transition: background 0.2s ease;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.1);
-}
-.reply-close:hover {
-  background: #d6d6d6;
-}
-.reply-close i {
-  width: 12px;
-  height: 12px;
-  color: #555;
+.reply-to::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1.3em;
+  background: linear-gradient(to bottom, rgba(233, 233, 233, 0), #e9e9e9);
 }
 
 /* ✅ Seen and Sent Tick Icons */
@@ -1156,46 +1147,6 @@ body.dark .chat-options-horizontal span:hover {
   color: #999;
   margin-left: 5px;
   vertical-align: middle;
-}
-
-/* 🧼 Reply highlight on scroll to reply */
-.highlighted-reply {
-  animation: flashHighlight 1.5s ease;
-  background-color: #fff59d !important;
-  transition: background-color 1s ease;
-}
-@keyframes flashHighlight {
-  0%   { background-color: #fff59d; }
-  50%  { background-color: #fff9c4; }
-  100% { background-color: transparent; }
-}
-
-/* 🔁 Message bubble reply-to block */
-.reply-text {
-  position: relative;
-  font-weight: 500;
-  flex: 1;
-  color: #333;
-  max-width: 220px;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;        /* Limit to 3 lines */
-  -webkit-box-orient: vertical;
-  text-overflow: ellipsis;
-  line-height: 1.3em;
-  max-height: calc(1.3em * 3);
-  white-space: normal;
-}
-
-/* ✨ Gradient fade at bottom of 3-line reply preview */
-.reply-text::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 1.3em;
-  background: linear-gradient(to bottom, rgba(255,255,255,0), #fff);
 }
 
 /* 🔗 Link Preview */
@@ -1245,7 +1196,7 @@ body.dark .chat-options-horizontal span:hover {
   opacity: 0.7;
 }
 
-/* ✨ Bubble styles */
+/* 💬 Message bubbles (no overflow growth) */
 .message-bubble {
   position: relative;
   padding: 6px 10px;
@@ -1303,6 +1254,8 @@ body.dark .chat-options-horizontal span:hover {
   gap: 4px;
   margin-top: 4px;
 }
+
+/* ✅ Show More (optional toggle) */
 .show-more {
   display: inline-block;
   color: var(--primary-color, #4fc3f7);
@@ -1311,6 +1264,7 @@ body.dark .chat-options-horizontal span:hover {
   margin-left: 4px;
   font-weight: 500;
 }
+
 /* 🔽 Reply animation slide */
 .reply-box {
   display: flex;
@@ -1326,4 +1280,44 @@ body.dark .chat-options-horizontal span:hover {
 @keyframes slideInReply {
   from { transform: translateX(-12px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
+}
+
+/* ✨ Scroll-to-reply flash */
+.highlighted-reply {
+  animation: flashHighlight 1.5s ease;
+  background-color: #fff59d !important;
+  transition: background-color 1s ease;
+}
+@keyframes flashHighlight {
+  0%   { background-color: #fff59d; }
+  50%  { background-color: #fff9c4; }
+  100% { background-color: transparent; }
+}
+
+/* ❌ Close Button */
+.reply-close {
+  background: #e0e0e0;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 14px;
+  color: #555;
+  transition: background 0.2s ease;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+}
+.reply-close:hover {
+  background: #d6d6d6;
+}
+.reply-close i {
+  width: 12px;
+  height: 12px;
+  color: #555;
 }
