@@ -1341,6 +1341,19 @@ async function openThread(uid, name) {
     }
 
     switchTab("threadView");
+    
+    setTimeout(() => {
+  const input = document.getElementById("threadInput");
+  if (input) input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendThreadMessage();
+    }
+  });
+
+  const sendBtn = document.getElementById("sendButton");
+  if (sendBtn) sendBtn.addEventListener("click", sendThreadMessage);
+}, 200);
 
     document.getElementById("threadWithName").textContent =
       typeof name === "string" ? name : (name?.username || "Chat");
@@ -1365,9 +1378,11 @@ async function openThread(uid, name) {
         }, 50);
       }
 
-      area.addEventListener("scroll", () => {
+      // Remove previous scroll listener if any
+      area.onscroll = null;
+      area.onscroll = () => {
         sessionStorage.setItem("threadScroll_" + threadIdStr, area.scrollTop);
-      });
+      };
     }
 
     try {
@@ -1434,16 +1449,15 @@ async function openThread(uid, name) {
           const isSelf = msg.from === currentUser.uid;
 
           let decrypted = "";
-          try {
-            if (typeof msg.text === "string") {
+          if (typeof msg.text === "string") {
+            try {
               const bytes = CryptoJS.AES.decrypt(msg.text, "yourSecretKey");
               decrypted = bytes.toString(CryptoJS.enc.Utf8) || "[Encrypted]";
-            } else {
-              decrypted = "[Invalid message]";
+            } catch {
+              decrypted = "[Decryption failed]";
             }
-          } catch (e) {
-            console.error("Decryption failed:", e);
-            decrypted = "[Decryption error]";
+          } else {
+            decrypted = "[Invalid text]";
           }
 
           const wrapper = document.createElement("div");
@@ -1728,15 +1742,21 @@ function handleSwipeToReply(msg, text) {
   replyingTo = { msgId: msg.id, text };
   const bar = document.getElementById("replyPreview");
   if (bar) {
-    bar.querySelector(".reply-text").textContent = text;
+    document.getElementById("replyText").textContent = text;
     bar.style.display = "flex";
   }
 }
 
 function cancelReply() {
+  replyingTo = null;
   const bar = document.getElementById("replyPreview");
-  if (bar) bar.style.display = "none";
+  if (bar) {
+    bar.style.display = "none";
+    document.getElementById("replyText").textContent = "";
+  }
 }
+
+
 
 function sendThreadMessage() {
   const input = document.getElementById("threadInput");
@@ -1811,7 +1831,6 @@ function handleThreadKey(event) {
     sendThreadMessage();
   }
 }
-
 document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("threadInput");
   if (input) {
