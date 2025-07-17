@@ -1746,7 +1746,9 @@ function sendThreadMessage() {
   if (!text) return;
 
   const fromName = document.getElementById("usernameDisplay")?.textContent || "User";
-  const toName = document.getElementById("threadWithName")?.textContent || "Friend";
+  const toNameElem = document.getElementById("threadWithName");
+  const toName = toNameElem ? toNameElem.textContent : "Friend";
+
   const threadIdStr = threadId(currentUser.uid, currentThreadUser);
   const threadRef = db.collection("threads").doc(threadIdStr);
 
@@ -1791,7 +1793,9 @@ function sendThreadMessage() {
           input.focus({ preventScroll: true });
         });
       });
-console.log("Thread to:", currentThreadUser, "Text:", input.value);
+
+      console.log("Thread to:", currentThreadUser, "Text:", text);
+
       setTimeout(() => scrollToBottomThread(true), 100);
     })
     .catch(err => {
