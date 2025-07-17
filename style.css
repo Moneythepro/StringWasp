@@ -1090,3 +1090,9 @@ body.dark .chat-options-horizontal span:hover {
   50%  { background-color: #fff9c4; }
   100% { background-color: inherit; }
 }
+
+.msg-deleted {
+  color: gray;
+  font-style: italic;
+  opacity: 0.7;
+}
