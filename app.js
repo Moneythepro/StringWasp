@@ -23,7 +23,7 @@ let client = null;
 let currentUser = null;
 let currentRoom = null;
 let currentThreadUser = null;
-
+let lastThreadId = null;
 let unsubscribeMessages = null;
 let unsubscribeThread = null;
 let unsubscribeInbox = null;
