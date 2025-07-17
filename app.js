@@ -2179,25 +2179,25 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ✅ Adjust thread view height
-adjustThreadLayout();
-
-// ✅ Thread input scroll
-const input = document.getElementById("threadInput");
-if (input) {
-  input.addEventListener("focus", () => {
-    setTimeout(() => scrollToBottomThread(true), 300);
-  });
-}
-  
-
-// ✅ Viewport resize: mobile keyboard, rotation
-window.addEventListener("resize", () => {
   adjustThreadLayout();
+
+  // ✅ Thread input scroll
   const input = document.getElementById("threadInput");
-  if (document.activeElement === input) {
-    setTimeout(() => scrollToBottomThread(true), 300);
+  if (input) {
+    input.addEventListener("focus", () => {
+      setTimeout(() => scrollToBottomThread(true), 300);
+    });
   }
-});
+
+  // ✅ Viewport resize: mobile keyboard, rotation
+  window.addEventListener("resize", () => {
+    adjustThreadLayout();
+    const input = document.getElementById("threadInput");
+    if (document.activeElement === input) {
+      setTimeout(() => scrollToBottomThread(true), 300);
+    }
+  });
+}); // <-- ✅ Closing the DOMContentLoaded listener
 
 // ✅ Set thread layout height
 function adjustThreadLayout() {
@@ -2218,6 +2218,20 @@ function scrollToBottomThread(smooth = true) {
   } catch (e) {
     console.warn("Scroll error:", e);
     area.scrollTop = area.scrollHeight;
+  }
+}
+
+// ✅ Scroll to replied message
+function scrollToRepliedMessage(msgId) {
+  const msgElements = document.querySelectorAll("#threadMessages .message-bubble-wrapper");
+  for (const wrapper of msgElements) {
+    const bubble = wrapper.querySelector(".message-bubble");
+    if (bubble?.dataset?.msgId === msgId) {
+      wrapper.scrollIntoView({ behavior: "smooth", block: "center" });
+      bubble.classList.add("reply-highlight");
+      setTimeout(() => bubble.classList.remove("reply-highlight"), 2000);
+      break;
+    }
   }
 }
 
