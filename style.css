@@ -1239,21 +1239,7 @@ body.dark .chat-options-horizontal span:hover {
   white-space: pre-wrap;
   word-break: break-word;
 }
-.msg-text {
-  word-break: break-word;
-  overflow-wrap: break-word;
-  white-space: pre-wrap;
-}
 
-/* 🕒 Meta info under message */
-.msg-meta {
-  font-size: 11px;
-  color: #999;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 4px;
-}
 
 /* ✅ Show More (optional toggle) */
 .show-more {
@@ -1320,4 +1306,38 @@ body.dark .chat-options-horizontal span:hover {
   width: 12px;
   height: 12px;
   color: #555;
+}
+
+.msg-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.msg-text {
+  flex: 1;
+  word-break: break-word;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.4;
+  margin-right: 6px;
+  max-width: 100%;
+}
+
+.msg-meta {
+  font-size: 11px;
+  color: #999;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.message-bubble {
+  padding: 6px 8px;
+  font-size: 14px;
+  border-radius: 10px;
+  margin: 3px 0;
 }
