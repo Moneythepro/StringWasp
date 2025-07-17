@@ -1140,7 +1140,6 @@ function threadId(a, b) {
 // ===== DM: Open Thread Chat =====
 // ===== GLOBALS =====
 let replyingTo = null;
-let unsubscribeTyping = null;
 let lastThreadId = null;
 const renderedMessageIds = new Set();
 
