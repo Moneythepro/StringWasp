@@ -1359,8 +1359,8 @@ function handleSwipeToReply(msg, decrypted) {
             </span>
             <div class="reply-text clamp-text">${escapeHtml(decrypted)}</div>
             <button class="reply-close" onclick="cancelReply()" aria-label="Cancel reply">
-              <i data-lucide="x" style="width:16px;height:16px;"></i>
-            </button>
+  <i data-lucide="x" style="width:14px;height:14px;"></i>
+</button>
           </div>
         `;
         replyBox.style.display = "flex";
