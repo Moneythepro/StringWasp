@@ -1673,50 +1673,81 @@ function listenMessages() {
 
   if (unsubscribeMessages) unsubscribeMessages();
 
+  const renderedIds = new Set();
+
   unsubscribeMessages = db.collection("groups").doc(currentRoom).collection("messages")
     .orderBy("timestamp")
     .onSnapshot(snapshot => {
-      messagesDiv.innerHTML = "";
-      snapshot.forEach(doc => {
+      snapshot.docChanges().forEach(change => {
+        const doc = change.doc;
         const msg = doc.data();
-        if (!msg?.text) return;
+        msg.id = doc.id;
 
-        if (msg.deletedFor?.[currentUser.uid]) {
-          const bubble = document.createElement("div");
-          bubble.className = "message-bubble deleted";
-          bubble.textContent = "This message was deleted";
-          messagesDiv.appendChild(bubble);
+        const existing = document.querySelector(`[data-msg-id="${msg.id}"]`);
+        const isSelf = msg.senderId === currentUser.uid;
+
+        const isDeletedForYou = msg.deletedFor?.[currentUser.uid];
+        const isDeletedForEveryone = msg.text === "";
+
+        // ========== Removed (if needed)
+        if (change.type === "removed") {
+          if (existing) existing.remove();
           return;
         }
 
-        const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
-        const bubble = document.createElement("div");
-        bubble.className = "message-bubble " + (msg.senderId === currentUser.uid ? "right" : "left");
+        // ========== Modified
+        if (change.type === "modified" && existing) {
+          // Replace or update content
+          const newBubble = buildGroupMessageBubble(msg, isSelf);
+          existing.replaceWith(newBubble);
+          return;
+        }
 
-        const sender = document.createElement("div");
-        sender.className = "sender-info";
-        sender.innerHTML = `<strong>${escapeHtml(msg.senderName || "Unknown")}</strong>`;
-        bubble.appendChild(sender);
-
-        const textDiv = document.createElement("div");
-        textDiv.innerHTML = linkifyText(escapeHtml(decrypted));
-        bubble.appendChild(textDiv);
-
-        // swipe + long press support
-        bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
-        bubble.addEventListener("touchmove", handleTouchMove, { passive: true });
-        bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted), { passive: true });
-        bubble.addEventListener("contextmenu", (e) => {
-          e.preventDefault();
-          handleLongPressMenu(msg, decrypted, msg.senderId === currentUser.uid);
-        });
-
-        messagesDiv.appendChild(bubble);
+        // ========== Added (new messages)
+        if (change.type === "added" && !renderedIds.has(msg.id)) {
+          renderedIds.add(msg.id);
+          const bubble = buildGroupMessageBubble(msg, isSelf);
+          messagesDiv.appendChild(bubble);
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
       });
-
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      renderWithMagnetSupport("groupMessages");
     });
+}
+
+function buildGroupMessageBubble(msg, isSelf) {
+  const bubble = document.createElement("div");
+  bubble.className = "message-bubble " + (isSelf ? "right" : "left");
+  bubble.dataset.msgId = msg.id;
+
+  const isDeletedForYou = msg.deletedFor?.[currentUser.uid];
+  const isDeletedForEveryone = msg.text === "";
+
+  if (isDeletedForYou || isDeletedForEveryone) {
+    bubble.classList.add("deleted");
+    bubble.textContent = "This message was deleted";
+    return bubble;
+  }
+
+  const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+
+  const sender = document.createElement("div");
+  sender.className = "sender-info";
+  sender.innerHTML = `<strong>${escapeHtml(msg.senderName || "Unknown")}</strong>`;
+  bubble.appendChild(sender);
+
+  const textDiv = document.createElement("div");
+  textDiv.innerHTML = linkifyText(escapeHtml(decrypted));
+  bubble.appendChild(textDiv);
+
+  bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
+  bubble.addEventListener("touchmove", handleTouchMove, { passive: true });
+  bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted), { passive: true });
+  bubble.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    handleLongPressMenu(msg, decrypted, isSelf);
+  });
+
+  return bubble;
 }
 
 
