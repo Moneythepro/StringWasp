@@ -1674,7 +1674,7 @@ function renderChatCard(chat) {
   `;
 }
 
-// ===== DM: Send Thread Message with AES Encryption =====
+// ===== DM: Send Thread Message with AES Encryption ====
 // ✅ Global for swipe + send
 let replyingTo = null;
 
