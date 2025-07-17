@@ -1442,7 +1442,7 @@ function sendThreadMessage() {
       setTimeout(() => scrollToBottomThread(true), 100);
     })
     .catch(err => {
-      console.error("❌ Send failed:", err.message || err);
+      console.error("❌ Send failed:", err?.message || JSON.stringify(err));
       alert("❌ Failed to send message.");
     });
 }
@@ -2086,7 +2086,7 @@ function uploadFile(type) {
     }
   }).catch(err => {
     alert("Upload failed");
-    console.error(err);
+    console.error("❌ Error:", err?.message || JSON.stringify(err));
   }).finally(() => showLoading(false));
 }
 
