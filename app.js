@@ -1233,14 +1233,15 @@ function openThread(uid, name) {
             const msg = msgDoc.data();
             msg.id = msgDoc.id;
 
-            if (renderedMessageIds.has(msg.id)) continue;
-            renderedMessageIds.add(msg.id);
+if (renderedMessageIds.has(msg.id)) continue;
+renderedMessageIds.add(msg.id);
 
-          
-            const wrapper = document.createElement("div");
-            wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
+const isSelf = msg.from === currentUser.uid;
 
-            const isDeletedForYou = msg.deletedFor?.[currentUser.uid];
+const wrapper = document.createElement("div");
+wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
+
+const isDeletedForYou = msg.deletedFor?.[currentUser.uid];
 const isDeletedForEveryone = msg.text === "";
 
 if (isDeletedForYou || isDeletedForEveryone) {
