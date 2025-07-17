@@ -1326,6 +1326,7 @@ function threadId(a, b) {
 }
 
 // ===== DM: Open Thread Chat =====
+let handleSendClick = null;
 let replyingTo = null;
 let touchStartX = 0;
 let touchMoveX = 0;
@@ -1369,7 +1370,9 @@ function handleSwipeToReply(msg, decrypted) {
       }
 
       const input = document.getElementById("threadInput");
-      if (input) input.focus();
+      if (input) {
+        requestAnimationFrame(() => input.focus({ preventScroll: true }));
+      }
     }
   }
 }
@@ -1545,7 +1548,7 @@ async function openThread(uid, name) {
               linkPreviewHTML = `
                 <div class="link-preview">
                   ${preview.image ? `<img src="${preview.image}" alt="Preview" class="preview-img">` : ""}
-                  <div class="preview-text">
+                  <div class="preview-info">
                     <div class="preview-title">${escapeHtml(preview.title || "")}</div>
                     <div class="preview-url">${url}</div>
                   </div>
@@ -1558,6 +1561,7 @@ async function openThread(uid, name) {
 
           const meta = `
             <span class="msg-time">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</span>
+            ${msg.edited ? '<span class="edited-tag">(edited)</span>' : ""}
             ${isSelf && !isDeleted ? '<i data-lucide="check-check" class="tick-icon tick-sent"></i>' : ""}
           `;
 
