@@ -1592,23 +1592,6 @@ function linkifyText(text) {
   return text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="link-text">$1</a>');
 }
 
-// Swipe gestures
-let xDown = null;
-function handleTouchStart(evt) {
-  xDown = evt.touches[0].clientX;
-}
-function handleTouchMove(evt) {
-  if (!xDown) return;
-  const xUp = evt.touches[0].clientX;
-  const xDiff = xDown - xUp;
-  if (xDiff > 60) {
-    xDown = null;
-    evt.target.dispatchEvent(new CustomEvent("swipeleft"));
-  } else if (xDiff < -60) {
-    xDown = null;
-    evt.target.dispatchEvent(new CustomEvent("swiperight"));
-  }
-}
 
 // Long press modal
 let selectedMessageForAction = null;
@@ -1797,28 +1780,50 @@ function renderChatCard(chat) {
   `;
 }
 
+let touchStartX = 0;
+let touchMoveX = 0;
+
+function handleTouchStart(e) {
+  touchStartX = e.touches[0].clientX;
+}
+
+function handleTouchMove(e) {
+  touchMoveX = e.touches[0].clientX;
+}
+
+function handleSwipeToReply(msg, decrypted) {
+  const deltaX = touchStartX - touchMoveX;
+
+  if (deltaX > 35 && deltaX < 150) {
+    const wrapper = event.target.closest(".message-bubble-wrapper");
+    if (wrapper) {
+      wrapper.classList.add("swiped");
+      setTimeout(() => wrapper.classList.remove("swiped"), 500);
+
+      replyingTo = {
+        msgId: msg.id,
+        text: decrypted.slice(0, 120)
+      };
+
+      const replyBox = document.getElementById("replyPreview");
+      if (replyBox) {
+        replyBox.innerHTML = `
+          <div class="reply-box-inner">
+            <span class="reply-label">↪️ Replying to</span>
+            <div class="reply-text">${escapeHtml(replyingTo.text)}</div>
+            <span class="reply-close" onclick="cancelReply()">×</span>
+          </div>
+        `;
+        replyBox.style.display = "flex";
+      }
+
+      const input = document.getElementById("threadInput");
+      if (input) input.focus();
+    }
+  }
+}
+
 // ===== DM: Send Thread Message with AES Encryption ====
-
-function handleSwipeToReply(msg, text) {
-  replyingTo = { msgId: msg.id, text };
-  const bar = document.getElementById("replyPreview");
-  if (bar) {
-    document.getElementById("replyText").textContent = text;
-    bar.style.display = "flex";
-  }
-}
-
-function cancelReply() {
-  replyingTo = null;
-  const bar = document.getElementById("replyPreview");
-  if (bar) {
-    bar.style.display = "none";
-    document.getElementById("replyText").textContent = "";
-  }
-}
-
-
-
 function sendThreadMessage() {
   const input = document.getElementById("threadInput");
   if (!input || !currentThreadUser) return;
