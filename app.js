@@ -1064,6 +1064,23 @@ function acceptInbox(id, type, fromUID) {
   }
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+  const sendBtn = document.getElementById("sendButton");
+  if (sendBtn) {
+    sendBtn.addEventListener("click", sendThreadMessage);
+  }
+
+  const threadInput = document.getElementById("threadInput");
+  if (threadInput) {
+    threadInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendThreadMessage();
+      }
+    });
+  }
+});
+
 function declineInbox(id) {
   if (!currentUser || !id) return;
 
