@@ -1073,9 +1073,10 @@ body.dark .chat-options-horizontal span:hover {
   flex: 1;
   color: #333;
   max-width: 220px;
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .reply-close {
@@ -1243,7 +1244,14 @@ body.dark .chat-options-horizontal span:hover {
   gap: 4px;
   margin-top: 4px;
 }
-
+.show-more {
+  display: inline-block;
+  color: var(--primary-color, #4fc3f7);
+  font-size: 13px;
+  cursor: pointer;
+  margin-left: 4px;
+  font-weight: 500;
+}
 /* 🔽 Reply animation slide */
 .reply-box {
   display: flex;
