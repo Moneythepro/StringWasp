@@ -1769,7 +1769,7 @@ document.addEventListener("animationstart", e=>{
    FINAL INIT
    ================================================================= */
 console.log(`✅ StringWasp ${STRINGWASP_VERSION} fully loaded with P2P, E2E, and UI extras.`);
-
+console.error("Inbox listener:", err.message || JSON.stringify(err));
 /* =================================================================
    END PART 6/6
    ================================================================= */
