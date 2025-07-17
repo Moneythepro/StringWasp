@@ -1138,7 +1138,6 @@ function threadId(a, b) {
 }
 
 // ===== DM: Open Thread Chat =====
-// ===== DM: Open Thread Chat =====
 let renderedMessageIds = new Set();
 let lastThreadId = null;
 
@@ -1674,17 +1673,14 @@ function renderChatCard(chat) {
   `;
 }
 
-// ===== DM: Send Thread Message with AES Encryption ====
-// ✅ Global for swipe + send
-let replyingTo = null;
-
 function handleSwipeToReply(msg, text) {
   replyingTo = { msgId: msg.id, text };
-  document.getElementById("replyText").textContent = text.slice(0, 50) + (text.length > 50 ? "..." : "");
+  document.getElementById("replyText").textContent =
+    text.slice(0, 50) + (text.length > 50 ? "..." : "");
   document.getElementById("replyPreview").style.display = "flex";
+
   if (typeof lucide !== "undefined") lucide.createIcons();
 }
-
 
 function renderMessage(msg, isOwn) {
   return `
