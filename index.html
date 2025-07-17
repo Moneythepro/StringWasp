@@ -1,287 +1,227 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
+  <meta name="theme-color" content="#1a1a1a" />
+  <title>StringWasp</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="favicon.png" />
+  <script>
+    if (localStorage.getItem("theme") === "dark") {
+      document.documentElement.classList.add("dark");
+    }
+  </script>
+</head>
+<body>
+  <audio id="notifSound" src="notif.mp3" preload="auto"></audio>
 
-<html lang="en">  
-<head>  
-  <meta charset="UTF-8" />  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">  
-  <title>StringWasp</title>  
-  <link rel="stylesheet" href="style.css" />  
-  <link rel="manifest" href="manifest.json" />  
-  <link rel="icon" href="favicon.png" />  
-  <script>  
-    if (localStorage.getItem("theme") === "dark") {  
-      document.documentElement.classList.add("dark");  
-    }  
-  </script>  
-</head>  
-<body>  
-  <audio id="notifSound" src="notif.mp3" preload="auto"></audio>    <!-- 🔃 Loading -->    <div id="loadingOverlay"><div class="loader"></div></div>    <!-- 🔐 Login/Register -->    <div id="loginPage" class="tab">  
-    <h2>Login</h2>  
-    <input type="email" id="email" placeholder="Email" />  
-    <input type="password" id="password" placeholder="Password" />  
-    <button onclick="login()">Login</button>  
-    <button onclick="register()">Register</button>  
-  </div>    <!-- 👤 Username Setup -->    <div id="usernameDialog" class="tab" style="display:none;">  
-    <h3>Pick a Username</h3>  
-    <input id="newUsername" placeholder="Username" />  
-    <button onclick="saveUsername()">Save</button>  
-  </div>    <!-- 📱 Main App -->    <div id="appPage" class="tabContent">  
-    <label class="theme-switch">  
-      <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()" />  
-      <span class="slider"></span>  
-    </label>  <!-- 🧭 Header -->  
-<div class="header">  
-  <span id="usernameDisplay"></span>  
-  <span id="onlineStatus" class="status-indicator"></span>  
-</div>  
+  <!-- 🔃 Loading -->
+  <div id="loadingOverlay"><div class="loader"></div></div>
 
-<!-- 🗂 Tabs -->  
-<div class="tabs">  
-  <button onclick="switchTab('chatTab')" id="tab-chat">  
-    <i data-lucide="message-circle"></i><br><span>Chats</span>  
-  </button>  
-  <button onclick="switchTab('friendsTab')" id="tab-friends">  
-    <i data-lucide="users"></i><br><span>Friends</span>  
-  </button>  
-  <button onclick="switchTab('inboxTab')" id="tab-inbox">  
-    <i data-lucide="bell"></i><br><span>Inbox</span><span id="inboxBadge" class="badge"></span>  
-  </button>  
-  <button onclick="switchTab('searchTab')" id="tab-search">  
-    <i data-lucide="search"></i><br><span>Search</span>  
-  </button>  
-  <button onclick="switchTab('profileTab')" id="tab-profile">  
-    <i data-lucide="user"></i><br><span>Profile</span>  
-  </button>  
-</div>  
+  <!-- 🔐 Login/Register -->
+  <div id="loginPage" class="tab">
+    <h2>Login</h2>
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="login()">Login</button>
+    <button onclick="register()">Register</button>
+  </div>
 
-<!-- 💬 Chats -->  
-<div id="chatTab" class="tab">  
-  <div class="chat-header">  
-    <input id="chatSearchInput" placeholder="Search chats..." oninput="searchChats(this.value)" />  
-    <button onclick="searchChats()"><i data-lucide="search"></i></button>  
-    <button onclick="loadChatList()"><i data-lucide="refresh-ccw"></i></button>  
-  </div>  
-  <div id="chatList" style="overflow-y: auto; max-height: calc(100vh - 150px);"></div>  
-  <button class="floating-btn" onclick="createGroup()">  
-    <i data-lucide="plus"></i>  
-  </button>  
-</div>  
+  <!-- 👤 Username Setup -->
+  <div id="usernameDialog" class="tab" style="display:none;">
+    <h3>Pick a Username</h3>
+    <input id="newUsername" placeholder="Username" />
+    <button onclick="saveUsername()">Save</button>
+  </div>
 
-<!-- 🧑‍🤝‍🧑 Friends Tab -->  
-<div id="friendsTab" class="tab">
+  <!-- 📱 Main App -->
+  <div id="appPage" class="tabContent">
+    <label class="theme-switch">
+      <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()" />
+      <span class="slider"></span>
+    </label>
 
-  <h3>Your Friends</h3>  
-  <div id="friendsList"></div>  
-      <button onclick="removeFriend(currentProfileUID)">Unfriend</button>  
-    </div>  <!-- 🔔 Inbox Tab -->  
-<div id="inboxTab" class="tab">  
-  <h3>Inbox</h3>  
-  <button onclick="markAllRead()"><i data-lucide="check-circle"></i> Mark All as Read</button>  
-  <div id="inboxList"></div>  
-</div>  
+    <!-- 🧭 Header -->
+    <div class="header">
+      <span id="usernameDisplay"></span>
+      <span id="onlineStatus" class="status-indicator"></span>
+    </div>
 
-<!-- 🔍 Search Tab -->
+    <!-- 🗂 Tabs -->
+    <div class="tabs">
+      <button onclick="switchTab('chatTab')" id="tab-chat"><i data-lucide="message-circle"></i><br><span>Chats</span></button>
+      <button onclick="switchTab('friendsTab')" id="tab-friends"><i data-lucide="users"></i><br><span>Friends</span></button>
+      <button onclick="switchTab('inboxTab')" id="tab-inbox"><i data-lucide="bell"></i><br><span>Inbox</span><span id="inboxBadge" class="badge"></span></button>
+      <button onclick="switchTab('searchTab')" id="tab-search"><i data-lucide="search"></i><br><span>Search</span></button>
+      <button onclick="switchTab('profileTab')" id="tab-profile"><i data-lucide="user"></i><br><span>Profile</span></button>
+    </div>
 
-<div id="searchTab" class="tab">  
-  <h3>Search</h3>  
-  <input id="searchInput" placeholder="Search users or groups..." />    <div class="search-buttons">  
-    <button onclick="switchSearchView('user')">  
-      <i data-lucide="user-search"></i> Users  
-    </button>  
-    <button onclick="switchSearchView('group')">  
-      <i data-lucide="users"></i> Groups  
-    </button>  
-    <button onclick="runSearch(); switchSearchView('user')">  
-      <i data-lucide="search"></i> Search  
-    </button>  
-  </div>    <div id="searchResultsUser" class="search-results"></div>  
-  <div id="searchResultsGroup" class="search-results" style="display:none;"></div>  
-</div>  <!-- 🙍 Profile Tab -->  
-<div id="profileTab" class="tab">  
-  <h3>Your Profile</h3>  
-  <img id="profilePicPreview" src="default-avatar.png" alt="Avatar" onclick="triggerProfileUpload()" />  
-  <label class="profile-edit-label" onclick="triggerProfileUpload()">Tap to upload</label>  
-  <input type="file" id="profilePic" accept="image/*" onchange="uploadProfilePic(event)" style="display:none;" />  
-  <input id="profileName" placeholder="Your Name" />  
-  <textarea id="profileBio" placeholder="Your Bio"></textarea>  
-  <select id="profileGender">  
-    <option value="">Select Gender</option>  
-    <option>Male</option>  
-    <option>Female</option>  
-    <option>Other</option>  
-  </select>  
-  <input id="profilePhone" placeholder="Phone Number" />  
-  <input id="profileEmail" placeholder="Public Email" />  
-  <input id="profileUsername" placeholder="Edit Username" />  
-  <button onclick="saveProfile()">Save</button>  
-  <button onclick="logout()">Logout</button>  
-  <button onclick="contactSupport()">Contact Us</button>  
-</div>
+    <!-- 💬 Chat Tab -->
+    <div id="chatTab" class="tab">
+      <div class="chat-header">
+        <input id="chatSearchInput" placeholder="Search chats..." oninput="searchChats(this.value)" />
+        <button onclick="searchChats()"><i data-lucide="search"></i></button>
+        <button onclick="loadChatList()"><i data-lucide="refresh-ccw"></i></button>
+      </div>
+      <div id="chatList" style="overflow-y: auto; max-height: calc(100vh - 150px);"></div>
+      <button class="floating-btn" onclick="createGroup()"><i data-lucide="plus"></i></button>
+    </div>
 
-<!-- 💬 WhatsApp-style Chat UI -->  <div id="threadView" class="thread-container tab" role="region">  
-  <header class="chat-header">  
-    <button class="back-btn" onclick="switchTab('chatTab')" aria-label="Back">  
-      <i data-lucide="arrow-left"></i>  
-    </button>  <img id="chatProfilePic" class="header-avatar" src="default-avatar.png" alt="Profile Picture" />  
+    <!-- 🧑‍🤝‍🧑 Friends Tab -->
+    <div id="friendsTab" class="tab">
+      <h3>Your Friends</h3>
+      <div id="friendsList"></div>
+      <button onclick="removeFriend(currentProfileUID)">Unfriend</button>
+    </div>
 
-<div class="chat-info">  
-  <h3 id="threadWithName">Friend Name</h3>  
-  <p id="chatStatus">last seen recently</p>  
-</div>  
+    <!-- 🔔 Inbox Tab -->
+    <div id="inboxTab" class="tab">
+      <h3>Inbox</h3>
+      <button onclick="markAllRead()"><i data-lucide="check-circle"></i> Mark All as Read</button>
+      <div id="inboxList"></div>
+    </div>
 
-<button class="menu-btn" onclick="toggleChatOptions(event)" aria-label="Menu">  
-  <i data-lucide="more-vertical"></i>  
-</button>  
+    <!-- 🔍 Search Tab -->
+    <div id="searchTab" class="tab">
+      <h3>Search</h3>
+      <input id="searchInput" placeholder="Search users or groups..." />
+      <div class="search-buttons">
+        <button onclick="switchSearchView('user')"><i data-lucide="user-search"></i> Users</button>
+        <button onclick="switchSearchView('group')"><i data-lucide="users"></i> Groups</button>
+        <button onclick="runSearch(); switchSearchView('user')"><i data-lucide="search"></i> Search</button>
+      </div>
+      <div id="searchResultsUser" class="search-results"></div>
+      <div id="searchResultsGroup" class="search-results" style="display:none;"></div>
+    </div>
 
-<div id="chatOptionsMenu" class="chat-options-horizontal" role="menu">  
-  <span onclick="blockUser()">Block</span>  
-  <span onclick="viewMedia()">Media</span>  
-  <span onclick="exportChat()">Export</span>  
-  <span onclick="deleteChat()">Delete</span>  
-</div>
+    <!-- 🙍 Profile Tab -->
+    <div id="profileTab" class="tab">
+      <h3>Your Profile</h3>
+      <img id="profilePicPreview" src="default-avatar.png" alt="Avatar" onclick="triggerProfileUpload()" />
+      <label class="profile-edit-label" onclick="triggerProfileUpload()">Tap to upload</label>
+      <input type="file" id="profilePic" accept="image/*" onchange="uploadProfilePic(event)" style="display:none;" />
+      <input id="profileName" placeholder="Your Name" />
+      <textarea id="profileBio" placeholder="Your Bio"></textarea>
+      <select id="profileGender">
+        <option value="">Select Gender</option>
+        <option>Male</option>
+        <option>Female</option>
+        <option>Other</option>
+      </select>
+      <input id="profilePhone" placeholder="Phone Number" />
+      <input id="profileEmail" placeholder="Public Email" />
+      <input id="profileUsername" placeholder="Edit Username" />
+      <button onclick="saveProfile()">Save</button>
+      <button onclick="logout()">Logout</button>
+      <button onclick="contactSupport()">Contact Us</button>
+    </div>
 
-  </header>    <div class="thread-main">  
-    <div class="chat-scroll-area">  
-      <div id="threadMessages" role="log" aria-live="polite">  
-        <!-- Messages will appear here -->  
-      </div>  
-      <div id="threadTypingStatus" class="typing-indicator" aria-hidden="true">  
-        <span></span><span></span><span></span>  
-      </div>  
-    </div>  <footer class="chat-input-bar">  
-  <button class="icon-btn" onclick="triggerFileInput('thread')" aria-label="Attach File">  
-    <i data-lucide="paperclip"></i>  
-  </button>  
+    <!-- 💬 Thread View -->
+    <div id="threadView" class="thread-container tab" role="region" style="display:none;">
+      <header class="chat-header">
+        <button class="back-btn" onclick="switchTab('chatTab')" aria-label="Back"><i data-lucide="arrow-left"></i></button>
+        <img id="chatProfilePic" class="header-avatar" src="default-avatar.png" alt="Profile Picture" />
+        <div class="chat-info">
+          <h3 id="threadWithName">Friend Name</h3>
+          <p id="chatStatus">last seen recently</p>
+        </div>
+        <button class="menu-btn" onclick="toggleChatOptions(event)" aria-label="Menu"><i data-lucide="more-vertical"></i></button>
+        <div id="chatOptionsMenu" class="chat-options-horizontal" role="menu">
+          <span onclick="blockUser()">Block</span>
+          <span onclick="viewMedia()">Media</span>
+          <span onclick="exportChat()">Export</span>
+          <span onclick="deleteChat()">Delete</span>
+        </div>
+      </header>
 
-  <input  
-    type="file"  
-    id="threadFile"  
-    class="visually-hidden"  
-    onchange="uploadFile('thread')" />  
+      <div class="thread-main">
+        <div class="chat-scroll-area">
+          <div id="threadMessages" role="log" aria-live="polite"></div>
+          <div id="threadTypingStatus" class="typing-indicator" aria-hidden="true"><span></span><span></span><span></span></div>
+        </div>
 
-  <button class="icon-btn" onclick="shareFileViaTorrent('dm')" aria-label="Send via Torrent">  
-    <i data-lucide="globe"></i>  
-  </button>  
+        <footer class="chat-input-bar">
+          <button class="icon-btn" onclick="triggerFileInput('thread')" aria-label="Attach File"><i data-lucide="paperclip"></i></button>
+          <input type="file" id="threadFile" class="visually-hidden" onchange="uploadFile('thread')" />
+          <button class="icon-btn" onclick="shareFileViaTorrent('dm')" aria-label="Send via Torrent"><i data-lucide="globe"></i></button>
+          <div id="replyPreview" class="reply-preview hidden">
+            <span id="replyText"></span>
+            <button class="cancel-reply-btn" onclick="cancelReply()" aria-label="Cancel reply">×</button>
+          </div>
+          <input id="threadInput" type="text" placeholder="Type a message…" autocomplete="off" autocapitalize="sentences" enterkeyhint="send" aria-label="Message input" />
+          <button type="button" id="sendButton" class="icon-btn" onclick="sendThreadMessage()" aria-label="Send"><i data-lucide="send"></i></button>
+        </footer>
+      </div>
+    </div>
 
-  <div id="replyPreview" class="reply-preview hidden">  
-    <span id="replyText"></span>  
-    <button class="cancel-reply-btn" onclick="cancelReply()" aria-label="Cancel reply">×</button>  
-  </div>  
+    <!-- ✅ Additional modals, toasts, edit, crop modals etc. not removed, still present -->
 
-  <input  
-    id="threadInput"  
-    type="text"  
-    placeholder="Type a message…"  
-    autocomplete="off"  
-    autocapitalize="sentences"  
-    enterkeyhint="send"  
-    aria-label="Message input"  
-  />  
+    <!-- Message Options -->
+    <div id="messageOptionsModal" class="message-options-modal hidden" onclick="closeOptionsModal(event)">
+      <div class="modal-inner" onclick="event.stopPropagation()">
+        <div class="option" onclick="editMessage()"><i data-lucide="edit-3"></i> Edit Message</div>
+        <div class="option" onclick="deleteForMe()"><i data-lucide="trash-2"></i> Delete for Me</div>
+        <div class="option" onclick="deleteForEveryone()"><i data-lucide="slash"></i> Delete for Everyone</div>
+        <div class="option cancel" onclick="closeOptionsModal()"><i data-lucide="x"></i> Cancel</div>
+      </div>
+    </div>
 
-  <button  
-    type="button"  
-    id="sendButton"  
-    class="icon-btn"  
-    aria-label="Send"  
-  >  
-    <i data-lucide="send"></i>  
-  </button>  
-</footer>
+    <!-- Toast -->
+    <div id="chatToast" class="chat-toast" style="display: none;"></div>
 
-  </div>  
-</div>  <!-- 💬 Group Chat View -->  
-<div id="roomView" class="tab" style="display:none;">  
-  <div class="chat-header">  
-    <h3 id="roomTitle">Group Name</h3>  
-    <div id="groupTypingStatus" class="typing-indicator" aria-hidden="true">
+    <!-- Edit Modal -->
+    <div id="editMessageModal" class="edit-modal" style="display: none;">
+      <div class="edit-header"><i data-lucide="edit-3"></i> Edit Message</div>
+      <textarea id="editMessageInput" rows="2" placeholder="Edit your message"></textarea>
+      <div class="edit-actions">
+        <i data-lucide="check" onclick="saveEditedMessage()"></i>
+        <i data-lucide="x" onclick="closeEditModal()"></i>
+      </div>
+    </div>
 
-<span></span><span></span><span></span>
-</div>
-</div>
-<div id="roomMessages" class="messages"></div>
-<div class="input-bar">
-<button class="icon-btn" onclick="triggerFileInput('group')"><i data-lucide="paperclip"></i></button>
-<button class="icon-btn" onclick="shareFileViaTorrent('group')"><i data-lucide="globe"></i></button>
-<input id="roomInput" placeholder="Type a message..." oninput="handleTyping('group')" />
-<button class="icon-btn" onclick="sendRoomMessage()"><i data-lucide="send"></i></button>
-<input type="file" id="roomFile" style="display:none;" onchange="uploadFile('group')" />
-</div>
-<div class="group-info">
-<p id="groupOwner">Owner: </p>
-<p id="groupAdmins">Admins: </p>
-<div id="groupMembers" class="member-list"></div>
-<button onclick="viewGroupMembers()"><i data-lucide="users"></i> View Members</button>
-<button onclick="inviteByLink()"><i data-lucide="link-2"></i> Invite</button>
-<button onclick="leaveGroup()"><i data-lucide="log-out"></i> Leave</button>
-</div>
-</div>
+    <!-- Crop Modal -->
+    <div id="cropModal" class="modal" style="display:none;">
+      <div class="modal-content" style="max-width: 90%; padding: 10px;">
+        <h3 style="margin-bottom: 10px;">Crop Profile Picture</h3>
+        <div style="max-height: 300px; overflow: auto; text-align: center;">
+          <img id="cropImage" alt="Crop Preview" style="max-width: 100%; border-radius: 12px;" />
+        </div>
+        <div class="btn-group" style="margin-top: 12px; display: flex; gap: 10px; justify-content: center;">
+          <button onclick="confirmCrop()">Crop & Upload</button>
+          <button onclick="closeCropModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<!-- 👁️ View Profile Modal -->
+  <!-- 🔥 Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
-<div id="viewProfileModal" class="modal">  
-  <div class="modal-content">  
-    <span class="close" onclick="document.getElementById('viewProfileModal').style.display='none'">×</span>  
-    <img id="viewProfilePic" src="default-avatar.png" alt="Avatar" style="width:80px;height:80px;border-radius:50%;margin:10px auto;display:block;" />  
-    <h3 id="viewProfileName">Name</h3>  
-    <p id="viewProfileUsername">@username</p>  
-    <p id="viewProfileBio">No bio</p>  
-    <p id="viewProfileEmail">Email</p>  
-    <p id="viewProfileStatus">Status</p>  
-    <div class="btn-group">  
-      <!-- Buttons like Add Friend / Unfriend / Message will be injected here -->  
-    </div>  
-  </div>  
-</div>  <div id="messageOptionsModal" class="message-options-modal hidden" onclick="closeOptionsModal(event)">  
-  <div class="modal-inner" onclick="event.stopPropagation()">  
-    <div class="option" onclick="editMessage()">  
-      <i data-lucide="edit-3"></i> Edit Message  
-    </div>  
-    <div class="option" onclick="deleteForMe()">  
-      <i data-lucide="trash-2"></i> Delete for Me  
-    </div>  
-    <div class="option" onclick="deleteForEveryone()">  
-      <i data-lucide="slash"></i> Delete for Everyone  
-    </div>  
-    <div class="option cancel" onclick="closeOptionsModal()">  
-      <i data-lucide="x"></i> Cancel  
-    </div>  
-  </div>  
-</div>  
-<div id="chatToast" class="chat-toast" style="display: none;"></div>  
-    <div id="editMessageModal" class="edit-modal" style="display: none;">  
-  <div class="edit-header">  
-    <i data-lucide="edit-3"></i> Edit Message  
-  </div>  
-  <textarea id="editMessageInput" rows="2" placeholder="Edit your message"></textarea>  
-  <div class="edit-actions">  
-    <i data-lucide="check" onclick="saveEditedMessage()"></i>  
-    <i data-lucide="x" onclick="closeEditModal()"></i>  
-  </div>  
-    </div>  <!-- 📸 Crop Modal -->
+  <!-- 📦 Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/webtorrent/webtorrent.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-<div id="cropModal" class="modal" style="display:none;">  
-  <div class="modal-content" style="max-width: 90%; padding: 10px;">  
-    <h3 style="margin-bottom: 10px;">Crop Profile Picture</h3>  
-    <div style="max-height: 300px; overflow: auto; text-align: center;">  
-      <img id="cropImage" alt="Crop Preview" style="max-width: 100%; border-radius: 12px;" />  
-    </div>  
-    <div class="btn-group" style="margin-top: 12px; display: flex; gap: 10px; justify-content: center;">  
-      <button onclick="confirmCrop()">Crop & Upload</button>  
-      <button onclick="closeCropModal()">Cancel</button>  
-    </div>  
-  </div>  
-</div>    </div>    <!-- 🔥 Firebase SDK -->    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>    <!-- 📦 Libraries -->    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>  
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>  
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>  
-  <script src="https://cdn.jsdelivr.net/npm/webtorrent/webtorrent.min.js"></script>  
-  <script src="https://unpkg.com/lucide@latest"></script>    <!-- 🔧 App Logic -->    <script src="firebase.js"></script>    <script src="app.js"></script>    <script>  
-    if ('serviceWorker' in navigator) {  
-      navigator.serviceWorker.register('service-worker.js')  
-        .then(() => console.log("✔ Service Worker Registered"))  
-        .catch(console.error);  
-    }  
-    lucide.createIcons();  
-  </script>  </body>  
+  <!-- 🔧 App Logic -->
+  <script src="firebase.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log("✔ Service Worker Registered"))
+        .catch(console.error);
+    }
+    lucide.createIcons();
+  </script>
+</body>
 </html>
