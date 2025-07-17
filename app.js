@@ -1327,6 +1327,52 @@ function threadId(a, b) {
 
 // ===== DM: Open Thread Chat =====
 let replyingTo = null;
+let touchStartX = 0;
+let touchMoveX = 0;
+
+function handleTouchStart(e) {
+  touchStartX = e.touches[0].clientX;
+}
+
+function handleTouchMove(e) {
+  touchMoveX = e.touches[0].clientX;
+}
+
+function handleSwipeToReply(msg, decrypted) {
+  const deltaX = touchStartX - touchMoveX;
+  if (deltaX > 35 && deltaX < 150) {
+    const wrapper = event.target.closest(".message-bubble-wrapper");
+    if (wrapper) {
+      wrapper.classList.add("swiped");
+      setTimeout(() => wrapper.classList.remove("swiped"), 500);
+
+      replyingTo = {
+        msgId: msg.id,
+        text: decrypted.slice(0, 120)
+      };
+
+      const replyBox = document.getElementById("replyPreview");
+      if (replyBox) {
+        replyBox.innerHTML = `
+          <div class="reply-box-inner">
+            <span class="reply-label">
+              <i data-lucide="corner-up-left"></i> Replying to
+            </span>
+            <div class="reply-text">${escapeHtml(replyingTo.text)}</div>
+            <button class="reply-close" onclick="cancelReply()" aria-label="Cancel reply">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+        `;
+        replyBox.style.display = "flex";
+        if (typeof lucide !== "undefined") lucide.createIcons();
+      }
+
+      const input = document.getElementById("threadInput");
+      if (input) input.focus();
+    }
+  }
+}
 
 async function openThread(uid, name) {
   if (!currentUser || !uid) return;
@@ -1345,18 +1391,13 @@ async function openThread(uid, name) {
     setTimeout(() => {
       const input = document.getElementById("threadInput");
       if (input && !input.dataset.bound) {
-        input.addEventListener("keydown", (e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            sendThreadMessage();
-          }
-        });
+        input.addEventListener("keydown", handleThreadKey);
         input.dataset.bound = "true";
       }
 
       const sendBtn = document.getElementById("sendButton");
       if (sendBtn && !sendBtn.dataset.bound) {
-        sendBtn.addEventListener("click", sendThreadMessage);
+        sendBtn.addEventListener("click", handleSendClick);
         sendBtn.dataset.bound = "true";
       }
     }, 200);
@@ -1378,7 +1419,7 @@ async function openThread(uid, name) {
       lastThreadId = threadIdStr;
     }
 
-    setTimeout(() => scrollToBottomThread(true), 100);
+    setTimeout(() => scrollToBottomThread(true), 150);
 
     area.onscroll = () => {
       sessionStorage.setItem("threadScroll_" + threadIdStr, area.scrollTop);
@@ -1448,7 +1489,7 @@ async function openThread(uid, name) {
           if (typeof msg.text === "string") {
             if (msg.text === "") {
               isDeleted = true;
-              decrypted = "🗑️ Message deleted";
+              decrypted = '<i data-lucide="trash-2"></i> Message deleted';
             } else {
               try {
                 const bytes = CryptoJS.AES.decrypt(msg.text, "yourSecretKey");
@@ -1470,10 +1511,10 @@ async function openThread(uid, name) {
 
           const textPreview = decrypted.length > 300
             ? `<span class="msg-preview">${escapeHtml(decrypted.slice(0, 300))}...</span><span class="show-more" onclick="this.previousElementSibling.textContent='${escapeHtml(decrypted)}'; this.remove();">Show more</span>`
-            : `<span class="msg-preview">${escapeHtml(decrypted)}</span>`;
+            : `<span class="msg-preview">${linkifyText(escapeHtml(decrypted))}</span>`;
 
           const replyHtml = msg.replyTo && !isDeleted
-            ? `<div class="reply-to">↪️ ${escapeHtml(msg.replyTo.text || "")}</div>`
+            ? `<div class="reply-to"><i data-lucide="corner-up-left"></i> ${escapeHtml(msg.replyTo.text || "")}</div>`
             : "";
 
           const meta = `
@@ -1491,14 +1532,19 @@ async function openThread(uid, name) {
           `;
 
           if (!isDeleted) {
-            bubble.addEventListener("contextmenu", e => {
-              e.preventDefault();
-              handleLongPressMenu(msg, decrypted, isSelf);
-            });
-
-            bubble.addEventListener("touchstart", handleTouchStart);
-            bubble.addEventListener("touchmove", handleTouchMove);
-            bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted));
+            if (isSelf) {
+              bubble.addEventListener("contextmenu", e => {
+                e.preventDefault();
+                handleLongPressMenu(msg, decrypted, true);
+              });
+              bubble.addEventListener("touchstart", handleTouchStart);
+              bubble.addEventListener("touchmove", handleTouchMove);
+              bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted));
+            } else {
+              bubble.addEventListener("touchstart", handleTouchStart);
+              bubble.addEventListener("touchmove", handleTouchMove);
+              bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted));
+            }
           }
 
           wrapper.appendChild(bubble);
@@ -1513,41 +1559,13 @@ async function openThread(uid, name) {
         if (typeof lucide !== "undefined") lucide.createIcons();
 
         if (isNearBottom) {
-          setTimeout(() => scrollToBottomThread(true), 80);
-        } else {
-          const toast = document.getElementById("chatToast");
-          if (toast) {
-            toast.textContent = "New message received";
-            toast.style.display = "block";
-            setTimeout(() => (toast.style.display = "none"), 2000);
-          }
+          setTimeout(() => scrollToBottomThread(true), 100);
         }
       });
 
   } catch (err) {
     console.error("❌ openThread error:", err);
     alert("❌ Could not open chat: " + (err.message || JSON.stringify(err)));
-  }
-}
-
-// ✅ Send button handler
-function handleSendClick() {
-  sendThreadMessage();
-  setTimeout(() => {
-    const input = document.getElementById("threadInput");
-    if (input) input.focus();
-  }, 50);
-}
-
-// ✅ Enter key handler
-function handleThreadKey(event) {
-  if (event.key === "Enter" && !event.shiftKey) {
-    event.preventDefault();
-    sendThreadMessage();
-    setTimeout(() => {
-      const input = document.getElementById("threadInput");
-      if (input) input.focus();
-    }, 80);
   }
 }
 
@@ -1778,49 +1796,6 @@ function renderChatCard(chat) {
       <div class="meta">${chat.timestamp || ""}</div>
     </div>
   `;
-}
-
-let touchStartX = 0;
-let touchMoveX = 0;
-
-function handleTouchStart(e) {
-  touchStartX = e.touches[0].clientX;
-}
-
-function handleTouchMove(e) {
-  touchMoveX = e.touches[0].clientX;
-}
-
-function handleSwipeToReply(msg, decrypted) {
-  const deltaX = touchStartX - touchMoveX;
-
-  if (deltaX > 35 && deltaX < 150) {
-    const wrapper = event.target.closest(".message-bubble-wrapper");
-    if (wrapper) {
-      wrapper.classList.add("swiped");
-      setTimeout(() => wrapper.classList.remove("swiped"), 500);
-
-      replyingTo = {
-        msgId: msg.id,
-        text: decrypted.slice(0, 120)
-      };
-
-      const replyBox = document.getElementById("replyPreview");
-      if (replyBox) {
-        replyBox.innerHTML = `
-          <div class="reply-box-inner">
-            <span class="reply-label">↪️ Replying to</span>
-            <div class="reply-text">${escapeHtml(replyingTo.text)}</div>
-            <span class="reply-close" onclick="cancelReply()">×</span>
-          </div>
-        `;
-        replyBox.style.display = "flex";
-      }
-
-      const input = document.getElementById("threadInput");
-      if (input) input.focus();
-    }
-  }
 }
 
 function cancelReply() {
