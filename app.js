@@ -1823,6 +1823,12 @@ function handleSwipeToReply(msg, decrypted) {
   }
 }
 
+function cancelReply() {
+  replyingTo = null;
+  const replyBox = document.getElementById("replyPreview");
+  if (replyBox) replyBox.style.display = "none";
+}
+
 // ===== DM: Send Thread Message with AES Encryption ====
 function sendThreadMessage() {
   const input = document.getElementById("threadInput");
