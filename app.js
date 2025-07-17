@@ -1600,12 +1600,13 @@ const textPreview = `
 
           bubble.innerHTML = `
   <div class="msg-content ${isDeleted ? "msg-deleted" : ""}">
-  ${replyHtml}
-  <div class="msg-row">
-    <span class="msg-text">${textPreview}</span>
-    <span class="msg-meta">${meta}</span>
+    ${replyHtml}
+    <div class="msg-row">
+      <span class="msg-text">${textPreview}</span>
+      <div class="msg-meta">${meta}</div>
+    </div>
   </div>
-</div>
+`;
 
           if (!isDeleted) {
             bubble.addEventListener("touchstart", handleTouchStart);
