@@ -1153,8 +1153,7 @@ async function openThread(uid, name) {
 
   const threadIdStr = threadId(currentUser.uid, uid);
   const area = document.getElementById("threadMessages");
-
-  renderedMessageIds = new Set(); // ✅ Reset rendered state
+  renderedMessageIds = new Set(); // ✅ Reset message tracker
 
   if (area && lastThreadId !== threadIdStr) {
     area.innerHTML = "";
@@ -1170,7 +1169,7 @@ async function openThread(uid, name) {
     });
   }
 
-  // Load avatar
+  // Load profile image
   try {
     const friendUserDoc = await db.collection("users").doc(uid).get();
     if (friendUserDoc.exists) {
@@ -1210,35 +1209,37 @@ async function openThread(uid, name) {
   });
   if (area) resizeObserver.observe(area);
 
-  // 👇 LIVE listener with append-only render
   unsubscribeThread = db.collection("threads").doc(threadIdStr)
     .collection("messages")
     .orderBy("timestamp")
-    .onSnapshot(async snapshot => {
+    .onSnapshot(snapshot => {
       if (!area) return;
 
       const prevScroll = area.scrollTop;
       const prevHeight = area.scrollHeight;
-
       const isNearBottom = prevHeight - prevScroll - area.clientHeight < 120;
 
-      for (const doc of snapshot.docChanges()) {
-        const msgDoc = doc.doc;
+      snapshot.docChanges().forEach(change => {
+        const msgDoc = change.doc;
         const msg = msgDoc.data();
         msg.id = msgDoc.id;
 
-        if (!msg.text || typeof msg.text !== "string") msg.text = "";
-
-        if (renderedMessageIds.has(msg.id)) continue;
+        if (renderedMessageIds.has(msg.id)) return;
         renderedMessageIds.add(msg.id);
 
         const isSelf = msg.from === currentUser.uid;
 
         let decrypted = "";
         try {
-          decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
-        } catch {
-          decrypted = "[Failed to decrypt]";
+          if (typeof msg.text === "string") {
+            decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+          } else {
+            console.warn("⚠️ Bad message format:", msg);
+            decrypted = "[Invalid message]";
+          }
+        } catch (e) {
+          console.error("Decryption failed:", e);
+          decrypted = "[Decryption error]";
         }
 
         const wrapper = document.createElement("div");
@@ -1259,10 +1260,9 @@ async function openThread(uid, name) {
 
         if (!msg.seenBy?.includes(currentUser.uid)) {
           db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
-            .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
-            .catch(() => {});
+            .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) }).catch(() => {});
         }
-      }
+      });
 
       if (typeof lucide !== "undefined") lucide.createIcons();
 
@@ -1278,6 +1278,7 @@ async function openThread(uid, name) {
       }
     });
 }
+
 
 // ✅ Send button handler
 function handleSendClick() {
@@ -1384,12 +1385,9 @@ function handleTouchMove(evt) {
 
 
 function cancelReply() {
+  const box = document.getElementById("replyPreview");
+  if (box) box.style.display = "none";
   replyingTo = null;
-  const replyPreview = document.getElementById("replyPreview");
-  if (replyPreview) {
-    replyPreview.style.display = "none";
-    replyPreview.querySelector("#replyText").textContent = "";
-  }
 }
 // ✋ Long press to open minimal modal with options
 let selectedMessageForAction = null;
@@ -1612,7 +1610,7 @@ function sendThreadMessage() {
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
 
-      // ✅ Refocus input without keyboard flicker
+      // ✅ Keep focus & keyboard open after sending
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           input.focus({ preventScroll: true });
@@ -1651,11 +1649,16 @@ function listenMessages() {
   unsubscribeMessages = db.collection("groups").doc(currentRoom).collection("messages")
     .orderBy("timestamp")
     .onSnapshot(snapshot => {
-      messagesDiv.innerHTML = "";
+      const prevScroll = messagesDiv.scrollTop;
+      const isNearBottom = messagesDiv.scrollHeight - prevScroll - messagesDiv.clientHeight < 100;
+
+      messagesDiv.innerHTML = ""; // optional: clear all for fresh render
+
       snapshot.forEach(doc => {
         const msg = doc.data();
         if (!msg?.text) return;
 
+        // Skip if user deleted this message
         if (msg.deletedFor?.[currentUser.uid]) {
           const bubble = document.createElement("div");
           bubble.className = "message-bubble deleted";
@@ -1664,23 +1667,40 @@ function listenMessages() {
           return;
         }
 
-        const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+        // ✅ Decrypt safely
+        let decrypted = "";
+        try {
+          if (typeof msg.text === "string") {
+            decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+          } else {
+            decrypted = "[Invalid message]";
+          }
+        } catch (e) {
+          console.error("Group message decryption failed:", e);
+          decrypted = "[Decryption error]";
+        }
+
+        // ✅ Message bubble
         const bubble = document.createElement("div");
         bubble.className = "message-bubble " + (msg.senderId === currentUser.uid ? "right" : "left");
 
+        // ✅ Sender info (with badge placeholder)
         const sender = document.createElement("div");
         sender.className = "sender-info";
         sender.innerHTML = `<strong>${escapeHtml(msg.senderName || "Unknown")}</strong>`;
         bubble.appendChild(sender);
 
+        // ✅ Message text
         const textDiv = document.createElement("div");
         textDiv.innerHTML = linkifyText(escapeHtml(decrypted));
         bubble.appendChild(textDiv);
 
-        // swipe + long press support
+        // ✅ Touch support
         bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
         bubble.addEventListener("touchmove", handleTouchMove, { passive: true });
         bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted), { passive: true });
+
+        // ✅ Right-click (desktop)
         bubble.addEventListener("contextmenu", (e) => {
           e.preventDefault();
           handleLongPressMenu(msg, decrypted, msg.senderId === currentUser.uid);
@@ -1689,7 +1709,13 @@ function listenMessages() {
         messagesDiv.appendChild(bubble);
       });
 
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      // ✅ Auto-scroll only if user is near bottom
+      if (isNearBottom) {
+        requestAnimationFrame(() => {
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+      }
+
       renderWithMagnetSupport("groupMessages");
     });
 }
@@ -2069,13 +2095,18 @@ function adjustThreadLayout() {
 
 // ✅ Smooth scroll to bottom of thread
 function scrollToBottomThread(smooth = true) {
-  const scrollArea = document.querySelector(".chat-scroll-area");
-  if (!scrollArea) return;
+  const area = document.getElementById("threadMessages");
+  if (!area) return;
 
-  scrollArea.scrollTo({
-    top: scrollArea.scrollHeight,
-    behavior: smooth ? "smooth" : "auto"
-  });
+  try {
+    area.scrollTo({
+      top: area.scrollHeight,
+      behavior: smooth ? "smooth" : "auto"
+    });
+  } catch (e) {
+    console.warn("Scroll error:", e);
+    area.scrollTop = area.scrollHeight;
+  }
 }
 
 function scrollToRepliedMessage(msgId) {
