@@ -1031,7 +1031,7 @@ body.dark .chat-options-horizontal span:hover {
   opacity: 1;
 }
 
-/* 🔁 Reply Preview in Input */
+/* 🔁 Reply Preview (outside input like WhatsApp) */
 #replyPreview,
 .reply-preview {
   display: flex;
@@ -1039,17 +1039,17 @@ body.dark .chat-options-horizontal span:hover {
   justify-content: space-between;
   background: var(--chat-bg-light, #f0f0f0);
   border-left: 4px solid var(--accent, #25d366);
-  padding: 6px 10px;
-  margin: 6px 0;
-  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 8px 12px;
+  border-radius: 10px;
   font-size: 13px;
   max-width: 100%;
+  gap: 10px;
 }
 .reply-preview.hidden {
   display: none;
 }
-.reply-box-inner,
-.reply-preview .reply-box-inner {
+.reply-box-inner {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1068,32 +1068,27 @@ body.dark .chat-options-horizontal span:hover {
   flex: 1;
   font-size: 13px;
   color: #333;
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
-.reply-close,
-.cancel-reply-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px;
-  margin-left: 8px;
-  color: #888;
-  font-size: 16px;
+.reply-close {
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
+  margin-left: 8px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
 }
-
-/* 🗨️ Chat input bar */
-.chat-input-bar {
-  display: flex;
-  align-items: center;
-  padding: 6px;
-  gap: 6px;
-  border-top: 1px solid #ddd;
-  background: #fff;
+.reply-close:hover {
+  background: #eee;
 }
 
 /* 🔗 Link Preview Block */
@@ -1133,7 +1128,7 @@ body.dark .chat-options-horizontal span:hover {
   font-size: 11px;
   color: #666;
   margin-top: 4px;
-  word-break: break-all;
+  word-break: break-word;
 }
 
 /* 🔁 Message Reply Preview (inside bubble) */
@@ -1152,7 +1147,7 @@ body.dark .chat-options-horizontal span:hover {
 }
 
 /* ✨ Reply highlight flash */
-.reply-highlight {
+.highlighted-reply {
   animation: highlightFlash 2s ease;
   background-color: #fff59d !important;
   transition: background-color 1s ease;
@@ -1184,6 +1179,9 @@ body.dark .chat-options-horizontal span:hover {
 .tick-delivered {
   color: #4fc3f7;
 }
+.tick-seen {
+  color: #4fc3f7 !important;
+}
 
 /* ✏️ Edited label */
 .edited-tag {
@@ -1207,7 +1205,7 @@ body.dark .chat-options-horizontal span:hover {
 .msg-text a {
   color: #2979ff;
   text-decoration: underline;
-  word-break: break-all;
+  word-break: break-word;
 }
 .msg-text a:hover {
   text-decoration: underline dotted;
@@ -1279,4 +1277,14 @@ body.dark .chat-options-horizontal span:hover {
 @keyframes slideInReply {
   from { transform: translateX(-12px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
+}
+
+/* 📥 Chat input bar */
+.chat-input-bar {
+  display: flex;
+  align-items: center;
+  padding: 6px;
+  gap: 6px;
+  border-top: 1px solid #ddd;
+  background: #fff;
 }
