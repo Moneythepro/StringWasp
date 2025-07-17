@@ -1096,3 +1096,96 @@ body.dark .chat-options-horizontal span:hover {
   font-style: italic;
   opacity: 0.7;
 }
+
+/* ✅ Tick icons for sent/delivered */
+.tick-icon {
+  width: 14px;
+  height: 14px;
+  margin-left: 6px;
+  vertical-align: middle;
+  color: #888;
+}
+.tick-sent {
+  color: #999;
+}
+.tick-delivered {
+  color: #4fc3f7; /* Light blue for delivered */
+}
+
+/* ✅ Edited label */
+.edited-tag {
+  font-size: 10px;
+  color: #999;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
+/* ✅ Swipe to reply preview */
+.reply-to {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-left: 3px solid var(--primary-color, #4fc3f7);
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: #555;
+  border-radius: 4px;
+}
+
+/* ✅ "Show more" link */
+.show-more {
+  display: inline-block;
+  color: var(--primary-color, #4fc3f7);
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* ✅ Clickable links in messages */
+.msg-text a {
+  color: #2979ff;
+  text-decoration: underline;
+  word-break: break-all;
+}
+.msg-text a:hover {
+  text-decoration: underline dotted;
+}
+
+/* ✅ Small meta area */
+.msg-meta {
+  font-size: 11px;
+  color: #999;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+/* ✅ Preview limit and layout */
+.msg-preview {
+  display: inline;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ✅ Ensure bubble doesn't overflow on long links or words */
+.message-bubble {
+  max-width: 90%;
+  word-break: break-word;
+}
+
+/* Wrapper for swipe gesture */
+.message-bubble-wrapper {
+  transition: transform 0.25s ease;
+  position: relative;
+}
+
+/* When swiped */
+.message-bubble-wrapper.swiped {
+  transform: translateX(-50px);
+}
+
+/* Prevent swipe from affecting layout */
+.message-bubble {
+  will-change: transform;
+}
