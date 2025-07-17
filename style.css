@@ -1080,14 +1080,30 @@ body.dark .chat-options-horizontal span:hover {
 }
 
 .reply-close {
-  background: none;
+  background: #e0e0e0;
   border: none;
-  color: #333;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  padding: 0;
   cursor: pointer;
-  padding: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 14px;
+  color: #555;
+  transition: background 0.2s ease;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+}
+.reply-close:hover {
+  background: #d6d6d6;
+}
+.reply-close i {
+  width: 14px;
+  height: 14px;
+  color: #555;
 }
 
 /* ✅ Seen and Sent Tick Icons */
