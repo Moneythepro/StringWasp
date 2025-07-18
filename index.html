@@ -142,12 +142,35 @@
           <div id="threadTypingStatus" class="typing-indicator" aria-hidden="true"><span></span><span></span><span></span></div>
         </div>
 <footer class="chat-input-bar">
-  <button class="icon-btn" id="emojiToggleBtn" aria-label="Emoji"><i data-lucide="smile"></i></button>
-  <button class="icon-btn" onclick="triggerFileInput('thread')" aria-label="Attach File"><i data-lucide="paperclip"></i></button>
+  <!-- Emoji Button (left) -->
+  <button class="icon-btn emoji-btn" id="emojiToggleBtn" aria-label="Emoji">
+    <i data-lucide="smile"></i>
+  </button>
+
+  <!-- Attach File -->
+  <button class="icon-btn" onclick="triggerFileInput('thread')" aria-label="Attach File">
+    <i data-lucide="paperclip"></i>
+  </button>
   <input type="file" id="threadFile" class="visually-hidden" onchange="uploadFile('thread')" />
-  <button class="icon-btn" onclick="shareFileViaTorrent('dm')" aria-label="Send via Torrent"><i data-lucide="globe"></i></button>
-  <div id="replyPreview" class="reply-box" style="display:none;"></div>
-  <input id="threadInput" type="text" placeholder="Type a message…" autocomplete="off" autocapitalize="sentences" enterkeyhint="send" aria-label="Message input" />
+
+  <!-- Send via Torrent -->
+  <button class="icon-btn" onclick="shareFileViaTorrent('dm')" aria-label="Send via Torrent">
+    <i data-lucide="globe"></i>
+  </button>
+
+  <!-- Reply Preview (should be outside input for structure) -->
+  <div id="replyPreview" class="reply-box" style="display: none;"></div>
+
+  <!-- Message Input -->
+  <input
+    id="threadInput"
+    type="text"
+    placeholder="Type a message…"
+    autocomplete="off"
+    autocapitalize="sentences"
+    enterkeyhint="send"
+    aria-label="Message input"
+  />
 </footer>
       </div>
     </div>
@@ -207,6 +230,8 @@
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/webtorrent/webtorrent.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="emoji.js"></script>
+<script src="main.js"></script>
 
   <!-- 🔧 App Logic -->
   <script src="firebase.js"></script>
