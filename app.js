@@ -1332,6 +1332,48 @@ let touchStartX = 0;
 let touchMoveX = 0;
 let isSendingThread = false;
 
+function setupEmojiButton() {
+  const emojiBtn = document.getElementById("emojiToggleBtn");
+  const input = document.getElementById("threadInput");
+  if (!emojiBtn || !input) return;
+
+  let emojiPicker;
+  let pickerOpen = false;
+
+  emojiBtn.addEventListener("click", async () => {
+    if (!emojiPicker) {
+      const module = await import("https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2");
+      emojiPicker = new module.default({
+        position: "top-start",
+        theme: document.body.classList.contains("dark") ? "dark" : "light",
+        autoHide: false,
+        showSearch: true,
+        showRecents: true,
+        emojiSize: "1.2em",
+      });
+
+      emojiPicker.on("emoji", emoji => {
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        input.value =
+          input.value.substring(0, start) + emoji + input.value.substring(end);
+        input.selectionStart = input.selectionEnd = start + emoji.length;
+
+        input.focus();
+        autoResizeInput(input);
+      });
+    }
+
+    if (pickerOpen) {
+      emojiPicker.hidePicker();
+    } else {
+      emojiPicker.setTheme(document.body.classList.contains("dark") ? "dark" : "light");
+      emojiPicker.showPicker(emojiBtn);
+    }
+    pickerOpen = !pickerOpen;
+  });
+}
+
 function handleTouchStart(e) {
   touchStartX = e.touches[0].clientX;
 }
@@ -2736,54 +2778,6 @@ function renderWithMagnetSupport(containerId) {
     setTimeout(() => el.classList.remove("highlighted-reply"), 2000);
   }
 
-  // ✨ Emoji Picker Setup
-  function setupEmojiButton() {
-  const emojiBtn = getEmojiBtn();
-  const input = getThreadInput();
-  if (!emojiBtn || !input) return;
-
-  let emojiPicker;
-  let pickerOpen = false;
-
-  emojiBtn.addEventListener("click", async () => {
-    // Lazy load emoji picker
-    if (!emojiPicker) {
-      const module = await import("https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2");
-      emojiPicker = new module.default({
-        position: 'top-end',
-        theme: document.body.classList.contains("dark") ? "dark" : "light",
-        autoHide: false,
-        showSearch: true,
-        showRecents: true,
-        emojiSize: '1.3em',
-        zIndex: 9999
-      });
-
-      // Insert emoji at caret position
-      emojiPicker.on("emoji", emoji => {
-        const start = input.selectionStart;
-        const end = input.selectionEnd;
-        const text = input.value;
-
-        input.value = text.slice(0, start) + emoji + text.slice(end);
-        input.selectionStart = input.selectionEnd = start + emoji.length;
-
-        autoResizeInput(input);
-        input.focus();
-      });
-    }
-
-    // Show/hide toggle
-    if (pickerOpen) {
-      emojiPicker.hidePicker();
-      pickerOpen = false;
-    } else {
-      emojiPicker.setTheme(document.body.classList.contains("dark") ? "dark" : "light");
-      emojiPicker.showPicker(emojiBtn);
-      pickerOpen = true;
-    }
-  });
-  }
 
   // ✨ Auto-resize input height
   function autoResizeInput(input) {
@@ -2835,7 +2829,6 @@ function renderWithMagnetSupport(containerId) {
       autoResizeInput(input); // Initial
     }
 
-    setupEmojiButton();
 
     window.addEventListener("resize", viewportChanged);
     if (window.visualViewport) {
