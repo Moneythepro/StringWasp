@@ -1330,6 +1330,7 @@ let handleSendClick = null;
 let replyingTo = null;
 let touchStartX = 0;
 let touchMoveX = 0;
+let isSendingThread = false;
 
 function handleTouchStart(e) {
   touchStartX = e.touches[0].clientX;
@@ -1354,13 +1355,12 @@ function handleSwipeToReply(msg, decrypted) {
       if (replyBox) {
         replyBox.innerHTML = `
           <div class="reply-box-inner" onclick="scrollToReplyMessage('${msg.id}')">
-            <span class="reply-label">
-              <i data-lucide="corner-up-left" style="width:14px;height:14px;"></i> Replying to
-            </span>
-            <div class="reply-text clamp-text">${escapeHtml(decrypted)}</div>
+            <div class="reply-info">
+              <div class="reply-text clamp-text">${escapeHtml(decrypted)}</div>
+            </div>
             <button class="reply-close" onclick="cancelReply()" aria-label="Cancel reply">
-  <i data-lucide="x" style="width:14px;height:14px;"></i>
-</button>
+              <i data-lucide="x"></i>
+            </button>
           </div>
         `;
         replyBox.style.display = "flex";
@@ -1384,7 +1384,6 @@ function cancelReply() {
   }
 }
 
-
 function extractFirstURL(text) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const match = text.match(urlRegex);
@@ -1400,6 +1399,98 @@ async function fetchLinkPreview(url) {
     console.warn("🔗 Link preview fetch failed:", e);
   }
   return null;
+}
+
+async function sendThreadMessage() {
+  if (isSendingThread) return;
+  isSendingThread = true;
+
+  const input = document.getElementById("threadInput");
+  if (!input || !currentThreadUser) {
+    isSendingThread = false;
+    return;
+  }
+
+  const text = input.value.trim();
+  if (!text) {
+    isSendingThread = false;
+    return;
+  }
+
+  const fromName = document.getElementById("usernameDisplay")?.textContent || "User";
+  const toNameElem = document.getElementById("threadWithName");
+  const toName = toNameElem ? toNameElem.textContent : "Friend";
+
+  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+  const threadRef = db.collection("threads").doc(threadIdStr);
+
+  // ✅ Encrypt message
+  const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
+
+  const message = {
+    text: encryptedText,
+    from: currentUser.uid,
+    fromName,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    seenBy: [currentUser.uid]
+  };
+
+  // ✅ Handle reply
+  if (replyingTo?.msgId && replyingTo?.text?.trim()) {
+    message.replyTo = {
+      msgId: replyingTo.msgId,
+      text: replyingTo.text
+    };
+  }
+
+  // ✅ Detect link & fetch preview
+  const urlMatch = text.match(/https?:\/\/[^\s]+/);
+  if (urlMatch) {
+    try {
+      const preview = await fetchLinkPreview(urlMatch[0]);
+      if (preview?.title) {
+        message.preview = {
+          title: preview.title,
+          image: preview.image || "",
+          url: preview.url
+        };
+      }
+    } catch (err) {
+      console.warn("⚠️ Preview fetch failed:", err);
+    }
+  }
+
+  input.value = "";
+  cancelReply();
+  replyingTo = null;
+
+  try {
+    await threadRef.collection("messages").add(message);
+
+    // ✅ Update thread metadata
+    await threadRef.set({
+      participants: [currentUser.uid, currentThreadUser],
+      names: {
+        [currentUser.uid]: fromName,
+        [currentThreadUser]: toName
+      },
+      lastMessage: text,
+      unread: {
+        [currentUser.uid]: 0,
+        [currentThreadUser]: firebase.firestore.FieldValue.increment(1)
+      },
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    requestAnimationFrame(() => input.focus({ preventScroll: true }));
+    setTimeout(() => scrollToBottomThread(true), 150);
+    console.log("📨 Thread message sent:", text);
+  } catch (err) {
+    console.error("❌ Send failed:", err.message || err);
+    alert("❌ Failed to send message.");
+  } finally {
+    isSendingThread = false;
+  }
 }
 
 async function openThread(uid, name) {
@@ -1429,9 +1520,7 @@ async function openThread(uid, name) {
         sendBtn.dataset.bound = "true";
       }
 
-      // ✅ Setup emoji button
       setupEmojiButton();
-
     }, 200);
 
     document.getElementById("threadWithName").textContent =
@@ -1548,7 +1637,7 @@ async function openThread(uid, name) {
           bubble.dataset.msgId = msg.id;
 
           const replyHtml = msg.replyTo && !isDeleted
-            ? `<div class="reply-to clamp-text"><i data-lucide="corner-up-left"></i> ${escapeHtml(msg.replyTo.text || "")}</div>`
+            ? `<div class="reply-to clamp-text">${escapeHtml(msg.replyTo.text || "")}</div>`
             : "";
 
           const url = extractFirstURL(decrypted);
@@ -1884,90 +1973,7 @@ function renderChatCard(chat) {
 
 
 // ===== DM: Send Thread Message with AES Encryption ====
-async function sendThreadMessage() {
-  const input = document.getElementById("threadInput");
-  if (!input || !currentThreadUser) return;
 
-  const text = input.value.trim();
-  if (!text) return;
-
-  const fromName = document.getElementById("usernameDisplay")?.textContent || "User";
-  const toNameElem = document.getElementById("threadWithName");
-  const toName = toNameElem ? toNameElem.textContent : "Friend";
-
-  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
-  const threadRef = db.collection("threads").doc(threadIdStr);
-
-  // ✅ Encrypt message
-  const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
-
-  const message = {
-    text: encryptedText,
-    from: currentUser.uid,
-    fromName,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    seenBy: [currentUser.uid]
-  };
-
-  // ✅ Handle reply
-  if (replyingTo?.msgId && replyingTo?.text?.trim()) {
-    message.replyTo = {
-      msgId: replyingTo.msgId,
-      text: replyingTo.text
-    };
-  }
-
-  // ✅ Detect link & fetch preview
-  const urlMatch = text.match(/https?:\/\/[^\s]+/);
-  if (urlMatch) {
-    try {
-      const preview = await fetchLinkPreview(urlMatch[0]);
-      if (preview?.title) {
-        message.preview = {
-          title: preview.title,
-          image: preview.image || "",
-          url: preview.url
-        };
-      }
-    } catch (err) {
-      console.warn("Preview fetch failed:", err);
-    }
-  }
-
-  // ✅ Clear input without losing focus
-  input.value = "";
-  cancelReply();
-
-  try {
-    await threadRef.collection("messages").add(message);
-
-    // ✅ Update thread metadata
-    await threadRef.set({
-      participants: [currentUser.uid, currentThreadUser],
-      names: {
-        [currentUser.uid]: fromName,
-        [currentThreadUser]: toName
-      },
-      lastMessage: text,
-      unread: {
-        [currentUser.uid]: 0,
-        [currentThreadUser]: firebase.firestore.FieldValue.increment(1)
-      },
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-
-    // ✅ Keep keyboard open and scroll down smoothly
-    requestAnimationFrame(() => {
-      input.focus({ preventScroll: true });
-    });
-    setTimeout(() => scrollToBottomThread(true), 150);
-
-    console.log("📨 Thread message sent:", text);
-  } catch (err) {
-    console.error("❌ Send failed:", err.message || err);
-    alert("❌ Failed to send message.");
-  }
-}
 
 function listenMessages() {
   const messagesDiv = document.getElementById("groupMessages");
