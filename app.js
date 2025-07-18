@@ -1594,18 +1594,23 @@ const meta = `
   </span>
 `;
 
+const content = hasLong
+  ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
+  : linkifyText(textHtml);
+
 const textPreview = `
-  <span class="msg-text clamp-text" data-full="${textHtml}" data-short="${shortText}">
-    ${hasLong
-      ? shortText + meta + '<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>'
-      : linkifyText(textHtml) + meta}
-  </span>
+  <div class="msg-text-wrapper">
+    <span class="msg-text clamp-text" data-full="${textHtml}" data-short="${shortText}">
+      ${content}
+    </span>
+    ${meta}
+  </div>
 `;
 
 bubble.innerHTML = `
   <div class="msg-content ${isDeleted ? "msg-deleted" : ""}">
     ${replyHtml || ""}
-    <div class="msg-inner-wrapper no-meta-overlay">
+    <div class="msg-inner-wrapper">
       ${textPreview}
     </div>
     ${linkPreviewHTML}
