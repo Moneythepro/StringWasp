@@ -1567,7 +1567,7 @@ async function openThread(uid, name) {
         sendBtn.dataset.bound = "true";
       }
 
-      setupEmojiButton();
+      if (typeof setupEmojiButton === "function") setupEmojiButton();
     }, 200);
 
     document.getElementById("threadWithName").textContent =
@@ -1689,7 +1689,7 @@ async function openThread(uid, name) {
 
           const url = extractFirstURL(decrypted);
           let linkPreviewHTML = "";
-          if (url) {
+          if (url && !msg.preview) {
             const preview = await fetchLinkPreview(url);
             if (preview?.title || preview?.image) {
               linkPreviewHTML = `
@@ -1702,6 +1702,16 @@ async function openThread(uid, name) {
                 </div>
               `;
             }
+          } else if (msg.preview) {
+            linkPreviewHTML = `
+              <div class="link-preview">
+                ${msg.preview.image ? `<img src="${msg.preview.image}" alt="Preview" class="preview-img">` : ""}
+                <div class="preview-info">
+                  <div class="preview-title">${escapeHtml(msg.preview.title || "")}</div>
+                  <div class="preview-url">${msg.preview.url || url}</div>
+                </div>
+              </div>
+            `;
           }
 
           const textHtml = escapeHtml(decrypted);
