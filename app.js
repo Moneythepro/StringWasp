@@ -1605,7 +1605,7 @@ const textPreview = `
 bubble.innerHTML = `
   <div class="msg-content ${isDeleted ? "msg-deleted" : ""}">
     ${replyHtml || ""}
-    <div class="msg-inner-wrapper">
+    <div class="msg-inner-wrapper no-meta-overlay">
       ${textPreview}
     </div>
     ${linkPreviewHTML}
