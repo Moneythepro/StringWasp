@@ -1448,35 +1448,28 @@ body.dark .msg-meta {
 }
 
 /* =========================================================
- * StringWasp v1.0 — WhatsApp-Style UI (Enhanced)
- * PART 1: Variables, Resets, Global Layout, Containers
- * ---------------------------------------------------------
- * - Palette + sizing variables
- * - Light/dark theme hooks
- * - Global reset, typography
- * - App shell layout (headers, tab pages)
- * - Scroll areas w/ safe bottom space
- * - Utility classes
+ * StringWasp v1.0 — WhatsApp-Style UI (Enhanced / Final)
  * ======================================================= */
+
 
 /* ---------- ROOT VARIABLES (LIGHT THEME DEFAULT) ---------- */
 :root {
-  /* --- Core WA palette approximations --- */
+  /* Core WA palette */
   --wa-brand-green: #25d366;
   --wa-brand-green-dark: #128c7e;
   --wa-brand-teal: #075e54;
-  --wa-brand-accent: #00a884; /* current WA accent */
-  --wa-outgoing-bg: #d9fdd3;  /* updated light outgoing */
+  --wa-brand-accent: #00a884;
+  --wa-outgoing-bg: #d9fdd3;
   --wa-incoming-bg: #ffffff;
   --wa-reply-bar: var(--wa-brand-green);
-  --wa-chat-bg: #efeae2;      /* chat wallpaper neutral */
+  --wa-chat-bg: #efeae2;
   --wa-app-bg: #f0f2f5;
   --wa-card-bg: #ffffff;
   --wa-card-border: #e0e0e0;
   --wa-card-hover: #f5f5f5;
   --wa-divider: #e6e6e6;
 
-  /* --- Text colors --- */
+  /* Text colors */
   --text-strong: #111b21;
   --text-default: #3b4a54;
   --text-secondary: #667781;
@@ -1484,33 +1477,33 @@ body.dark .msg-meta {
   --text-link: var(--wa-brand-accent);
   --text-danger: #d93025;
 
-  /* --- Meta/time/ticks --- */
+  /* Meta/time/ticks */
   --meta-font-size: 11px;
   --meta-color: #8696a0;
   --tick-sent-color: #8696a0;
   --tick-delivered-color: #53bdeb;
   --tick-seen-color: #53bdeb;
 
-  /* --- Bubble metrics (base scale from your snippet, tuned) --- */
+  /* Bubble metrics */
   --bubble-max-width: 88%;
   --bubble-padding-y: 4px;
   --bubble-padding-x: 8px;
   --bubble-radius: 8px;
-  --bubble-radius-lg: 16px; /* for large rounding at leading corner */
+  --bubble-radius-lg: 16px;
   --bubble-font-size: 15px;
   --bubble-line-height: 1.25;
 
   --msg-font-size: 15px;
   --msg-line-height: 1.3;
 
-  /* reply preview */
+  /* Reply preview */
   --reply-font-size: 13px;
   --reply-color: var(--text-secondary);
   --reply-bg: rgba(0,0,0,0.04);
   --reply-border-color: var(--wa-reply-bar);
   --reply-max-height: 3.4em;
 
-  /* spacing scale */
+  /* Spacing scale */
   --space-0: 0;
   --space-2: 2px;
   --space-4: 4px;
@@ -1522,36 +1515,37 @@ body.dark .msg-meta {
   --space-20: 20px;
   --space-24: 24px;
 
-  /* header / composer heights */
+  /* Heights */
   --header-height: 56px;
   --composer-height: 56px;
   --fab-size: 56px;
 
-  /* borders & radii */
+  /* Radii */
   --radius-xs: 2px;
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 16px;
   --radius-pill: 999px;
 
-  /* shadows */
+  /* Shadows */
   --shadow-card: 0 1px 2px rgba(0,0,0,0.08);
   --shadow-fab: 0 2px 8px rgba(0,0,0,0.25);
   --shadow-elev-1: 0 1px 3px rgba(0,0,0,0.12);
   --shadow-elev-2: 0 4px 12px rgba(0,0,0,0.18);
 
-  /* transitions */
+  /* Transitions */
   --fast: 0.12s;
   --norm: 0.2s;
   --slow: 0.35s;
   --easing: cubic-bezier(.2,.8,.4,1);
 
-  /* safe areas */
+  /* Safe areas */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
 }
+
 
 /* ---------- DARK THEME SUPPORT ---------- */
 :root.dark,
@@ -1578,27 +1572,18 @@ body.dark .msg-meta {
   --tick-seen-color: #53bdeb;
 }
 
-/* Optional auto-dark if system prefers */
-@media (prefers-color-scheme: dark) {
-  :root.auto-dark {
-    /* apply same as .dark above by re-defining if you prefer */
-  }
-}
-
 
 /* =========================================================
  * RESET
  * ======================================================= */
 *,
 *::before,
-*::after {
-  box-sizing: border-box;
-}
+*::after { box-sizing: border-box; }
 html, body {
   margin: 0;
   padding: 0;
-  height: 100%;
   width: 100%;
+  height: 100%;
 }
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -1610,47 +1595,24 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
-img, svg, video, canvas {
-  max-width: 100%;
-  height: auto;
-}
+img, svg, video, canvas { max-width: 100%; height: auto; }
 button {
-  font: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-  padding: 0;
-  margin: 0;
+  font: inherit; cursor: pointer; border: none; background: none;
+  padding: 0; margin: 0;
 }
 input, textarea {
-  font: inherit;
-  color: inherit;
-  margin: 0;
+  font: inherit; color: inherit; margin: 0;
 }
-a {
-  color: var(--text-link);
-  text-decoration: none;
-}
-a:hover {
-  text-decoration: underline;
-}
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,.2);
-  border-radius: 4px;
-}
-.dark ::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,.2);
-}
+a { color: var(--text-link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,.2); border-radius: 4px; }
+.dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); }
 
 
 /* =========================================================
  * APP SHELL
  * ======================================================= */
-
 #app,
 .app-root {
   position: fixed;
@@ -1658,10 +1620,7 @@ a:hover {
   display: flex;
   flex-direction: column;
   background: var(--wa-app-bg);
-  padding-top: var(--safe-top);
-  padding-right: var(--safe-right);
-  padding-bottom: var(--safe-bottom);
-  padding-left: var(--safe-left);
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
   overflow: hidden;
 }
 
@@ -1674,23 +1633,17 @@ a:hover {
   height: var(--header-height);
   padding: 0 var(--space-12);
   background: var(--wa-brand-teal);
-  color: var(--text-inverse);
+  color: #fff !important;             /* FORCE white text */
   box-shadow: var(--shadow-elev-1);
 }
-.app-header .header-back {
-  margin-right: var(--space-8);
-}
+.app-header .header-back { margin-right: var(--space-8); }
 .app-header .header-title {
-  font-size: 17px;
-  font-weight: 600;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 17px; font-weight: 600; flex: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: #fff !important;             /* Ensure white text */
 }
 .app-header .header-actions {
-  display: flex;
-  gap: var(--space-8);
+  display: flex; gap: var(--space-8); color: #fff !important;
 }
 
 /* Tabs bar (bottom main nav) */
@@ -1720,9 +1673,7 @@ a:hover {
   font-weight: 600;
 }
 .tabs-bar button .tab-icon {
-  font-size: 20px;
-  line-height: 1;
-  margin-bottom: 2px;
+  font-size: 20px; line-height: 1; margin-bottom: 2px;
 }
 
 /* Tab pages wrapper */
@@ -1733,11 +1684,9 @@ a:hover {
   flex-direction: column;
   overflow: hidden;
 }
-.tab-page.active {
-  display: flex;
-}
+.tab-page.active { display: flex; }
 
-/* Some pages (chat list, inbox, etc.) scroll internally */
+/* Scrollable tab content */
 .tab-scroll {
   flex: 1;
   overflow-y: auto;
@@ -1749,69 +1698,52 @@ a:hover {
 
 /* =========================================================
  * CHAT VIEW / THREAD VIEW LAYOUT
- * (header + scroll body + fixed composer)
  * ======================================================= */
-
+/* Full-height flex container that resizes w/ keyboard (gap fix) */
 .chat-view,
 .thread-view,
 .room-view {
-  position: absolute;
-  inset: 0;
   display: none;
   flex-direction: column;
+  /* dynamic viewport height first, fallback */
+  height: 100dvh;
+  height: 100vh;
   background: var(--wa-chat-bg);
 }
 .chat-view.active,
 .thread-view.active,
-.room-view.active {
-  display: flex;
-}
+.room-view.active { display: flex; }
 
-/* Chat header (in-conversation) */
+/* Chat header (conversation) */
 .chat-header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   height: var(--header-height);
   padding: 0 var(--space-12);
   background: var(--wa-brand-teal);
-  color: var(--text-inverse);
+  color: #fff !important;            /* FORCE white text */
   box-shadow: var(--shadow-elev-1);
 }
 .chat-header .chat-header-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  overflow: hidden;
-  margin-right: var(--space-8);
-  flex-shrink: 0;
+  width: 36px; height: 36px; border-radius: 50%;
+  overflow: hidden; margin-right: var(--space-8); flex-shrink: 0;
 }
 .chat-header .chat-header-title-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+  flex: 1; display: flex; flex-direction: column; min-width: 0;
 }
 .chat-header .chat-header-title {
-  font-size: 17px;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 17px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  color: #fff !important;
 }
 .chat-header .chat-header-subtitle {
-  font-size: 12px;
-  color: rgba(255,255,255,.7);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 12px; color: rgba(255,255,255,.8) !important;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .chat-header .chat-header-actions {
-  display: flex;
-  gap: var(--space-8);
-  margin-left: var(--space-8);
+  display: flex; gap: var(--space-8); margin-left: var(--space-8);
+  color: #fff !important;
 }
 
 /* Scrollable messages area */
@@ -1827,7 +1759,7 @@ a:hover {
   scroll-behavior: smooth;
 }
 
-/* Container where messages get appended */
+/* Messages container(s) */
 #threadMessages,
 .thread-messages,
 #roomMessages,
@@ -1849,11 +1781,9 @@ a:hover {
   background: rgba(0,0,0,.08);
   border-radius: var(--radius-pill);
 }
-.dark .msg-day-separator {
-  background: rgba(255,255,255,.1);
-}
+.dark .msg-day-separator { background: rgba(255,255,255,.1); }
 
-/* System / service messages (joined, left, etc.) */
+/* System messages */
 .msg-system {
   align-self: center;
   max-width: 90%;
@@ -1865,122 +1795,20 @@ a:hover {
   border-radius: var(--radius-md);
   text-align: center;
 }
-.dark .msg-system {
-  background: rgba(255,255,255,.08);
-}
+.dark .msg-system { background: rgba(255,255,255,.08); }
 
 
 /* =========================================================
- * FLOATING ACTION BUTTON (NEW CHAT)
+ * CHAT BUBBLES + REPLY + META
  * ======================================================= */
-.fab-new-chat {
-  position: absolute;
-  right: var(--space-16);
-  bottom: calc(48px + var(--space-16) + var(--safe-bottom)); /* above tabs bar */
-  width: var(--fab-size);
-  height: var(--fab-size);
-  border-radius: 50%;
-  background: var(--wa-brand-accent);
-  color: var(--text-inverse);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 26px;
-  box-shadow: var(--shadow-fab);
-  transition: transform var(--fast) var(--easing), box-shadow var(--fast) var(--easing);
-}
-.fab-new-chat:active {
-  transform: scale(.96);
-  box-shadow: var(--shadow-elev-2);
-}
-
-
-/* =========================================================
- * LOADING OVERLAY
- * ======================================================= */
-.loading-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,.35);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-.loading-overlay.active {
-  display: flex;
-}
-.loading-spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid rgba(255,255,255,.4);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-
-/* =========================================================
- * UTILITIES
- * ======================================================= */
-.hide { display: none !important; }
-.show-flex { display: flex !important; }
-.show-block { display: block !important; }
-.text-center { text-align: center !important; }
-.text-right { text-align: right !important; }
-.text-muted { color: var(--text-secondary) !important; }
-.bold { font-weight: 600 !important; }
-.pointer { cursor: pointer !important; }
-.round { border-radius: 50% !important; }
-.mt-8 { margin-top: var(--space-8) !important; }
-.mb-8 { margin-bottom: var(--space-8) !important; }
-
-/* Animations */
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-@keyframes pop-in {
-  0% { transform: scale(.9); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
-}
-@keyframes bubble-highlight {
-  0% { box-shadow: 0 0 0 0 rgba(37,211,102,.6); }
-  100% { box-shadow: 0 0 0 12px rgba(37,211,102,0); }
-}
-
-/* When new messages arrive */
-.message-bubble-anim-in {
-  animation: pop-in var(--fast) var(--easing);
-}
-
-/* For ping (e.g., on mention) */
-.message-bubble-ping {
-  animation: bubble-highlight 1.2s var(--easing) 1;
-}
-
-
-/* =========================================================
- * (Bubble + Reply + Meta CSS comes in PART 2)
- * (Composer, Tabs details, Inbox cards, Responsive in PART 3)
- * ======================================================= */
-
-/* =========================================================
- * PART 2: CHAT BUBBLES + REPLY PREVIEW + META
- * Matches WhatsApp look (tails, spacing, ticks)
- * ======================================================= */
-
-/* Wrapper per message */
 .message-bubble-wrapper {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   padding: 0 var(--space-4);
 }
-.message-bubble-wrapper.right {
-  align-items: flex-end;
-}
+.message-bubble-wrapper.right { align-items: flex-end; }
 
-/* The bubble */
 .message-bubble {
   position: relative;
   max-width: var(--bubble-max-width);
@@ -2006,14 +1834,13 @@ a:hover {
   border-top-right-radius: var(--radius-xs);
 }
 
-/* Tail for bubbles (WhatsApp style) */
+/* Bubble tails */
 .message-bubble.left::after,
 .message-bubble.right::after {
   content: "";
   position: absolute;
   bottom: 0;
-  width: 0;
-  height: 0;
+  width: 0; height: 0;
   border: solid transparent;
 }
 .message-bubble.left::after {
@@ -2047,7 +1874,7 @@ a:hover {
   text-overflow: ellipsis;
 }
 
-/* Main message text */
+/* Message text */
 .msg-text {
   font-size: var(--msg-font-size);
   line-height: var(--msg-line-height);
@@ -2056,7 +1883,7 @@ a:hover {
   color: var(--text-strong);
 }
 
-/* Meta (time + ticks) */
+/* Meta inline (time + ticks) */
 .msg-meta-inline {
   display: inline-flex;
   align-items: center;
@@ -2067,37 +1894,28 @@ a:hover {
   margin-top: 2px;
 }
 
-/* Ticks for sent/delivered/read */
+/* Tick icons */
 .tick-icon {
-  width: 16px;
-  height: 16px;
-  display: inline-block;
+  width: 16px; height: 16px; display: inline-block;
 }
-.tick-sent {
-  color: var(--tick-sent-color);
-}
-.tick-delivered {
-  color: var(--tick-delivered-color);
-}
-.tick-seen {
-  color: var(--tick-seen-color);
-}
+.tick-sent { color: var(--tick-sent-color); }
+.tick-delivered { color: var(--tick-delivered-color); }
+.tick-seen { color: var(--tick-seen-color); }
 
-/* Long-press highlight effect */
+/* Long-press highlight */
 .message-bubble.highlight {
   animation: bubble-highlight 1.2s var(--easing) 1;
 }
 
-/* =========================================================
- * PART 3: COMPOSER, TABS, INBOX CARDS, RESPONSIVE, EXTRAS
- * ======================================================= */
 
-/* =======================
-   COMPOSER (INPUT BAR)
-   ======================= */
+/* =========================================================
+ * COMPOSER (INPUT BAR)
+ * ======================================================= */
+/* IMPORTANT: relative/bottom:auto to prevent white gap */
 .chat-composer {
-  position: sticky;
-  bottom: 0;
+  position: relative;   /* no sticky/fixed -> keyboard safe */
+  bottom: auto;
+  flex-shrink: 0;
   z-index: 20;
   display: flex;
   align-items: center;
@@ -2105,8 +1923,10 @@ a:hover {
   padding: var(--space-8);
   background: var(--wa-card-bg);
   border-top: 1px solid var(--wa-divider);
+  animation: slide-up 0.25s var(--easing);
 }
 
+/* Reply preview above input */
 .chat-composer .composer-reply {
   display: none;
   flex-direction: row;
@@ -2120,19 +1940,13 @@ a:hover {
   color: var(--reply-color);
   max-width: 90%;
 }
-.chat-composer.reply-active .composer-reply {
-  display: flex;
-}
+.chat-composer.reply-active .composer-reply { display: flex; }
 .composer-reply .close-reply {
-  margin-left: auto;
-  font-size: 18px;
-  cursor: pointer;
-  opacity: 0.6;
+  margin-left: auto; font-size: 18px; cursor: pointer; opacity: .6;
 }
-.composer-reply .close-reply:hover {
-  opacity: 1;
-}
+.composer-reply .close-reply:hover { opacity: 1; }
 
+/* Input bubble */
 .composer-input-wrap {
   flex: 1;
   display: flex;
@@ -2161,41 +1975,34 @@ a:hover {
   color: var(--text-default);
 }
 
+/* Composer actions (emoji, attach, etc.) */
 .composer-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  margin-left: var(--space-8);
+  display: flex; align-items: center;
+  gap: var(--space-8); margin-left: var(--space-8);
 }
 .composer-actions button {
   font-size: 22px;
   color: var(--wa-brand-accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
 }
 
-/* Send button animation */
+/* Send button */
 .btn-send {
   background: var(--wa-brand-accent);
   color: var(--text-inverse);
-  width: 40px;
-  height: 40px;
+  width: 40px; height: 40px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   box-shadow: var(--shadow-fab);
   font-size: 20px;
   transition: transform var(--fast) var(--easing);
 }
-.btn-send:active {
-  transform: scale(0.95);
-}
+.btn-send:active { transform: scale(.95); }
 
-/* =======================
-   INBOX CARDS
-   ======================= */
+
+/* =========================================================
+ * INBOX CARDS
+ * ======================================================= */
 .inbox-card {
   display: flex;
   align-items: center;
@@ -2205,78 +2012,111 @@ a:hover {
   transition: background var(--fast);
   cursor: pointer;
 }
-.inbox-card:hover {
-  background: var(--wa-card-hover);
-}
+.inbox-card:hover { background: var(--wa-card-hover); }
 .inbox-card .avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  margin-right: var(--space-12);
-  background: #ccc;
-  flex-shrink: 0;
+  width: 48px; height: 48px; border-radius: 50%;
+  margin-right: var(--space-12); background: #ccc; flex-shrink: 0;
 }
-.inbox-card .info {
-  flex: 1;
-  min-width: 0;
-}
+.inbox-card .info { flex: 1; min-width: 0; }
 .inbox-card .info .name {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-strong);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 15px; font-weight: 600; color: var(--text-strong);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .inbox-card .info .preview {
-  font-size: 13px;
-  color: var(--text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 13px; color: var(--text-secondary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .inbox-card .time {
-  font-size: 11px;
-  color: var(--meta-color);
-  margin-left: var(--space-8);
+  font-size: 11px; color: var(--meta-color); margin-left: var(--space-8);
 }
 
-/* =======================
-   RESPONSIVE POLISH
-   ======================= */
+
+/* =========================================================
+ * FLOATING ACTION BUTTON (NEW CHAT)
+ * ======================================================= */
+.fab-new-chat {
+  position: absolute;
+  right: var(--space-16);
+  bottom: calc(48px + var(--space-16) + var(--safe-bottom));
+  width: var(--fab-size); height: var(--fab-size);
+  border-radius: 50%;
+  background: var(--wa-brand-accent);
+  color: var(--text-inverse);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  box-shadow: var(--shadow-fab);
+  transition: transform var(--fast) var(--easing), box-shadow var(--fast) var(--easing);
+}
+.fab-new-chat:active {
+  transform: scale(.96);
+  box-shadow: var(--shadow-elev-2);
+}
+
+
+/* =========================================================
+ * LOADING OVERLAY
+ * ======================================================= */
+.loading-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.35);
+  display: none; align-items: center; justify-content: center;
+  z-index: 999;
+}
+.loading-overlay.active { display: flex; }
+.loading-spinner {
+  width: 48px; height: 48px;
+  border: 4px solid rgba(255,255,255,.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+
+/* =========================================================
+ * UTILITIES
+ * ======================================================= */
+.hide { display: none !important; }
+.show-flex { display: flex !important; }
+.show-block { display: block !important; }
+.text-center { text-align: center !important; }
+.text-right { text-align: right !important; }
+.text-muted { color: var(--text-secondary) !important; }
+.bold { font-weight: 600 !important; }
+.pointer { cursor: pointer !important; }
+.round { border-radius: 50% !important; }
+.mt-8 { margin-top: var(--space-8) !important; }
+.mb-8 { margin-bottom: var(--space-8) !important; }
+
+
+/* =========================================================
+ * RESPONSIVE POLISH
+ * ======================================================= */
 @media (max-width: 480px) {
-  .app-header .header-title {
-    font-size: 15px;
-  }
-  .chat-header .chat-header-title {
-    font-size: 15px;
-  }
-  .msg-text {
-    font-size: 14px;
-  }
-  .composer-input-wrap {
-    padding: 4px 10px;
-  }
-  .btn-send {
-    width: 36px;
-    height: 36px;
-    font-size: 18px;
-  }
+  .app-header .header-title,
+  .chat-header .chat-header-title { font-size: 15px; }
+  .msg-text { font-size: 14px; }
+  .composer-input-wrap { padding: 4px 10px; }
+  .btn-send { width: 36px; height: 36px; font-size: 18px; }
 }
 
-/* =======================
-   ANIMATIONS
-   ======================= */
+
+/* =========================================================
+ * ANIMATIONS
+ * ======================================================= */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pop-in {
+  0% { transform: scale(.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes bubble-highlight {
+  0% { box-shadow: 0 0 0 0 rgba(37,211,102,.6); }
+  100% { box-shadow: 0 0 0 12px rgba(37,211,102,0); }
+}
 @keyframes slide-up {
-  0% {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  0% { transform: translateY(100%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
 }
-.chat-composer {
-  animation: slide-up 0.25s var(--easing);
-}
+
+/* New message animation helpers */
+.message-bubble-anim-in { animation: pop-in var(--fast) var(--easing); }
+.message-bubble-ping { animation: bubble-highlight 1.2s var(--easing) 1; }
