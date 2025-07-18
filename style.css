@@ -1448,26 +1448,26 @@ body.dark .msg-meta {
 }
 
 :root {
-  --bubble-max-width: 85%;
-  --bubble-padding: 6px 10px;
+  --bubble-max-width: 76%;
+  --bubble-padding: 5px 9px;
   --bubble-radius: 8px 8px 8px 0px;
   --bubble-radius-right: 8px 8px 0px 8px;
-  --bubble-margin: 2px 4px;
-  --bubble-font-size: 15px;
-  --bubble-line-height: 1.45;
+  --bubble-margin: 2px 3px;
+  --bubble-font-size: 14px;
+  --bubble-line-height: 1.35;
 
-  --msg-font-size: 15px;
-  --msg-line-height: 1.45;
+  --msg-font-size: 14px;
+  --msg-line-height: 1.35;
 
   --self-bubble-bg: #dcf8c6;
   --other-bubble-bg: #ffffff;
 
-  --meta-font-size: 12px;
+  --meta-font-size: 11px;
   --meta-color: #5e5e5e;
 
-  --tick-size: 16px;
+  --tick-size: 13px;
   --tick-seen-color: #4fc3f7;
-  --tick-sent-color: #aaa;
+  --tick-sent-color: #999;
 
   --reply-font-size: 13px;
   --reply-color: #555;
@@ -1477,7 +1477,7 @@ body.dark .msg-meta {
   --inputbar-bg: #f5f5f5;
   --fg-muted: #666;
 
-  --bubble-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  --bubble-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
 }
 
 body.dark {
