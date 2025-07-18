@@ -1603,10 +1603,8 @@ const meta = `
 bubble.innerHTML = `
   <div class="msg-content ${isDeleted ? "msg-deleted" : ""}">
     ${replyHtml}
-    <div class="msg-text-row">
-      <span class="msg-text">${textPreview}</span>
-      <span class="msg-meta">${meta}</span>
-    </div>
+    <div class="msg-text">${textPreview}</div>
+    <div class="msg-meta">${meta}</div>
   </div>
 `;
 
