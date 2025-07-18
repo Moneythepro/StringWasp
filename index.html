@@ -141,16 +141,15 @@
           <div id="threadMessages" role="log" aria-live="polite"></div>
           <div id="threadTypingStatus" class="typing-indicator" aria-hidden="true"><span></span><span></span><span></span></div>
         </div>
-  <footer class="chat-input-bar">
+ <footer class="chat-input-bar">
+  <button class="icon-btn" id="emojiToggleBtn" aria-label="Emoji"><i data-lucide="smile"></i></button>
   <button class="icon-btn" onclick="triggerFileInput('thread')" aria-label="Attach File"><i data-lucide="paperclip"></i></button>
   <input type="file" id="threadFile" class="visually-hidden" onchange="uploadFile('thread')" />
   <button class="icon-btn" onclick="shareFileViaTorrent('dm')" aria-label="Send via Torrent"><i data-lucide="globe"></i></button>
-  
-  <button id="emojiBtn" class="icon-btn" aria-label="Emoji"><i data-lucide="smile"></i></button>
-
   <div id="replyPreview" class="reply-box" style="display:none;"></div>
   <input id="threadInput" type="text" placeholder="Type a message…" autocomplete="off" autocapitalize="sentences" enterkeyhint="send" aria-label="Message input" />
-  </footer>
+  <button type="button" id="sendButton" class="icon-btn" onclick="sendThreadMessage()" aria-label="Send"><i data-lucide="send"></i></button>
+ </footer>
       </div>
     </div>
 
