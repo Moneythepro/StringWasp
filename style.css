@@ -482,6 +482,18 @@ input[type="file"]#threadFile {
 .message-bubble-wrapper.right .msg-avatar-img {
   display: none;
 }
+.message-bubble {
+  max-width: 85%;
+  background: #dcf8c6;
+  padding: 6px 10px;
+  border-radius: 8px;
+  display: inline-flex;
+  flex-direction: column;
+  font-size: 13.5px;
+  line-height: 1.4;
+  word-break: break-word;
+  transition: all 0.25s ease;
+}
 .message-bubble.deleted {
   background: #eee;
   color: #555;
@@ -492,30 +504,51 @@ input[type="file"]#threadFile {
   font-size: 13px;
 }
 .message-bubble.left {
-  background-color: #fff;
-  align-self: flex-start;
+  background: #fff;
+  border-radius: 0 8px 8px 8px;
 }
-
 .message-bubble.right {
-  background-color: #dcf8c6;
-  align-self: flex-end;
+  background: #dcf8c6;
+  border-radius: 8px 0 8px 8px;
+  margin-left: auto;
 }
 .message-bubble.long-msg {
   font-size: 13px;
   padding: 5px 8px;
   line-height: 1.3;
 }
-.message-bubble {
-  margin: 2px 0;
+.message-bubble:last-child {
+  margin-bottom: 8px;
 }
 /* === MESSAGE TEXT + META === */
-.msg-text {
-  display: inline;
-  margin-right: 6px;
+.msg-content {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
   word-break: break-word;
-  white-space: pre-wrap;
+  min-width: 0;
+}
+.msg-text {
   font-size: 14px;
+  font-weight: 400;
   line-height: 1.4;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.msg-meta {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  color: #667781;
+  gap: 2px;
+  margin-left: 6px;
+  white-space: nowrap;
+  opacity: 0.85;
+  flex-shrink: 0;
 }
 .message-bubble.right .msg-meta {
   color: #4fc3f7;
@@ -998,7 +1031,7 @@ body.dark .chat-options-horizontal span:hover {
   opacity: 1;
 }
 
-/* ✅ Compact WhatsApp-Style Reply Box Above Input */
+/* ✅ WhatsApp-Style Reply Box Above Input */
 #replyPreview {
   position: absolute;
   bottom: 62px;
@@ -1006,89 +1039,106 @@ body.dark .chat-options-horizontal span:hover {
   right: 0;
   background: #f0f0f0;
   border-top: 1px solid #ddd;
-  padding: 6px 8px 6px 10px;
+  padding: 6px 10px;
   display: none;
   z-index: 2;
-  font-size: 13px;
+  font-size: 14px;
   font-family: sans-serif;
-  box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.08);
-  max-height: 56px;
-  overflow: hidden;
-  display: flex;
-  align-items: flex-start;
-  position: relative;
+  box-shadow: 0 -1px 2px rgba(0,0,0,0.08);
 }
 
+/* ✂️ Restrict reply text to 3 lines with fade in preview */
 #replyPreview .reply-text {
+  position: relative;
   font-weight: 500;
   flex: 1;
   color: #333;
-  font-size: 13px;
-  line-height: 1.3;
-  max-height: calc(1.3em * 3);
+  max-width: 220px;
   overflow: hidden;
-  text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+  line-height: 1.3em;
+  max-height: calc(1.3em * 3);
   white-space: normal;
 }
-
 #replyPreview .reply-text::after {
-  display: none;
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1.3em;
+  background: linear-gradient(to bottom, rgba(240, 240, 240, 0), #f0f0f0);
 }
 
-/* ❌ Sticky WhatsApp-style Close Button */
-.reply-close {
-  position: absolute !important;
-  top: 6px !important;
-  right: 8px !important;
-  background: transparent !important;
-  border: none !important;
-  width: 18px !important;
-  height: 18px !important;
-  font-size: 18px !important;
-  line-height: 1 !important;
-  color: #888 !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-}
-.reply-close:hover {
-  color: #333 !important;
-}
-.reply-close i {
-  font-style: normal;
-  font-weight: bold;
-  font-size: 16px;
-  line-height: 1;
-  color: inherit;
-  width: auto !important;
-  height: auto !important;
+.reply-box-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-left: 3px solid #4caf50;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  flex: 1;
+  flex-shrink: 0;
+  overflow: hidden;
+  min-height: 36px;
 }
 
-/* 🧵 Compact reply inside bubble */
+.reply-label {
+  font-size: 12px;
+  color: #555;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 🧵 Reply inside bubble - limit to 3 lines */
 .reply-to {
   background: #e9e9e9;
   border-left: 3px solid #4caf50;
-  padding: 2px 6px;
-  margin-bottom: 2px;
+  padding: 4px 6px;
+  margin-bottom: 4px;
   font-size: 12px;
   color: #555;
   border-radius: 4px;
   display: -webkit-box;
-  align-items: center;
-  gap: 4px;
-  line-height: 1.2;
-  overflow: hidden;
-  white-space: normal;
-  text-overflow: ellipsis;
-  position: relative;
-  max-height: calc(1.3em * 3);
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3em;
+  max-height: calc(1.3em * 3);
+  white-space: normal;
+  position: relative;
 }
 .reply-to::after {
-  display: none;
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1.3em;
+  background: linear-gradient(to bottom, rgba(233, 233, 233, 0), #e9e9e9);
+}
+
+/* ✅ Seen and Sent Tick Icons */
+.tick-icon {
+  width: 14px;
+  height: 14px;
+  margin-left: 6px;
+  vertical-align: middle;
+  color: #999;
+}
+.tick-sent {
+  color: #999;
+}
+.tick-seen {
+  color: #0b93f6 !important;
 }
 
 /* ✏️ Edited tag */
@@ -1097,21 +1147,6 @@ body.dark .chat-options-horizontal span:hover {
   color: #999;
   margin-left: 5px;
   vertical-align: middle;
-}
-
-/* ✅ Seen and Sent Tick Icons */
-.tick-icon {
-  width: 14px !important;
-  height: 14px !important;
-  margin-left: 2px !important;
-  vertical-align: middle !important;
-  color: #999 !important;
-}
-.tick-sent {
-  color: #999;
-}
-.tick-seen {
-  color: #0b93f6 !important;
 }
 
 /* 🔗 Link Preview */
@@ -1161,7 +1196,28 @@ body.dark .chat-options-horizontal span:hover {
   opacity: 0.7;
 }
 
-/* 📦 Message Swipe Wrapper */
+/* 💬 Message bubbles (no overflow growth) */
+.message-bubble {
+  position: relative;
+  padding: 6px 10px;
+  border-radius: 12px;
+  max-width: 80%;
+  background-color: var(--msg-bg, #e1ffc7);
+  margin: 4px 0;
+  font-size: 14px;
+  will-change: transform;
+  word-break: break-word;
+}
+.message-bubble.left {
+  background-color: #fff;
+  align-self: flex-start;
+}
+.message-bubble.right {
+  background-color: #dcf8c6;
+  align-self: flex-end;
+}
+
+/* 📦 Reply swipe animation wrapper */
 .message-bubble-wrapper {
   transition: transform 0.25s ease;
   position: relative;
@@ -1170,7 +1226,7 @@ body.dark .chat-options-horizontal span:hover {
   transform: translateX(12px);
 }
 
-/* 🔤 Message Text & Links */
+/* 🔤 Message text */
 .msg-text a {
   color: #2979ff;
   text-decoration: underline;
@@ -1183,8 +1239,23 @@ body.dark .chat-options-horizontal span:hover {
   white-space: pre-wrap;
   word-break: break-word;
 }
+.msg-text {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
 
-/* ✅ Show More Button */
+/* 🕒 Meta info under message */
+.msg-meta {
+  font-size: 11px;
+  color: #999;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+/* ✅ Show More (optional toggle) */
 .show-more {
   display: inline-block;
   color: var(--primary-color, #4fc3f7);
@@ -1194,7 +1265,7 @@ body.dark .chat-options-horizontal span:hover {
   font-weight: 500;
 }
 
-/* 🔽 Reply Input Slide In */
+/* 🔽 Reply animation slide */
 .reply-box {
   display: flex;
   flex-direction: column;
@@ -1211,7 +1282,7 @@ body.dark .chat-options-horizontal span:hover {
   to { transform: translateX(0); opacity: 1; }
 }
 
-/* ✨ Scroll-to-reply Flash */
+/* ✨ Scroll-to-reply flash */
 .highlighted-reply {
   animation: flashHighlight 1.5s ease;
   background-color: #fff59d !important;
@@ -1223,77 +1294,30 @@ body.dark .chat-options-horizontal span:hover {
   100% { background-color: transparent; }
 }
 
-/* === WhatsApp Compact Bubble Layout === */
-.message-bubble {
-  padding: 4px 8px !important;
-  margin: 2px 0 !important;
-  font-size: 14px !important;
-  border-radius: 10px !important;
-  max-width: 78% !important;
-  background-color: var(--msg-bg, #e1ffc7) !important;
-  display: block !important;
-  word-break: break-word !important;
-  position: relative !important;
+/* ❌ Close Button */
+.reply-close {
+  background: #e0e0e0;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 14px;
+  color: #555;
+  transition: background 0.2s ease;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.1);
 }
-.message-bubble.left {
-  background-color: #fff !important;
-  align-self: flex-start !important;
+.reply-close:hover {
+  background: #d6d6d6;
 }
-.message-bubble.right {
-  background-color: #dcf8c6 !important;
-  align-self: flex-end !important;
-}
-body.dark .message-bubble.left {
-  background-color: #1f1f1f !important;
-  color: #f0f0f0 !important;
-}
-body.dark .message-bubble.right {
-  background-color: #056162 !important;
-  color: #fff !important;
-}
-
-.msg-content {
-  display: block !important;
-  width: 100% !important;
-  position: relative !important;
-}
-
-.msg-text-row {
-  display: flex !important;
-  align-items: flex-end !important;
-  justify-content: flex-start !important;
-  gap: 6px !important;
-  flex-wrap: nowrap !important;
-}
-
-.msg-text {
-  display: inline !important;
-  margin-right: 6px !important;
-  font-size: 14px !important;
-  white-space: pre-wrap !important;
-  line-height: 1.4 !important;
-  word-break: break-word !important;
-  flex-shrink: 1 !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-}
-
-.msg-meta {
-  display: inline-flex !important;
-  align-items: center !important;
-  font-size: 11px !important;
-  color: #999 !important;
-  margin-left: 0 !important;
-  gap: 4px !important;
-  vertical-align: bottom !important;
-  flex-shrink: 0 !important;
-}
-body.dark .msg-meta {
-  color: #aaa !important;
-}
-
-/* 🌀 Fade In Animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+.reply-close i {
+  width: 12px;
+  height: 12px;
+  color: #555;
 }
