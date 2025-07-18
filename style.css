@@ -1448,7 +1448,8 @@ body.dark .msg-meta {
 }
 
 /* =========================================================
- * StringWasp v1.0 — WhatsApp-Style UI (Enhanced / Final / Tight)
+ * StringWasp v1.0 — WhatsApp-Style UI
+ * Enhanced / Final / Tight (Sticky Composer + Ultra-Tight Bubbles + Arrive Anim)
  * ======================================================= */
 
 
@@ -1486,7 +1487,7 @@ body.dark .msg-meta {
 
   /* Bubble metrics */
   --bubble-max-width: 88%;
-  --bubble-padding-y: 2px;          /* tightened vertically */
+  --bubble-padding-y: 2px; /* will be tightened below in override */
   --bubble-padding-x: 8px;
   --bubble-radius: 8px;
   --bubble-radius-lg: 16px;
@@ -1660,7 +1661,7 @@ a:hover { text-decoration: underline; }
 
 /* Tabs bar (bottom main nav) */
 .tabs-bar,
-.tabs { /* your HTML uses .tabs, keep both */
+.tabs {
   position: relative;
   z-index: 10;
   display: flex;
@@ -1718,12 +1719,13 @@ a:hover { text-decoration: underline; }
 .chat-view,
 .thread-view,
 .room-view,
-.thread-container { /* include your HTML's .thread-container */
+.thread-container {
   display: none;
   flex-direction: column;
   height: 100dvh;
   height: 100vh;
   background: var(--wa-chat-bg);
+  position: relative; /* needed for absolute fallback composer */
 }
 .chat-view.active,
 .thread-view.active,
@@ -1773,13 +1775,13 @@ a:hover { text-decoration: underline; }
 
 /* Scrollable messages area */
 .chat-scroll-area,
-.thread-main .chat-scroll-area { /* include thread-main path */
+.thread-main .chat-scroll-area {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  padding: 0 var(--space-8) var(--space-8);
+  padding: 0 var(--space-8) calc(var(--composer-height) + var(--space-8)); /* room for composer */
   background: var(--wa-chat-bg);
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
@@ -1835,10 +1837,11 @@ a:hover { text-decoration: underline; }
 }
 .message-bubble-wrapper.right { align-items: flex-end; }
 
+/* base bubble */
 .message-bubble {
   position: relative;
   max-width: var(--bubble-max-width);
-  padding: var(--bubble-padding-y) var(--bubble-padding-x); /* tightened vertical */
+  padding: var(--bubble-padding-y) var(--bubble-padding-x);
   font-size: var(--bubble-font-size);
   line-height: var(--bubble-line-height);
   word-wrap: break-word;
@@ -1848,7 +1851,7 @@ a:hover { text-decoration: underline; }
   flex-direction: column;
   gap: var(--space-2);
   background: var(--wa-incoming-bg);
-  animation: msg-pop var(--fast) var(--easing); /* new msg anim */
+  animation: msg-arrive-bounce var(--fast) var(--easing); /* arrival */
 }
 .message-bubble.left {
   align-self: flex-start;
@@ -1887,7 +1890,7 @@ a:hover { text-decoration: underline; }
 .reply-to {
   font-size: var(--reply-font-size);
   color: var(--reply-color);
-  background: var(--reply-bg); /* flat */
+  background: var(--reply-bg);
   border-left: 3px solid var(--reply-border-color);
   padding: 2px 6px;
   margin-bottom: var(--space-4);
@@ -1944,11 +1947,12 @@ a:hover { text-decoration: underline; }
 /* =========================================================
  * COMPOSER (INPUT BAR)
  * ======================================================= */
-/* use your HTML's .chat-input-bar too */
 .chat-composer,
 .chat-input-bar {
-  position: relative;
-  bottom: auto;
+  position: sticky;            /* FIX: sticks to bottom in scrolling container */
+  bottom: 0;
+  left: 0;
+  right: 0;
   flex-shrink: 0;
   z-index: 20;
   display: flex;
@@ -1960,12 +1964,19 @@ a:hover { text-decoration: underline; }
   animation: slide-up 0.25s var(--easing);
 }
 
-/* Reply preview above input (composer-reply + reply-box) */
+/* JS fallback: when mobile keyboard breaks sticky, toggle .input-fixed */
+.chat-composer.input-fixed,
+.chat-input-bar.input-fixed {
+  position: absolute;
+  bottom: 0;
+}
+
+/* Reply preview above input */
 .chat-composer .composer-reply,
 .chat-input-bar .reply-box {
   display: none;
   align-items: center;
-  background: var(--reply-bg); /* flat */
+  background: var(--reply-bg);
   padding: 6px var(--space-8);
   border-left: 3px solid var(--reply-border-color);
   border-radius: var(--radius-sm);
@@ -1975,8 +1986,8 @@ a:hover { text-decoration: underline; }
   max-width: 90%;
 }
 .chat-composer.reply-active .composer-reply,
-.chat-input-bar.reply-active .reply-box { display: flex; }
-.chat-input-bar .reply-box.show { display: flex; } /* JS can toggle */
+.chat-input-bar.reply-active .reply-box,
+.chat-input-bar .reply-box.show { display: flex; }
 .chat-composer .composer-reply .close-reply,
 .chat-input-bar .reply-box .close-reply {
   margin-left: auto; font-size: 18px; cursor: pointer; opacity: .6;
@@ -2087,7 +2098,7 @@ a:hover { text-decoration: underline; }
  * FLOATING ACTION BUTTON (NEW CHAT)
  * ======================================================= */
 .fab-new-chat,
-.floating-btn { /* your HTML uses .floating-btn */
+.floating-btn {
   position: absolute;
   right: var(--space-16);
   bottom: calc(48px + var(--space-16) + var(--safe-bottom));
@@ -2111,7 +2122,7 @@ a:hover { text-decoration: underline; }
  * LOADING OVERLAY
  * ======================================================= */
 .loading-overlay,
-#loadingOverlay { /* include your HTML id */
+#loadingOverlay {
   position: absolute; inset: 0;
   background: rgba(0,0,0,.35);
   display: none; align-items: center; justify-content: center;
@@ -2190,6 +2201,13 @@ a:hover { text-decoration: underline; }
   100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
+/* WhatsApp-ish bounce/fade arrival */
+@keyframes msg-arrive-bounce {
+  0%   { transform: translateY(8px) scale(.96); opacity: 0; }
+  70%  { transform: translateY(0) scale(1.02); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
 /* halo ping */
 @keyframes bubble-highlight {
   0% { box-shadow: 0 0 0 0 rgba(37,211,102,.6); }
@@ -2209,7 +2227,7 @@ a:hover { text-decoration: underline; }
 }
 
 /* helper classes */
-.message-bubble-anim-in { animation: msg-pop var(--fast) var(--easing); }
+.message-bubble-anim-in { animation: msg-arrive-bounce var(--fast) var(--easing); }
 .message-bubble-ping { animation: bubble-highlight 1.2s var(--easing) 1; }
 .highlighted-reply { animation: replyHighlight 2s ease-in-out; }
 
@@ -2217,3 +2235,19 @@ a:hover { text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
 }
+
+
+/* =========================================================
+ * FINAL OVERRIDES (Tightest bubble vertical spacing)
+ * ======================================================= */
+/* override at end so guaranteed tight */
+:root {
+  --bubble-padding-y: 0.5px; /* ultra tight vertical */
+}
+.message-bubble {
+  padding-top: calc(var(--bubble-padding-y)) !important;
+  padding-bottom: calc(var(--bubble-padding-y)) !important;
+  gap: 0 !important;
+}
+.msg-meta-inline { margin-top: 0 !important; }
+.reply-to { margin-bottom: var(--space-2) !important; }
