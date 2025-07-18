@@ -1448,7 +1448,7 @@ body.dark .msg-meta {
 }
 
 /* =========================================================
- * StringWasp v1.0 — WhatsApp-Style UI (Enhanced / Final)
+ * StringWasp v1.0 — WhatsApp-Style UI (Enhanced / Final / Tight)
  * ======================================================= */
 
 
@@ -1486,7 +1486,7 @@ body.dark .msg-meta {
 
   /* Bubble metrics */
   --bubble-max-width: 88%;
-  --bubble-padding-y: 4px;
+  --bubble-padding-y: 2px;          /* tightened vertically */
   --bubble-padding-x: 8px;
   --bubble-radius: 8px;
   --bubble-radius-lg: 16px;
@@ -1624,6 +1624,18 @@ a:hover { text-decoration: underline; }
   overflow: hidden;
 }
 
+/* Generic header in your HTML (.header) */
+.header {
+  background: var(--wa-brand-teal);
+  color: #fff !important;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+.header span,
+.header i { color: #fff !important; }
+
 /* Global top bar (used on tab pages) */
 .app-header {
   position: relative;
@@ -1633,21 +1645,22 @@ a:hover { text-decoration: underline; }
   height: var(--header-height);
   padding: 0 var(--space-12);
   background: var(--wa-brand-teal);
-  color: #fff !important;             /* FORCE white text */
+  color: #fff !important;
   box-shadow: var(--shadow-elev-1);
 }
 .app-header .header-back { margin-right: var(--space-8); }
 .app-header .header-title {
   font-size: 17px; font-weight: 600; flex: 1;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  color: #fff !important;             /* Ensure white text */
+  color: #fff !important;
 }
 .app-header .header-actions {
   display: flex; gap: var(--space-8); color: #fff !important;
 }
 
 /* Tabs bar (bottom main nav) */
-.tabs-bar {
+.tabs-bar,
+.tabs { /* your HTML uses .tabs, keep both */
   position: relative;
   z-index: 10;
   display: flex;
@@ -1658,7 +1671,8 @@ a:hover { text-decoration: underline; }
   border-top: 1px solid var(--wa-divider);
   box-shadow: var(--shadow-elev-1);
 }
-.tabs-bar button {
+.tabs-bar button,
+.tabs > button {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -1668,11 +1682,13 @@ a:hover { text-decoration: underline; }
   color: var(--text-secondary);
   transition: color var(--fast) var(--easing);
 }
-.tabs-bar button.active {
+.tabs-bar button.active,
+.tabs > button.active {
   color: var(--wa-brand-green);
   font-weight: 600;
 }
-.tabs-bar button .tab-icon {
+.tabs-bar button .tab-icon,
+.tabs > button i {
   font-size: 20px; line-height: 1; margin-bottom: 2px;
 }
 
@@ -1699,20 +1715,20 @@ a:hover { text-decoration: underline; }
 /* =========================================================
  * CHAT VIEW / THREAD VIEW LAYOUT
  * ======================================================= */
-/* Full-height flex container that resizes w/ keyboard (gap fix) */
 .chat-view,
 .thread-view,
-.room-view {
+.room-view,
+.thread-container { /* include your HTML's .thread-container */
   display: none;
   flex-direction: column;
-  /* dynamic viewport height first, fallback */
   height: 100dvh;
   height: 100vh;
   background: var(--wa-chat-bg);
 }
 .chat-view.active,
 .thread-view.active,
-.room-view.active { display: flex; }
+.room-view.active,
+.thread-container.active { display: flex; }
 
 /* Chat header (conversation) */
 .chat-header {
@@ -1722,32 +1738,42 @@ a:hover { text-decoration: underline; }
   height: var(--header-height);
   padding: 0 var(--space-12);
   background: var(--wa-brand-teal);
-  color: #fff !important;            /* FORCE white text */
+  color: #fff !important;
   box-shadow: var(--shadow-elev-1);
 }
+.chat-header .header-avatar,
 .chat-header .chat-header-avatar {
   width: 36px; height: 36px; border-radius: 50%;
   overflow: hidden; margin-right: var(--space-8); flex-shrink: 0;
 }
+.chat-header img.header-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+.chat-header .chat-info,
 .chat-header .chat-header-title-wrap {
   flex: 1; display: flex; flex-direction: column; min-width: 0;
 }
+.chat-header .chat-info h3,
 .chat-header .chat-header-title {
   font-size: 17px; font-weight: 600;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   color: #fff !important;
+  margin: 0;
 }
+.chat-header .chat-info p,
 .chat-header .chat-header-subtitle {
   font-size: 12px; color: rgba(255,255,255,.8) !important;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin: 0;
 }
-.chat-header .chat-header-actions {
-  display: flex; gap: var(--space-8); margin-left: var(--space-8);
+.chat-header .chat-header-actions,
+.chat-header .menu-btn,
+.chat-header button,
+.chat-header i {
   color: #fff !important;
 }
 
 /* Scrollable messages area */
-.chat-scroll-area {
+.chat-scroll-area,
+.thread-main .chat-scroll-area { /* include thread-main path */
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
@@ -1812,7 +1838,7 @@ a:hover { text-decoration: underline; }
 .message-bubble {
   position: relative;
   max-width: var(--bubble-max-width);
-  padding: var(--bubble-padding-y) var(--bubble-padding-x);
+  padding: var(--bubble-padding-y) var(--bubble-padding-x); /* tightened vertical */
   font-size: var(--bubble-font-size);
   line-height: var(--bubble-line-height);
   word-wrap: break-word;
@@ -1822,6 +1848,7 @@ a:hover { text-decoration: underline; }
   flex-direction: column;
   gap: var(--space-2);
   background: var(--wa-incoming-bg);
+  animation: msg-pop var(--fast) var(--easing); /* new msg anim */
 }
 .message-bubble.left {
   align-self: flex-start;
@@ -1860,7 +1887,7 @@ a:hover { text-decoration: underline; }
 .reply-to {
   font-size: var(--reply-font-size);
   color: var(--reply-color);
-  background: var(--reply-bg);
+  background: var(--reply-bg); /* flat */
   border-left: 3px solid var(--reply-border-color);
   padding: 2px 6px;
   margin-bottom: var(--space-4);
@@ -1873,6 +1900,7 @@ a:hover { text-decoration: underline; }
   line-clamp: 3;
   text-overflow: ellipsis;
 }
+.dark .reply-to { background: var(--reply-bg); }
 
 /* Message text */
 .msg-text {
@@ -1881,17 +1909,21 @@ a:hover { text-decoration: underline; }
   white-space: pre-wrap;
   word-break: break-word;
   color: var(--text-strong);
+  margin: 0;
 }
 
-/* Meta inline (time + ticks) */
+/* Meta inline (time + ticks) always one row */
 .msg-meta-inline {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-4);
+  justify-content: flex-end;
+  gap: 4px;
   font-size: var(--meta-font-size);
   color: var(--meta-color);
+  margin-top: 1px;
+  white-space: nowrap;
+  line-height: 1;
   align-self: flex-end;
-  margin-top: 2px;
 }
 
 /* Tick icons */
@@ -1902,8 +1934,9 @@ a:hover { text-decoration: underline; }
 .tick-delivered { color: var(--tick-delivered-color); }
 .tick-seen { color: var(--tick-seen-color); }
 
-/* Long-press highlight */
-.message-bubble.highlight {
+/* Long-press / reply jump highlight */
+.message-bubble.highlight,
+.highlighted-reply {
   animation: bubble-highlight 1.2s var(--easing) 1;
 }
 
@@ -1911,9 +1944,10 @@ a:hover { text-decoration: underline; }
 /* =========================================================
  * COMPOSER (INPUT BAR)
  * ======================================================= */
-/* IMPORTANT: relative/bottom:auto to prevent white gap */
-.chat-composer {
-  position: relative;   /* no sticky/fixed -> keyboard safe */
+/* use your HTML's .chat-input-bar too */
+.chat-composer,
+.chat-input-bar {
+  position: relative;
   bottom: auto;
   flex-shrink: 0;
   z-index: 20;
@@ -1926,12 +1960,12 @@ a:hover { text-decoration: underline; }
   animation: slide-up 0.25s var(--easing);
 }
 
-/* Reply preview above input */
-.chat-composer .composer-reply {
+/* Reply preview above input (composer-reply + reply-box) */
+.chat-composer .composer-reply,
+.chat-input-bar .reply-box {
   display: none;
-  flex-direction: row;
   align-items: center;
-  background: var(--reply-bg);
+  background: var(--reply-bg); /* flat */
   padding: 6px var(--space-8);
   border-left: 3px solid var(--reply-border-color);
   border-radius: var(--radius-sm);
@@ -1940,11 +1974,20 @@ a:hover { text-decoration: underline; }
   color: var(--reply-color);
   max-width: 90%;
 }
-.chat-composer.reply-active .composer-reply { display: flex; }
-.composer-reply .close-reply {
+.chat-composer.reply-active .composer-reply,
+.chat-input-bar.reply-active .reply-box { display: flex; }
+.chat-input-bar .reply-box.show { display: flex; } /* JS can toggle */
+.chat-composer .composer-reply .close-reply,
+.chat-input-bar .reply-box .close-reply {
   margin-left: auto; font-size: 18px; cursor: pointer; opacity: .6;
 }
-.composer-reply .close-reply:hover { opacity: 1; }
+.chat-composer .composer-reply .close-reply:hover,
+.chat-input-bar .reply-box .close-reply:hover { opacity: 1; }
+.dark .chat-input-bar .reply-box,
+.dark .chat-composer .composer-reply {
+  background: #2a3942;
+  color: #d1d7db;
+}
 
 /* Input bubble */
 .composer-input-wrap {
@@ -1963,7 +2006,10 @@ a:hover { text-decoration: underline; }
   border-color: #3b4a54;
 }
 .composer-input-wrap input,
-.composer-input-wrap textarea {
+.composer-input-wrap textarea,
+.chat-input-bar input[type="text"],
+.chat-input-bar input[type="search"],
+.chat-input-bar input[type="email"] {
   flex: 1;
   border: none;
   outline: none;
@@ -1976,18 +2022,22 @@ a:hover { text-decoration: underline; }
 }
 
 /* Composer actions (emoji, attach, etc.) */
-.composer-actions {
+.composer-actions,
+.chat-input-bar .icon-btn-group {
   display: flex; align-items: center;
   gap: var(--space-8); margin-left: var(--space-8);
 }
-.composer-actions button {
+.composer-actions button,
+.chat-input-bar .icon-btn {
   font-size: 22px;
   color: var(--wa-brand-accent);
   display: flex; align-items: center; justify-content: center;
 }
 
 /* Send button */
-.btn-send {
+.btn-send,
+.chat-input-bar #sendButton,
+.chat-input-bar .send-btn {
   background: var(--wa-brand-accent);
   color: var(--text-inverse);
   width: 40px; height: 40px;
@@ -1997,7 +2047,9 @@ a:hover { text-decoration: underline; }
   font-size: 20px;
   transition: transform var(--fast) var(--easing);
 }
-.btn-send:active { transform: scale(.95); }
+.btn-send:active,
+.chat-input-bar #sendButton:active,
+.chat-input-bar .send-btn:active { transform: scale(.95); }
 
 
 /* =========================================================
@@ -2034,7 +2086,8 @@ a:hover { text-decoration: underline; }
 /* =========================================================
  * FLOATING ACTION BUTTON (NEW CHAT)
  * ======================================================= */
-.fab-new-chat {
+.fab-new-chat,
+.floating-btn { /* your HTML uses .floating-btn */
   position: absolute;
   right: var(--space-16);
   bottom: calc(48px + var(--space-16) + var(--safe-bottom));
@@ -2047,7 +2100,8 @@ a:hover { text-decoration: underline; }
   box-shadow: var(--shadow-fab);
   transition: transform var(--fast) var(--easing), box-shadow var(--fast) var(--easing);
 }
-.fab-new-chat:active {
+.fab-new-chat:active,
+.floating-btn:active {
   transform: scale(.96);
   box-shadow: var(--shadow-elev-2);
 }
@@ -2056,19 +2110,37 @@ a:hover { text-decoration: underline; }
 /* =========================================================
  * LOADING OVERLAY
  * ======================================================= */
-.loading-overlay {
+.loading-overlay,
+#loadingOverlay { /* include your HTML id */
   position: absolute; inset: 0;
   background: rgba(0,0,0,.35);
   display: none; align-items: center; justify-content: center;
   z-index: 999;
 }
-.loading-overlay.active { display: flex; }
-.loading-spinner {
+.loading-overlay.active,
+#loadingOverlay.active { display: flex; }
+.loading-spinner,
+#loadingOverlay .loader {
   width: 48px; height: 48px;
   border: 4px solid rgba(255,255,255,.4);
   border-top-color: #fff;
   border-radius: 50%;
   animation: spin 1s linear infinite;
+}
+
+
+/* =========================================================
+ * KEYBOARD-OPEN ADJUSTMENTS
+ * (body.keyboard-open gets toggled in JS)
+ * ======================================================= */
+.keyboard-open .tabs,
+.keyboard-open .tabs-bar,
+.keyboard-open .floating-btn,
+.keyboard-open .fab-new-chat {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform var(--fast) var(--easing), opacity var(--fast) var(--easing);
 }
 
 
@@ -2096,7 +2168,8 @@ a:hover { text-decoration: underline; }
   .chat-header .chat-header-title { font-size: 15px; }
   .msg-text { font-size: 14px; }
   .composer-input-wrap { padding: 4px 10px; }
-  .btn-send { width: 36px; height: 36px; font-size: 18px; }
+  .btn-send,
+  .chat-input-bar #sendButton { width: 36px; height: 36px; font-size: 18px; }
 }
 
 
@@ -2104,28 +2177,43 @@ a:hover { text-decoration: underline; }
  * ANIMATIONS
  * ======================================================= */
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* default pop-in used earlier; keep for back-compat */
 @keyframes pop-in {
   0% { transform: scale(.9); opacity: 0; }
   100% { transform: scale(1); opacity: 1; }
 }
+
+/* subtle Y slide + fade for new messages */
+@keyframes msg-pop {
+  0% { transform: translateY(8px) scale(.98); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* halo ping */
 @keyframes bubble-highlight {
   0% { box-shadow: 0 0 0 0 rgba(37,211,102,.6); }
   100% { box-shadow: 0 0 0 12px rgba(37,211,102,0); }
 }
+
+/* composer slide */
 @keyframes slide-up {
   0% { transform: translateY(100%); opacity: 0; }
   100% { transform: translateY(0); opacity: 1; }
 }
 
-/* New message animation helpers */
-.message-bubble-anim-in { animation: pop-in var(--fast) var(--easing); }
-.message-bubble-ping { animation: bubble-highlight 1.2s var(--easing) 1; }
-
-.highlighted-reply {
-  animation: replyHighlight 2s ease-in-out;
+/* reply jump flash */
+@keyframes replyHighlight {
+  0% { background-color: rgba(255, 223, 0, 0.35); }
+  100% { background-color: transparent; }
 }
 
-@keyframes replyHighlight {
-  0% { background-color: rgba(255, 223, 0, 0.3); }
-  100% { background-color: transparent; }
+/* helper classes */
+.message-bubble-anim-in { animation: msg-pop var(--fast) var(--easing); }
+.message-bubble-ping { animation: bubble-highlight 1.2s var(--easing) 1; }
+.highlighted-reply { animation: replyHighlight 2s ease-in-out; }
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
 }
