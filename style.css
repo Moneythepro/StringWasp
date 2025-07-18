@@ -1308,13 +1308,6 @@ body.dark .chat-options-horizontal span:hover {
   color: #555;
 }
 
-.msg-row {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 6px;
-  flex-wrap: wrap;
-}
 
 .msg-text {
   flex: 1;
@@ -1327,14 +1320,23 @@ body.dark .chat-options-horizontal span:hover {
   max-width: 100%;
 }
 
+.msg-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 .msg-meta {
   font-size: 11px;
-  color: #999;
+  color: #777;
   display: flex;
   align-items: center;
   gap: 4px;
-  flex-shrink: 0;
+  margin-left: auto;
 }
+
 .message-bubble {
   padding: 6px 8px;
   font-size: 14px;
