@@ -1344,33 +1344,38 @@ function setupEmojiButton() {
     if (!emojiPicker) {
       const module = await import("https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2");
       emojiPicker = new module.default({
-        position: "top-start",
+        position: 'top-end',
         theme: document.body.classList.contains("dark") ? "dark" : "light",
         autoHide: false,
         showSearch: true,
         showRecents: true,
-        emojiSize: "1.2em",
+        emojiSize: '1.3em',
+        zIndex: 9999
       });
 
       emojiPicker.on("emoji", emoji => {
         const start = input.selectionStart;
         const end = input.selectionEnd;
-        input.value =
-          input.value.substring(0, start) + emoji + input.value.substring(end);
-        input.selectionStart = input.selectionEnd = start + emoji.length;
+        const text = input.value;
 
-        input.focus();
+        // ✅ Insert the actual emoji character
+        input.value = text.slice(0, start) + emoji.emoji + text.slice(end);
+        input.selectionStart = input.selectionEnd = start + emoji.emoji.length;
+
         autoResizeInput(input);
+        input.focus();
       });
     }
 
+    // Toggle emoji picker
     if (pickerOpen) {
       emojiPicker.hidePicker();
+      pickerOpen = false;
     } else {
       emojiPicker.setTheme(document.body.classList.contains("dark") ? "dark" : "light");
       emojiPicker.showPicker(emojiBtn);
+      pickerOpen = true;
     }
-    pickerOpen = !pickerOpen;
   });
 }
 
