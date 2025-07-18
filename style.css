@@ -1447,78 +1447,50 @@ body.dark .msg-meta {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* =========================================================
- * Base Theme Variables
- * ========================================================= */
 :root {
   --bubble-max-width: 88%;
-  --bubble-padding: 8px 10px;
-  --bubble-radius: 12px;
-  --bubble-margin: 2px 6px;
-  --bubble-font-size: 14px;
+  --bubble-padding: 7px 12px;
+  --bubble-radius: 8px 8px 8px 0px;
+  --bubble-radius-right: 8px 8px 0px 8px;
+  --bubble-margin: 4px 8px;
+  --bubble-font-size: 15px;
   --bubble-line-height: 1.4;
 
-  --msg-font-size: 13px;
+  --msg-font-size: 15px;
   --msg-line-height: 1.4;
 
   --self-bubble-bg: #dcf8c6;
   --other-bubble-bg: #ffffff;
-  --default-bubble-bg: #e0f0ff;
 
-  --meta-font-size: 11px;
-  --meta-color: #888;
-  --meta-padding-right: 42px;
-  --meta-bottom: 3px;
-  --meta-right: 6px;
+  --meta-font-size: 12px;
+  --meta-color: #5e5e5e;
 
-  --tick-size: 14px;
+  --tick-size: 16px;
   --tick-seen-color: #4fc3f7;
   --tick-sent-color: #aaa;
 
-  --reply-font-size: 12px;
+  --reply-font-size: 13px;
   --reply-color: #555;
-  --reply-bg: #f7f7f7;
+  --reply-bg: #f0f0f0;
   --reply-border-color: #999;
-  --reply-max-height: 3.4em;
 
   --inputbar-bg: #f5f5f5;
   --fg-muted: #666;
 
-  --preview-title-size: 13px;
-  --preview-url-size: 11px;
+  --bubble-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
 
-/* =========================================================
- * Dark Theme Overrides
- * ========================================================= */
+/* Dark Theme */
 body.dark {
   --self-bubble-bg: #2e3a2f;
   --other-bubble-bg: #1e1e1e;
-  --default-bubble-bg: #252525;
-
   --meta-color: #aaa;
   --reply-bg: #333;
   --reply-color: #ccc;
   --reply-border-color: #666;
-  --fg-muted: #bbb;
 }
 
-/* =========================================================
- * Compact View
- * ========================================================= */
-.thread-compact {
-  --bubble-padding: 6px 8px;
-  --bubble-font-size: 13px;
-  --meta-font-size: 10px;
-  --msg-font-size: 12px;
-  --tick-size: 12px;
-  --reply-font-size: 11px;
-  --reply-max-height: 3em;
-}
-
-/* =========================================================
- * Message Wrapper
- * ========================================================= */
+/* Bubble Wrapper */
 .message-bubble-wrapper {
   display: flex;
   flex-direction: column;
@@ -1529,105 +1501,107 @@ body.dark {
   align-items: flex-end;
 }
 .message-bubble-wrapper.fade-in {
-  animation: fadeInUp 0.3s ease-out;
+  animation: fadeInUp 0.25s ease-out;
 }
 
-/* =========================================================
- * Message Bubble
- * ========================================================= */
+/* Message Bubble */
 .message-bubble {
   max-width: var(--bubble-max-width);
-  background: var(--bubble-bg, var(--default-bubble-bg));
   padding: var(--bubble-padding);
   border-radius: var(--bubble-radius);
+  background: var(--other-bubble-bg);
   margin: var(--bubble-margin);
-  position: relative;
   font-size: var(--bubble-font-size);
   line-height: var(--bubble-line-height);
-  word-wrap: break-word;
-  transition: background 0.2s ease;
-  display: inline-flex;
-  flex-direction: column;
+  display: inline-block;
+  position: relative;
+  animation: messageIn 0.25s ease-out;
+  word-break: break-word;
+  box-shadow: var(--bubble-shadow);
 }
 .message-bubble.right {
-  align-self: flex-end;
   background: var(--self-bubble-bg);
-}
-.message-bubble.left {
-  align-self: flex-start;
-  background: var(--other-bubble-bg);
+  border-radius: var(--bubble-radius-right);
 }
 
-/* Bubble tail triangle */
+/* Bubble Tail */
 .message-bubble::after {
   content: "";
   position: absolute;
   bottom: 0;
   width: 0;
   height: 0;
-  border: 8px solid transparent;
-}
-.message-bubble.right::after {
-  border-left-color: var(--self-bubble-bg);
-  right: -8px;
-  border-right: 0;
+  border: 6px solid transparent;
 }
 .message-bubble.left::after {
   border-right-color: var(--other-bubble-bg);
-  left: -8px;
+  left: -6px;
   border-left: 0;
 }
+.message-bubble.right::after {
+  border-left-color: var(--self-bubble-bg);
+  right: -6px;
+  border-right: 0;
+}
 
-/* =========================================================
- * Message Content
- * ========================================================= */
+/* Message Content */
 .msg-content {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 .msg-inner-wrapper {
-  position: relative;
   display: inline-block;
   max-width: 100%;
 }
 .msg-text-wrapper {
   display: flex;
-  align-items: flex-end;
   justify-content: space-between;
+  align-items: flex-end;
   gap: 6px;
-  flex-wrap: wrap;
-  word-break: break-word;
+  flex-wrap: nowrap;
 }
 .msg-text {
-  white-space: pre-wrap;
-  word-break: break-word;
   font-size: var(--msg-font-size);
   line-height: var(--msg-line-height);
+  white-space: pre-wrap;
+  word-break: break-word;
   display: inline-block;
-  max-width: calc(100% - 70px);
 }
 
-/* =========================================================
- * Meta Info + Ticks Inline
- * ========================================================= */
+/* Scale emojis in message */
+.msg-text :is(img.emoji, .emoji) {
+  height: 1.2em;
+  vertical-align: middle;
+}
+
+/* Meta (time + tick) inline */
 .msg-meta-inline {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: var(--meta-font-size);
   color: var(--meta-color);
-  white-space: nowrap;
   flex-shrink: 0;
+  white-space: nowrap;
+  margin-left: 8px;
 }
-.edited-tag {
-  font-style: italic;
-  color: #999;
+
+/* Optional Floating Timestamp (hover style) */
+.message-bubble:hover::before {
+  content: attr(data-time);
+  position: absolute;
+  bottom: -16px;
+  right: 10px;
+  font-size: 11px;
+  color: var(--meta-color);
+  opacity: 0.85;
 }
+
+/* Ticks */
 .tick-icon {
   width: var(--tick-size);
   height: var(--tick-size);
-  vertical-align: middle;
 }
 .tick-seen {
   color: var(--tick-seen-color);
@@ -1636,29 +1610,25 @@ body.dark {
   color: var(--tick-sent-color);
 }
 
-/* =========================================================
- * Reply Box
- * ========================================================= */
+/* Reply Strip */
 .reply-to {
   font-size: var(--reply-font-size);
   color: var(--reply-color);
   background: var(--reply-bg);
-  padding: 3px 6px;
+  padding: 4px 6px;
   border-left: 3px solid var(--reply-border-color);
   margin-bottom: 4px;
-  max-height: var(--reply-max-height);
+  max-height: 3.4em;
   overflow: hidden;
   display: -webkit-box;
-  -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
-  line-clamp: 3;
+  -webkit-box-orient: vertical;
   overflow-wrap: break-word;
   text-overflow: ellipsis;
+  background-image: none;
 }
 
-/* =========================================================
- * Input Bar + Emoji Button
- * ========================================================= */
+/* Input Bar */
 .chat-input-bar {
   display: flex;
   align-items: center;
@@ -1681,7 +1651,7 @@ body.dark {
   background: #fff;
 }
 
-/* Emoji button inline left */
+/* Emoji Button */
 #emojiToggleBtn {
   order: -1;
 }
@@ -1694,39 +1664,7 @@ body.dark {
   align-items: center;
 }
 
-/* =========================================================
- * Link Preview (Optional for URLs)
- * ========================================================= */
-.link-preview {
-  display: flex;
-  gap: 8px;
-  margin-top: 6px;
-  background: rgba(0, 0, 0, 0.03);
-  padding: 6px;
-  border-radius: 6px;
-  overflow: hidden;
-}
-.link-preview img.preview-img {
-  width: 48px;
-  height: 48px;
-  border-radius: 4px;
-  object-fit: cover;
-}
-.preview-info {
-  flex: 1;
-}
-.preview-title {
-  font-size: var(--preview-title-size);
-  font-weight: 500;
-}
-.preview-url {
-  font-size: var(--preview-url-size);
-  color: #666;
-}
-
-/* =========================================================
- * Animations
- * ========================================================= */
+/* Animations */
 @keyframes fadeInUp {
   from {
     opacity: 0;
