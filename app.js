@@ -1406,9 +1406,7 @@ async function openThread(uid, name) {
   if (!currentUser || !uid) return;
 
   try {
-    const friendDoc = await db.collection("users").doc(currentUser.uid)
-      .collection("friends").doc(uid).get();
-
+    const friendDoc = await db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).get();
     if (!friendDoc.exists) {
       alert("⚠️ You must be friends to start a chat.");
       return;
@@ -1430,9 +1428,7 @@ async function openThread(uid, name) {
       }
     }, 200);
 
-    document.getElementById("threadWithName").textContent =
-      typeof name === "string" ? name : (name?.username || "Chat");
-
+    document.getElementById("threadWithName").textContent = typeof name === "string" ? name : (name?.username || "Chat");
     document.getElementById("chatOptionsMenu").style.display = "none";
 
     currentThreadUser = uid;
@@ -1466,8 +1462,7 @@ async function openThread(uid, name) {
         const user = friendUserDoc.data();
         const headerImg = document.getElementById("chatProfilePic");
         if (headerImg) {
-          headerImg.src = user.avatarBase64 || user.photoURL ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+          headerImg.src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
         }
       }
     } catch (e) {
@@ -1515,7 +1510,6 @@ async function openThread(uid, name) {
 
           const old = area.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`);
           if (old?.parentElement) old.parentElement.remove();
-
           if (msg.deletedFor?.[currentUser.uid]) continue;
 
           let decrypted = "";
@@ -1538,7 +1532,7 @@ async function openThread(uid, name) {
           }
 
           const wrapper = document.createElement("div");
-          wrapper.className = "message-bubble-wrapper " + (isSelf ? "right" : "left");
+          wrapper.className = "message-bubble-wrapper fade-in " + (isSelf ? "right" : "left");
 
           const bubble = document.createElement("div");
           bubble.className = "message-bubble " + (isSelf ? "right" : "left");
@@ -1565,42 +1559,42 @@ async function openThread(uid, name) {
             }
           }
 
-const textHtml = escapeHtml(decrypted);
-const shortText = textHtml.slice(0, 500);
-const hasLong = textHtml.length > 500;
+          const textHtml = escapeHtml(decrypted);
+          const shortText = textHtml.slice(0, 500);
+          const hasLong = textHtml.length > 500;
 
-const seenClass = msg.seenBy?.includes(currentThreadUser) ? "tick-seen" : "tick-sent";
+          const seenClass = msg.seenBy?.includes(currentThreadUser) ? "tick-seen" : "tick-sent";
 
-const meta = `
-  <span class="msg-meta-inline">
-    ${msg.timestamp?.toDate ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>` : ""}
-    ${msg.edited ? '<span class="edited-tag">(edited)</span>' : ""}
-    ${isSelf && !isDeleted ? `<i data-lucide="check-check" class="tick-icon ${seenClass}"></i>` : ""}
-  </span>
-`;
+          const meta = `
+            <span class="msg-meta-inline">
+              ${msg.timestamp?.toDate ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>` : ""}
+              ${msg.edited ? '<span class="edited-tag">(edited)</span>' : ""}
+              ${isSelf && !isDeleted ? `<i data-lucide="check-check" class="tick-icon ${seenClass}"></i>` : ""}
+            </span>
+          `;
 
-const content = hasLong
-  ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
-  : linkifyText(textHtml);
+          const content = hasLong
+            ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
+            : linkifyText(textHtml);
 
-const textPreview = `
-  <div class="msg-text-wrapper">
-    <span class="msg-text clamp-text" data-full="${textHtml}" data-short="${shortText}">
-      ${content}
-    </span>
-    ${meta}
-  </div>
-`;
+          const textPreview = `
+            <div class="msg-text-wrapper">
+              <span class="msg-text clamp-text" data-full="${textHtml}" data-short="${shortText}">
+                ${content}
+              </span>
+              ${meta}
+            </div>
+          `;
 
-bubble.innerHTML = `
-  <div class="msg-content ${isDeleted ? "msg-deleted" : ""}">
-    ${replyHtml || ""}
-    <div class="msg-inner-wrapper">
-      ${textPreview}
-    </div>
-    ${linkPreviewHTML}
-  </div>
-`;
+          bubble.innerHTML = `
+            <div class="msg-content ${isDeleted ? "msg-deleted" : ""}">
+              ${replyHtml || ""}
+              <div class="msg-inner-wrapper">
+                ${textPreview}
+              </div>
+              ${linkPreviewHTML}
+            </div>
+          `;
 
           if (!isDeleted) {
             bubble.addEventListener("touchstart", handleTouchStart);
@@ -2670,26 +2664,24 @@ function renderWithMagnetSupport(containerId) {
 }
 
 /* =========================================================
- * Thread View Enhancements (Safe Wrapped Version)
+ * Thread View Enhancements — Full with Emoji, Autosize
  * ======================================================= */
 (function(){
-  // ----- CONFIG -----
   const THREAD_VIEW_ID     = "threadView";
   const THREAD_MSGS_ID     = "threadMessages";
   const THREAD_INPUT_ID    = "threadInput";
   const THREAD_SEND_BTN_ID = "sendButton";
+  const EMOJI_BTN_ID       = "emojiToggle";
   const KEYBOARD_THRESHOLD = 150;
 
-  // Capture initial viewport for keyboard comparison
   let initialViewportHeight = window.innerHeight;
 
-  // --- Helpers to grab elements ---
   const getThreadView  = () => document.getElementById(THREAD_VIEW_ID);
   const getThreadMsgs  = () => document.getElementById(THREAD_MSGS_ID);
   const getThreadInput = () => document.getElementById(THREAD_INPUT_ID);
   const getSendBtn     = () => document.getElementById(THREAD_SEND_BTN_ID);
+  const getEmojiBtn    = () => document.getElementById(EMOJI_BTN_ID);
 
-  // --- Layout height (keyboard-aware) ---
   function adjustThreadLayout() {
     const el = getThreadView();
     if (!el) return;
@@ -2697,7 +2689,6 @@ function renderWithMagnetSupport(containerId) {
     el.style.height = vh + "px";
   }
 
-  // --- Scroll bottom ---
   function scrollToBottomThread(smooth = true) {
     const msgs = getThreadMsgs();
     if (!msgs) return;
@@ -2708,7 +2699,6 @@ function renderWithMagnetSupport(containerId) {
     });
   }
 
-  // --- Focus helper ---
   function focusThreadInput() {
     requestAnimationFrame(() => {
       const input = getThreadInput();
@@ -2716,7 +2706,6 @@ function renderWithMagnetSupport(containerId) {
     });
   }
 
-  // --- Enter to send ---
   function handleThreadKey(event) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -2726,7 +2715,6 @@ function renderWithMagnetSupport(containerId) {
     }
   }
 
-  // --- Scroll to replied message + highlight ---
   function scrollToReplyMessage(msgId) {
     const el = document.querySelector(`.message-bubble[data-msg-id="${msgId}"]`);
     if (!el) return;
@@ -2735,14 +2723,56 @@ function renderWithMagnetSupport(containerId) {
     setTimeout(() => el.classList.remove("highlighted-reply"), 2000);
   }
 
-  // Expose to global (so existing code can call them)
+  // ✨ Emoji Picker Setup
+  function setupEmojiButton() {
+    const emojiBtn = getEmojiBtn();
+    const input = getThreadInput();
+    if (!emojiBtn || !input) return;
+
+    let emojiPicker;
+    let pickerOpen = false;
+
+    emojiBtn.addEventListener("click", async () => {
+      if (!emojiPicker) {
+        const module = await import("https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2");
+        emojiPicker = new module.default({
+          position: "top-end",
+          theme: document.body.classList.contains("dark") ? "dark" : "light",
+          autoHide: false,
+          showSearch: true,
+          showRecents: true,
+        });
+
+        emojiPicker.on("emoji", emoji => {
+          input.value += emoji;
+          autoResizeInput(input);
+          input.focus();
+        });
+      }
+
+      if (pickerOpen) {
+        emojiPicker.hidePicker();
+        pickerOpen = false;
+      } else {
+        emojiPicker.showPicker(emojiBtn);
+        pickerOpen = true;
+      }
+    });
+  }
+
+  // ✨ Auto-resize input height
+  function autoResizeInput(input) {
+    input.style.height = "auto";
+    input.style.height = (input.scrollHeight) + "px";
+  }
+
+  // Make these usable globally
   window.adjustThreadLayout     = adjustThreadLayout;
   window.scrollToBottomThread   = scrollToBottomThread;
   window.focusThreadInput       = focusThreadInput;
   window.handleThreadKey        = handleThreadKey;
   window.scrollToReplyMessage   = scrollToReplyMessage;
 
-  // --- Keyboard open detect ---
   function detectKeyboardResize() {
     const isKeyboardOpen = window.innerHeight < initialViewportHeight - KEYBOARD_THRESHOLD;
     document.body.classList.toggle("keyboard-open", isKeyboardOpen);
@@ -2751,7 +2781,6 @@ function renderWithMagnetSupport(containerId) {
     }
   }
 
-  // --- Combined viewport handler (resize / keyboard / rotate) ---
   let resizeRAF = null;
   function viewportChanged() {
     if (resizeRAF) cancelAnimationFrame(resizeRAF);
@@ -2765,32 +2794,29 @@ function renderWithMagnetSupport(containerId) {
     });
   }
 
-  // --- Init when DOM ready ---
   document.addEventListener("DOMContentLoaded", () => {
-    // Initial layout
     adjustThreadLayout();
 
-    // Bind Enter-to-send
     const input = getThreadInput();
-    if (input) input.addEventListener("keydown", handleThreadKey);
-
-    // Bind send button
-    const sendBtn = getSendBtn();
-    if (sendBtn) sendBtn.addEventListener("click", () => {
-      if (typeof sendThreadMessage === "function") sendThreadMessage();
-    });
-
-    // Scroll bottom on focus (keyboard up)
     if (input) {
+      input.addEventListener("keydown", handleThreadKey);
+      input.addEventListener("input", () => autoResizeInput(input));
       input.addEventListener("focus", () => {
         setTimeout(() => {
           adjustThreadLayout();
           scrollToBottomThread(true);
         }, 100);
       });
+      autoResizeInput(input); // Initial
     }
 
-    // Listeners: window + visualViewport
+    const sendBtn = getSendBtn();
+    if (sendBtn) sendBtn.addEventListener("click", () => {
+      if (typeof sendThreadMessage === "function") sendThreadMessage();
+    });
+
+    setupEmojiButton();
+
     window.addEventListener("resize", viewportChanged);
     if (window.visualViewport) {
       window.visualViewport.addEventListener("resize", viewportChanged);
