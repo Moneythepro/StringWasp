@@ -2829,11 +2829,6 @@ function renderWithMagnetSupport(containerId) {
       autoResizeInput(input); // Initial
     }
 
-    const sendBtn = getSendBtn();
-    if (sendBtn) sendBtn.addEventListener("click", () => {
-      if (typeof sendThreadMessage === "function") sendThreadMessage();
-    });
-
     setupEmojiButton();
 
     window.addEventListener("resize", viewportChanged);
