@@ -2120,3 +2120,12 @@ a:hover { text-decoration: underline; }
 /* New message animation helpers */
 .message-bubble-anim-in { animation: pop-in var(--fast) var(--easing); }
 .message-bubble-ping { animation: bubble-highlight 1.2s var(--easing) 1; }
+
+.highlighted-reply {
+  animation: replyHighlight 2s ease-in-out;
+}
+
+@keyframes replyHighlight {
+  0% { background-color: rgba(255, 223, 0, 0.3); }
+  100% { background-color: transparent; }
+}
