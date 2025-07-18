@@ -1538,7 +1538,7 @@ body.dark .msg-meta {
   background-image: none !important;
 }
 
-/* Bubble inner wrapper for text + overlay */
+/* Bubble inner wrapper */
 .msg-inner-wrapper {
   position: relative;
   display: inline-block;
@@ -1546,17 +1546,27 @@ body.dark .msg-meta {
   background: transparent;
 }
 
-/* Text */
-.msg-text {
-  display: inline-block;
-  white-space: pre-wrap;
+/* Text wrapper for inline meta */
+.msg-text-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 4px;
+  flex-wrap: wrap;
   word-break: break-word;
-  padding-right: var(--meta-padding-right);
-  font-size: var(--msg-font-size);
-  line-height: var(--msg-line-height);
 }
 
-/* Meta overlay */
+/* Message text */
+.msg-text {
+  display: inline;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: var(--msg-font-size);
+  line-height: var(--msg-line-height);
+  max-width: calc(100% - 50px); /* Ensures room for meta */
+}
+
+/* Meta overlay (absolute, if needed) */
 .msg-meta-overlay {
   position: absolute;
   bottom: var(--meta-bottom);
@@ -1577,6 +1587,7 @@ body.dark .msg-meta {
   font-size: var(--meta-font-size);
   color: var(--meta-color);
   margin-left: 4px;
+  flex-shrink: 0;
 }
 
 /* Tick icons */
