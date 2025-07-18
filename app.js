@@ -2377,7 +2377,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (modal && modalNo) {
     modalNo.onclick = () => modal.style.display = "none";
   }
-
+});
   // ✅ Restore theme
   if (localStorage.getItem("theme") === "dark") {
     document.body.classList.add("dark");
@@ -2385,91 +2385,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (toggle) toggle.checked = true;
   }
 
-// ==================== THREAD VIEW ENHANCEMENTS ====================
-
-// ✅ Detect keyboard open/close (adds .keyboard-open class for CSS adjustments)
-let initialViewportHeight = window.innerHeight;
-window.addEventListener("resize", () => {
-  const isKeyboardOpen = window.innerHeight < initialViewportHeight - 150;
-  document.body.classList.toggle("keyboard-open", isKeyboardOpen);
-
-  if (isKeyboardOpen) {
-    setTimeout(() => scrollToBottomThread(true), 100);
-  }
-});
-
-// ✅ Adjust thread layout height on load and resize
-function adjustThreadLayout() {
-  const threadView = document.getElementById("threadView");
-  if (threadView) {
-    const vh = window.visualViewport?.height || window.innerHeight;
-    threadView.style.height = vh + "px";
-  }
-}
-
-// ✅ Call layout adjuster once on load
-document.addEventListener("DOMContentLoaded", adjustThreadLayout);
-
-// ✅ Re-adjust on viewport resize (rotation or keyboard)
-window.addEventListener("resize", () => {
-  adjustThreadLayout();
-  const input = document.getElementById("threadInput");
-  if (document.activeElement === input) {
-    setTimeout(() => scrollToBottomThread(true), 300);
-  }
-});
-
-// ✅ Smooth scroll to bottom of thread
-function scrollToBottomThread(smooth = true) {
-  const area = document.getElementById("threadMessages");
-  if (area) {
-    area.scrollTo({
-      top: area.scrollHeight,
-      behavior: smooth ? "smooth" : "auto"
-    });
-  }
-}
-
-// ✅ Focus helper for thread input
-function focusThreadInput() {
-  requestAnimationFrame(() => {
-    const input = document.getElementById("threadInput");
-    if (input) {
-      input.focus({ preventScroll: false });
-    }
-  });
-}
-
-// ✅ Handle Enter key in thread input
-function handleThreadKey(event) {
-  if (event.key === "Enter" && !event.shiftKey) {
-    event.preventDefault();
-    sendThreadMessage();
-  }
-}
-
-// ✅ Highlight + scroll to a replied message
-function scrollToReplyMessage(msgId) {
-  const el = document.querySelector(`.message-bubble[data-msg-id="${msgId}"]`);
-  if (el) {
-    el.classList.add("highlighted-reply");
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-    setTimeout(() => el.classList.remove("highlighted-reply"), 2000);
-  }
-}
-
-// ✅ Attach input & send button listeners on DOM ready
-document.addEventListener("DOMContentLoaded", () => {
-  const input = document.getElementById("threadInput");
-  if (input) {
-    input.addEventListener("keydown", handleThreadKey);
-  }
-
-  const sendBtn = document.getElementById("sendButton");
-  if (sendBtn) {
-    sendBtn.addEventListener("click", sendThreadMessage);
-  }
-});
 
 // ✅ Toggle theme
 function toggleTheme() {
@@ -2751,3 +2666,133 @@ function renderWithMagnetSupport(containerId) {
     };
   });
 }
+
+/* =========================================================
+ * Thread View Enhancements (Safe Wrapped Version)
+ * ======================================================= */
+(function(){
+  // ----- CONFIG -----
+  const THREAD_VIEW_ID     = "threadView";
+  const THREAD_MSGS_ID     = "threadMessages";
+  const THREAD_INPUT_ID    = "threadInput";
+  const THREAD_SEND_BTN_ID = "sendButton";
+  const KEYBOARD_THRESHOLD = 150;
+
+  // Capture initial viewport for keyboard comparison
+  let initialViewportHeight = window.innerHeight;
+
+  // --- Helpers to grab elements ---
+  const getThreadView  = () => document.getElementById(THREAD_VIEW_ID);
+  const getThreadMsgs  = () => document.getElementById(THREAD_MSGS_ID);
+  const getThreadInput = () => document.getElementById(THREAD_INPUT_ID);
+  const getSendBtn     = () => document.getElementById(THREAD_SEND_BTN_ID);
+
+  // --- Layout height (keyboard-aware) ---
+  function adjustThreadLayout() {
+    const el = getThreadView();
+    if (!el) return;
+    const vh = window.visualViewport?.height || window.innerHeight;
+    el.style.height = vh + "px";
+  }
+
+  // --- Scroll bottom ---
+  function scrollToBottomThread(smooth = true) {
+    const msgs = getThreadMsgs();
+    if (!msgs) return;
+    const scrollTarget = msgs.closest(".chat-scroll-area") || msgs;
+    scrollTarget.scrollTo({
+      top: scrollTarget.scrollHeight,
+      behavior: smooth ? "smooth" : "auto"
+    });
+  }
+
+  // --- Focus helper ---
+  function focusThreadInput() {
+    requestAnimationFrame(() => {
+      const input = getThreadInput();
+      if (input) input.focus({ preventScroll: false });
+    });
+  }
+
+  // --- Enter to send ---
+  function handleThreadKey(event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      if (typeof sendThreadMessage === "function") {
+        sendThreadMessage();
+      }
+    }
+  }
+
+  // --- Scroll to replied message + highlight ---
+  function scrollToReplyMessage(msgId) {
+    const el = document.querySelector(`.message-bubble[data-msg-id="${msgId}"]`);
+    if (!el) return;
+    el.classList.add("highlighted-reply");
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => el.classList.remove("highlighted-reply"), 2000);
+  }
+
+  // Expose to global (so existing code can call them)
+  window.adjustThreadLayout     = adjustThreadLayout;
+  window.scrollToBottomThread   = scrollToBottomThread;
+  window.focusThreadInput       = focusThreadInput;
+  window.handleThreadKey        = handleThreadKey;
+  window.scrollToReplyMessage   = scrollToReplyMessage;
+
+  // --- Keyboard open detect ---
+  function detectKeyboardResize() {
+    const isKeyboardOpen = window.innerHeight < initialViewportHeight - KEYBOARD_THRESHOLD;
+    document.body.classList.toggle("keyboard-open", isKeyboardOpen);
+    if (isKeyboardOpen) {
+      setTimeout(() => scrollToBottomThread(true), 100);
+    }
+  }
+
+  // --- Combined viewport handler (resize / keyboard / rotate) ---
+  let resizeRAF = null;
+  function viewportChanged() {
+    if (resizeRAF) cancelAnimationFrame(resizeRAF);
+    resizeRAF = requestAnimationFrame(() => {
+      detectKeyboardResize();
+      adjustThreadLayout();
+      const input = getThreadInput();
+      if (document.activeElement === input) {
+        setTimeout(() => scrollToBottomThread(true), 150);
+      }
+    });
+  }
+
+  // --- Init when DOM ready ---
+  document.addEventListener("DOMContentLoaded", () => {
+    // Initial layout
+    adjustThreadLayout();
+
+    // Bind Enter-to-send
+    const input = getThreadInput();
+    if (input) input.addEventListener("keydown", handleThreadKey);
+
+    // Bind send button
+    const sendBtn = getSendBtn();
+    if (sendBtn) sendBtn.addEventListener("click", () => {
+      if (typeof sendThreadMessage === "function") sendThreadMessage();
+    });
+
+    // Scroll bottom on focus (keyboard up)
+    if (input) {
+      input.addEventListener("focus", () => {
+        setTimeout(() => {
+          adjustThreadLayout();
+          scrollToBottomThread(true);
+        }, 100);
+      });
+    }
+
+    // Listeners: window + visualViewport
+    window.addEventListener("resize", viewportChanged);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", viewportChanged);
+      window.visualViewport.addEventListener("scroll", viewportChanged);
+    }
+  });
+})();
