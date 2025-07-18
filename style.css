@@ -1526,7 +1526,7 @@ body.dark .msg-meta {
 .reply-to {
   font-size: var(--reply-font-size);
   color: var(--reply-color);
-  background: var(--reply-bg);
+  background: #f7f7f7; /* <- solid color, no gradient */
   padding: 4px 6px;
   border-left: 3px solid var(--reply-border-color);
   margin-bottom: 4px;
@@ -1538,6 +1538,8 @@ body.dark .msg-meta {
   -webkit-box-orient: vertical;
   overflow-wrap: break-word;
   text-overflow: ellipsis;
+  background-image: none !important;
+background: #f7f7f7 !important; /* <- overrides any gradient */
 }
 
 /* Bubble inner wrapper to hold both text + meta overlay */
