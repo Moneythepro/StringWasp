@@ -1382,3 +1382,65 @@ body.dark .chat-options-horizontal span:hover {
   color: #999;
   vertical-align: middle;
 }
+
+/* === MESSAGE BUBBLES: WhatsApp Compact === */
+.msg-bubble {
+  max-width: 80%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.3;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.25s ease-in;
+  margin: 2px 0; /* Compact vertical spacing */
+}
+
+.msg-bubble.mine {
+  align-self: flex-end;
+  background: #dcf8c6;
+  border-bottom-right-radius: 4px;
+}
+.msg-bubble.theirs {
+  align-self: flex-start;
+  background: #fff;
+  border-bottom-left-radius: 4px;
+}
+body.dark .msg-bubble.mine {
+  background: #056162;
+  color: #fff;
+}
+body.dark .msg-bubble.theirs {
+  background: #1f1f1f;
+  color: #f0f0f0;
+}
+
+/* Message text and meta inline */
+.msg-content {
+  display: inline-block;
+  width: 100%;
+  position: relative;
+}
+.msg-text {
+  display: inline;
+  margin-right: 6px;
+  word-wrap: break-word;
+}
+.msg-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: #666;
+  vertical-align: bottom;
+}
+body.dark .msg-meta {
+  color: #aaa;
+}
+
+/* Smooth fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
