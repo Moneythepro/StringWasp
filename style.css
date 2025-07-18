@@ -1449,10 +1449,10 @@ body.dark .msg-meta {
 
 :root {
   --bubble-max-width: 88%;
-  --bubble-padding: 7px 12px;
-  --bubble-radius: 8px 8px 8px 0px;
-  --bubble-radius-right: 8px 8px 0px 8px;
-  --bubble-margin: 4px 8px;
+  --bubble-padding: 5px 10px; /* Tighter WhatsApp-like padding */
+  --bubble-radius: 6px 6px 6px 0px; /* Rounded corners, cleaner */
+  --bubble-radius-right: 6px 6px 0px 6px;
+  --bubble-margin: 2px 6px; /* Closer message spacing */
   --bubble-font-size: 15px;
   --bubble-line-height: 1.4;
 
@@ -1480,7 +1480,6 @@ body.dark .msg-meta {
   --bubble-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
 
-/* Dark Theme */
 body.dark {
   --self-bubble-bg: #2e3a2f;
   --other-bubble-bg: #1e1e1e;
@@ -1495,7 +1494,7 @@ body.dark {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 1px 6px;
+  padding: 0 4px;
 }
 .message-bubble-wrapper.right {
   align-items: flex-end;
@@ -1518,10 +1517,15 @@ body.dark {
   animation: messageIn 0.25s ease-out;
   word-break: break-word;
   box-shadow: var(--bubble-shadow);
+  vertical-align: top;
 }
 .message-bubble.right {
   background: var(--self-bubble-bg);
   border-radius: var(--bubble-radius-right);
+  margin-left: auto;
+}
+.message-bubble.left {
+  margin-right: auto;
 }
 
 /* Bubble Tail */
@@ -1568,8 +1572,6 @@ body.dark {
   word-break: break-word;
   display: inline-block;
 }
-
-/* Scale emojis in message */
 .msg-text :is(img.emoji, .emoji) {
   height: 1.2em;
   vertical-align: middle;
@@ -1655,8 +1657,6 @@ body.dark {
 #emojiToggleBtn {
   order: -1;
 }
-
-/* Emoji Style */
 .emoji-btn {
   margin-right: 4px;
   cursor: pointer;
