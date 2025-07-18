@@ -692,18 +692,7 @@ html, body, #threadView {
 }
 
 /* === Message Bubble === */
-.message-bubble {
-  max-width: 78%;
-  background: #dcf8c6;
-  padding: 6px 9px;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  font-size: 14px;
-  line-height: 1.4;
-  word-break: break-word;
-  margin: 3px 0;
-}
+
 .message-bubble.left {
   background: #fff;
   border-radius: 0 8px 8px 8px;
@@ -726,21 +715,7 @@ html, body, #threadView {
   flex-direction: column;
   gap: 4px;
 }
-.reply-to {
-  background: #e9e9e9;
-  border-left: 3px solid #4caf50;
-  padding: 4px 6px;
-  margin-bottom: 4px;
-  font-size: 12px;
-  color: #555;
-  border-radius: 4px;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.3em;
-}
+
 
 /* === Text & Meta Inline Row === */
 .msg-text-row {
@@ -757,26 +732,7 @@ html, body, #threadView {
   overflow-wrap: break-word;
   font-size: 14px;
 }
-.msg-meta {
-  font-size: 11px;
-  color: #999;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-.tick-icon {
-  width: 14px;
-  height: 14px;
-  color: #999;
-  vertical-align: middle;
-}
-.tick-sent {
-  color: #999;
-}
-.tick-seen {
-  color: #0b93f6 !important;
-}
+
 .edited-tag {
   font-size: 10px;
   color: #999;
@@ -975,3 +931,64 @@ body.dark .msg-meta {
   color: #aaa;
 }
 
+/* Compact bubble padding */
+.message-bubble {
+  max-width: 80%;
+  padding: 8px 12px;
+  margin: 4px 0;
+  font-size: 14px;
+  line-height: 1.4;
+  border-radius: 10px;
+  word-break: break-word;
+}
+
+/* Prevent bloated bubble from reply text */
+.reply-to {
+  background: #eaeaea;
+  padding: 4px 6px;
+  border-left: 3px solid #888;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #333;
+  max-width: 100%;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Clamp main message to 3 lines */
+.msg-preview.clamp-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-height: calc(1.4em * 3);
+  text-overflow: ellipsis;
+}
+
+/* Meta aligned at bottom right */
+.msg-meta {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  margin-top: 4px;
+  color: #777;
+  white-space: nowrap;
+}
+
+.tick-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  stroke-width: 2px;
+}
+.tick-seen {
+  color: #4fc3f7; /* WhatsApp blue tick */
+}
+.tick-sent {
+  color: #999; /* Gray for sent only */
+}
