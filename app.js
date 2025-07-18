@@ -1601,10 +1601,16 @@ const meta = `
   ${isSelf && !isDeleted ? `<i data-lucide="check-check" class="tick-icon ${seenClass}"></i>` : ""}
 `;
 
+const textPreview = `
+  <div class="msg-preview clamp-text">
+    ${escapeHtml(decrypted)}
+  </div>
+`;
+
 bubble.innerHTML = `
   <div class="msg-content ${isDeleted ? "msg-deleted" : ""}">
-    ${replyHtml}
-    <div class="msg-text">${textPreview}</div>
+    ${replyHtml || ""}
+    ${textPreview}
     <div class="msg-meta">${meta}</div>
   </div>
 `;
