@@ -1464,6 +1464,10 @@ async function sendThreadMessage() {
     return;
   }
 
+  input.value = ""; // Clear first to prevent duplicate sends
+  cancelReply();
+  replyingTo = null;
+
   const fromName = document.getElementById("usernameDisplay")?.textContent || "User";
   const toNameElem = document.getElementById("threadWithName");
   const toName = toNameElem ? toNameElem.textContent : "Friend";
@@ -1471,7 +1475,7 @@ async function sendThreadMessage() {
   const threadIdStr = threadId(currentUser.uid, currentThreadUser);
   const threadRef = db.collection("threads").doc(threadIdStr);
 
-  // ✅ Encrypt message
+  // Encrypt message
   const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
 
   const message = {
@@ -1482,7 +1486,7 @@ async function sendThreadMessage() {
     seenBy: [currentUser.uid]
   };
 
-  // ✅ Handle reply
+  // Add reply data
   if (replyingTo?.msgId && replyingTo?.text?.trim()) {
     message.replyTo = {
       msgId: replyingTo.msgId,
@@ -1490,7 +1494,7 @@ async function sendThreadMessage() {
     };
   }
 
-  // ✅ Detect link & fetch preview
+  // Optional link preview
   const urlMatch = text.match(/https?:\/\/[^\s]+/);
   if (urlMatch) {
     try {
@@ -1507,14 +1511,10 @@ async function sendThreadMessage() {
     }
   }
 
-  input.value = "";
-  cancelReply();
-  replyingTo = null;
-
   try {
     await threadRef.collection("messages").add(message);
 
-    // ✅ Update thread metadata
+    // Update thread metadata
     await threadRef.set({
       participants: [currentUser.uid, currentThreadUser],
       names: {
@@ -1530,8 +1530,7 @@ async function sendThreadMessage() {
     }, { merge: true });
 
     requestAnimationFrame(() => input.focus({ preventScroll: true }));
-    setTimeout(() => scrollToBottomThread(true), 150);
-    console.log("📨 Thread message sent:", text);
+    setTimeout(() => scrollToBottomThread(true), 100);
   } catch (err) {
     console.error("❌ Send failed:", err.message || err);
     alert("❌ Failed to send message.");
@@ -1600,6 +1599,7 @@ async function openThread(uid, name) {
       sessionStorage.setItem("threadScroll_" + threadIdStr, area.scrollTop);
     };
 
+    // Load profile image
     try {
       const friendUserDoc = await db.collection("users").doc(uid).get();
       if (friendUserDoc.exists) {
@@ -1683,43 +1683,13 @@ async function openThread(uid, name) {
           bubble.className = "message-bubble " + (isSelf ? "right" : "left");
           bubble.dataset.msgId = msg.id;
 
-          const replyHtml = msg.replyTo && !isDeleted
+          // Reply text block
+          const replyBox = msg.replyTo && !isDeleted
             ? `<div class="reply-to clamp-text">${escapeHtml(msg.replyTo.text || "")}</div>`
             : "";
 
-          const url = extractFirstURL(decrypted);
-          let linkPreviewHTML = "";
-          if (url && !msg.preview) {
-            const preview = await fetchLinkPreview(url);
-            if (preview?.title || preview?.image) {
-              linkPreviewHTML = `
-                <div class="link-preview">
-                  ${preview.image ? `<img src="${preview.image}" alt="Preview" class="preview-img">` : ""}
-                  <div class="preview-info">
-                    <div class="preview-title">${escapeHtml(preview.title || "")}</div>
-                    <div class="preview-url">${url}</div>
-                  </div>
-                </div>
-              `;
-            }
-          } else if (msg.preview) {
-            linkPreviewHTML = `
-              <div class="link-preview">
-                ${msg.preview.image ? `<img src="${msg.preview.image}" alt="Preview" class="preview-img">` : ""}
-                <div class="preview-info">
-                  <div class="preview-title">${escapeHtml(msg.preview.title || "")}</div>
-                  <div class="preview-url">${msg.preview.url || url}</div>
-                </div>
-              </div>
-            `;
-          }
-
-          const textHtml = escapeHtml(decrypted);
-          const shortText = textHtml.slice(0, 500);
-          const hasLong = textHtml.length > 500;
-
+          // Meta info
           const seenClass = msg.seenBy?.includes(currentThreadUser) ? "tick-seen" : "tick-sent";
-
           const meta = `
             <span class="msg-meta-inline">
               ${msg.timestamp?.toDate ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>` : ""}
@@ -1727,6 +1697,10 @@ async function openThread(uid, name) {
               ${isSelf && !isDeleted ? `<i data-lucide="check-check" class="tick-icon ${seenClass}"></i>` : ""}
             </span>
           `;
+
+          const textHtml = escapeHtml(decrypted);
+          const shortText = textHtml.slice(0, 500);
+          const hasLong = textHtml.length > 500;
 
           const content = hasLong
             ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
@@ -1741,12 +1715,37 @@ async function openThread(uid, name) {
             </div>
           `;
 
-          bubble.innerHTML = `
-            <div class="msg-content ${isDeleted ? "msg-deleted" : ""}">
-              ${replyHtml || ""}
-              <div class="msg-inner-wrapper">
-                ${textPreview}
+          let linkPreviewHTML = "";
+          const url = extractFirstURL(decrypted);
+          if (msg.preview) {
+            linkPreviewHTML = `
+              <div class="link-preview">
+                ${msg.preview.image ? `<img src="${msg.preview.image}" class="preview-img">` : ""}
+                <div class="preview-info">
+                  <div class="preview-title">${escapeHtml(msg.preview.title || "")}</div>
+                  <div class="preview-url">${escapeHtml(msg.preview.url || "")}</div>
+                </div>
               </div>
+            `;
+          } else if (url) {
+            const preview = await fetchLinkPreview(url);
+            if (preview?.title || preview?.image) {
+              linkPreviewHTML = `
+                <div class="link-preview">
+                  ${preview.image ? `<img src="${preview.image}" class="preview-img">` : ""}
+                  <div class="preview-info">
+                    <div class="preview-title">${escapeHtml(preview.title || "")}</div>
+                    <div class="preview-url">${url}</div>
+                  </div>
+                </div>
+              `;
+            }
+          }
+
+          bubble.innerHTML = `
+            ${replyBox}
+            <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
+              ${textPreview}
               ${linkPreviewHTML}
             </div>
           `;
