@@ -1592,6 +1592,7 @@ const textPreview = `
   </div>
   ${linkPreviewHTML}
 `;
+          
           const seenClass = msg.seenBy?.includes(currentThreadUser) ? "tick-seen" : "tick-sent";
 
 const meta = `
