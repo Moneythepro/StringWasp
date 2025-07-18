@@ -1558,7 +1558,7 @@ body.dark .msg-meta {
   line-height: var(--msg-line-height);
 }
 
-/* Meta overlay */
+/* Meta overlay (if positioned) */
 .msg-meta-overlay {
   position: absolute;
   bottom: var(--meta-bottom);
@@ -1569,6 +1569,16 @@ body.dark .msg-meta {
   align-items: center;
   gap: 4px;
   pointer-events: none;
+}
+
+/* ✅ Meta inline (for same-line tick + time) */
+.msg-meta-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--meta-font-size);
+  color: var(--meta-color);
+  margin-left: 6px;
 }
 
 /* Tick Icons */
