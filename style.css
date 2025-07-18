@@ -1651,10 +1651,12 @@ body.dark {
   background: #fff;
 }
 
-/* Emoji Button */
+/* Emoji Button First */
 #emojiToggleBtn {
   order: -1;
 }
+
+/* Emoji Style */
 .emoji-btn {
   margin-right: 4px;
   cursor: pointer;
