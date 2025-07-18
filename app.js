@@ -1406,7 +1406,9 @@ async function openThread(uid, name) {
   if (!currentUser || !uid) return;
 
   try {
-    const friendDoc = await db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).get();
+    const friendDoc = await db.collection("users").doc(currentUser.uid)
+      .collection("friends").doc(uid).get();
+
     if (!friendDoc.exists) {
       alert("⚠️ You must be friends to start a chat.");
       return;
@@ -1426,9 +1428,15 @@ async function openThread(uid, name) {
         sendBtn.addEventListener("click", handleSendClick);
         sendBtn.dataset.bound = "true";
       }
+
+      // ✅ Setup emoji button
+      setupEmojiButton();
+
     }, 200);
 
-    document.getElementById("threadWithName").textContent = typeof name === "string" ? name : (name?.username || "Chat");
+    document.getElementById("threadWithName").textContent =
+      typeof name === "string" ? name : (name?.username || "Chat");
+
     document.getElementById("chatOptionsMenu").style.display = "none";
 
     currentThreadUser = uid;
@@ -1462,7 +1470,8 @@ async function openThread(uid, name) {
         const user = friendUserDoc.data();
         const headerImg = document.getElementById("chatProfilePic");
         if (headerImg) {
-          headerImg.src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+          headerImg.src = user.avatarBase64 || user.photoURL ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
         }
       }
     } catch (e) {
@@ -1628,8 +1637,6 @@ async function openThread(uid, name) {
     alert("❌ Could not open chat: " + (err.message || JSON.stringify(err)));
   }
 }
-
-
 
 function toggleChatOptions(event) {
   event.stopPropagation();
@@ -2725,39 +2732,51 @@ function renderWithMagnetSupport(containerId) {
 
   // ✨ Emoji Picker Setup
   function setupEmojiButton() {
-    const emojiBtn = getEmojiBtn();
-    const input = getThreadInput();
-    if (!emojiBtn || !input) return;
+  const emojiBtn = getEmojiBtn();
+  const input = getThreadInput();
+  if (!emojiBtn || !input) return;
 
-    let emojiPicker;
-    let pickerOpen = false;
+  let emojiPicker;
+  let pickerOpen = false;
 
-    emojiBtn.addEventListener("click", async () => {
-      if (!emojiPicker) {
-        const module = await import("https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2");
-        emojiPicker = new module.default({
-          position: "top-end",
-          theme: document.body.classList.contains("dark") ? "dark" : "light",
-          autoHide: false,
-          showSearch: true,
-          showRecents: true,
-        });
+  emojiBtn.addEventListener("click", async () => {
+    // Lazy load emoji picker
+    if (!emojiPicker) {
+      const module = await import("https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2");
+      emojiPicker = new module.default({
+        position: 'top-end',
+        theme: document.body.classList.contains("dark") ? "dark" : "light",
+        autoHide: false,
+        showSearch: true,
+        showRecents: true,
+        emojiSize: '1.3em',
+        zIndex: 9999
+      });
 
-        emojiPicker.on("emoji", emoji => {
-          input.value += emoji;
-          autoResizeInput(input);
-          input.focus();
-        });
-      }
+      // Insert emoji at caret position
+      emojiPicker.on("emoji", emoji => {
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const text = input.value;
 
-      if (pickerOpen) {
-        emojiPicker.hidePicker();
-        pickerOpen = false;
-      } else {
-        emojiPicker.showPicker(emojiBtn);
-        pickerOpen = true;
-      }
-    });
+        input.value = text.slice(0, start) + emoji + text.slice(end);
+        input.selectionStart = input.selectionEnd = start + emoji.length;
+
+        autoResizeInput(input);
+        input.focus();
+      });
+    }
+
+    // Show/hide toggle
+    if (pickerOpen) {
+      emojiPicker.hidePicker();
+      pickerOpen = false;
+    } else {
+      emojiPicker.setTheme(document.body.classList.contains("dark") ? "dark" : "light");
+      emojiPicker.showPicker(emojiBtn);
+      pickerOpen = true;
+    }
+  });
   }
 
   // ✨ Auto-resize input height
