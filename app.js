@@ -1580,25 +1580,26 @@ async function openThread(uid, name) {
             }
           }
 
-          const textHtml = escapeHtml(decrypted);
+const textHtml = escapeHtml(decrypted);
 const shortText = textHtml.slice(0, 500);
 const hasLong = textHtml.length > 500;
 
 const seenClass = msg.seenBy?.includes(currentThreadUser) ? "tick-seen" : "tick-sent";
 
 const meta = `
-  ${msg.timestamp?.toDate ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>` : ""}
-  ${msg.edited ? '<span class="edited-tag">(edited)</span>' : ""}
-  ${isSelf && !isDeleted ? `<i data-lucide="check-check" class="tick-icon ${seenClass}"></i>` : ""}
+  <span class="msg-meta-inline">
+    ${msg.timestamp?.toDate ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>` : ""}
+    ${msg.edited ? '<span class="edited-tag">(edited)</span>' : ""}
+    ${isSelf && !isDeleted ? `<i data-lucide="check-check" class="tick-icon ${seenClass}"></i>` : ""}
+  </span>
 `;
 
 const textPreview = `
   <span class="msg-text clamp-text" data-full="${textHtml}" data-short="${shortText}">
     ${hasLong
-      ? shortText + '<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>'
-      : linkifyText(textHtml)}
+      ? shortText + meta + '<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>'
+      : linkifyText(textHtml) + meta}
   </span>
-  <div class="msg-meta-overlay">${meta}</div>
 `;
 
 bubble.innerHTML = `
