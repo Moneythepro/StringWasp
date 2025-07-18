@@ -1449,14 +1449,14 @@ body.dark .msg-meta {
 
 :root {
   --bubble-max-width: 88%;
-  --bubble-padding: 4px 8px;
-  --bubble-radius: 12px;
-  --bubble-margin: 1px 6px;
+  --bubble-padding: 2px 6px;          /* ↓ tighter vertically */
+  --bubble-radius: 10px;
+  --bubble-margin: 0px 4px;           /* ↓ no vertical spacing */
   --bubble-font-size: 13px;
-  --bubble-line-height: 1.2;
+  --bubble-line-height: 1.1;          /* ↓ tighter line height */
 
   --msg-font-size: 13px;
-  --msg-line-height: 1.3;
+  --msg-line-height: 1.2;
 
   --self-bubble-bg: #dcf8c6;
   --other-bubble-bg: #fff;
@@ -1465,7 +1465,7 @@ body.dark .msg-meta {
   --meta-font-size: 10px;
   --meta-color: #777;
   --meta-padding-right: 42px;
-  --meta-bottom: 3px;
+  --meta-bottom: 2px;
   --meta-right: 6px;
 
   --tick-size: 12px;
@@ -1476,7 +1476,7 @@ body.dark .msg-meta {
   --reply-color: #555;
   --reply-bg: #f7f7f7;
   --reply-border-color: #999;
-  --reply-max-height: 3.4em;
+  --reply-max-height: 3.2em;
 }
 
 /* Wrapper */
@@ -1484,7 +1484,7 @@ body.dark .msg-meta {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 1px 6px;
+  padding: 0px 4px;                  /* ↓ reduced vertical padding */
 }
 .message-bubble-wrapper.right {
   align-items: flex-end;
@@ -1524,9 +1524,9 @@ body.dark .msg-meta {
   font-size: var(--reply-font-size);
   color: var(--reply-color);
   background: var(--reply-bg) !important;
-  padding: 3px 6px;
+  padding: 2px 4px;                 /* ↓ tighter padding */
   border-left: 3px solid var(--reply-border-color);
-  margin-bottom: 3px;
+  margin-bottom: 2px;
   max-height: var(--reply-max-height);
   overflow: hidden;
   line-clamp: 3;
@@ -1563,10 +1563,10 @@ body.dark .msg-meta {
   word-break: break-word;
   font-size: var(--msg-font-size);
   line-height: var(--msg-line-height);
-  max-width: calc(100% - 50px); /* Ensures room for meta */
+  max-width: calc(100% - 50px);
 }
 
-/* Meta overlay (absolute, if needed) */
+/* Meta overlay */
 .msg-meta-overlay {
   position: absolute;
   bottom: var(--meta-bottom);
@@ -1579,7 +1579,7 @@ body.dark .msg-meta {
   pointer-events: none;
 }
 
-/* Meta inline (same line as text) */
+/* Meta inline */
 .msg-meta-inline {
   display: inline-flex;
   align-items: center;
