@@ -1560,7 +1560,7 @@ async function openThread(uid, name) {
           bubble.dataset.msgId = msg.id;
 
           const replyHtml = msg.replyTo && !isDeleted
-            ? `<div class="reply-to"><i data-lucide="corner-up-left"></i> ${escapeHtml(msg.replyTo.text || "")}</div>`
+            ? `<div class="reply-to clamp-text"><i data-lucide="corner-up-left"></i> ${escapeHtml(msg.replyTo.text || "")}</div>`
             : "";
 
           const url = extractFirstURL(decrypted);
@@ -1580,37 +1580,37 @@ async function openThread(uid, name) {
             }
           }
 
-          let textHtml = escapeHtml(decrypted);
-let shortText = textHtml.slice(0, 500);
-let hasLong = textHtml.length > 500;
+          const textHtml = escapeHtml(decrypted);
+          const shortText = textHtml.slice(0, 500);
+          const hasLong = textHtml.length > 500;
 
-const textPreview = `
-  <div class="msg-text">
-    <span class="msg-preview clamp-text" data-full="${textHtml}" data-short="${shortText}">
-      ${hasLong
-        ? shortText + '<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>'
-        : linkifyText(textHtml)}
-    </span>
-  </div>
-  ${linkPreviewHTML}
-`;
+          const textPreview = `
+            <div class="msg-text">
+              <span class="msg-preview clamp-text" data-full="${textHtml}" data-short="${shortText}">
+                ${hasLong
+                  ? shortText + '<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>'
+                  : linkifyText(textHtml)}
+              </span>
+            </div>
+            ${linkPreviewHTML}
+          `;
 
-const seenClass = msg.seenBy?.includes(currentThreadUser) ? "tick-seen" : "tick-sent";
+          const seenClass = msg.seenBy?.includes(currentThreadUser) ? "tick-seen" : "tick-sent";
 
-const meta = `
-  ${msg.timestamp?.toDate ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>` : ""}
-  ${msg.edited ? '<span class="edited-tag">(edited)</span>' : ""}
-  ${isSelf && !isDeleted ? `<i data-lucide="check-check" class="tick-icon ${seenClass}"></i>` : ""}
-`;
+          const meta = `
+            ${msg.timestamp?.toDate ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>` : ""}
+            ${msg.edited ? '<span class="edited-tag">(edited)</span>' : ""}
+            ${isSelf && !isDeleted ? `<i data-lucide="check-check" class="tick-icon ${seenClass}"></i>` : ""}
+          `;
 
-bubble.innerHTML = `
-  <div class="msg-content ${isDeleted ? "msg-deleted" : ""}">
-    ${replyHtml || ""}
-    ${textPreview}
-    <div class="msg-meta">${meta}</div>
-  </div>
-`;
-          
+          bubble.innerHTML = `
+            <div class="msg-content ${isDeleted ? "msg-deleted" : ""}">
+              ${replyHtml}
+              ${textPreview}
+              <div class="msg-meta">${meta}</div>
+            </div>
+          `;
+
           if (!isDeleted) {
             bubble.addEventListener("touchstart", handleTouchStart);
             bubble.addEventListener("touchmove", handleTouchMove);
