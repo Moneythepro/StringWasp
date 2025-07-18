@@ -1592,18 +1592,19 @@ const textPreview = `
 `;
 
           const seenClass = msg.seenBy?.includes(currentThreadUser) ? "tick-seen" : "tick-sent";
-          const meta = `
-            <span class="msg-time">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</span>
-            ${msg.edited ? '<span class="edited-tag">(edited)</span>' : ""}
-            ${isSelf && !isDeleted ? `<i data-lucide="check-check" class="tick-icon ${seenClass}"></i>` : ""}
-          `;
 
-          bubble.innerHTML = `
+const meta = `
+  ${msg.timestamp?.toDate ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>` : ""}
+  ${msg.edited ? '<span class="edited-tag">(edited)</span>' : ""}
+  ${isSelf && !isDeleted ? `<i data-lucide="check-check" class="tick-icon ${seenClass}"></i>` : ""}
+`;
+
+bubble.innerHTML = `
   <div class="msg-content ${isDeleted ? "msg-deleted" : ""}">
     ${replyHtml}
-    <div class="msg-row">
+    <div class="msg-text-row">
       <span class="msg-text">${textPreview}</span>
-      <div class="msg-meta">${meta}</div>
+      <span class="msg-meta">${meta}</span>
     </div>
   </div>
 `;
