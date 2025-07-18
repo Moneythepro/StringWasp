@@ -1341,3 +1341,44 @@ body.dark .chat-options-horizontal span:hover {
   border-radius: 10px;
   margin: 3px 0;
 }
+
+.message-bubble {
+  padding: 6px 9px;
+  border-radius: 10px;
+  max-width: 78%;
+  font-size: 14px;
+  margin: 3px 0;
+  background-color: var(--msg-bg, #e1ffc7);
+}
+.msg-text-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.msg-text {
+  flex: 1;
+  font-size: 14px;
+  word-break: break-word;
+  white-space: pre-wrap;
+  line-height: 1.4;
+}
+
+.msg-meta {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  color: #999;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.tick-icon {
+  width: 14px;
+  height: 14px;
+  margin-left: 2px;
+  color: #999;
+  vertical-align: middle;
+}
