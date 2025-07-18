@@ -1897,6 +1897,7 @@ async function sendThreadMessage() {
   const threadIdStr = threadId(currentUser.uid, currentThreadUser);
   const threadRef = db.collection("threads").doc(threadIdStr);
 
+  // ✅ Encrypt message
   const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
 
   const message = {
@@ -1907,7 +1908,7 @@ async function sendThreadMessage() {
     seenBy: [currentUser.uid]
   };
 
-  // Handle reply
+  // ✅ Handle reply
   if (replyingTo?.msgId && replyingTo?.text?.trim()) {
     message.replyTo = {
       msgId: replyingTo.msgId,
@@ -1915,56 +1916,57 @@ async function sendThreadMessage() {
     };
   }
 
-  // 🔍 Detect link & fetch preview
+  // ✅ Detect link & fetch preview
   const urlMatch = text.match(/https?:\/\/[^\s]+/);
   if (urlMatch) {
-    const preview = await fetchLinkPreview(urlMatch[0]);
-    if (preview?.title) {
-      message.preview = {
-        title: preview.title,
-        image: preview.image || "",
-        url: preview.url
-      };
+    try {
+      const preview = await fetchLinkPreview(urlMatch[0]);
+      if (preview?.title) {
+        message.preview = {
+          title: preview.title,
+          image: preview.image || "",
+          url: preview.url
+        };
+      }
+    } catch (err) {
+      console.warn("Preview fetch failed:", err);
     }
   }
 
-  // Clear input and reply
+  // ✅ Clear input without losing focus
   input.value = "";
   cancelReply();
 
-  threadRef.collection("messages").add(message)
-    .then(() => {
-      threadRef.set({
-        participants: [currentUser.uid, currentThreadUser],
-        names: {
-          [currentUser.uid]: fromName,
-          [currentThreadUser]: toName
-        },
-        lastMessage: text,
-        unread: {
-          [currentUser.uid]: 0,
-          [currentThreadUser]: firebase.firestore.FieldValue.increment(1)
-        },
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
+  try {
+    await threadRef.collection("messages").add(message);
 
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          input.focus({ preventScroll: true });
-        });
-      });
+    // ✅ Update thread metadata
+    await threadRef.set({
+      participants: [currentUser.uid, currentThreadUser],
+      names: {
+        [currentUser.uid]: fromName,
+        [currentThreadUser]: toName
+      },
+      lastMessage: text,
+      unread: {
+        [currentUser.uid]: 0,
+        [currentThreadUser]: firebase.firestore.FieldValue.increment(1)
+      },
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
 
-      console.log("📨 Thread message sent to:", currentThreadUser, "Text:", text);
-      setTimeout(() => scrollToBottomThread(true), 100);
-    })
-    .catch(err => {
-      console.error("❌ Send failed:", err.message || err);
-      alert("❌ Failed to send message.");
+    // ✅ Keep keyboard open and scroll down smoothly
+    requestAnimationFrame(() => {
+      input.focus({ preventScroll: true });
     });
+    setTimeout(() => scrollToBottomThread(true), 150);
+
+    console.log("📨 Thread message sent:", text);
+  } catch (err) {
+    console.error("❌ Send failed:", err.message || err);
+    alert("❌ Failed to send message.");
+  }
 }
-
-
-
 
 function listenMessages() {
   const messagesDiv = document.getElementById("groupMessages");
