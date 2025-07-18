@@ -1608,7 +1608,7 @@ bubble.innerHTML = `
     </div>
   </div>
 `;
-
+document.querySelector('.message-bubble').getBoundingClientRect()
           if (!isDeleted) {
             bubble.addEventListener("touchstart", handleTouchStart);
             bubble.addEventListener("touchmove", handleTouchMove);
