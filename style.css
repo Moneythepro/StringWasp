@@ -1341,3 +1341,28 @@ body.dark .msg-meta {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+.message-bubble {
+  padding: 6px 9px !important;
+  margin: 2px 0 !important;
+  font-size: 14px !important;
+  display: block !important;
+  max-width: 78% !important;
+  border-radius: 10px !important;
+}
+
+.msg-text {
+  display: inline !important;
+  margin-right: 6px !important;
+  font-size: 14px !important;
+  white-space: pre-wrap !important;
+  line-height: 1.4 !important;
+}
+
+.msg-meta {
+  display: inline-flex !important;
+  align-items: center !important;
+  font-size: 11px !important;
+  margin-left: 0 !important;
+  gap: 4px !important;
+}
