@@ -143,12 +143,35 @@
         </div>
 
         <footer class="chat-input-bar">
-          <button class="icon-btn" onclick="triggerFileInput('thread')" aria-label="Attach File"><i data-lucide="paperclip"></i></button>
-          <input type="file" id="threadFile" class="visually-hidden" onchange="uploadFile('thread')" />
-          <button class="icon-btn" onclick="shareFileViaTorrent('dm')" aria-label="Send via Torrent"><i data-lucide="globe"></i></button>
-          <div id="replyPreview" class="reply-box" style="display:none;"></div>
-          <input id="threadInput" type="text" placeholder="Type a message…" autocomplete="off" autocapitalize="sentences" enterkeyhint="send" aria-label="Message input" />
-          <button type="button" id="sendButton" class="icon-btn" onclick="sendThreadMessage()" aria-label="Send"><i data-lucide="send"></i></button>
+  <button class="icon-btn" onclick="triggerFileInput('thread')" aria-label="Attach File">
+    <i data-lucide="paperclip"></i>
+  </button>
+
+  <input type="file" id="threadFile" class="visually-hidden" onchange="uploadFile('thread')" />
+
+  <button class="icon-btn" onclick="shareFileViaTorrent('dm')" aria-label="Send via Torrent">
+    <i data-lucide="globe"></i>
+  </button>
+
+  <button class="icon-btn" id="emojiToggle" aria-label="Emoji Picker">
+    <i data-lucide="smile"></i>
+  </button>
+
+  <div id="replyPreview" class="reply-box" style="display:none;"></div>
+
+  <input
+    id="threadInput"
+    type="text"
+    placeholder="Type a message…"
+    autocomplete="off"
+    autocapitalize="sentences"
+    enterkeyhint="send"
+    aria-label="Message input"
+  />
+
+  <button type="button" id="sendButton" class="icon-btn hidden" aria-label="Send" disabled>
+    <i data-lucide="send"></i>
+  </button>
         </footer>
       </div>
     </div>
