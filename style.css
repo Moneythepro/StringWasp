@@ -998,7 +998,7 @@ body.dark .chat-options-horizontal span:hover {
   opacity: 1;
 }
 
-/* ✅ WhatsApp-Style Reply Box Above Input */
+/* ✅ Compact WhatsApp-Style Reply Box Above Input */
 #replyPreview {
   position: absolute;
   bottom: 62px;
@@ -1011,10 +1011,8 @@ body.dark .chat-options-horizontal span:hover {
   z-index: 2;
   font-size: 14px;
   font-family: sans-serif;
-  box-shadow: 0 -1px 2px rgba(0,0,0,0.08);
+  box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.08);
 }
-
-/* ✂️ Restrict reply text to 3 lines with fade in preview */
 #replyPreview .reply-text {
   position: relative;
   font-weight: 500;
@@ -1040,46 +1038,22 @@ body.dark .chat-options-horizontal span:hover {
   background: linear-gradient(to bottom, rgba(240, 240, 240, 0), #f0f0f0);
 }
 
-.reply-box-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 6px 8px;
-  border-left: 3px solid #4caf50;
-  background-color: #fff;
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-  flex: 1;
-  flex-shrink: 0;
-  overflow: hidden;
-  min-height: 36px;
-}
-
-.reply-label {
-  font-size: 12px;
-  color: #555;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* 🧵 Reply inside bubble - limit to 3 lines */
+/* 🧵 Compact reply inside bubble */
 .reply-to {
   background: #e9e9e9;
   border-left: 3px solid #4caf50;
-  padding: 4px 6px;
-  margin-bottom: 4px;
+  padding: 2px 4px;
+  margin-bottom: 2px;
   font-size: 12px;
   color: #555;
   border-radius: 4px;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.3em;
-  max-height: calc(1.3em * 3);
+  max-height: calc(1.3em * 2);
   white-space: normal;
   position: relative;
 }
@@ -1093,27 +1067,27 @@ body.dark .chat-options-horizontal span:hover {
   background: linear-gradient(to bottom, rgba(233, 233, 233, 0), #e9e9e9);
 }
 
-/* ✅ Seen and Sent Tick Icons */
-.tick-icon {
-  width: 14px;
-  height: 14px;
-  margin-left: 6px;
-  vertical-align: middle;
-  color: #999;
-}
-.tick-sent {
-  color: #999;
-}
-.tick-seen {
-  color: #0b93f6 !important;
-}
-
 /* ✏️ Edited tag */
 .edited-tag {
   font-size: 10px;
   color: #999;
   margin-left: 5px;
   vertical-align: middle;
+}
+
+/* ✅ Seen and Sent Tick Icons */
+.tick-icon {
+  width: 14px !important;
+  height: 14px !important;
+  margin-left: 2px !important;
+  vertical-align: middle !important;
+  color: #999 !important;
+}
+.tick-sent {
+  color: #999;
+}
+.tick-seen {
+  color: #0b93f6 !important;
 }
 
 /* 🔗 Link Preview */
@@ -1163,9 +1137,7 @@ body.dark .chat-options-horizontal span:hover {
   opacity: 0.7;
 }
 
-/* 💬 Message bubbles (no overflow growth) */
-
-/* 📦 Reply swipe animation wrapper */
+/* 📦 Message Swipe Wrapper */
 .message-bubble-wrapper {
   transition: transform 0.25s ease;
   position: relative;
@@ -1174,7 +1146,7 @@ body.dark .chat-options-horizontal span:hover {
   transform: translateX(12px);
 }
 
-/* 🔤 Message text */
+/* 🔤 Message Text & Links */
 .msg-text a {
   color: #2979ff;
   text-decoration: underline;
@@ -1188,8 +1160,7 @@ body.dark .chat-options-horizontal span:hover {
   word-break: break-word;
 }
 
-
-/* ✅ Show More (optional toggle) */
+/* ✅ Show More Button */
 .show-more {
   display: inline-block;
   color: var(--primary-color, #4fc3f7);
@@ -1199,7 +1170,7 @@ body.dark .chat-options-horizontal span:hover {
   font-weight: 500;
 }
 
-/* 🔽 Reply animation slide */
+/* 🔽 Reply Input Slide In */
 .reply-box {
   display: flex;
   flex-direction: column;
@@ -1216,7 +1187,7 @@ body.dark .chat-options-horizontal span:hover {
   to { transform: translateX(0); opacity: 1; }
 }
 
-/* ✨ Scroll-to-reply flash */
+/* ✨ Scroll-to-reply Flash */
 .highlighted-reply {
   animation: flashHighlight 1.5s ease;
   background-color: #fff59d !important;
@@ -1228,7 +1199,7 @@ body.dark .chat-options-horizontal span:hover {
   100% { background-color: transparent; }
 }
 
-/* ❌ Close Button */
+/* ❌ Close Reply Button */
 .reply-close {
   background: #e0e0e0;
   border: none;
@@ -1245,7 +1216,7 @@ body.dark .chat-options-horizontal span:hover {
   font-size: 14px;
   color: #555;
   transition: background 0.2s ease;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
 }
 .reply-close:hover {
   background: #d6d6d6;
@@ -1256,99 +1227,31 @@ body.dark .chat-options-horizontal span:hover {
   color: #555;
 }
 
-.msg-row {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-
-.msg-text-row {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-
-.tick-icon {
-  width: 14px;
-  height: 14px;
-  margin-left: 2px;
-  color: #999;
-  vertical-align: middle;
-}
-
-/* === MESSAGE BUBBLES: WhatsApp Compact === */
-.message-bubble {
-  padding: 6px 9px;
-  border-radius: 10px;
-  max-width: 78%;
-  font-size: 14px;
-  margin: 2px 0;
-  background-color: var(--msg-bg, #e1ffc7);
-  position: relative;
-  will-change: transform;
-  word-break: break-word;
-  display: block; /* ✅ Keep block layout */
-}
-
-.msg-bubble.mine {
-  align-self: flex-end;
-  background: #dcf8c6;
-  border-bottom-right-radius: 4px;
-}
-.msg-bubble.theirs {
-  align-self: flex-start;
-  background: #fff;
-  border-bottom-left-radius: 4px;
-}
-body.dark .msg-bubble.mine {
-  background: #056162;
-  color: #fff;
-}
-body.dark .msg-bubble.theirs {
-  background: #1f1f1f;
-  color: #f0f0f0;
-}
-
-/* Message text and meta inline */
-.msg-content {
-  display: inline-block;
-  width: 100%;
-  position: relative;
-}
-
-.msg-meta {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  color: #999;
-  gap: 4px;
-  flex-shrink: 0;
-  vertical-align: bottom;
-  margin-left: 0; /* ✅ remove any margin */
-}
-body.dark .msg-meta {
-  color: #aaa;
-}
-
-/* Smooth fade-in animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
+/* === WhatsApp Compact Bubble Layout === */
 .message-bubble {
   padding: 6px 9px !important;
   margin: 2px 0 !important;
   font-size: 14px !important;
-  display: block !important;
-  max-width: 78% !important;
   border-radius: 10px !important;
+  max-width: 78% !important;
+  background-color: var(--msg-bg, #e1ffc7) !important;
+  display: block !important;
+  word-break: break-word !important;
+  position: relative !important;
+}
+
+.msg-content {
+  display: inline-block !important;
+  width: 100% !important;
+  position: relative !important;
+}
+
+.msg-text-row {
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+  flex-wrap: wrap !important;
 }
 
 .msg-text {
@@ -1363,6 +1266,35 @@ body.dark .msg-meta {
   display: inline-flex !important;
   align-items: center !important;
   font-size: 11px !important;
+  color: #999 !important;
   margin-left: 0 !important;
   gap: 4px !important;
+  vertical-align: bottom !important;
+}
+body.dark .msg-meta {
+  color: #aaa !important;
+}
+
+/* Sent/Received Bubble Colors */
+.message-bubble.left {
+  background-color: #fff !important;
+  align-self: flex-start !important;
+}
+.message-bubble.right {
+  background-color: #dcf8c6 !important;
+  align-self: flex-end !important;
+}
+body.dark .message-bubble.left {
+  background-color: #1f1f1f !important;
+  color: #f0f0f0 !important;
+}
+body.dark .message-bubble.right {
+  background-color: #056162 !important;
+  color: #fff !important;
+}
+
+/* 🌀 Fade In Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
