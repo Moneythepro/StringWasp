@@ -1502,6 +1502,10 @@ body.dark .msg-meta {
 
   --bubble-anim-duration: 0.18s;
   --bubble-anim-ease: cubic-bezier(.2,.8,.4,1);
+
+  /* Avatar size for slim look */
+  --pfp-size: 28px;
+  --pfp-gap: 6px;
 }
 
 /* ---------- DARK MODE OVERRIDES ---------- */
@@ -1540,6 +1544,26 @@ body.dark {
   align-items: flex-end;
 }
 
+/* For avatar alignment */
+.message-bubble-wrapper.has-pfp {
+  flex-direction: row;
+  align-items: flex-end;
+  gap: var(--pfp-gap);
+}
+.message-bubble-wrapper.has-pfp.right {
+  flex-direction: row-reverse;
+}
+.bubble-pfp {
+  width: var(--pfp-size);
+  height: var(--pfp-size);
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+.bubble-pfp:active { transform: scale(0.95); }
+
 /* Compact vertical gap when grouped */
 .message-bubble-wrapper.grp-mid,
 .message-bubble-wrapper.grp-end {
@@ -1557,6 +1581,7 @@ body.dark {
   padding: var(--bubble-padding);
   font-size: var(--bubble-font-size);
   line-height: var(--bubble-line-height);
+  font-weight: 500; /* Slightly bold */
   background: var(--other-bubble-bg);
   border-radius: var(--bubble-radius);
   box-shadow: var(--bubble-shadow);
@@ -1637,7 +1662,6 @@ body.dark {
 
 /* =========================================================
  * BUBBLE TAIL
- * Show tail only on grp-end & grp-single (WA behavior)
  * ======================================================= */
 .message-bubble::after {
   content: "";
@@ -1659,10 +1683,8 @@ body.dark {
   right: -6px;
   border-right: 0;
 }
-/* Hide on start + mid */
 .message-bubble.grp-start::after,
 .message-bubble.grp-mid::after { display: none; }
-/* Tail shows on grp-end + grp-single */
 
 /* =========================================================
  * MESSAGE CONTENT
@@ -1673,16 +1695,12 @@ body.dark {
   gap: 2px;
   padding: 0;
 }
-
-/* no reserved bottom padding now; meta is inline */
 .msg-inner-wrapper {
   display: inline-block;
   max-width: 100%;
   position: static;
   padding: 0;
 }
-
-/* inline row: text + meta */
 .msg-text-wrapper {
   display: flex;
   align-items: flex-end;
@@ -1694,8 +1712,6 @@ body.dark {
 .message-bubble.from-self .msg-text-wrapper {
   justify-content: flex-end;
 }
-
-/* Actual text */
 .msg-text {
   font-size: var(--msg-font-size);
   line-height: var(--msg-line-height);
@@ -1709,8 +1725,6 @@ body.dark {
   height: 1.3em;
   vertical-align: middle;
 }
-
-/* Emoji-only scaling */
 .message-bubble.emoji-only .msg-text {
   font-size: calc(var(--msg-font-size) * 1.8);
   line-height: 1.1;
@@ -1737,8 +1751,6 @@ body.dark {
 .msg-time {
   font-size: 0.75rem;
 }
-
-/* Tick icon */
 .tick-icon {
   width: var(--tick-size);
   height: var(--tick-size);
@@ -1746,8 +1758,6 @@ body.dark {
   display: inline-block;
   line-height: 1;
 }
-
-/* Status coloring */
 .msg-meta-inline[data-status="sent"] .tick-icon { color: var(--tick-sent-color); }
 .msg-meta-inline[data-status="delivered"] .tick-icon { color: var(--tick-delivered-color); }
 .msg-meta-inline[data-status="seen"] .tick-icon { color: var(--tick-seen-color); }
@@ -1772,7 +1782,7 @@ body.dark {
 .reply-to:hover { text-decoration: underline; }
 
 /* =========================================================
- * HOVER TIMESTAMP TOOLTIP (fallback)
+ * HOVER TIMESTAMP TOOLTIP
  * ======================================================= */
 .message-bubble:hover::before {
   content: attr(data-time);
@@ -1817,8 +1827,6 @@ body.dark {
   border-color: var(--tick-seen-color);
   background: #fff;
 }
-
-/* Emoji Button */
 #emojiToggleBtn { order: -1; }
 .emoji-btn {
   margin-right: 4px;
@@ -1828,8 +1836,6 @@ body.dark {
   display: flex;
   align-items: center;
 }
-
-/* DARK MODE INPUT */
 body.dark .chat-input-bar { background: var(--inputbar-bg); border-top-color: #333; }
 body.dark #threadInput { background: #222; color: #eee; border-color: #444; }
 body.dark .chat-input-bar .icon-btn { color: #bbb; }
@@ -1862,9 +1868,9 @@ body, html {
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ===========================
-   Developer Badge (Verified Tick)
-   =========================== */
+/* =========================================================
+ * Developer Badge
+ * ======================================================= */
 .dev-badge {
   display: inline-flex;
   align-items: center;
@@ -1873,16 +1879,14 @@ body, html {
   width: 16px;
   height: 16px;
   margin-left: 4px;
-  color: #1da1f2; /* Instagram/Twitter style verified blue */
+  color: #1da1f2;
   stroke-width: 2.2px;
   transition: transform 0.2s ease, color 0.2s ease;
 }
-
 .dev-badge:hover {
   transform: scale(1.2);
   color: #0d8ddb;
 }
-
 .search-username .dev-badge,
 .username-display .dev-badge,
 .chat-username .dev-badge,
@@ -1891,8 +1895,6 @@ body, html {
   width: 16px;
   height: 16px;
 }
-
-/* Message author label (used for group-start / single bubbles) */
 .msg-author {
   font-size: var(--meta-font-size);
   line-height: 1.1;
