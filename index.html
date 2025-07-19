@@ -134,6 +134,20 @@
           <span onclick="exportChat()">Export</span>
           <span onclick="deleteChat()">Delete</span>
         </div>
+        <!-- Profile Preview Modal -->
+<div id="profilePreviewModal" class="profile-modal hidden" onclick="closeProfilePreview(event)">
+  <div class="profile-modal-content">
+    <img id="profilePreviewPic" class="profile-preview-pic" src="" alt="Profile Pic">
+    <div class="profile-preview-name" id="profilePreviewName">User</div>
+    <div class="profile-preview-status" id="profilePreviewStatus">Loading...</div>
+    <div class="profile-preview-actions">
+      <button onclick="viewUserFullProfile()">View Profile</button>
+      <button onclick="viewMedia()">Media</button>
+      <button onclick="blockUser()">Block</button>
+      <button onclick="exportChat()">Export Chat</button>
+    </div>
+  </div>
+</div>
       </header>
 
       <div class="thread-main">
