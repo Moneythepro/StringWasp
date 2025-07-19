@@ -8,6 +8,7 @@ const urlsToCache = [
   "/manifest.json",
   "/favicon.png",
   "/notif.mp3",
+  "/verified.json", // Added for badge data
   "https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js",
   "https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js",
   "https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js",
