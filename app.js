@@ -2128,7 +2128,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
     const replyBox = !isDeleted ? buildReplyStrip(msg) : "";
 
-    // unified meta (always present)
+    // unified meta (always present; short HH:MM; tick only if self)
     const metaHtml = buildThreadMetaInline(msg, isSelf, otherUid);
 
     const textHtml  = escapeHtml(displayText);
@@ -2169,7 +2169,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       else wrapper.style.marginLeft = indent;
     }
 
-    const dataTime = msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : "";
+    const dataTime = msg.timestamp?.toDate ? formatTimeHM(msg.timestamp.toDate()) : "";
     wrapper.innerHTML = `
       ${pfpHtml}
       <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""} ${msg._grp || ""}"
@@ -2179,7 +2179,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
         ${replyBox}
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
           <div class="msg-text-wrapper">
-            <span class="msg-text clamp-text" data-full="${textHtml}" data-short="${shortText}">
+            <span class="msg-text" data-full="${textHtml}" data-short="${shortText}">
               ${content}
             </span>
             ${metaHtml}
