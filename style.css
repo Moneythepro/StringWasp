@@ -1931,12 +1931,23 @@ body {
   gap: 6px;
   border-top: 1px solid #ccc;
   background: var(--inputbar-bg);
-  position: relative; /* Needed for absolute emoji inside */
+  position: relative;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  font-size: 1.4em;
+  color: #444;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
 }
 
 #threadInput {
   flex: 1;
-  padding: 10px 40px 10px 14px; /* right padding to fit emoji inside */
+  padding: 10px 40px 10px 14px;
   font-size: 15px;
   border-radius: 8px;
   border: 1px solid #d1d1d6;
@@ -1965,12 +1976,31 @@ body {
   padding: 0;
   font-size: 1.3em;
   cursor: pointer;
-  color: var(--fg-muted);
+  color: #444;
   display: flex;
   align-items: center;
   z-index: 2;
 }
 
+/* Dark mode styles */
+body.dark .chat-input-bar {
+  background: var(--inputbar-bg);
+  border-top-color: #333;
+}
+body.dark .icon-btn {
+  color: #bbb;
+}
+body.dark #threadInput {
+  background: #1c1c1e;
+  color: #fff;
+  border-color: #3a3a3c;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.05);
+}
+body.dark #threadInput:focus {
+  border-color: #0a84ff;
+  background: #2c2c2e;
+  box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.2);
+}
 body.dark #emojiToggleBtn {
   color: #aaa;
 }
