@@ -1,4 +1,4 @@
-const CACHE_NAME = "stringwasp-v1.1";
+const CACHE_NAME = "stringwasp-v1.2"; // Bump version to force update
 const urlsToCache = [
   "/",
   "/index.html",
@@ -14,28 +14,38 @@ const urlsToCache = [
   "https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"
 ];
 
-self.addEventListener("install", event => {
+// Install and cache files
+self.addEventListener("install", (event) => {
+  self.skipWaiting(); // Activate new SW immediately
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(urlsToCache);
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
+  );
+});
+
+// Fetch strategy: network-first for verified.json and dynamic files
+self.addEventListener("fetch", (event) => {
+  const requestURL = new URL(event.request.url);
+
+  // Always fetch latest verified.json
+  if (requestURL.pathname.endsWith("verified.json")) {
+    event.respondWith(fetch(event.request, { cache: "no-store" }));
+    return;
+  }
+
+  // Cache-first fallback for other files
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
     })
   );
 });
 
-self.addEventListener("fetch", event => {
-  event.respondWith(
-    caches.match(event.request).then(response =>
-      response || fetch(event.request)
-    )
-  );
-});
-
-self.addEventListener("activate", event => {
+// Activate and remove old caches
+self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-      )
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
     )
   );
+  self.clients.claim();
 });
