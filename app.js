@@ -1746,7 +1746,7 @@ async function sendThreadMessage() {
     return;
   }
 
-  input.value = ""; // clear to avoid dup send
+  input.value = ""; // clear to avoid duplicate send
   cancelReply();
   replyingTo = null;
 
@@ -1757,18 +1757,23 @@ async function sendThreadMessage() {
   const threadIdStr = threadId(currentUser.uid, currentThreadUser);
   const threadRef = db.collection("threads").doc(threadIdStr);
 
-  // Encrypt
+  // Encrypt text
   const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
+
+  // Use local timestamp for immediate render
+  const localTimestamp = new Date();
 
   const message = {
     text: encryptedText,
     from: currentUser.uid,
     fromName,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    seenBy: [currentUser.uid]
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(), // actual server timestamp
+    localTime: localTimestamp.getTime(),  // temporary local timestamp
+    seenBy: [currentUser.uid],
+    status: "pending" // to mark as sending
   };
 
-  // Reply
+  // Add reply data
   if (replyingTo?.msgId && replyingTo?.text?.trim()) {
     message.replyTo = {
       msgId: replyingTo.msgId,
@@ -1776,7 +1781,7 @@ async function sendThreadMessage() {
     };
   }
 
-// Link preview (best effort, one)
+  // Add link preview (best effort)
   const urlMatch = rawText.match(/https?:\/\/[^\s]+/);
   if (urlMatch && urlMatch[0]) {
     try {
@@ -1792,6 +1797,9 @@ async function sendThreadMessage() {
       console.warn("⚠️ Link preview fetch failed:", err);
     }
   }
+
+  // **Optimistic bubble render**
+  renderOptimisticBubble(text, localTimestamp);
 
   try {
     await threadRef.collection("messages").add(message);
@@ -1821,19 +1829,31 @@ async function sendThreadMessage() {
   }
 }
 
-/* Bind globals used in openThread */
-if (!handleSendClick) {
-  handleSendClick = () => sendThreadMessage();
-}
-if (typeof handleThreadKey !== "function") {
-  window.handleThreadKey = function handleThreadKey(e) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendThreadMessage();
-    }
-  };
-}
+function renderOptimisticBubble(text, localTime) {
+  const area = document.getElementById("threadMessages");
+  if (!area) return;
 
+  const wrapper = document.createElement("div");
+  wrapper.className = "message-bubble-wrapper right from-self grp-single pending";
+
+  wrapper.innerHTML = `
+    <div class="message-bubble right" data-msg-id="temp-${localTime}">
+      <div class="msg-inner-wrapper">
+        <div class="msg-text-wrapper">
+          <span class="msg-text">${linkifyText(escapeHtml(text))}</span>
+          <span class="msg-meta-inline" data-status="pending">
+            <span class="msg-time">${timeSince(localTime)}</span>
+            <i data-lucide="clock" class="tick-icon tick-pending"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  area.appendChild(wrapper);
+  setTimeout(() => scrollToBottomThread(true), 40);
+  if (typeof lucide !== "undefined") lucide.createIcons();
+}
 /* =========================================================
  * Helpers for Enhanced Bubble Rendering
  * ======================================================= */
