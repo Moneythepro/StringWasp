@@ -1869,7 +1869,7 @@ function computeGroupClasses(msgs, gapMs = 5 * 60 * 1000) {
 /* ---------------------------------------------------------
  * Global lightweight user cache (uid -> {avatar, username})
  * --------------------------------------------------------- */
-const USER_CACHE = USER_CACHE || {};
+const USER_CACHE = {};
 
 /* ---------------------------------------------------------
  * Self/other meta (unchanged except minor formatting)
