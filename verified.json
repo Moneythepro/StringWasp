@@ -1,6 +1,17 @@
 {
-  "developer": ["moneythepro"],
-  "gold": ["empty07", "none"],
-  "silver": ["jamesR"],
-  "bronze": ["none"]
+  "developer": [
+    "moneythepro"        // Supreme developer badge (crown icon)
+  ],
+  "gold": [
+    "empty07",
+    "jamesR"             // Gold verified users
+  ],
+  "silver": [
+    "user123",
+    "coolguy"            // Silver verified users
+  ],
+  "bronze": [
+    "demoUser",
+    "tester01"           // Bronze verified users
+  ]
 }
