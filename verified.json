@@ -1,7 +1,6 @@
 {
-  "verified": [
-    "moneythepro",
-    "empty07",
-    "jamesR"
-  ]
+  "developer": ["moneythepro"],
+  "gold": ["empty07", "none"],
+  "silver": ["jamesR"],
+  "bronze": ["none"]
 }
