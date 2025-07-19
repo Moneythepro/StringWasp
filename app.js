@@ -1837,12 +1837,12 @@ function renderOptimisticBubble(text, localTime) {
   wrapper.className = "message-bubble-wrapper right from-self grp-single pending";
 
   wrapper.innerHTML = `
-    <div class="message-bubble right" data-msg-id="temp-${localTime}">
+    <div class="message-bubble right" data-msg-id="temp-${localTime.getTime()}">
       <div class="msg-inner-wrapper">
         <div class="msg-text-wrapper">
           <span class="msg-text">${linkifyText(escapeHtml(text))}</span>
           <span class="msg-meta-inline" data-status="pending">
-            <span class="msg-time">${timeSince(localTime)}</span>
+            <span class="msg-time">just now</span>
             <i data-lucide="clock" class="tick-icon tick-pending"></i>
           </span>
         </div>
@@ -2038,6 +2038,51 @@ async function getUserProfileCached(uid) {
  * Render snapshot -> DOM (Direct Message Thread)
  * Adds slim circular PFP at grp-start/single; indents followups.
  * --------------------------------------------------------- */
+function buildThreadMetaInline(msg, isSelf, otherUid) {
+  // choose status & icon
+  let status = "other";
+  let icon = "";
+  let tickClass = "";
+  if (isSelf) {
+    status = "sent";
+    icon = "check";
+    tickClass = "tick-sent";
+    if (msg.deliveredAt) {
+      status = "delivered";
+      icon = "check-check";
+      tickClass = "tick-sent";
+    }
+    if (Array.isArray(msg.seenBy) && msg.seenBy.includes(otherUid)) {
+      status = "seen";
+      icon = "check-check";
+      tickClass = "tick-seen";
+    }
+  }
+
+  // time text (fallbacks)
+  let tText = "...";
+  if (msg.timestamp?.toDate) {
+    tText = timeSince(msg.timestamp.toDate());
+  } else if (msg.localTime) {
+    tText = "just now";
+  }
+
+  // icon html: keep a hidden spacer for non-self so width is constant
+  const iconHtml = isSelf
+    ? `<i data-lucide="${icon}" class="tick-icon ${tickClass}"></i>`
+    : `<span class="tick-hidden"></span>`;
+
+  // data-pending attr if no server time yet (used to dim)
+  const pendingAttr = msg.timestamp?.toDate ? "0" : "1";
+
+  return `
+    <span class="msg-meta-inline" data-status="${status}" data-pending="${pendingAttr}">
+      <span class="msg-time">${tText}</span>
+      ${iconHtml}
+    </span>
+  `;
+}
+
 async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, isInitial }) {
   if (!area) return;
 
@@ -2075,56 +2120,61 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
     const replyBox = !isDeleted ? buildReplyStrip(msg) : "";
 
-    const meta = isSelf && !isDeleted
-      ? buildTickMeta(msg, otherUid)
-      : buildOtherMeta(msg);
+    // unified meta (always present)
+    const metaHtml = buildThreadMetaInline(msg, isSelf, otherUid);
 
     const textHtml  = escapeHtml(displayText);
     const shortText = textHtml.slice(0, 500);
     const hasLong   = textHtml.length > 500;
-    const content   = hasLong
-      ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
-      : linkifyText(textHtml);
+    const content   = isDeleted
+      ? deletedHtml
+      : hasLong
+        ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
+        : linkifyText(textHtml);
 
     let linkPreviewHTML = "";
-    if (msg.preview) {
-      linkPreviewHTML = buildLinkPreviewHTML(msg.preview, msg.preview.url);
-    } else if (!isDeleted) {
-      const url = extractFirstURL(displayText);
-      if (url) {
-        try {
-          const preview = await fetchLinkPreview(url);
-          if (preview?.title || preview?.image) {
-            linkPreviewHTML = buildLinkPreviewHTML(preview, url);
-          }
-        } catch (_) {}
+    if (!isDeleted) {
+      if (msg.preview) {
+        linkPreviewHTML = buildLinkPreviewHTML(msg.preview, msg.preview.url);
+      } else {
+        const url = extractFirstURL(displayText);
+        if (url) {
+          try {
+            const preview = await fetchLinkPreview(url);
+            if (preview?.title || preview?.image) {
+              linkPreviewHTML = buildLinkPreviewHTML(preview, url);
+            }
+          } catch (_) {}
+        }
       }
     }
 
     const wrapper = document.createElement("div");
-    wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}`;
-    if (showPfp) wrapper.classList.add("has-pfp");
+    wrapper.className =
+      `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}` +
+      (showPfp ? " has-pfp" : "");
 
-    // indent follow-up bubbles that *don't* show a pfp
+    // indent follow-ups (no avatar) – inline fallback
     if (!showPfp) {
       const indent = "calc(var(--pfp-size) + var(--pfp-gap))";
       if (isSelf) wrapper.style.marginRight = indent;
       else wrapper.style.marginLeft = indent;
     }
 
+    const dataTime = msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : "";
     wrapper.innerHTML = `
       ${pfpHtml}
       <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""} ${msg._grp || ""}"
            data-msg-id="${msg.id}"
-           data-time="${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}">
+           data-time="${dataTime}">
         ${authorHtml}
         ${replyBox}
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
           <div class="msg-text-wrapper">
             <span class="msg-text clamp-text" data-full="${textHtml}" data-short="${shortText}">
-              ${isDeleted ? deletedHtml : content}
+              ${content}
             </span>
-            ${!isDeleted ? meta : ""}
+            ${metaHtml}
           </div>
           ${linkPreviewHTML}
         </div>
@@ -2146,7 +2196,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
     frag.appendChild(wrapper);
 
-    // seen
+    // seen receipt
     if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
       db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
         .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
@@ -2159,11 +2209,36 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
   if (typeof lucide !== "undefined") lucide.createIcons();
 
   if (isInitial) {
-    // handled elsewhere
+    // initial scroll handled upstream
   } else if (isNearBottom) {
     setTimeout(() => scrollToBottomThread(true), 40);
   } else if (typeof distFromBottom === "number") {
     setTimeout(() => { area.scrollTop = area.scrollHeight - distFromBottom; }, 0);
+  }
+}
+
+function upgradeMetaInline(msgId, timeText, status, icon, tickClass) {
+  const bubble = document.querySelector(`.message-bubble[data-msg-id="${msgId}"]`);
+  if (!bubble) return;
+  const metaEl = bubble.querySelector(".msg-meta-inline");
+  if (!metaEl) return;
+
+  metaEl.dataset.status = status;
+  metaEl.dataset.pending = "0";
+  const tEl = metaEl.querySelector(".msg-time");
+  if (tEl) tEl.textContent = timeText;
+
+  if (icon) {
+    let iEl = metaEl.querySelector(".tick-icon");
+    if (!iEl) {
+      // existed as spacer
+      metaEl.insertAdjacentHTML("beforeend",
+        `<i data-lucide="${icon}" class="tick-icon ${tickClass}"></i>`);
+    } else {
+      iEl.setAttribute("data-lucide", icon);
+      iEl.className = `tick-icon ${tickClass}`;
+    }
+    if (typeof lucide !== "undefined") lucide.createIcons();
   }
 }
 
