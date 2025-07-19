@@ -2307,8 +2307,6 @@ async function sendThreadMessage() {
  * PART 3: GROUP CHAT
  * ======================================================= */
 
-let unsubscribeMessages = null;
-
 /* ---------- Listen to Group Messages ---------- */
 function listenMessages() {
   const messagesDiv = document.getElementById("groupMessages");
