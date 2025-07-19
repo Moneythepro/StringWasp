@@ -1448,8 +1448,7 @@ body.dark .msg-meta {
 }
 
 /* =========================================================
- * StringWasp Chat Bubbles (Enhanced / WA-Style)
- * Drop-in module: vars + bubble + input bar
+ * StringWasp Chat Bubbles (Enhanced / WA-Style • Inline Meta)
  * ======================================================= */
 
 /* ---------- ROOT VARIABLES ---------- */
@@ -1458,9 +1457,14 @@ body.dark .msg-meta {
   --bubble-padding-y: 4px;
   --bubble-padding-x: 8px;
   --bubble-padding: var(--bubble-padding-y) var(--bubble-padding-x);
+
+  /* Base corner shapes (1st bubble in a stack) */
   --bubble-radius: 16px 16px 16px 0px;
   --bubble-radius-right: 16px 16px 0px 16px;
-  --bubble-radius-mid: 6px; /* inner joints when grouped */
+
+  /* Inner joints when grouped (WA look = tighter) */
+  --bubble-radius-mid: 4px;
+
   --bubble-gap-y: 2px;      /* vertical gap between same-sender msgs */
   --bubble-margin: 4px 0px; /* base gap between diff senders */
 
@@ -1541,8 +1545,6 @@ body.dark {
 .message-bubble-wrapper.grp-end {
   margin-top: var(--bubble-gap-y);
 }
-
-/* Reset bottom gap inside long stacks */
 .message-bubble-wrapper.grp-mid {
   margin-bottom: var(--bubble-gap-y);
 }
@@ -1577,85 +1579,65 @@ body.dark {
 }
 
 /* Press feedback */
-.message-bubble:active {
-  transform: scale(.98);
-}
+.message-bubble:active { transform: scale(.98); }
 .message-bubble.left:active,
-.message-bubble.from-other:active {
-  background: var(--other-bubble-bg-press);
-}
+.message-bubble.from-other:active { background: var(--other-bubble-bg-press); }
 .message-bubble.right:active,
-.message-bubble.from-self:active {
-  background: var(--self-bubble-bg-press);
-}
+.message-bubble.from-self:active { background: var(--self-bubble-bg-press); }
 
 /* =========================================================
- * GROUPED BUBBLE CORNER SMOOTHING
- * Add grp-* classes to wrapper OR bubble
+ * GROUPED BUBBLE CORNER SMOOTHING (WA-LIKE)
  * ======================================================= */
-.message-bubble.grp-start.left,
-.message-bubble.grp-mid.left,
-.message-bubble.grp-end.left {
-  margin-right: auto;
-}
-.message-bubble.grp-start.right,
-.message-bubble.grp-mid.right,
-.message-bubble.grp-end.right {
-  margin-left: auto;
-}
 
-/* Start of a group keeps top radii wide, bottom inner tight */
-.message-bubble.grp-start.left {
+/* Received stack */
+.message-bubble.left.grp-start {
   border-top-left-radius: 16px;
   border-top-right-radius: 16px;
   border-bottom-left-radius: var(--bubble-radius-mid);
   border-bottom-right-radius: 16px;
 }
-.message-bubble.grp-start.right {
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  border-bottom-left-radius: 16px;
-  border-bottom-right-radius: var(--bubble-radius-mid);
-}
-
-/* Middle bubbles flat both connecting ends */
-.message-bubble.grp-mid.left {
-  border-radius: var(--bubble-radius-mid);
+.message-bubble.left.grp-mid {
   border-top-left-radius: var(--bubble-radius-mid);
   border-bottom-left-radius: var(--bubble-radius-mid);
   border-top-right-radius: 16px;
   border-bottom-right-radius: 16px;
 }
-.message-bubble.grp-mid.right {
-  border-radius: var(--bubble-radius-mid);
-  border-top-right-radius: var(--bubble-radius-mid);
-  border-bottom-right-radius: var(--bubble-radius-mid);
-  border-top-left-radius: 16px;
-  border-bottom-left-radius: 16px;
-}
-
-/* End bubble restores tail side */
-.message-bubble.grp-end.left {
+.message-bubble.left.grp-end {
   border-top-left-radius: var(--bubble-radius-mid);
   border-top-right-radius: 16px;
   border-bottom-left-radius: 16px;
   border-bottom-right-radius: 16px;
 }
-.message-bubble.grp-end.right {
+.message-bubble.left.grp-single {
+  border-radius: var(--bubble-radius);
+}
+
+/* Sent stack */
+.message-bubble.right.grp-start {
+  border-top-right-radius: 16px;
+  border-top-left-radius: 16px;
+  border-bottom-right-radius: var(--bubble-radius-mid);
+  border-bottom-left-radius: 16px;
+}
+.message-bubble.right.grp-mid {
+  border-top-right-radius: var(--bubble-radius-mid);
+  border-bottom-right-radius: var(--bubble-radius-mid);
+  border-top-left-radius: 16px;
+  border-bottom-left-radius: 16px;
+}
+.message-bubble.right.grp-end {
   border-top-right-radius: var(--bubble-radius-mid);
   border-top-left-radius: 16px;
   border-bottom-right-radius: 16px;
   border-bottom-left-radius: 16px;
 }
-
-/* Single message (no grouping) */
-.message-bubble.grp-single {
-  border-radius: 16px;
+.message-bubble.right.grp-single {
+  border-radius: var(--bubble-radius-right);
 }
 
 /* =========================================================
  * BUBBLE TAIL
- * Hide for grouped mids; show for starts/ends/single.
+ * Show tail only on grp-end & grp-single (WA behavior)
  * ======================================================= */
 .message-bubble::after {
   content: "";
@@ -1677,15 +1659,10 @@ body.dark {
   right: -6px;
   border-right: 0;
 }
-/* Hide tails when stacked tightly */
-.message-bubble.grp-mid::after,
-.message-bubble.grp-start::after {
-  display: none;
-}
-/* Optional: also hide tail on grp-end if you prefer smooth stacks */
-.message-bubble.grp-end::after {
-  display: none;
-}
+/* Hide on start + mid */
+.message-bubble.grp-start::after,
+.message-bubble.grp-mid::after { display: none; }
+/* Tail shows on grp-end + grp-single */
 
 /* =========================================================
  * MESSAGE CONTENT
@@ -1697,17 +1674,25 @@ body.dark {
   padding: 0;
 }
 
-/* wrapper ensures meta absolute can anchor */
+/* no reserved bottom padding now; meta is inline */
 .msg-inner-wrapper {
   display: inline-block;
   max-width: 100%;
-  position: relative;
-  padding-bottom: 14px; /* reserve space for meta bottom-right */
+  position: static;
+  padding: 0;
 }
 
-/* row that holds text; meta is absolute so no wrap pressure */
+/* inline row: text + meta */
 .msg-text-wrapper {
-  display: inline;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 3px;
+  flex-wrap: nowrap;
+}
+.message-bubble.right .msg-text-wrapper,
+.message-bubble.from-self .msg-text-wrapper {
+  justify-content: flex-end;
 }
 
 /* Actual text */
@@ -1716,7 +1701,7 @@ body.dark {
   line-height: var(--msg-line-height);
   word-break: break-word;
   white-space: pre-wrap;
-  display: inline;
+  display: inline-block;
   margin: 0;
   padding: 0;
 }
@@ -1725,43 +1710,41 @@ body.dark {
   vertical-align: middle;
 }
 
-/* Emoji-only scaling
-   Add .emoji-only to bubble OR detect in JS */
+/* Emoji-only scaling */
 .message-bubble.emoji-only .msg-text {
   font-size: calc(var(--msg-font-size) * 1.8);
   line-height: 1.1;
 }
 
 /* =========================================================
- * META: TIME + TICKS INSIDE BUBBLE (BOTTOM-RIGHT)
- * NOTE: requires .msg-meta-inline inside .msg-inner-wrapper
+ * META: TIME + TICKS INLINE
  * ======================================================= */
 .msg-meta-inline {
-  position: absolute;
-  bottom: -2px;
-  right: 0;
   display: inline-flex;
   align-items: center;
   gap: 2px;
   font-size: var(--meta-font-size);
   color: var(--meta-color);
+  margin-left: 6px;
+  opacity: 0.85;
   white-space: nowrap;
   line-height: 1;
-  pointer-events: none;
 }
-/* on self bubble, lighten meta for contrast */
 .message-bubble.right .msg-meta-inline,
 .message-bubble.from-self .msg-meta-inline {
   color: var(--meta-color-on-self);
 }
+.msg-time {
+  font-size: 0.75rem;
+}
 
+/* Tick icon */
 .tick-icon {
   width: var(--tick-size);
   height: var(--tick-size);
   vertical-align: middle;
   display: inline-block;
   line-height: 1;
-  /* placeholder: style with background-image: url(...) if desired */
 }
 
 /* Status coloring */
@@ -1786,13 +1769,10 @@ body.dark {
   max-width: calc(var(--bubble-max-width) - 12px);
   cursor: pointer;
 }
-.reply-to:hover {
-  text-decoration: underline;
-}
+.reply-to:hover { text-decoration: underline; }
 
 /* =========================================================
  * HOVER TIMESTAMP TOOLTIP (fallback)
- * If JS cannot place inline meta, this shows on hover.
  * ======================================================= */
 .message-bubble:hover::before {
   content: attr(data-time);
@@ -1839,9 +1819,7 @@ body.dark {
 }
 
 /* Emoji Button */
-#emojiToggleBtn {
-  order: -1;
-}
+#emojiToggleBtn { order: -1; }
 .emoji-btn {
   margin-right: 4px;
   cursor: pointer;
@@ -1852,18 +1830,9 @@ body.dark {
 }
 
 /* DARK MODE INPUT */
-body.dark .chat-input-bar {
-  background: var(--inputbar-bg);
-  border-top-color: #333;
-}
-body.dark #threadInput {
-  background: #222;
-  color: #eee;
-  border-color: #444;
-}
-body.dark .chat-input-bar .icon-btn {
-  color: #bbb;
-}
+body.dark .chat-input-bar { background: var(--inputbar-bg); border-top-color: #333; }
+body.dark #threadInput { background: #222; color: #eee; border-color: #444; }
+body.dark .chat-input-bar .icon-btn { color: #bbb; }
 
 /* =========================================================
  * RESPONSIVE
@@ -1873,13 +1842,8 @@ body.dark .chat-input-bar .icon-btn {
     --bubble-font-size: 14px;
     --msg-font-size: 14px;
   }
-  .chat-input-bar {
-    padding: 8px 10px;
-  }
-  #threadInput {
-    font-size: 14px;
-    padding: 10px 12px;
-  }
+  .chat-input-bar { padding: 8px 10px; }
+  #threadInput { font-size: 14px; padding: 10px 12px; }
 }
 
 /* =========================================================
