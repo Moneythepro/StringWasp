@@ -3112,13 +3112,6 @@ function copyRoomId() {
   copyToClipboard(currentRoom);
   alert("Group ID copied!");
 }
-/* ---------------------------------------------------------
- * Developer / verified badge tagging
- * Call as usernameWithBadge(uid, name) OR usernameWithBadge(nameOnly)
- * --------------------------------------------------------- */
-const DEV_UIDS = [
-  // "yourFirebaseUIDHere" // Add your actual Firebase UID if needed
-];
 
 /* ---------------------------------------------------------
  * Dynamic Verified Badge System (via verified.json)
@@ -3135,6 +3128,10 @@ async function loadVerifiedUsers() {
       VERIFIED_USERS = data.verified.map(u => u.toLowerCase());
     }
     console.log("Verified list loaded:", VERIFIED_USERS);
+
+    // ⬇️ Force badge refresh immediately after loading verified.json
+    requestAnimationFrame(decorateUsernamesWithBadges);
+
   } catch (err) {
     console.warn("⚠️ Could not load verified.json:", err);
   }
