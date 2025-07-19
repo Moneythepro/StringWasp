@@ -2039,3 +2039,30 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
   justify-content: flex-end;
 }
 
+.day-separator {
+  text-align: center;
+  margin: 10px 0;
+  font-size: 12px;
+  color: #777;
+  font-weight: 500;
+  position: relative;
+}
+.day-separator::before,
+.day-separator::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: #ddd;
+}
+.day-separator::before { left: 0; }
+.day-separator::after  { right: 0; }
+
+body.dark .day-separator {
+  color: #aaa;
+}
+body.dark .day-separator::before,
+body.dark .day-separator::after {
+  background: #333;
+}
