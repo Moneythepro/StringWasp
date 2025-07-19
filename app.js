@@ -808,66 +808,126 @@ function loadGroupMessages(groupId) {
 
   box.innerHTML = "";
 
+  // Live listener
   db.collection("groups").doc(groupId).collection("messages")
     .orderBy("timestamp", "asc")
-    .onSnapshot(snapshot => {
+    .onSnapshot(async snapshot => {
       box.innerHTML = "";
       const frag = document.createDocumentFragment();
 
-      snapshot.forEach(doc => {
-        const msg = doc.data();
-        msg.id = doc.id;
+      if (snapshot.empty) {
+        box.innerHTML = `<div class="no-results">No messages yet.</div>`;
+        return;
+      }
 
-        // Skip if deleted for this user
-        if (msg.deletedFor?.[currentUser.uid]) return;
+      /* -------- Normalize + collect sender ids -------- */
+      const msgs = snapshot.docs.map(d => {
+        const m = d.data();
+        m.id = d.id;
+        // unify "from" so we can reuse grouping util
+        m.from = m.senderId;
+        return m;
+      });
 
+      // Remove messages deleted for me
+      const visible = msgs.filter(m => !(m.deletedFor?.[currentUser.uid]));
+
+      // Grouping (5 min window)
+      computeGroupClassesGroup(visible);
+
+      // Unique sender cache
+      const uidSet = new Set();
+      visible.forEach(m => uidSet.add(m.senderId));
+      const senderCache = {};
+
+      // Fetch sender docs in parallel
+      await Promise.all(
+        [...uidSet].map(async uid => {
+          try {
+            const uDoc = await db.collection("users").doc(uid).get();
+            if (uDoc.exists) senderCache[uid] = uDoc.data();
+          } catch (_) {}
+        })
+      );
+
+      /* -------- Build DOM -------- */
+      for (const msg of visible) {
         const isSelf = msg.senderId === currentUser.uid;
 
         /* --- Decrypt --- */
         let decrypted;
+        let isDeleted = false;
         try {
-          decrypted = typeof msg.text === "string"
-            ? (CryptoJS.AES.decrypt(msg.text, "yourSecretKey")
-                .toString(CryptoJS.enc.Utf8) || "[Encrypted]")
-            : "[Invalid]";
+          if (msg.text === "") {
+            isDeleted = true;
+            decrypted = "";
+          } else if (typeof msg.text === "string") {
+            decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey")
+              .toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+          } else {
+            decrypted = "[Invalid]";
+          }
         } catch {
           decrypted = "[Decryption error]";
         }
 
         /* --- Reply strip --- */
-        const replyHtml = msg.replyTo?.text
-          ? `<div class="reply-to clamp-text">↪ ${escapeHtml(msg.replyTo.text || "").slice(0, 120)}</div>`
+        const replyHtml = (!isDeleted && msg.replyTo?.text)
+          ? `<div class="reply-to clamp-text" onclick="scrollToMessage('${msg.replyTo.msgId || msg.replyTo.id || ""}')">↪ ${escapeHtml(msg.replyTo.text || "").slice(0,120)}</div>`
           : "";
 
-        /* --- Sender name w/ badge (show for others; optional for self) --- */
-        // Strip any markup that may have been stored in senderName
-        const rawSenderName = (msg.senderName || "").replace(/<[^>]*>/g, "");
-        const senderLabel = !isSelf
-          ? `<div class="msg-author">${usernameWithBadge(msg.senderId, rawSenderName || "User")}</div>`
+        /* --- Sender data --- */
+        const senderData = senderCache[msg.senderId] || {};
+        const senderNameRaw = (msg.senderName || senderData.username || senderData.name || "User").replace(/<[^>]*>/g,"");
+        const senderNameHtml = usernameWithBadge(msg.senderId, senderNameRaw);
+
+        /* --- Show author row only on grp-start / grp-single (and when not self, optional) --- */
+        const showAuthorRow = msg._grp === "grp-start" || msg._grp === "grp-single";
+        const authorLabel = showAuthorRow
+          ? `<div class="msg-author">${senderNameHtml}</div>`
           : "";
 
-        /* --- Meta (time only; group msgs don’t show ticks) --- */
+        /* --- Meta (time only) --- */
         const metaHtml = `
           <span class="msg-meta-inline" data-status="other">
             ${msg.timestamp?.toDate ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>` : ""}
           </span>
         `;
 
-        /* --- Message body --- */
-        const bodyHtml = linkifyText(escapeHtml(decrypted));
+        /* --- Body --- */
+        const bodyHtml = isDeleted
+          ? `<i data-lucide="trash-2"></i> <span class="deleted-msg-label">Message deleted</span>`
+          : linkifyText(escapeHtml(decrypted));
 
-        /* --- Build wrapper/bubble --- */
+        /* --- Avatar (only grp-start / grp-single) --- */
+        const showPfp = showAuthorRow;
+        let avatarSrc = "default-avatar.png";
+        if (senderData.avatarBase64) avatarSrc = senderData.avatarBase64;
+        else if (senderData.photoURL) avatarSrc = senderData.photoURL;
+        else avatarSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderData.username || senderNameRaw || "User")}`;
+
+        /* --- Wrapper --- */
         const wrapper = document.createElement("div");
-        wrapper.className = `message-bubble-wrapper ${isSelf ? "right from-self" : "left from-other"} grp-single`;
+        wrapper.className = `message-bubble-wrapper ${isSelf ? "right from-self" : "left from-other"} ${msg._grp}`;
+        if (showPfp) wrapper.classList.add("has-pfp");
+
+        /* indent follow-up bubbles so they align under text (reserve avatar space) */
+        if (!showPfp && !isSelf) {
+          wrapper.style.margin-left = `calc(var(--pfp-size) + var(--pfp-gap))`;
+        }
+        if (!showPfp && isSelf) {
+          wrapper.style.margin-right = `calc(var(--pfp-size) + var(--pfp-gap))`;
+        }
 
         wrapper.innerHTML = `
-          <div class="message-bubble ${isSelf ? "right" : "left"}" data-msg-id="${msg.id}">
-            ${senderLabel}
+          ${showPfp ? `<img class="bubble-pfp" src="${avatarSrc}" alt="${escapeHtml(senderNameRaw)}" onclick="viewUserProfile('${msg.senderId}')">` : ""}
+          <div class="message-bubble ${isSelf ? "right" : "left"} ${msg._grp}" data-msg-id="${msg.id}" data-time="${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}">
+            ${authorLabel}
             ${replyHtml}
-            <div class="msg-inner-wrapper">
+            <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
               <div class="msg-text-wrapper">
                 <span class="msg-text">${bodyHtml}</span>
-                ${metaHtml}
+                ${!isDeleted ? metaHtml : ""}
               </div>
             </div>
           </div>
@@ -895,18 +955,41 @@ function loadGroupMessages(groupId) {
               seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
             }).catch(() => {});
         }
-      });
+      }
 
       box.appendChild(frag);
 
       // Scroll to bottom after render
       box.scrollTop = box.scrollHeight;
 
-      // Refresh Lucide icons (badge-check, etc.)
+      // Refresh Lucide icons (badge-check, trash-2, etc.)
       if (typeof lucide !== "undefined") lucide.createIcons();
     }, err => {
       console.error("❌ Group message load failed:", err.message || err);
     });
+}
+
+/* ---------------------------------------------------------
+ * Grouping helper for group chat (senderId-based)
+ * gapMs default 5m
+ * sets ._grp on each message: grp-start | grp-mid | grp-end | grp-single
+ * --------------------------------------------------------- */
+function computeGroupClassesGroup(msgs, gapMs = 5 * 60 * 1000) {
+  for (let i = 0; i < msgs.length; i++) {
+    const m = msgs[i];
+    const ts = m.timestamp?.toMillis?.() ?? 0;
+    const prev = msgs[i - 1];
+    const next = msgs[i + 1];
+
+    const prevOk = prev && prev.senderId === m.senderId && ts - (prev.timestamp?.toMillis?.() ?? 0) <= gapMs;
+    const nextOk = next && next.senderId === m.senderId && (next.timestamp?.toMillis?.() ?? 0) - ts <= gapMs;
+
+    if (prevOk && nextOk) m._grp = "grp-mid";
+    else if (prevOk && !nextOk) m._grp = "grp-end";
+    else if (!prevOk && nextOk) m._grp = "grp-start";
+    else m._grp = "grp-single";
+  }
+  return msgs;
 }
 
 // === Send Room Message (Group Chat) ===
@@ -1784,7 +1867,14 @@ function computeGroupClasses(msgs, gapMs = 5 * 60 * 1000) {
   return msgs;
 }
 
-/* Tick meta for self */
+/* ---------------------------------------------------------
+ * Global lightweight user cache (uid -> {avatar, username})
+ * --------------------------------------------------------- */
+const USER_CACHE = USER_CACHE || {};
+
+/* ---------------------------------------------------------
+ * Self/other meta (unchanged except minor formatting)
+ * --------------------------------------------------------- */
 function buildTickMeta(msg, otherUid) {
   let status = "sent";
   let tickClass = "tick-sent";
@@ -1813,7 +1903,6 @@ function buildTickMeta(msg, otherUid) {
   `;
 }
 
-/* Meta for other */
 function buildOtherMeta(msg) {
   return `
     <span class="msg-meta-inline" data-status="other">
@@ -1822,14 +1911,19 @@ function buildOtherMeta(msg) {
   `;
 }
 
-/* Reply strip */
+/* ---------------------------------------------------------
+ * Reply strip
+ * --------------------------------------------------------- */
 function buildReplyStrip(msg) {
   if (!msg.replyTo) return "";
+  const replyId = msg.replyTo.msgId || msg.replyTo.id || "";
   const rText = escapeHtml(msg.replyTo.text || "");
-  return `<div class="reply-to clamp-text" onclick="scrollToMessage('${msg.replyTo.id || ""}')">${rText}</div>`;
+  return `<div class="reply-to clamp-text" onclick="scrollToMessage('${replyId}')">${rText}</div>`;
 }
 
-/* Link preview markup */
+/* ---------------------------------------------------------
+ * Link preview markup
+ * --------------------------------------------------------- */
 function buildLinkPreviewHTML(preview, url) {
   if (!preview && !url) return "";
   const img = preview?.image ? `<img src="${preview.image}" class="preview-img">` : "";
@@ -1847,7 +1941,9 @@ function buildLinkPreviewHTML(preview, url) {
   `;
 }
 
-/* Decrypt & interpret msg text */
+/* ---------------------------------------------------------
+ * Decrypt & interpret msg text
+ * --------------------------------------------------------- */
 function decryptMsgText(msg) {
   let decrypted = "";
   let isDeleted = false;
@@ -1877,14 +1973,48 @@ function decryptMsgText(msg) {
   return { text: decrypted, isDeleted: false, deletedHtml };
 }
 
-/* =========================================================
- * Render snapshot -> DOM
- * ======================================================= */
+/* ---------------------------------------------------------
+ * Ensure we have avatar + username for a uid (cached)
+ * --------------------------------------------------------- */
+async function getUserProfileCached(uid) {
+  if (!uid) return { username: "User", avatar: "default-avatar.png" };
+  if (USER_CACHE[uid]) return USER_CACHE[uid];
+
+  try {
+    const uDoc = await db.collection("users").doc(uid).get();
+    if (uDoc.exists) {
+      const uData = uDoc.data();
+      const avatar =
+        uData.avatarBase64 ||
+        uData.photoURL ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(uData.username || "User")}`;
+      USER_CACHE[uid] = { username: uData.username || uData.name || "User", avatar };
+      return USER_CACHE[uid];
+    }
+  } catch (_) {}
+  const fallback = {
+    username: "User",
+    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent("User")}`
+  };
+  USER_CACHE[uid] = fallback;
+  return fallback;
+}
+
+/* ---------------------------------------------------------
+ * Render snapshot -> DOM (Direct Message Thread)
+ * Adds slim circular PFP at grp-start/single; indents followups.
+ * --------------------------------------------------------- */
 async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, isInitial }) {
   if (!area) return;
 
   const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
-  computeGroupClasses(msgs); // Group messages visually
+
+  // Group messages visually
+  computeGroupClasses(msgs);
+
+  // Preload self + other avatars (once)
+  const selfProfile = await getUserProfileCached(currentUser.uid);
+  const otherProfile = await getUserProfileCached(otherUid);
 
   let distFromBottom;
   if (isInitial) {
@@ -1901,10 +2031,17 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     const { text: displayText, isDeleted, deletedHtml } = decryptMsgText(msg);
     const emojiOnly = isEmojiOnlyText(displayText);
 
-    /* -------- Author Name (only for other users) -------- */
-    const showAuthorRow = !isSelf && (msg._grp === "grp-start" || msg._grp === "grp-single");
+    /* -------- PFP logic -------- */
+    const showPfp = msg._grp === "grp-start" || msg._grp === "grp-single";
+    const prof = isSelf ? selfProfile : otherProfile;
+    const pfpHtml = showPfp
+      ? `<img class="bubble-pfp ${isSelf ? "pfp-self" : "pfp-other"}" src="${prof.avatar}" alt="${escapeHtml(prof.username)}" onclick="viewUserProfile('${isSelf ? currentUser.uid : otherUid}')">`
+      : "";
+
+    /* -------- Author Name (for other user on start/single) -------- */
+    const showAuthorRow = !isSelf && showPfp;
     const authorHtml = showAuthorRow
-      ? `<div class="msg-author">${usernameWithBadge(msg.from, msg.fromName)}</div>`
+      ? `<div class="msg-author">${usernameWithBadge(otherUid, prof.username)}</div>`
       : "";
 
     /* -------- Reply Strip -------- */
@@ -1942,8 +2079,14 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     /* -------- Wrapper -------- */
     const wrapper = document.createElement("div");
     wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}`;
+    if (!showPfp) {
+      // indent followups so bubbles align under text column
+      if (isSelf) wrapper.style.marginRight = `calc(var(--pfp-size) + var(--pfp-gap))`;
+      else wrapper.style.marginLeft = `calc(var(--pfp-size) + var(--pfp-gap))`;
+    }
 
     wrapper.innerHTML = `
+      ${pfpHtml}
       <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""} ${msg._grp || ""}"
            data-msg-id="${msg.id}"
            data-time="${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}">
@@ -2000,19 +2143,22 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
   }
 }
 
-// Known developer UIDs (add yours if you want UID-based matching)
+/* ---------------------------------------------------------
+ * Known developer UIDs (add yours if you want UID-based match)
+ * --------------------------------------------------------- */
 const DEV_UIDS = [
-  // "abc123FirebaseUID",  // <-- put your actual Firebase UID here if you want
+  // "yourFirebaseUIDHere"
 ];
 
-// Unified helper: accepts (uid, name) OR (nameOnly)
+/* ---------------------------------------------------------
+ * Unified helper: usernameWithBadge(uid, name) OR usernameWithBadge(nameOnly)
+ * --------------------------------------------------------- */
 function usernameWithBadge(uidOrName, maybeName) {
-  // If called as usernameWithBadge(nameOnly)
   let uid = uidOrName;
   let name = maybeName;
 
+  // one-arg form
   if (typeof maybeName === "undefined") {
-    // One-arg form: treat arg as display name; no uid known
     name = uidOrName;
     uid = "";
   }
@@ -2025,14 +2171,15 @@ function usernameWithBadge(uidOrName, maybeName) {
 
   const isDev =
     lowerName === "moneythepro" ||
-    lowerUid === "moneythepro" ||   // if ever passed username in uid slot
-    DEV_UIDS.includes(uid);         // explicit UID match
+    lowerUid === "moneythepro" ||
+    DEV_UIDS.includes(uid);
 
   if (isDev) {
     return `${safe} <i data-lucide="badge-check" class="dev-badge" aria-label="Verified"></i>`;
   }
   return safe;
 }
+
 
 async function openThread(uid, name) {
   if (!currentUser || !uid) return;
