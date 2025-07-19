@@ -1973,30 +1973,45 @@ function decryptMsgText(msg) {
   return { text: decrypted, isDeleted: false, deletedHtml };
 }
 
+
 /* ---------------------------------------------------------
- * Ensure we have avatar + username for a uid (cached)
+ * Lightweight profile cache (uid -> {username, avatar})
  * --------------------------------------------------------- */
+const _profileCache = new Map();
+
 async function getUserProfileCached(uid) {
-  if (!uid) return { username: "User", avatar: "default-avatar.png" };
-  if (USER_CACHE[uid]) return USER_CACHE[uid];
+  if (!uid) {
+    return {
+      username: "User",
+      avatar: `https://ui-avatars.com/api/?name=User`
+    };
+  }
+  if (_profileCache.has(uid)) return _profileCache.get(uid);
 
   try {
-    const uDoc = await db.collection("users").doc(uid).get();
-    if (uDoc.exists) {
-      const uData = uDoc.data();
-      const avatar =
-        uData.avatarBase64 ||
-        uData.photoURL ||
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(uData.username || "User")}`;
-      USER_CACHE[uid] = { username: uData.username || uData.name || "User", avatar };
-      return USER_CACHE[uid];
+    const snap = await db.collection("users").doc(uid).get();
+    if (snap.exists) {
+      const u = snap.data() || {};
+      const prof = {
+        username: u.username || u.name || "User",
+        avatar:
+          u.avatarBase64 ||
+          u.photoURL ||
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username || u.name || "User")}`
+      };
+      _profileCache.set(uid, prof);
+      return prof;
     }
-  } catch (_) {}
+  } catch (err) {
+    console.warn("getUserProfileCached error:", err);
+  }
+
+  // fallback
   const fallback = {
     username: "User",
-    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent("User")}`
+    avatar: `https://ui-avatars.com/api/?name=User`
   };
-  USER_CACHE[uid] = fallback;
+  _profileCache.set(uid, fallback);
   return fallback;
 }
 
@@ -2009,11 +2024,11 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
   const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
 
-  // Group messages visually
+  /* --- Group messages (adds _grp) --- */
   computeGroupClasses(msgs);
 
-  // Preload self + other avatars (once)
-  const selfProfile = await getUserProfileCached(currentUser.uid);
+  /* --- Preload avatars for both participants --- */
+  const selfProfile  = await getUserProfileCached(currentUser.uid);
   const otherProfile = await getUserProfileCached(otherUid);
 
   let distFromBottom;
@@ -2031,14 +2046,15 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     const { text: displayText, isDeleted, deletedHtml } = decryptMsgText(msg);
     const emojiOnly = isEmojiOnlyText(displayText);
 
-    /* -------- PFP logic -------- */
+    /* -------- Avatar logic -------- */
     const showPfp = msg._grp === "grp-start" || msg._grp === "grp-single";
     const prof = isSelf ? selfProfile : otherProfile;
+    const safeUser = escapeHtml(prof.username || "User");
     const pfpHtml = showPfp
-      ? `<img class="bubble-pfp ${isSelf ? "pfp-self" : "pfp-other"}" src="${prof.avatar}" alt="${escapeHtml(prof.username)}" onclick="viewUserProfile('${isSelf ? currentUser.uid : otherUid}')">`
+      ? `<img class="bubble-pfp ${isSelf ? "pfp-self" : "pfp-other"}" src="${prof.avatar}" alt="${safeUser}" onclick="viewUserProfile('${isSelf ? currentUser.uid : otherUid}')">`
       : "";
 
-    /* -------- Author Name (for other user on start/single) -------- */
+    /* -------- Author Name (only show for OTHER user on start/single) -------- */
     const showAuthorRow = !isSelf && showPfp;
     const authorHtml = showAuthorRow
       ? `<div class="msg-author">${usernameWithBadge(otherUid, prof.username)}</div>`
@@ -2052,11 +2068,11 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       ? buildTickMeta(msg, otherUid)
       : buildOtherMeta(msg);
 
-    /* -------- Text Content -------- */
-    const textHtml = escapeHtml(displayText);
+    /* -------- Message Text -------- */
+    const textHtml  = escapeHtml(displayText);
     const shortText = textHtml.slice(0, 500);
-    const hasLong = textHtml.length > 500;
-    const content = hasLong
+    const hasLong   = textHtml.length > 500;
+    const content   = hasLong
       ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
       : linkifyText(textHtml);
 
@@ -2076,20 +2092,24 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       }
     }
 
+    /* -------- Time attr (empty until available -> CSS meta fade) -------- */
+    const timeAttr = msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : "";
+
     /* -------- Wrapper -------- */
     const wrapper = document.createElement("div");
     wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}`;
-    if (!showPfp) {
-      // indent followups so bubbles align under text column
-      if (isSelf) wrapper.style.marginRight = `calc(var(--pfp-size) + var(--pfp-gap))`;
-      else wrapper.style.marginLeft = `calc(var(--pfp-size) + var(--pfp-gap))`;
+    if (showPfp) {
+      wrapper.classList.add("has-pfp");
+    } else {
+      wrapper.classList.add(isSelf ? "indent-self" : "indent-other");
     }
 
+    /* -------- Bubble Markup -------- */
     wrapper.innerHTML = `
       ${pfpHtml}
       <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""} ${msg._grp || ""}"
            data-msg-id="${msg.id}"
-           data-time="${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}">
+           data-time="${timeAttr}">
         ${authorHtml}
         ${replyBox}
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
@@ -2130,54 +2150,17 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
   area.appendChild(frag);
 
-  /* Refresh Lucide Icons */
+  /* Refresh Lucide Icons (ticks + badge) */
   if (typeof lucide !== "undefined") lucide.createIcons();
 
   /* Scroll Behavior */
   if (isInitial) {
-    // Initial scroll handled externally
+    // outside handles initial scroll
   } else if (isNearBottom) {
     setTimeout(() => scrollToBottomThread(true), 40);
   } else if (typeof distFromBottom === "number") {
     setTimeout(() => { area.scrollTop = area.scrollHeight - distFromBottom; }, 0);
   }
-}
-
-/* ---------------------------------------------------------
- * Known developer UIDs (add yours if you want UID-based match)
- * --------------------------------------------------------- */
-const DEV_UIDS = [
-  // "yourFirebaseUIDHere"
-];
-
-/* ---------------------------------------------------------
- * Unified helper: usernameWithBadge(uid, name) OR usernameWithBadge(nameOnly)
- * --------------------------------------------------------- */
-function usernameWithBadge(uidOrName, maybeName) {
-  let uid = uidOrName;
-  let name = maybeName;
-
-  // one-arg form
-  if (typeof maybeName === "undefined") {
-    name = uidOrName;
-    uid = "";
-  }
-
-  const rawName = name || "User";
-  const safe = escapeHtml(rawName);
-
-  const lowerUid = (uid || "").toLowerCase();
-  const lowerName = (rawName || "").toLowerCase();
-
-  const isDev =
-    lowerName === "moneythepro" ||
-    lowerUid === "moneythepro" ||
-    DEV_UIDS.includes(uid);
-
-  if (isDev) {
-    return `${safe} <i data-lucide="badge-check" class="dev-badge" aria-label="Verified"></i>`;
-  }
-  return safe;
 }
 
 
@@ -3144,6 +3127,40 @@ function copyRoomId() {
   if (!currentRoom) return;
   copyToClipboard(currentRoom);
   alert("Group ID copied!");
+}
+/* ---------------------------------------------------------
+ * Developer / verified badge tagging
+ * Call as usernameWithBadge(uid, name) OR usernameWithBadge(nameOnly)
+ * --------------------------------------------------------- */
+const DEV_UIDS = [
+  // "yourFirebaseUIDHere" // Add your actual Firebase UID if needed
+];
+
+function usernameWithBadge(uidOrName, maybeName) {
+  let uid = uidOrName;
+  let name = maybeName;
+
+  // One-argument form: usernameWithBadge(nameOnly)
+  if (typeof maybeName === "undefined") {
+    name = uidOrName;
+    uid = "";
+  }
+
+  const rawName = name || "User";
+  const safe = escapeHtml(rawName);
+
+  const lowerUid = (uid || "").toLowerCase();
+  const lowerName = (rawName || "").toLowerCase();
+
+  const isDev =
+    lowerName === "moneythepro" ||
+    lowerUid === "moneythepro" ||
+    DEV_UIDS.includes(uid);
+
+  if (isDev) {
+    return `${safe} <i data-lucide="badge-check" class="dev-badge" aria-label="Verified"></i>`;
+  }
+  return safe;
 }
 
 // ✅ Add Developer Badge Everywhere
