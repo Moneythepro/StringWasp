@@ -3114,33 +3114,62 @@ function copyRoomId() {
 }
 
 /* ---------------------------------------------------------
- * Dynamic Verified Badge System (via verified.json)
+ * Dynamic Multi-Level Badge System with Cache + Legend
  * --------------------------------------------------------- */
-let VERIFIED_USERS = ["moneythepro"]; // Default fallback
 
-// Load verified usernames from a JSON file in your repository
-async function loadVerifiedUsers() {
+// Cache expiration (1 hour)
+const BADGE_CACHE_KEY = "verified_badges_cache";
+const BADGE_CACHE_TIME = 3600000; // 1 hour in ms
+let VERIFIED_BADGES = {
+  developer: ["moneythepro"],
+  gold: [],
+  silver: [],
+  bronze: []
+};
+
+// Load verified badge data (cached)
+async function loadVerifiedBadges() {
+  const now = Date.now();
   try {
-    const res = await fetch("./verified.json"); // Path to your JSON file
+    // Check cache
+    const cached = localStorage.getItem(BADGE_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (now - parsed.timestamp < BADGE_CACHE_TIME) {
+        VERIFIED_BADGES = parsed.data;
+        console.log("Badges loaded from cache:", VERIFIED_BADGES);
+        return;
+      }
+    }
+
+    // Fetch from verified.json
+    const res = await fetch("./verified.json");
     if (!res.ok) throw new Error("Failed to fetch verified.json");
     const data = await res.json();
-    if (Array.isArray(data.verified)) {
-      VERIFIED_USERS = data.verified.map(u => u.toLowerCase());
-    }
-    console.log("Verified list loaded:", VERIFIED_USERS);
 
-    // ⬇️ Force badge refresh immediately after loading verified.json
-    requestAnimationFrame(decorateUsernamesWithBadges);
+    VERIFIED_BADGES = {
+      developer: (data.developer || []).map(u => u.toLowerCase()),
+      gold: (data.gold || []).map(u => u.toLowerCase()),
+      silver: (data.silver || []).map(u => u.toLowerCase()),
+      bronze: (data.bronze || []).map(u => u.toLowerCase())
+    };
 
+    // Save to cache
+    localStorage.setItem(BADGE_CACHE_KEY, JSON.stringify({
+      timestamp: now,
+      data: VERIFIED_BADGES
+    }));
+
+    console.log("Verified badge list loaded:", VERIFIED_BADGES);
   } catch (err) {
     console.warn("⚠️ Could not load verified.json:", err);
   }
 }
+document.addEventListener("DOMContentLoaded", loadVerifiedBadges);
 
-// Call this once on page load
-document.addEventListener("DOMContentLoaded", loadVerifiedUsers);
-
-// Function to add badge next to usernames
+/**
+ * Get username with badge HTML
+ */
 function usernameWithBadge(uidOrName, maybeName) {
   let uid = uidOrName;
   let name = maybeName;
@@ -3150,41 +3179,90 @@ function usernameWithBadge(uidOrName, maybeName) {
     uid = "";
   }
 
-  const rawName = (name || "User");
+  const rawName = name || "User";
+  const safe = escapeHtml(rawName);
   const lowerName = rawName.toLowerCase();
   const lowerUid = (uid || "").toLowerCase();
 
-  const isVerified = VERIFIED_USERS.includes(lowerName) || VERIFIED_USERS.includes(lowerUid);
-  const safe = escapeHtml(rawName);
+  const badgeType = getBadgeLevel(lowerName, lowerUid);
+  if (!badgeType) return safe;
 
-  return isVerified
-    ? `${safe} <i data-lucide="badge-check" class="dev-badge" aria-label="Verified"></i>`
-    : safe;
+  return `${safe} ${getBadgeIcon(badgeType)}`;
 }
 
-// Automatically apply badges to username elements
+/**
+ * Determine badge level
+ */
+function getBadgeLevel(name, uid) {
+  if (VERIFIED_BADGES.developer.includes(name) || VERIFIED_BADGES.developer.includes(uid))
+    return "developer";
+  if (VERIFIED_BADGES.gold.includes(name) || VERIFIED_BADGES.gold.includes(uid))
+    return "gold";
+  if (VERIFIED_BADGES.silver.includes(name) || VERIFIED_BADGES.silver.includes(uid))
+    return "silver";
+  if (VERIFIED_BADGES.bronze.includes(name) || VERIFIED_BADGES.bronze.includes(uid))
+    return "bronze";
+  return null;
+}
+
+/**
+ * Return badge icon HTML based on level
+ */
+function getBadgeIcon(level) {
+  switch (level) {
+    case "developer":
+      return `<i data-lucide="crown" class="dev-badge supreme" aria-label="Developer"></i>`;
+    case "gold":
+      return `<i data-lucide="badge-check" class="dev-badge gold" aria-label="Gold Verified"></i>`;
+    case "silver":
+      return `<i data-lucide="badge-check" class="dev-badge silver" aria-label="Silver Verified"></i>`;
+    case "bronze":
+      return `<i data-lucide="badge-check" class="dev-badge bronze" aria-label="Bronze Verified"></i>`;
+    default:
+      return "";
+  }
+}
+
+/**
+ * Automatically decorate usernames
+ */
 function decorateUsernamesWithBadges() {
   document.querySelectorAll(
     ".search-username, .username-display, .chat-username, .message-username"
   ).forEach(el => {
     const raw = el.textContent.replace("@", "").trim().toLowerCase();
-    if (VERIFIED_USERS.includes(raw)) {
-      if (!el.querySelector(".dev-badge")) {
-        const badge = document.createElement("i");
-        badge.setAttribute("data-lucide", "badge-check");
-        badge.className = "dev-badge";
-        el.appendChild(badge);
-        if (typeof lucide !== "undefined") lucide.createIcons();
-      }
+    const badgeLevel = getBadgeLevel(raw, raw);
+    if (badgeLevel && !el.querySelector(".dev-badge")) {
+      el.insertAdjacentHTML("beforeend", getBadgeIcon(badgeLevel));
+      if (typeof lucide !== "undefined") lucide.createIcons();
     }
   });
 }
+document.addEventListener("DOMContentLoaded", decorateUsernamesWithBadges);
 
-// Observe DOM changes to auto-add badges
 const badgeObserver = new MutationObserver(() => {
   requestAnimationFrame(decorateUsernamesWithBadges);
 });
 badgeObserver.observe(document.body, { childList: true, subtree: true });
+
+/* ---------------------------------------------------------
+ * Badge Legend Modal
+ * --------------------------------------------------------- */
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("badgeLegendModal");
+  const closeBtn = document.getElementById("closeBadgeLegend");
+
+  document.body.addEventListener("click", (e) => {
+    if (e.target.classList.contains("dev-badge")) {
+      modal.classList.remove("hidden");
+    }
+  });
+
+  closeBtn?.addEventListener("click", () => modal.classList.add("hidden"));
+  modal?.addEventListener("click", (e) => {
+    if (e.target === modal) modal.classList.add("hidden");
+  });
+});
 
 // ✅ Group controls
 function transferGroupOwnership(newOwnerId) {
