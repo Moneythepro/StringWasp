@@ -1861,3 +1861,33 @@ body, html {
   from { opacity: 0; transform: translateY(4px) scale(.98); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* ===========================
+   Developer Badge (Verified Tick)
+   =========================== */
+.dev-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  width: 16px;
+  height: 16px;
+  margin-left: 4px;
+  color: #1da1f2; /* Instagram/official style blue */
+  stroke-width: 2.2px;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.dev-badge:hover {
+  transform: scale(1.2);
+  color: #0d8ddb; /* Slightly darker blue on hover */
+}
+
+/* Adjust for small username containers */
+.search-username .dev-badge,
+.username-display .dev-badge,
+.chat-username .dev-badge {
+  margin-left: 6px;
+  width: 16px;
+  height: 16px;
+}
