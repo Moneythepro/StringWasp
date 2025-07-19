@@ -1775,13 +1775,351 @@ body {
 }
 
 /* =========================================================
+ * GLOBAL FONT
+ * ======================================================= */
+body {
+  font-family: var(--sw-font-stack);
+}
+
+/* =========================================================
+ * WRAPPER
+ * ======================================================= */
+.message-bubble-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0;
+  margin: var(--bubble-margin);
+  opacity: 0;
+  animation: bubblePopIn var(--bubble-anim-duration) var(--bubble-anim-ease) forwards;
+  will-change: transform, opacity;
+}
+.message-bubble-wrapper.right,
+.message-bubble-wrapper.from-self {
+  align-items: flex-end;
+}
+
+/* When wrapper includes an avatar beside the bubble */
+.message-bubble-wrapper.has-pfp {
+  flex-direction: row;
+  align-items: flex-end;
+  gap: var(--pfp-gap);
+}
+.message-bubble-wrapper.has-pfp.right,
+.message-bubble-wrapper.has-pfp.from-self {
+  flex-direction: row-reverse;
+  align-items: flex-end;
+}
+
+/* Indent continuation bubbles (no avatar) to line up under text col */
+.message-bubble-wrapper.indent-other { margin-left: calc(var(--pfp-size) + var(--pfp-gap)); }
+.message-bubble-wrapper.indent-self  { margin-right: calc(var(--pfp-size) + var(--pfp-gap)); }
+
+/* Compact vertical gap when grouped */
+.message-bubble-wrapper.grp-mid,
+.message-bubble-wrapper.grp-end {
+  margin-top: var(--bubble-gap-y);
+}
+.message-bubble-wrapper.grp-mid {
+  margin-bottom: var(--bubble-gap-y);
+}
+
+/* Pending (optimistic send) subtle pulse + keep meta visible */
+.message-bubble-wrapper.pending .message-bubble {
+  animation: bubblePendingPulse 1.2s ease-in-out infinite;
+}
+.message-bubble-wrapper.pending .msg-meta-inline {
+  opacity: 0.6 !important; /* show placeholder meta immediately */
+}
+
+/* =========================================================
+ * AVATAR (PFP)
+ * ======================================================= */
+.bubble-pfp {
+  width: var(--pfp-size);
+  height: var(--pfp-size);
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.08);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.bubble-pfp:hover { transform: scale(1.05); }
+.bubble-pfp:active { transform: scale(.95); }
+
+/* =========================================================
+ * BUBBLE CORE
+ * ======================================================= */
+.message-bubble {
+  max-width: var(--bubble-max-width);
+  width: fit-content;              /* hug contents */
+  padding: var(--bubble-padding);
+  font-size: var(--bubble-font-size);
+  line-height: var(--bubble-line-height);
+  font-weight: 500; /* premium touch */
+  background: var(--other-bubble-bg-grad);
+  border-radius: var(--bubble-radius-left);
+  box-shadow: var(--bubble-shadow);
+  word-break: break-word;
+  display: inline-flex;
+  flex-direction: column;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.08s ease, transform 0.08s ease;
+}
+.message-bubble.right,
+.message-bubble.from-self {
+  background: var(--self-bubble-bg-grad);
+  border-radius: var(--bubble-radius-right);
+  margin-left: auto;
+}
+.message-bubble.left,
+.message-bubble.from-other {
+  margin-right: auto;
+}
+
+/* Make really long messages still wrap nicely */
+.message-bubble > .msg-inner-wrapper,
+.message-bubble > .msg-content {
+  max-width: 100%;
+}
+
+/* Press feedback */
+.message-bubble:active { transform: scale(.98); }
+.message-bubble.left:active,
+.message-bubble.from-other:active { background: var(--other-bubble-bg-press); }
+.message-bubble.right:active,
+.message-bubble.from-self:active { background: var(--self-bubble-bg-press); }
+
+/* =========================================================
+ * EMOJI-ONLY BUBBLES (float & no background)
+ * ======================================================= */
+.message-bubble.emoji-only {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 2px !important;
+}
+.message-bubble.emoji-only::after { display: none !important; }
+.message-bubble.emoji-only .msg-text {
+  font-size: calc(var(--msg-font-size) * 2.2) !important;
+  line-height: 1.05 !important;
+}
+.message-bubble.emoji-only .msg-meta-inline {
+  opacity: 0.85 !important; /* keep meta visible */
+  margin-left: 6px;
+}
+
+/* =========================================================
+ * GROUPED BUBBLE CORNER SMOOTHING
+ * ======================================================= */
+
+/* Received stack */
+.message-bubble.left.grp-start {
+  border-top-left-radius:  var(--bubble-rad-lg);
+  border-top-right-radius: var(--bubble-rad-lg);
+  border-bottom-left-radius:  var(--bubble-radius-mid);
+  border-bottom-right-radius: var(--bubble-rad-md);
+}
+.message-bubble.left.grp-mid {
+  border-top-left-radius:  var(--bubble-radius-mid);
+  border-bottom-left-radius: var(--bubble-radius-mid);
+  border-top-right-radius: var(--bubble-rad-md);
+  border-bottom-right-radius: var(--bubble-rad-md);
+}
+.message-bubble.left.grp-end {
+  border-top-left-radius:  var(--bubble-radius-mid);
+  border-top-right-radius: var(--bubble-rad-md);
+  border-bottom-left-radius: var(--bubble-rad-md);
+  border-bottom-right-radius: var(--bubble-rad-md);
+}
+.message-bubble.left.grp-single {
+  border-radius: var(--bubble-radius-left);
+}
+
+/* Sent stack */
+.message-bubble.right.grp-start {
+  border-top-right-radius:  var(--bubble-rad-lg);
+  border-top-left-radius:   var(--bubble-rad-lg);
+  border-bottom-right-radius: var(--bubble-radius-mid);
+  border-bottom-left-radius:  var(--bubble-rad-md);
+}
+.message-bubble.right.grp-mid {
+  border-top-right-radius:  var(--bubble-radius-mid);
+  border-bottom-right-radius: var(--bubble-radius-mid);
+  border-top-left-radius:   var(--bubble-rad-md);
+  border-bottom-left-radius:var(--bubble-rad-md);
+}
+.message-bubble.right.grp-end {
+  border-top-right-radius:  var(--bubble-radius-mid);
+  border-top-left-radius:   var(--bubble-rad-md);
+  border-bottom-right-radius: var(--bubble-rad-md);
+  border-bottom-left-radius:  var(--bubble-rad-md);
+}
+.message-bubble.right.grp-single {
+  border-radius: var(--bubble-radius-right);
+}
+
+/* =========================================================
+ * BUBBLE TAIL
+ * ======================================================= */
+.message-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+}
+.message-bubble.left::after,
+.message-bubble.from-other::after {
+  border-right-color: var(--other-bubble-bg);
+  left: -6px;
+  border-left: 0;
+}
+.message-bubble.right::after,
+.message-bubble.from-self::after {
+  border-left-color: var(--self-bubble-bg);
+  right: -6px;
+  border-right: 0;
+}
+.message-bubble.grp-start::after,
+.message-bubble.grp-mid::after { display: none; }
+
+/* =========================================================
+ * MESSAGE CONTENT
+ * ======================================================= */
+.msg-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0;
+}
+.msg-inner-wrapper {
+  display: inline-block;
+  max-width: 100%;
+  position: static;
+  padding: 0;
+}
+.msg-text-wrapper {
+  display: inline-flex;
+  align-items: flex-end;      /* baseline align meta w/ text */
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  gap: 4px;
+  max-width: 100%;
+  vertical-align: bottom;
+  width: max-content;         /* shrink to fit text+meta */
+  min-width: 0;
+}
+.message-bubble.right .msg-text-wrapper,
+.message-bubble.from-self .msg-text-wrapper {
+  justify-content: flex-end;
+}
+.msg-text {
+  font-family: var(--sw-font-stack);
+  font-size: var(--msg-font-size);
+  line-height: var(--msg-line-height);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  vertical-align: bottom;
+  max-width: 100%;
+  flex: 1 1 auto;
+}
+.msg-text img.emoji {
+  height: 1.3em;
+  vertical-align: middle;
+}
+
+/* =========================================================
+ * META: TIME + TICKS INLINE
+ * ======================================================= */
+.msg-meta-inline {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  font-size: var(--meta-font-size);
+  color: var(--meta-color);
+  white-space: nowrap;
+  line-height: 1;
+  margin-left: 4px;
+  opacity: 0; /* hidden until timestamp arrives (except pending) */
+  transition: opacity 0.12s ease;
+}
+.message-bubble.right .msg-meta-inline,
+.message-bubble.from-self .msg-meta-inline {
+  color: var(--meta-color-on-self);
+}
+.msg-time {
+  font-size: var(--meta-font-size);
+  line-height: 1;
+}
+.tick-icon {
+  width: var(--tick-size);
+  height: var(--tick-size);
+  vertical-align: middle;
+  display: inline-block;
+  line-height: 1;
+}
+.msg-meta-inline[data-status="sent"] .tick-icon { color: var(--tick-sent-color); }
+.msg-meta-inline[data-status="delivered"] .tick-icon { color: var(--tick-delivered-color); }
+.msg-meta-inline[data-status="seen"] .tick-icon { color: var(--tick-seen-color); }
+.msg-meta-inline[data-status="pending"] .tick-icon { color: var(--tick-pending-color); }
+
+/* Reveal meta once timestamp is populated (JS sets data-time on .message-bubble) */
+.message-bubble[data-time]:not([data-time=""]) .msg-meta-inline {
+  opacity: 0.85;
+}
+
+/* =========================================================
+ * REPLY STRIP
+ * ======================================================= */
+.reply-to {
+  font-size: var(--reply-font-size);
+  color: var(--reply-color);
+  background: var(--reply-bg);
+  padding: 2px 5px; /* slimmer */
+  border-left: 2px solid var(--reply-border-color);
+  margin-bottom: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: calc(var(--bubble-max-width) - 8px);
+  cursor: pointer;
+}
+.reply-to:hover { text-decoration: underline; }
+
+/* =========================================================
+ * HOVER TIMESTAMP TOOLTIP
+ * ======================================================= */
+.message-bubble:hover::before {
+  content: attr(data-time);
+  position: absolute;
+  bottom: -16px;
+  right: 6px;
+  font-size: 10px;
+  color: var(--meta-color);
+  opacity: 0.8;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.message-bubble.from-self:hover::before {
+  color: var(--meta-color-on-self);
+}
+
+/* =========================================================
  * INPUT BAR
  * ======================================================= */
 .chat-input-bar {
   display: flex;
   align-items: center;
-  padding: 4px 6px; /* slimmer */
-  gap: 4px;
+  padding: 6px 8px; /* slimmer */
+  gap: 6px;
   border-top: 1px solid #ccc;
   background: var(--inputbar-bg);
 }
@@ -1791,9 +2129,9 @@ body {
 }
 #threadInput {
   flex: 1;
-  padding: 4px 8px; /* slimmer */
+  padding: 6px 10px; /* slimmer */
   font-size: 15px;
-  border-radius: 14px;
+  border-radius: 16px;
   border: 1px solid #ccc;
   outline: none;
   background: #fff;
@@ -1817,6 +2155,18 @@ body {
 body.dark .chat-input-bar { background: var(--inputbar-bg); border-top-color: #333; }
 body.dark #threadInput { background: #222; color: #eee; border-color: #444; }
 body.dark .chat-input-bar .icon-btn { color: #bbb; }
+
+/* =========================================================
+ * RESPONSIVE
+ * ======================================================= */
+@media (max-width: 480px) {
+  :root {
+    --bubble-font-size: 14px;
+    --msg-font-size: 14px;
+  }
+  .chat-input-bar { padding: 5px 6px; }
+  #threadInput { font-size: 14px; padding: 6px 10px; }
+}
 
 /* =========================================================
  * ANIMATIONS
@@ -1850,7 +2200,7 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
   width: 16px;
   height: 16px;
   margin-left: 4px;
-  color: #1da1f2;
+  color: #1da1f2; /* Default blue (developer-like) */
   stroke-width: 2.2px;
   transition: transform 0.2s ease, color 0.2s ease;
 }
@@ -1863,12 +2213,18 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
 
 /* Badge levels */
 .dev-badge.supreme {
-  color: #ff5722;
+  color: #ff5722; /* Supreme = Orange */
   filter: drop-shadow(0 0 3px rgba(255, 87, 34, 0.5));
 }
-.dev-badge.gold { color: #ffb300; }
-.dev-badge.silver { color: #c0c0c0; }
-.dev-badge.bronze { color: #cd7f32; }
+.dev-badge.gold {
+  color: #ffb300; /* Gold */
+}
+.dev-badge.silver {
+  color: #c0c0c0; /* Silver */
+}
+.dev-badge.bronze {
+  color: #cd7f32; /* Bronze */
+}
 
 /* Placement in username containers */
 .search-username .dev-badge,
@@ -1880,9 +2236,7 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
   height: 16px;
 }
 
-/* =========================================================
- * AUTHOR (Message Sender Name)
- * ======================================================= */
+/* Author text styling (next to badge) */
 .msg-author {
   font-size: var(--meta-font-size);
   line-height: 1.1;
@@ -1892,7 +2246,6 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
   align-items: center;
   gap: 2px;
   pointer-events: none;
-  font-weight: 600;
 }
 .message-bubble.right .msg-author,
 .message-bubble.from-self .msg-author {
@@ -1900,70 +2253,51 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
   justify-content: flex-end;
 }
 
-/* =========================================================
- * LINK PREVIEW
- * ======================================================= */
-.link-preview {
-  display: flex;
-  flex-direction: column;
-  background: #fafafa;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
-  max-width: 300px;
-  margin-top: 4px;
-  cursor: pointer;
-  transition: box-shadow 0.15s ease;
-}
-.link-preview:hover {
-  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-}
-.link-preview img {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-.link-preview .link-info {
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.link-preview .link-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-  line-height: 1.3;
-}
-.link-preview .link-desc {
-  font-size: 12px;
-  color: #555;
-  line-height: 1.3;
-}
-body.dark .link-preview {
-  background: #222;
-  border-color: #333;
-}
-body.dark .link-preview .link-title { color: #eee; }
-body.dark .link-preview .link-desc { color: #bbb; }
-
-/* =========================================================
- * EDIT TAG
- * ======================================================= */
-.msg-edited-tag {
-  font-size: 10px;
-  font-weight: 500;
-  color: #999;
+/* =================== BADGE STYLES =================== */
+.dev-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  width: 16px;
+  height: 16px;
   margin-left: 4px;
-  user-select: none;
-}
-body.dark .msg-edited-tag {
-  color: #aaa;
+  stroke-width: 2.2px;
+  transition: transform 0.2s ease, color 0.2s ease;
 }
 
-/* =========================================================
- * BADGE LEGEND MODAL
- * ======================================================= */
+/* Badge Levels */
+.dev-badge.supreme {
+  color: #ff5722; /* Orange crown for developer */
+  filter: drop-shadow(0 0 3px rgba(255, 87, 34, 0.5));
+}
+.dev-badge.gold {
+  color: #ffb300; /* Gold badge */
+}
+.dev-badge.silver {
+  color: #c0c0c0; /* Silver badge */
+}
+.dev-badge.bronze {
+  color: #cd7f32; /* Bronze badge */
+}
+
+/* Hover */
+.dev-badge:hover {
+  transform: scale(1.2);
+  opacity: 0.9;
+}
+
+/* Badge placements */
+.search-username .dev-badge,
+.username-display .dev-badge,
+.chat-username .dev-badge,
+.message-username .dev-badge {
+  margin-left: 6px;
+  width: 16px;
+  height: 16px;
+}
+
+/* ================= Badge Legend Modal ================= */
 .badge-legend-modal {
   position: fixed;
   top: 0;
@@ -1976,7 +2310,9 @@ body.dark .msg-edited-tag {
   justify-content: center;
   z-index: 9999;
 }
-.badge-legend-modal.hidden { display: none; }
+.badge-legend-modal.hidden {
+  display: none;
+}
 .badge-legend-content {
   background: #fff;
   color: #333;
@@ -2014,163 +2350,11 @@ body.dark .msg-edited-tag {
   cursor: pointer;
   transition: background 0.2s ease;
 }
-.close-badge-legend:hover { background: #1ebe5d; }
+.close-badge-legend:hover {
+  background: #1ebe5d;
+}
 
 @keyframes scaleIn {
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
-}
-
-/* === FIX: Images inside bubbles === */
-.message-bubble img,
-.message-bubble video {
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
-  display: block;
-}
-/* =========================================================
- * PROFILE PICTURE FIX (Alignment with Bubble)
- * ======================================================= */
-.message-bubble-wrapper.has-pfp {
-  display: flex;
-  align-items: flex-end;
-  gap: 6px; /* Gap between PFP and bubble */
-}
-.message-bubble-wrapper.has-pfp.right {
-  flex-direction: row-reverse; /* Align PFP on right for self */
-}
-
-/* Profile picture sizing */
-.bubble-pfp {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
-}
-
-/* Make bubbles align vertically with PFP */
-.message-bubble-wrapper.has-pfp .message-bubble {
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-/* =========================================================
- * FORWARDED TAG
- * ======================================================= */
-.forwarded-tag {
-  font-size: 11px;
-  color: #777;
-  font-style: italic;
-  margin-bottom: 3px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.forwarded-tag::before {
-  content: "↪";
-  font-size: 12px;
-  color: #888;
-}
-
-/* =========================================================
- * DELETED MESSAGE
- * ======================================================= */
-.message-bubble.deleted {
-  background: #f4f4f4 !important;
-  color: #888 !important;
-  font-style: italic;
-  text-align: center;
-}
-.message-bubble.deleted::after {
-  display: none;
-}
-
-/* =========================================================
- * SYSTEM MESSAGES (DATE SEPARATORS, STATUS)
- * ======================================================= */
-.system-message {
-  text-align: center;
-  font-size: 12px;
-  color: #666;
-  background: #e6e6e6;
-  padding: 4px 10px;
-  border-radius: 10px;
-  display: inline-block;
-  margin: 8px auto;
-  font-weight: 500;
-}
-body.dark .system-message {
-  background: #333;
-  color: #aaa;
-}
-
-/* "User joined" banners */
-.joined-banner,
-.left-banner {
-  text-align: center;
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 8px;
-  margin: 6px auto;
-  background: #f0f0f0;
-  color: #555;
-}
-body.dark .joined-banner,
-body.dark .left-banner {
-  background: #222;
-  color: #bbb;
-}
-
-/* =========================================================
- * BUBBLE SHADOW ENHANCEMENTS
- * ======================================================= */
-.message-bubble {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06), 
-              0 1px 2px rgba(0, 0, 0, 0.05);
-}
-.message-bubble.right {
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.07),
-              0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-/* Add subtle hover effect */
-.message-bubble:hover {
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
-}
-
-/* =========================================================
- * TYPING INDICATOR
- * ======================================================= */
-.typing-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  height: 20px;
-  padding: 4px 8px;
-  border-radius: 10px;
-  background: var(--other-bubble-bg);
-  box-shadow: var(--bubble-shadow);
-  margin: 4px auto;
-}
-
-.typing-dot {
-  width: 6px;
-  height: 6px;
-  background: #888;
-  border-radius: 50%;
-  animation: typingBlink 1.3s infinite ease-in-out;
-}
-.typing-dot:nth-child(2) {
-  animation-delay: 0.2s;
-}
-.typing-dot:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes typingBlink {
-  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-  40% { transform: scale(1); opacity: 1; }
-}
+  
