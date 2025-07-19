@@ -1805,6 +1805,14 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
   }
 }
 
+function usernameWithBadge(uid, name) {
+  const safe = escapeHtml(name || "User");
+  if ((uid || "").toLowerCase() === "moneythepro") {
+    return `${safe} <i data-lucide="badge-check" class="dev-badge" aria-label="Verified"></i>`;
+  }
+  return safe;
+}
+
 async function openThread(uid, name) {
   if (!currentUser || !uid) return;
 
@@ -2678,42 +2686,34 @@ function copyRoomId() {
   alert("Group ID copied!");
 }
 
-// ✅ Add Developer Badge (with Lucide Tick)
-function applyDeveloperBadge(uid, usernameElement) {
-  if (!usernameElement) return;
-
-  const username = (uid || "").trim().toLowerCase();
+// ✅ Add Developer Badge Everywhere
+function applyDeveloperBadge(usernameElement, username) {
+  if (!usernameElement || !username) return;
   if (username === "moneythepro") {
-    // Remove old badge if exists
-    if (usernameElement.querySelector(".dev-badge")) return;
-
     const badge = document.createElement("i");
     badge.setAttribute("data-lucide", "badge-check");
-    badge.className = "dev-badge lucide-icon";
-    badge.style.marginLeft = "6px";
-    badge.style.color = "#1da1f2"; // Instagram/official style (blue tick)
+    badge.className = "dev-badge";
     usernameElement.appendChild(badge);
-
     if (typeof lucide !== "undefined") lucide.createIcons();
   }
 }
 
-// ✅ Decorate All Usernames with Developer Tick
+// ✅ Decorate usernames globally
 function decorateUsernamesWithBadges() {
-  const usernames = document.querySelectorAll(".search-username, .username-display, .chat-username");
-  usernames.forEach(el => {
-    const username = el.textContent.replace("@", "").trim().toLowerCase();
+  document.querySelectorAll(
+    ".search-username, .username-display, .chat-username, .message-username"
+  ).forEach(el => {
+    const username = el.textContent.replace("@", "").trim();
     if (username === "moneythepro" && !el.querySelector(".dev-badge")) {
-      const badge = document.createElement("i");
-      badge.setAttribute("data-lucide", "badge-check");
-      badge.className = "dev-badge lucide-icon";
-      badge.style.marginLeft = "6px";
-      badge.style.color = "#1da1f2";
-      el.appendChild(badge);
+      applyDeveloperBadge(el, username);
     }
   });
-  if (typeof lucide !== "undefined") lucide.createIcons();
 }
+
+// Auto-run badge decoration after DOM updates
+document.addEventListener("DOMContentLoaded", decorateUsernamesWithBadges);
+const badgeObserver = new MutationObserver(decorateUsernamesWithBadges);
+badgeObserver.observe(document.body, { childList: true, subtree: true });
 
 // ✅ Group controls
 function transferGroupOwnership(newOwnerId) {
