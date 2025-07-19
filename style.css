@@ -2005,7 +2005,7 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
 }
 
 /* =========================================================
- * Developer Badge
+ * BADGE STYLES (Levels + Developer Style)
  * ======================================================= */
 .dev-badge {
   display: inline-flex;
@@ -2015,14 +2015,33 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
   width: 16px;
   height: 16px;
   margin-left: 4px;
-  color: #1da1f2;
+  color: #1da1f2; /* Default blue (developer-like) */
   stroke-width: 2.2px;
   transition: transform 0.2s ease, color 0.2s ease;
 }
+
+/* Hover effect */
 .dev-badge:hover {
   transform: scale(1.2);
   color: #0d8ddb;
 }
+
+/* Badge levels */
+.dev-badge.supreme {
+  color: #ff5722; /* Supreme = Orange */
+  filter: drop-shadow(0 0 3px rgba(255, 87, 34, 0.5));
+}
+.dev-badge.gold {
+  color: #ffb300; /* Gold */
+}
+.dev-badge.silver {
+  color: #c0c0c0; /* Silver */
+}
+.dev-badge.bronze {
+  color: #cd7f32; /* Bronze */
+}
+
+/* Placement in username containers */
 .search-username .dev-badge,
 .username-display .dev-badge,
 .chat-username .dev-badge,
@@ -2031,6 +2050,8 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
   width: 16px;
   height: 16px;
 }
+
+/* Author text styling (next to badge) */
 .msg-author {
   font-size: var(--meta-font-size);
   line-height: 1.1;
@@ -2045,4 +2066,60 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
 .message-bubble.from-self .msg-author {
   color: var(--meta-color-on-self);
   justify-content: flex-end;
+}
+
+/* ================= Badge Legend Modal ================= */
+.badge-legend-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.badge-legend-modal.hidden {
+  display: none;
+}
+.badge-legend-content {
+  background: #fff;
+  color: #333;
+  padding: 20px 24px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  max-width: 320px;
+  text-align: left;
+}
+.badge-legend-content h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 600;
+}
+.badge-legend-content ul {
+  padding: 0;
+  margin: 0 0 16px;
+  list-style: none;
+}
+.badge-legend-content li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  font-size: 15px;
+}
+.close-badge-legend {
+  background: #25d366;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.close-badge-legend:hover {
+  background: #1ebe5d;
 }
