@@ -3143,8 +3143,8 @@ async function loadVerifiedBadges() {
       }
     }
 
-    // 2. Fetch from verified.json (with cache-busting)
-    const res = await fetch("./verified.json?cb=" + Date.now());
+    // 2. Fetch from verified.json (cache-busting)
+    const res = await fetch("./verified.json?cb=" + Date.now(), { cache: "no-store" });
     if (!res.ok) throw new Error("Failed to fetch verified.json");
     const data = await res.json();
 
@@ -3266,6 +3266,55 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target === modal) modal?.classList.add("hidden");
   });
 });
+
+/* ---------------------------------------------------------
+ * Service Worker Update Detection
+ * --------------------------------------------------------- */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js')
+    .then((reg) => {
+      console.log("Service Worker registered:", reg);
+
+      // Listen for updates
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log("New version available!");
+              showUpdateToast();
+            }
+          });
+        }
+      });
+    })
+    .catch((err) => console.error("SW registration failed:", err));
+}
+
+// Simple toast notification for updates
+function showUpdateToast() {
+  const toast = document.createElement("div");
+  toast.textContent = "New update available – click to refresh";
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #25d366;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    z-index: 9999;
+    font-family: sans-serif;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  `;
+  toast.onclick = () => {
+    caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    window.location.reload(true);
+  };
+  document.body.appendChild(toast);
+}
 
 // ✅ Group controls
 function transferGroupOwnership(newOwnerId) {
