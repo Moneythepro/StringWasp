@@ -1448,17 +1448,16 @@ body.dark .msg-meta {
 }
 
 :root {
-  --bubble-max-width: 85%;
-  --bubble-padding: 6px 10px;
-  --bubble-radius-left: 8px 8px 8px 0px;
-  --bubble-radius-right: 8px 8px 0px 8px;
-  --bubble-margin: 2px 4px;
-
+  --bubble-max-width: 92%;
+  --bubble-padding: 4px 8px;
+  --bubble-radius: 7px 7px 7px 0px;
+  --bubble-radius-right: 7px 7px 0px 7px;
+  --bubble-margin: 1px 2px;
   --bubble-font-size: 15px;
-  --bubble-line-height: 1.4;
+  --bubble-line-height: 1.35;
 
   --msg-font-size: 15px;
-  --msg-line-height: 1.4;
+  --msg-line-height: 1.35;
 
   --self-bubble-bg: #dcf8c6;
   --other-bubble-bg: #ffffff;
@@ -1468,17 +1467,17 @@ body.dark .msg-meta {
 
   --tick-size: 12px;
   --tick-seen-color: #4fc3f7;
-  --tick-sent-color: #999;
+  --tick-sent-color: #aaa;
 
   --reply-font-size: 13px;
-  --reply-color: #444;
+  --reply-color: #555;
   --reply-bg: #f0f0f0;
   --reply-border-color: #999;
 
   --inputbar-bg: #f5f5f5;
   --fg-muted: #666;
 
-  --bubble-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  --bubble-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
 }
 
 body.dark {
@@ -1495,7 +1494,8 @@ body.dark {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  margin: 1px 0;
+  padding: 0;
+  margin: 0;
 }
 .message-bubble-wrapper.right {
   align-items: flex-end;
@@ -1509,12 +1509,11 @@ body.dark {
   font-size: var(--bubble-font-size);
   line-height: var(--bubble-line-height);
   background: var(--other-bubble-bg);
-  border-radius: var(--bubble-radius-left);
+  border-radius: var(--bubble-radius);
   box-shadow: var(--bubble-shadow);
-  display: inline-flex;
-  flex-direction: column;
-  position: relative;
   word-break: break-word;
+  display: inline-block;
+  position: relative;
 }
 .message-bubble.right {
   background: var(--self-bubble-bg);
@@ -1586,21 +1585,16 @@ body.dark {
   gap: 3px;
   font-size: var(--meta-font-size);
   color: var(--meta-color);
-  flex-shrink: 0;
   white-space: nowrap;
-  margin: 0;
-  padding: 0;
-  line-height: 1;
-  height: 1em;
+  margin-left: 6px;
 }
-
-/* === Ticks === */
 .tick-icon {
   width: var(--tick-size);
   height: var(--tick-size);
-  vertical-align: bottom;
-  margin-left: 2px;
+  vertical-align: middle;
 }
+
+/* === Ticks === */
 .tick-seen {
   color: var(--tick-seen-color);
 }
@@ -1613,15 +1607,12 @@ body.dark {
   font-size: var(--reply-font-size);
   color: var(--reply-color);
   background: var(--reply-bg);
-  padding: 4px 6px;
-  border-left: 3px solid var(--reply-border-color);
-  margin-bottom: 4px;
+  padding: 3px 6px;
+  border-left: 2px solid var(--reply-border-color);
+  margin-bottom: 3px;
   overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow-wrap: break-word;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* === Hover Timestamp on Bubble === */
@@ -1707,4 +1698,9 @@ body.dark .msg-meta-inline {
     font-size: 14px;
     padding: 10px 12px;
   }
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
 }
