@@ -1461,7 +1461,7 @@ body.dark .msg-meta {
   --bubble-padding-x: 10px;
   --bubble-padding: var(--bubble-padding-y) var(--bubble-padding-x);
 
-  /* “squircle” base radii (slightly more organic) */
+  /* “squircle” base radii */
   --bubble-rad-lg: 20px;
   --bubble-rad-md: 14px;
   --bubble-rad-sm: 6px;
@@ -1583,9 +1583,12 @@ body.dark {
   margin-bottom: var(--bubble-gap-y);
 }
 
-/* Pending (optimistic send) subtle pulse */
+/* Pending (optimistic send) subtle pulse + keep meta visible */
 .message-bubble-wrapper.pending .message-bubble {
   animation: bubblePendingPulse 1.2s ease-in-out infinite;
+}
+.message-bubble-wrapper.pending .msg-meta-inline {
+  opacity: 0.6 !important; /* show placeholder meta immediately */
 }
 
 /* =========================================================
@@ -1734,12 +1737,14 @@ body.dark {
 }
 .msg-text-wrapper {
   display: inline-flex;
-  align-items: flex-end;   /* baseline align meta w/ text */
+  align-items: flex-end;      /* baseline align meta w/ text */
   justify-content: flex-start;
   flex-wrap: nowrap;
   gap: 4px;
   max-width: 100%;
   vertical-align: bottom;
+  width: max-content;         /* shrink to fit text+meta */
+  min-width: 0;
 }
 .message-bubble.right .msg-text-wrapper,
 .message-bubble.from-self .msg-text-wrapper {
@@ -1749,11 +1754,14 @@ body.dark {
   font-size: var(--msg-font-size);
   line-height: var(--msg-line-height);
   word-break: break-word;
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
   display: inline-block;
   margin: 0;
   padding: 0;
   vertical-align: bottom;
+  max-width: 100%;
+  flex: 1 1 auto;
 }
 .msg-text img.emoji {
   height: 1.3em;
@@ -1763,11 +1771,16 @@ body.dark {
   font-size: calc(var(--msg-font-size) * 1.8);
   line-height: 1.1;
 }
+/* When emoji-only, hide inline meta (looks cleaner); meta shown tooltip */
+.message-bubble.emoji-only .msg-meta-inline {
+  display: none;
+}
 
 /* =========================================================
  * META: TIME + TICKS INLINE
  * ======================================================= */
 .msg-meta-inline {
+  flex: none;
   display: inline-flex;
   align-items: center;
   gap: 2px;
@@ -1776,7 +1789,7 @@ body.dark {
   white-space: nowrap;
   line-height: 1;
   margin-left: 4px;
-  opacity: 0; /* hidden until timestamp arrives */
+  opacity: 0; /* hidden until timestamp arrives (except pending) */
   transition: opacity 0.12s ease;
 }
 .message-bubble.right .msg-meta-inline,
@@ -1785,6 +1798,7 @@ body.dark {
 }
 .msg-time {
   font-size: 0.75rem;
+  line-height: 1;
 }
 .tick-icon {
   width: var(--tick-size);
@@ -1862,10 +1876,12 @@ body.dark {
   border: 1px solid #ccc;
   outline: none;
   background: #fff;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
 #threadInput:focus {
   border-color: var(--tick-seen-color);
   background: #fff;
+  box-shadow: 0 0 0 2px rgba(79,195,247,.25);
 }
 #emojiToggleBtn { order: -1; }
 .emoji-btn {
@@ -1964,4 +1980,4 @@ body, html {
 .message-bubble.from-self .msg-author {
   color: var(--meta-color-on-self);
   justify-content: flex-end;
-}
+                                                             }
