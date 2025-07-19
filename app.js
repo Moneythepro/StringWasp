@@ -3778,3 +3778,39 @@ function renderWithMagnetSupport(containerId) {
     }
   });
 })();
+
+function setupEmojiButton() {
+  const emojiBtn = document.getElementById("emojiToggleBtn");
+  const input = document.getElementById("threadInput");
+  if (!emojiBtn || !input) return;
+
+  let emojiPicker;
+  let pickerOpen = false;
+
+  emojiBtn.addEventListener("click", async () => {
+    if (!emojiPicker) {
+      const module = await import("https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2");
+      emojiPicker = new module.default({
+        position: 'top-end',
+        theme: document.body.classList.contains("dark") ? "dark" : "light",
+        autoHide: false,
+        showSearch: true,
+        showRecents: true,
+        emojiSize: '1.3em',
+        zIndex: 9999
+      });
+
+      emojiPicker.on("emoji", selection => {
+        const chosenEmoji = selection.emoji;
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        input.value = input.value.slice(0, start) + chosenEmoji + input.value.slice(end);
+        input.selectionStart = input.selectionEnd = start + chosenEmoji.length;
+        input.focus();
+      });
+    }
+
+    pickerOpen = !pickerOpen;
+    pickerOpen ? emojiPicker.showPicker(emojiBtn) : emojiPicker.hidePicker();
+  });
+}
