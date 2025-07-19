@@ -2068,6 +2068,50 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
   justify-content: flex-end;
 }
 
+/* =================== BADGE STYLES =================== */
+.dev-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  width: 16px;
+  height: 16px;
+  margin-left: 4px;
+  stroke-width: 2.2px;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+/* Badge Levels */
+.dev-badge.supreme {
+  color: #ff5722; /* Orange crown for developer */
+  filter: drop-shadow(0 0 3px rgba(255, 87, 34, 0.5));
+}
+.dev-badge.gold {
+  color: #ffb300; /* Gold badge */
+}
+.dev-badge.silver {
+  color: #c0c0c0; /* Silver badge */
+}
+.dev-badge.bronze {
+  color: #cd7f32; /* Bronze badge */
+}
+
+/* Hover */
+.dev-badge:hover {
+  transform: scale(1.2);
+  opacity: 0.9;
+}
+
+/* Badge placements */
+.search-username .dev-badge,
+.username-display .dev-badge,
+.chat-username .dev-badge,
+.message-username .dev-badge {
+  margin-left: 6px;
+  width: 16px;
+  height: 16px;
+}
+
 /* ================= Badge Legend Modal ================= */
 .badge-legend-modal {
   position: fixed;
@@ -2092,6 +2136,7 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   max-width: 320px;
   text-align: left;
+  animation: scaleIn 0.2s ease forwards;
 }
 .badge-legend-content h3 {
   margin: 0 0 12px;
@@ -2122,4 +2167,9 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
 }
 .close-badge-legend:hover {
   background: #1ebe5d;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
