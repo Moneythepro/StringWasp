@@ -1703,6 +1703,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
   const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
 
+  // Compute grouping (grp-start, grp-mid, grp-end, grp-single)
   computeGroupClasses(msgs);
 
   let distFromBottom;
@@ -1717,14 +1718,24 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
   for (const msg of msgs) {
     const isSelf = msg.from === currentUser.uid;
-    const decrypted = decryptMsgText(msg);
-    const isDeleted = decrypted.isDeleted;
-    const displayText = decrypted.text;
+    const { text: displayText, isDeleted, deletedHtml } = decryptMsgText(msg);
     const emojiOnly = isEmojiOnlyText(displayText);
 
-    const replyBox = !isDeleted ? buildReplyStrip(msg) : "";
-    const meta = isSelf && !isDeleted ? buildTickMeta(msg, otherUid) : buildOtherMeta(msg);
+    /* ------ Username Row (only on group-start / single to reduce clutter) ------ */
+    const showAuthorRow = msg._grp === "grp-start" || msg._grp === "grp-single";
+    const authorHtml = showAuthorRow
+      ? `<div class="msg-author">${usernameWithBadge(msg.from, msg.fromName)}</div>`
+      : "";
 
+    /* ------ Reply Strip ------ */
+    const replyBox = !isDeleted ? buildReplyStrip(msg) : "";
+
+    /* ------ Meta (time + ticks) ------ */
+    const meta = isSelf && !isDeleted
+      ? buildTickMeta(msg, otherUid)
+      : buildOtherMeta(msg);
+
+    /* ------ Text / truncation ------ */
     const textHtml = escapeHtml(displayText);
     const shortText = textHtml.slice(0, 500);
     const hasLong = textHtml.length > 500;
@@ -1732,10 +1743,11 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
       : linkifyText(textHtml);
 
+    /* ------ Link Preview ------ */
     let linkPreviewHTML = "";
     if (msg.preview) {
       linkPreviewHTML = buildLinkPreviewHTML(msg.preview, msg.preview.url);
-    } else {
+    } else if (!isDeleted) {
       const url = extractFirstURL(displayText);
       if (url) {
         try {
@@ -1747,18 +1759,21 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       }
     }
 
+    /* ------ Wrapper ------ */
     const wrapper = document.createElement("div");
     wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}`;
 
+    /* ------ Bubble Markup ------ */
     wrapper.innerHTML = `
       <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""} ${msg._grp || ""}"
            data-msg-id="${msg.id}"
            data-time="${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}">
+        ${authorHtml}
         ${replyBox}
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
           <div class="msg-text-wrapper">
             <span class="msg-text clamp-text" data-full="${textHtml}" data-short="${shortText}">
-              ${isDeleted ? decrypted.deletedHtml : content}
+              ${isDeleted ? deletedHtml : content}
             </span>
             ${!isDeleted ? meta : ""}
           </div>
@@ -1767,6 +1782,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       </div>
     `;
 
+    /* ------ Gestures (skip deleted) ------ */
     if (!isDeleted) {
       const bubbleEl = wrapper.querySelector(".message-bubble");
       if (bubbleEl) {
@@ -1782,7 +1798,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
     frag.appendChild(wrapper);
 
-    // seen receipt
+    /* ------ Seen receipt ------ */
     if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
       db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
         .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
@@ -1792,10 +1808,12 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
   area.appendChild(frag);
 
+  /* Render Lucide icons (ticks, badge-check, trash, etc.) */
   if (typeof lucide !== "undefined") lucide.createIcons();
 
+  /* Scroll behavior */
   if (isInitial) {
-    // handled outside (saved scroll / bottom)
+    // initial scroll handled externally
   } else if (isNearBottom) {
     setTimeout(() => scrollToBottomThread(true), 40);
   } else if (typeof distFromBottom === "number") {
@@ -1957,6 +1975,9 @@ function renderMessage(msg, isOwn) {
   const { text, isDeleted, deletedHtml } = decryptMsgText(msg);
   const escaped = escapeHtml(text);
 
+  // Add author row with verified tick if it's moneythepro
+  const authorHtml = `<div class="msg-author">${usernameWithBadge(msg.from, msg.fromName)}</div>`;
+
   const replyHtml = msg.replyTo && !isDeleted
     ? `<div class="reply-to">${escapeHtml(msg.replyTo.text || "")}</div>`
     : "";
@@ -1975,6 +1996,7 @@ function renderMessage(msg, isOwn) {
   return `
     <div class="message-bubble-wrapper ${isOwn ? 'right from-self' : 'left from-other'} grp-single">
       <div class="message-bubble ${isOwn ? 'right' : 'left'} ${emojiOnly}" data-msg-id="${msg.id}">
+        ${authorHtml}
         ${replyHtml}
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
           <div class="msg-text-wrapper">
