@@ -1627,7 +1627,7 @@ function buildOtherMeta(msg) {
 }
 
 /* ========= SWIPE REPLY ========= */
-let touchStartX = 0, touchMoveX = 0;
+ touchMoveX = 0;
 function handleTouchStart(e) { if (e.touches?.[0]) touchStartX = touchMoveX = e.touches[0].clientX; }
 function handleTouchMove(e) { if (e.touches?.[0]) touchMoveX = e.touches[0].clientX; }
 function handleSwipeToReply(ev, msg, decrypted) {
