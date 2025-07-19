@@ -824,18 +824,17 @@ function loadGroupMessages(groupId) {
       const msgs = snapshot.docs.map(d => {
         const m = d.data();
         m.id = d.id;
-        // unify "from" so we can reuse grouping util
-        m.from = m.senderId;
+        m.from = m.senderId;        // normalize so computeGroupClasses works
         return m;
       });
 
-      // Remove messages deleted for me
+      // Filter out messages deleted for current user
       const visible = msgs.filter(m => !(m.deletedFor?.[currentUser.uid]));
 
-      // Grouping (5 min window)
-      computeGroupClassesGroup(visible);
+      // Grouping (5 min window) using existing helper
+      computeGroupClasses(visible);
 
-      // Unique sender cache
+      // Collect unique sender IDs
       const uidSet = new Set();
       visible.forEach(m => uidSet.add(m.senderId));
       const senderCache = {};
@@ -846,7 +845,7 @@ function loadGroupMessages(groupId) {
           try {
             const uDoc = await db.collection("users").doc(uid).get();
             if (uDoc.exists) senderCache[uid] = uDoc.data();
-          } catch (_) {}
+          } catch { /* ignore */ }
         })
       );
 
@@ -872,8 +871,9 @@ function loadGroupMessages(groupId) {
         }
 
         /* --- Reply strip --- */
-        const replyHtml = (!isDeleted && msg.replyTo?.text)
-          ? `<div class="reply-to clamp-text" onclick="scrollToMessage('${msg.replyTo.msgId || msg.replyTo.id || ""}')">↪ ${escapeHtml(msg.replyTo.text || "").slice(0,120)}</div>`
+        const replyRaw = msg.replyTo?.text || "";
+        const replyHtml = (!isDeleted && replyRaw)
+          ? `<div class="reply-to clamp-text" onclick="scrollToMessage('${msg.replyTo.msgId || msg.replyTo.id || ""}')">↪ ${escapeHtml(replyRaw.slice(0,120))}</div>`
           : "";
 
         /* --- Sender data --- */
@@ -881,7 +881,7 @@ function loadGroupMessages(groupId) {
         const senderNameRaw = (msg.senderName || senderData.username || senderData.name || "User").replace(/<[^>]*>/g,"");
         const senderNameHtml = usernameWithBadge(msg.senderId, senderNameRaw);
 
-        /* --- Show author row only on grp-start / grp-single (and when not self, optional) --- */
+        /* --- Show author row on grp-start / grp-single --- */
         const showAuthorRow = msg._grp === "grp-start" || msg._grp === "grp-single";
         const authorLabel = showAuthorRow
           ? `<div class="msg-author">${senderNameHtml}</div>`
@@ -911,12 +911,12 @@ function loadGroupMessages(groupId) {
         wrapper.className = `message-bubble-wrapper ${isSelf ? "right from-self" : "left from-other"} ${msg._grp}`;
         if (showPfp) wrapper.classList.add("has-pfp");
 
-        /* indent follow-up bubbles so they align under text (reserve avatar space) */
+        // indent follow-up bubbles so they align under text (reserve avatar space)
         if (!showPfp && !isSelf) {
-          wrapper.style.margin-left = `calc(var(--pfp-size) + var(--pfp-gap))`;
+          wrapper.style.marginLeft = `calc(var(--pfp-size) + var(--pfp-gap))`;
         }
         if (!showPfp && isSelf) {
-          wrapper.style.margin-right = `calc(var(--pfp-size) + var(--pfp-gap))`;
+          wrapper.style.marginRight = `calc(var(--pfp-size) + var(--pfp-gap))`;
         }
 
         wrapper.innerHTML = `
