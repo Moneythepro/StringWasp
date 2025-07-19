@@ -1938,22 +1938,22 @@ body {
 }
 #threadInput {
   flex: 1;
-  padding: 14px 16px; /* smooth, tall padding */
-  font-size: 16px;
-  border-radius: 12px; /* smooth iOS-like edges */
-  border: 1px solid #d1d1d6; /* soft gray border like iOS */
+  padding: 10px 14px; /* slightly smaller height & width */
+  font-size: 15px; /* slightly smaller text */
+  border-radius: 8px; /* smoother but less rounded */
+  border: 1px solid #d1d1d6; /* soft iOS border */
   outline: none;
-  background: #f9f9f9; /* soft white, not harsh */
+  background: #f9f9f9;
   color: #000;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); /* subtle inner shadow */
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 #threadInput:focus {
-  border-color: #007aff; /* iOS blue */
+  border-color: #007aff;
   background: #fff;
-  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2); /* subtle focus ring */
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
 }
 #emojiToggleBtn { order: -1; }
 .emoji-btn {
