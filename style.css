@@ -1492,25 +1492,26 @@ body.dark .msg-meta {
 }
 
 /* =========================================================
- * StringWasp Chat Bubbles • Compact HH:MM Fit
+ * StringWasp Chat Bubbles • Ultra Slim Luxe Merge
+ * (80% Width • 1px Vert Pad • Tight Radii • Inline Meta • Smooth Anim)
  * ======================================================= */
 
 /* ---------- ROOT VARIABLES ---------- */
 :root {
-  --sw-font-stack: "Inter", "Roboto", "Segoe UI", -apple-system, BlinkMacSystemFont,
-                   "Helvetica Neue", Arial, sans-serif;
+  --sw-font-stack: "Inter", "Roboto", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
 
-  --bubble-max-width: 92%;
+  /* ultraslim tweaks */
+  --bubble-max-width: 80%;          /* tighter than Compact Luxe 92% */
 
-  /* ultra-compact bubble padding */
-  --bubble-padding-y: 2px;
-  --bubble-padding-x: 8px;
+  /* ultra-slim bubble padding (edges hug text) */
+  --bubble-padding-y: 1px;
+  --bubble-padding-x: 6px;
   --bubble-padding: var(--bubble-padding-y) var(--bubble-padding-x);
 
-  /* “squircle” radii */
-  --bubble-rad-lg: 20px;
-  --bubble-rad-md: 14px;
-  --bubble-rad-sm: 6px;
+  /* “squircle” base radii (slightly smaller) */
+  --bubble-rad-lg: 18px;
+  --bubble-rad-md: 12px;
+  --bubble-rad-sm: 5px;
 
   /* first bubble shapes */
   --bubble-radius-left:  var(--bubble-rad-lg) var(--bubble-rad-lg) var(--bubble-rad-lg) var(--bubble-rad-sm);
@@ -1519,14 +1520,15 @@ body.dark .msg-meta {
   /* inner joints when grouped */
   --bubble-radius-mid: var(--bubble-rad-sm);
 
-  --bubble-gap-y: 1px;
-  --bubble-margin: 4px 0px;
+  --bubble-gap-y: 1px;        /* tighter vertical gap inside stack */
+  --bubble-margin: 3px 0px;   /* gap between different senders (slimmer) */
 
-  /* text sizing */
-  --bubble-font-size: 16px;
-  --bubble-line-height: 1.32;
-  --msg-font-size: 16px;
-  --msg-line-height: 1.32;
+  /* text sizing (slimmer spec) */
+  --bubble-font-size: 15px;
+  --bubble-line-height: 1.28;
+
+  --msg-font-size: 15px;
+  --msg-line-height: 1.28;
 
   --self-bubble-bg: #dcf8c6;
   --other-bubble-bg: #ffffff;
@@ -1548,7 +1550,7 @@ body.dark .msg-meta {
   --tick-sent-color: #bdbdbd;
   --tick-pending-color: #ccc;
 
-  --reply-font-size: 13px;
+  --reply-font-size: 12px;
   --reply-color: #555;
   --reply-bg: #f0f0f0;
   --reply-border-color: #999;
@@ -1558,11 +1560,10 @@ body.dark .msg-meta {
 
   --bubble-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
 
-  /* anim */
-  --bubble-anim-duration: 0.22s;
-  --bubble-anim-ease: cubic-bezier(.16,.84,.44,1);
+  --bubble-anim-duration: 0.2s;
+  --bubble-anim-ease: cubic-bezier(.16,.84,.44,1); /* buttery snap */
 
-  /* avatars */
+  /* Avatar size for slim look */
   --pfp-size: 28px;
   --pfp-gap: 6px;
 }
@@ -1605,7 +1606,7 @@ body {
   padding: 0;
   margin: var(--bubble-margin);
   opacity: 0;
-  animation: swBubbleFade var(--bubble-anim-duration) var(--bubble-anim-ease) forwards;
+  animation: bubblePopIn var(--bubble-anim-duration) var(--bubble-anim-ease) forwards;
   will-change: transform, opacity;
 }
 .message-bubble-wrapper.right,
@@ -1613,7 +1614,7 @@ body {
   align-items: flex-end;
 }
 
-/* wrapper w/ avatar */
+/* When wrapper includes an avatar beside the bubble */
 .message-bubble-wrapper.has-pfp {
   flex-direction: row;
   align-items: flex-end;
@@ -1625,21 +1626,25 @@ body {
   align-items: flex-end;
 }
 
-/* inline indents (if JS falls back) */
+/* Indent continuation bubbles (no avatar) to line up under text col */
 .message-bubble-wrapper.indent-other { margin-left: calc(var(--pfp-size) + var(--pfp-gap)); }
 .message-bubble-wrapper.indent-self  { margin-right: calc(var(--pfp-size) + var(--pfp-gap)); }
 
-/* grouped spacing */
+/* Compact vertical gap when grouped */
 .message-bubble-wrapper.grp-mid,
-.message-bubble-wrapper.grp-end { margin-top: var(--bubble-gap-y); }
-.message-bubble-wrapper.grp-mid { margin-bottom: var(--bubble-gap-y); }
+.message-bubble-wrapper.grp-end {
+  margin-top: var(--bubble-gap-y);
+}
+.message-bubble-wrapper.grp-mid {
+  margin-bottom: var(--bubble-gap-y);
+}
 
-/* pending pulse */
+/* Pending (optimistic send) subtle pulse + keep meta visible */
 .message-bubble-wrapper.pending .message-bubble {
   animation: bubblePendingPulse 1.2s ease-in-out infinite;
 }
 .message-bubble-wrapper.pending .msg-meta-inline {
-  opacity: 0.6 !important;
+  opacity: 0.6 !important; /* show placeholder meta immediately */
 }
 
 /* =========================================================
@@ -1663,11 +1668,11 @@ body {
  * ======================================================= */
 .message-bubble {
   max-width: var(--bubble-max-width);
-  width: fit-content;
+  width: fit-content;              /* hug contents */
   padding: var(--bubble-padding);
   font-size: var(--bubble-font-size);
   line-height: var(--bubble-line-height);
-  font-weight: 500;
+  font-weight: 500; /* premium touch */
   background: var(--other-bubble-bg-grad);
   border-radius: var(--bubble-radius-left);
   box-shadow: var(--bubble-shadow);
@@ -1689,13 +1694,13 @@ body {
   margin-right: auto;
 }
 
-/* Let inner content shrink naturally */
+/* Make really long messages still wrap nicely */
 .message-bubble > .msg-inner-wrapper,
 .message-bubble > .msg-content {
   max-width: 100%;
 }
 
-/* press feedback */
+/* Press feedback */
 .message-bubble:active { transform: scale(.98); }
 .message-bubble.left:active,
 .message-bubble.from-other:active { background: var(--other-bubble-bg-press); }
@@ -1703,7 +1708,7 @@ body {
 .message-bubble.from-self:active { background: var(--self-bubble-bg-press); }
 
 /* =========================================================
- * EMOJI-ONLY BUBBLES
+ * EMOJI-ONLY BUBBLES (float & no background)
  * ======================================================= */
 .message-bubble.emoji-only {
   background: transparent !important;
@@ -1716,19 +1721,19 @@ body {
   line-height: 1.05 !important;
 }
 .message-bubble.emoji-only .msg-meta-inline {
+  opacity: 0.85 !important; /* keep meta visible */
   margin-left: 6px;
-  opacity: 0.85 !important;
 }
-/* avoid tooltip duplication */
-.message-bubble.emoji-only:hover::before { display: none; }
 
 /* =========================================================
- * GROUPED CORNERS
+ * GROUPED BUBBLE CORNER SMOOTHING
  * ======================================================= */
+
+/* Received stack */
 .message-bubble.left.grp-start {
   border-top-left-radius:  var(--bubble-rad-lg);
   border-top-right-radius: var(--bubble-rad-lg);
-  border-bottom-left-radius: var(--bubble-radius-mid);
+  border-bottom-left-radius:  var(--bubble-radius-mid);
   border-bottom-right-radius: var(--bubble-rad-md);
 }
 .message-bubble.left.grp-mid {
@@ -1746,6 +1751,8 @@ body {
 .message-bubble.left.grp-single {
   border-radius: var(--bubble-radius-left);
 }
+
+/* Sent stack */
 .message-bubble.right.grp-start {
   border-top-right-radius:  var(--bubble-rad-lg);
   border-top-left-radius:   var(--bubble-rad-lg);
@@ -1769,7 +1776,7 @@ body {
 }
 
 /* =========================================================
- * TAIL
+ * BUBBLE TAIL
  * ======================================================= */
 .message-bubble::after {
   content: "";
@@ -1811,13 +1818,13 @@ body {
 }
 .msg-text-wrapper {
   display: inline-flex;
-  align-items: flex-end; /* baseline align meta */
+  align-items: flex-end;      /* baseline align meta w/ text */
   justify-content: flex-start;
   flex-wrap: nowrap;
   gap: 4px;
   max-width: 100%;
   vertical-align: bottom;
-  width: max-content;  /* shrink to fit */
+  width: max-content;         /* shrink to fit text+meta */
   min-width: 0;
 }
 .message-bubble.right .msg-text-wrapper,
@@ -1844,7 +1851,7 @@ body {
 }
 
 /* =========================================================
- * META INLINE (HH:MM + ticks)
+ * META: TIME + TICKS INLINE
  * ======================================================= */
 .msg-meta-inline {
   flex: none;
@@ -1856,10 +1863,8 @@ body {
   white-space: nowrap;
   line-height: 1;
   margin-left: 4px;
-  opacity: 0; /* shown when data-time exists or pending */
+  opacity: 0; /* hidden until timestamp arrives (except pending) */
   transition: opacity 0.12s ease;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum";
 }
 .message-bubble.right .msg-meta-inline,
 .message-bubble.from-self .msg-meta-inline {
@@ -1881,7 +1886,7 @@ body {
 .msg-meta-inline[data-status="seen"] .tick-icon { color: var(--tick-seen-color); }
 .msg-meta-inline[data-status="pending"] .tick-icon { color: var(--tick-pending-color); }
 
-/* reveal meta on timestamp */
+/* Reveal meta once timestamp is populated (JS sets data-time on .message-bubble) */
 .message-bubble[data-time]:not([data-time=""]) .msg-meta-inline {
   opacity: 0.85;
 }
@@ -1893,13 +1898,13 @@ body {
   font-size: var(--reply-font-size);
   color: var(--reply-color);
   background: var(--reply-bg);
-  padding: 3px 6px;
+  padding: 2px 5px; /* slimmer */
   border-left: 2px solid var(--reply-border-color);
   margin-bottom: 3px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: calc(var(--bubble-max-width) - 12px);
+  max-width: calc(var(--bubble-max-width) - 8px);
   cursor: pointer;
 }
 .reply-to:hover { text-decoration: underline; }
@@ -1910,11 +1915,11 @@ body {
 .message-bubble:hover::before {
   content: attr(data-time);
   position: absolute;
-  bottom: -18px;
-  right: 10px;
-  font-size: 11px;
+  bottom: -16px;
+  right: 6px;
+  font-size: 10px;
   color: var(--meta-color);
-  opacity: 0.85;
+  opacity: 0.8;
   pointer-events: none;
   white-space: nowrap;
 }
@@ -1928,8 +1933,8 @@ body {
 .chat-input-bar {
   display: flex;
   align-items: center;
-  padding: 10px 12px;
-  gap: 8px;
+  padding: 6px 8px; /* slimmer */
+  gap: 6px;
   border-top: 1px solid #ccc;
   background: var(--inputbar-bg);
 }
@@ -1939,9 +1944,9 @@ body {
 }
 #threadInput {
   flex: 1;
-  padding: 10px 14px;
-  font-size: 16px;
-  border-radius: 20px;
+  padding: 6px 10px; /* slimmer */
+  font-size: 15px;
+  border-radius: 16px;
   border: 1px solid #ccc;
   outline: none;
   background: #fff;
@@ -1958,7 +1963,7 @@ body {
   margin-right: 4px;
   cursor: pointer;
   color: var(--fg-muted);
-  font-size: 1.4em;
+  font-size: 1.3em;
   display: flex;
   align-items: center;
 }
@@ -1971,19 +1976,19 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
  * ======================================================= */
 @media (max-width: 480px) {
   :root {
-    --bubble-font-size: 15px;
-    --msg-font-size: 15px;
+    --bubble-font-size: 14px;
+    --msg-font-size: 14px;
   }
-  .chat-input-bar { padding: 8px 10px; }
-  #threadInput { font-size: 15px; padding: 10px 12px; }
+  .chat-input-bar { padding: 5px 6px; }
+  #threadInput { font-size: 14px; padding: 6px 10px; }
 }
 
 /* =========================================================
  * ANIMATIONS
  * ======================================================= */
-@keyframes swBubbleFade {
+@keyframes bubblePopIn {
   0%   { opacity: 0; transform: translateY(4px) scale(.98); }
-  60%  { opacity: 1; transform: translateY(0) scale(1.01); }
+  60%  { opacity: 1; transform: translateY(0) scale(1.02); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 @keyframes bubblePendingPulse {
@@ -2014,7 +2019,10 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
   stroke-width: 2.2px;
   transition: transform 0.2s ease, color 0.2s ease;
 }
-.dev-badge:hover { transform: scale(1.2); color: #0d8ddb; }
+.dev-badge:hover {
+  transform: scale(1.2);
+  color: #0d8ddb;
+}
 .search-username .dev-badge,
 .username-display .dev-badge,
 .chat-username .dev-badge,
@@ -2037,32 +2045,4 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
 .message-bubble.from-self .msg-author {
   color: var(--meta-color-on-self);
   justify-content: flex-end;
-}
-
-.day-separator {
-  text-align: center;
-  margin: 10px 0;
-  font-size: 12px;
-  color: #777;
-  font-weight: 500;
-  position: relative;
-}
-.day-separator::before,
-.day-separator::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  width: 40%;
-  height: 1px;
-  background: #ddd;
-}
-.day-separator::before { left: 0; }
-.day-separator::after  { right: 0; }
-
-body.dark .day-separator {
-  color: #aaa;
-}
-body.dark .day-separator::before,
-body.dark .day-separator::after {
-  background: #333;
 }
