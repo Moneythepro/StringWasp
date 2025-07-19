@@ -1448,17 +1448,19 @@ body.dark .msg-meta {
 }
 
 /* =========================================================
- * StringWasp Chat Bubbles • Compact Luxe Edition
- * (Better-than-WA iOS • Inline Meta • Smooth Anim)
+ * StringWasp Chat Bubbles • Compact Luxe HH:MM Fit
+ * (Better-than-WA iOS • Inline Meta • Smooth Anim • Tight Width)
  * ======================================================= */
 
 /* ---------- ROOT VARIABLES ---------- */
 :root {
+  --sw-font-stack: "Inter", "Roboto", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+
   --bubble-max-width: 92%;
 
-  /* compact padding (vertical halved) */
+  /* ultra-compact bubble padding */
   --bubble-padding-y: 2px;
-  --bubble-padding-x: 10px;
+  --bubble-padding-x: 8px;
   --bubble-padding: var(--bubble-padding-y) var(--bubble-padding-x);
 
   /* “squircle” base radii */
@@ -1476,10 +1478,11 @@ body.dark .msg-meta {
   --bubble-gap-y: 1px;        /* tighter vertical gap inside stack */
   --bubble-margin: 4px 0px;   /* gap between different senders */
 
-  --bubble-font-size: 15px;
+  /* text sizing (msg slightly larger than before) */
+  --bubble-font-size: 16px;
   --bubble-line-height: 1.32;
 
-  --msg-font-size: 15px;
+  --msg-font-size: 16px;
   --msg-line-height: 1.32;
 
   --self-bubble-bg: #dcf8c6;
@@ -1491,11 +1494,12 @@ body.dark .msg-meta {
   --self-bubble-bg-press: #c8eab0;
   --other-bubble-bg-press: #f3f3f3;
 
-  --meta-font-size: 11px;
+  /* compact meta */
+  --meta-font-size: 10px;
   --meta-color: #5e5e5e;
   --meta-color-on-self: rgba(0,0,0,0.45);
 
-  --tick-size: 12px;
+  --tick-size: 11px;
   --tick-seen-color: #4fc3f7;
   --tick-delivered-color: #9e9e9e;
   --tick-sent-color: #bdbdbd;
@@ -1538,6 +1542,13 @@ body.dark {
   --inputbar-bg: #111;
   background: #0e0e0e;
   color: #eee;
+}
+
+/* =========================================================
+ * GLOBAL FONT
+ * ======================================================= */
+body {
+  font-family: var(--sw-font-stack);
 }
 
 /* =========================================================
@@ -1612,6 +1623,7 @@ body.dark {
  * ======================================================= */
 .message-bubble {
   max-width: var(--bubble-max-width);
+  width: fit-content;              /* hug contents */
   padding: var(--bubble-padding);
   font-size: var(--bubble-font-size);
   line-height: var(--bubble-line-height);
@@ -1637,12 +1649,36 @@ body.dark {
   margin-right: auto;
 }
 
+/* Make really long messages still wrap nicely */
+.message-bubble > .msg-inner-wrapper,
+.message-bubble > .msg-content {
+  max-width: 100%;
+}
+
 /* Press feedback */
 .message-bubble:active { transform: scale(.98); }
 .message-bubble.left:active,
 .message-bubble.from-other:active { background: var(--other-bubble-bg-press); }
 .message-bubble.right:active,
 .message-bubble.from-self:active { background: var(--self-bubble-bg-press); }
+
+/* =========================================================
+ * EMOJI-ONLY BUBBLES (float & no background)
+ * ======================================================= */
+.message-bubble.emoji-only {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 2px !important;
+}
+.message-bubble.emoji-only::after { display: none !important; }
+.message-bubble.emoji-only .msg-text {
+  font-size: calc(var(--msg-font-size) * 2.2) !important;
+  line-height: 1.05 !important;
+}
+.message-bubble.emoji-only .msg-meta-inline {
+  opacity: 0.85 !important; /* keep meta visible */
+  margin-left: 6px;
+}
 
 /* =========================================================
  * GROUPED BUBBLE CORNER SMOOTHING
@@ -1751,6 +1787,7 @@ body.dark {
   justify-content: flex-end;
 }
 .msg-text {
+  font-family: var(--sw-font-stack);
   font-size: var(--msg-font-size);
   line-height: var(--msg-line-height);
   word-break: break-word;
@@ -1767,14 +1804,6 @@ body.dark {
   height: 1.3em;
   vertical-align: middle;
 }
-.message-bubble.emoji-only .msg-text {
-  font-size: calc(var(--msg-font-size) * 1.8);
-  line-height: 1.1;
-}
-/* When emoji-only, hide inline meta (looks cleaner); meta shown tooltip */
-.message-bubble.emoji-only .msg-meta-inline {
-  display: none;
-}
 
 /* =========================================================
  * META: TIME + TICKS INLINE
@@ -1783,7 +1812,7 @@ body.dark {
   flex: none;
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
   font-size: var(--meta-font-size);
   color: var(--meta-color);
   white-space: nowrap;
@@ -1797,7 +1826,7 @@ body.dark {
   color: var(--meta-color-on-self);
 }
 .msg-time {
-  font-size: 0.75rem;
+  font-size: var(--meta-font-size);
   line-height: 1;
 }
 .tick-icon {
@@ -1871,12 +1900,13 @@ body.dark {
 #threadInput {
   flex: 1;
   padding: 10px 14px;
-  font-size: 15px;
+  font-size: 16px;
   border-radius: 20px;
   border: 1px solid #ccc;
   outline: none;
   background: #fff;
   transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  font-family: var(--sw-font-stack);
 }
 #threadInput:focus {
   border-color: var(--tick-seen-color);
@@ -1901,31 +1931,21 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
  * ======================================================= */
 @media (max-width: 480px) {
   :root {
-    --bubble-font-size: 14px;
-    --msg-font-size: 14px;
+    --bubble-font-size: 15px;
+    --msg-font-size: 15px;
   }
   .chat-input-bar { padding: 8px 10px; }
-  #threadInput { font-size: 14px; padding: 10px 12px; }
-}
-
-/* =========================================================
- * RESET / SAFETY
- * ======================================================= */
-body, html {
-  margin: 0;
-  padding: 0;
+  #threadInput { font-size: 15px; padding: 10px 12px; }
 }
 
 /* =========================================================
  * ANIMATIONS
  * ======================================================= */
-/* entry */
 @keyframes bubblePopIn {
   0%   { opacity: 0; transform: translateY(4px) scale(.98); }
   60%  { opacity: 1; transform: translateY(0) scale(1.02); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
-/* pending pulse (optional) */
 @keyframes bubblePendingPulse {
   0%,100% { transform: scale(1);     opacity: 1; }
   50%     { transform: scale(.98);   opacity: .85; }
@@ -1980,4 +2000,4 @@ body, html {
 .message-bubble.from-self .msg-author {
   color: var(--meta-color-on-self);
   justify-content: flex-end;
-                                                             }
+}
