@@ -1873,21 +1873,38 @@ body, html {
   width: 16px;
   height: 16px;
   margin-left: 4px;
-  color: #1da1f2; /* Instagram/official style blue */
+  color: #1da1f2; /* Instagram/Twitter style verified blue */
   stroke-width: 2.2px;
   transition: transform 0.2s ease, color 0.2s ease;
 }
 
 .dev-badge:hover {
   transform: scale(1.2);
-  color: #0d8ddb; /* Slightly darker blue on hover */
+  color: #0d8ddb;
 }
 
-/* Adjust for small username containers */
 .search-username .dev-badge,
 .username-display .dev-badge,
-.chat-username .dev-badge {
+.chat-username .dev-badge,
+.message-username .dev-badge {
   margin-left: 6px;
   width: 16px;
   height: 16px;
+}
+
+/* Message author label (used for group-start / single bubbles) */
+.msg-author {
+  font-size: var(--meta-font-size);
+  line-height: 1.1;
+  color: var(--meta-color);
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+.message-bubble.right .msg-author,
+.message-bubble.from-self .msg-author {
+  color: var(--meta-color-on-self);
+  justify-content: flex-end;
 }
