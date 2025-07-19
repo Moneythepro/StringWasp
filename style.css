@@ -1927,62 +1927,45 @@ body {
 .chat-input-bar {
   display: flex;
   align-items: center;
-  padding: 10px 12px; /* taller bar */
-  gap: 8px;
+  padding: 6px 8px; /* slimmer */
+  gap: 6px;
   border-top: 1px solid #ccc;
   background: var(--inputbar-bg);
 }
-
 .chat-input-bar .icon-btn {
-  font-size: 20px;
+  font-size: 18px;
   color: #444;
 }
-
 #threadInput {
   flex: 1;
-  padding: 12px 14px; /* increased height */
-  font-size: 16px;
-  border-radius: 4px; /* squarish edges */
+  padding: 12px 14px; /* taller input */
+  font-size: 15px;
+  border-radius: 6px; /* squarish corners */
   border: 1px solid #ccc;
   outline: none;
   background: #fff;
   transition: border-color 0.12s ease, box-shadow 0.12s ease;
   font-family: var(--sw-font-stack);
-  min-height: 42px; /* ensure consistent tall input */
+  min-height: 42px; /* ensure consistent tall shape */
 }
-
 #threadInput:focus {
   border-color: var(--tick-seen-color);
   background: #fff;
   box-shadow: 0 0 0 2px rgba(79,195,247,.25);
 }
-
-#emojiToggleBtn {
-  order: -1;
-}
-
+#emojiToggleBtn { order: -1; }
 .emoji-btn {
   margin-right: 4px;
   cursor: pointer;
   color: var(--fg-muted);
-  font-size: 1.4em;
+  font-size: 1.3em;
   display: flex;
   align-items: center;
 }
+body.dark .chat-input-bar { background: var(--inputbar-bg); border-top-color: #333; }
+body.dark #threadInput { background: #222; color: #eee; border-color: #444; }
+body.dark .chat-input-bar .icon-btn { color: #bbb; }
 
-/* Dark mode adjustments */
-body.dark .chat-input-bar {
-  background: var(--inputbar-bg);
-  border-top-color: #333;
-}
-body.dark #threadInput {
-  background: #222;
-  color: #eee;
-  border-color: #444;
-}
-body.dark .chat-input-bar .icon-btn {
-  color: #bbb;
-}
 /* =========================================================
  * RESPONSIVE
  * ======================================================= */
