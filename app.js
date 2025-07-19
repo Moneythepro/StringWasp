@@ -410,11 +410,15 @@ function viewUserProfile(uid) {
     const avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
 
     document.getElementById("viewProfilePic").src = avatar;
-    document.getElementById("viewProfileName").textContent = user.name || "Unnamed";
-    document.getElementById("viewProfileUsername").textContent = `@${user.username || "unknown"}`;
-    document.getElementById("viewProfileBio").textContent = user.bio || "No bio";
-    document.getElementById("viewProfileEmail").textContent = user.email || "";
-    document.getElementById("viewProfileStatus").textContent = user.status || "";
+document.getElementById("viewProfileName").textContent = user.name || "Unnamed";
+
+// ✅ Apply badge to username
+document.getElementById("viewProfileUsername").innerHTML =
+  `@${usernameWithBadge(user.username || "unknown")}`;
+
+document.getElementById("viewProfileBio").textContent = user.bio || "No bio";
+document.getElementById("viewProfileEmail").textContent = user.email || "";
+document.getElementById("viewProfileStatus").textContent = user.status || "";
 
     document.getElementById("viewProfileModal").style.display = "flex";
 
@@ -578,7 +582,7 @@ function loadRealtimeGroups() {
           <img class="group-avatar" src="${icon}" />
           <div class="details">
             <div class="name-row">
-              <span class="name">#${escapeHtml(name)}</span>
+              <span class="name">#${usernameWithBadge(name)}</span>
               <span class="time">${updatedTime}</span>
             </div>
             <div class="last-message">${escapeHtml(lastMsg)}</div>
@@ -655,7 +659,7 @@ function loadFriendThreads() {
           <img class="friend-avatar" src="${avatar}" />
           <div class="details">
             <div class="name-row">
-              <span class="name">${escapeHtml(name)}</span>
+              <span class="name">#${usernameWithBadge(name)}</span>
               <span class="time">${updatedTime}</span>
             </div>
             <div class="last-message">${escapeHtml(lastMsg)}</div>
@@ -946,7 +950,8 @@ function listenInbox() {
                   const senderData = senderDoc.data();
                   senderCache[fromUID] = {
                     name: senderData.username || senderData.name || "Unknown",
-                    avatar: senderData.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(senderData.username || "User")}`
+                    avatar: senderData.photoURL || 
+                            `https://ui-avatars.com/api/?name=${encodeURIComponent(senderData.username || "User")}`
                   };
                 }
               } catch (e) {
@@ -964,10 +969,10 @@ function listenInbox() {
             senderName = data.from.name || "Unknown";
           }
 
-          // 🏷️ Message type
+          // 🏷️ Message type (with badge applied to @username)
           const typeText =
             data.type === "friend"
-              ? `👤 Friend request from @${senderName}`
+              ? `👤 Friend request from @${usernameWithBadge(senderName)}`
               : data.type === "group"
               ? `📣 Group invite: ${escapeHtml(data.groupName || "Unnamed Group")}`
               : "📩 Notification";
@@ -978,7 +983,7 @@ function listenInbox() {
           card.innerHTML = `
             <img src="${avatarURL}" alt="Avatar" />
             <div class="inbox-meta">
-              <div class="inbox-title">${escapeHtml(typeText)}</div>
+              <div class="inbox-title">${typeText}</div>
               <div class="inbox-time">${timeSince(data.timestamp?.toDate?.() || new Date())}</div>
             </div>
             <div class="btn-group">
@@ -1114,7 +1119,7 @@ function markAllRead() {
 }
 
 function renderInboxCard(data) {
-  const name = escapeHtml(data.name || "Unknown");
+  const name = usernameWithBadge(data.name || "Unknown");
   const msg = escapeHtml(data.message || "Notification");
   const photo = data.photo || "default-avatar.png";
 
@@ -1287,8 +1292,11 @@ function loadGroupInfo(groupId) {
     const admins = data.admins || [];
     const members = data.members || [];
 
-    ownerLabel.textContent = "Owner: " + (data.createdBy || "Unknown");
-    adminsLabel.textContent = "Admins: " + (admins.length ? admins.join(", ") : "None");
+    // Apply badge to owner and admin lists
+    ownerLabel.innerHTML = "Owner: " + usernameWithBadge(data.createdBy, data.createdBy || "Unknown");
+    adminsLabel.innerHTML = "Admins: " + (admins.length 
+      ? admins.map(a => usernameWithBadge(a, a)).join(", ") 
+      : "None");
 
     memberList.innerHTML = "";
 
@@ -1302,7 +1310,7 @@ function loadGroupInfo(groupId) {
         const div = document.createElement("div");
         div.className = "member-entry";
         div.innerHTML = `
-          <span>${escapeHtml(name)}</span>
+          <span>${usernameWithBadge(uid, name)}</span>
           ${isOwner ? `<span class="badge owner-badge">Owner</span>` : ""}
           ${isAdmin && !isOwner ? `<span class="badge admin-badge">Admin</span>` : ""}
         `;
@@ -1861,10 +1869,11 @@ async function openThread(uid, name) {
       if (typeof setupEmojiButton === "function") setupEmojiButton();
     }, 200);
 
-    // 4. Header name
+    // 4. Header name with badge
     const headerNameEl = document.getElementById("threadWithName");
     if (headerNameEl) {
-      headerNameEl.textContent = typeof name === "string" ? name : name?.username || "Chat";
+      const displayName = typeof name === "string" ? name : name?.username || "Chat";
+      headerNameEl.innerHTML = usernameWithBadge(uid, displayName);
     }
 
     // hide options menu
@@ -2323,14 +2332,15 @@ function runSearch() {
       snapshot.forEach(async doc => {
         if (doc.id === currentUser.uid) return; // skip self
         const user = doc.data();
-        const avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+        const avatar = user.avatarBase64 || user.photoURL || 
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
 
         const card = document.createElement("div");
         card.className = "search-result";
         card.innerHTML = `
           <img src="${avatar}" class="search-avatar" />
           <div class="search-info">
-            <div class="username">@${escapeHtml(user.username || "unknown")}</div>
+            <div class="username">@${usernameWithBadge(user.username || "unknown")}</div>
             <div class="bio">${escapeHtml(user.bio || "No bio")}</div>
           </div>
           <button id="friendBtn_${doc.id}">Add Friend</button>
@@ -2340,7 +2350,8 @@ function runSearch() {
         const btn = card.querySelector("button");
 
         // ✅ Check if already friends
-        const friendDoc = await db.collection("users").doc(currentUser.uid).collection("friends").doc(doc.id).get();
+        const friendDoc = await db.collection("users").doc(currentUser.uid)
+          .collection("friends").doc(doc.id).get();
         if (friendDoc.exists) {
           btn.textContent = "Friend";
           btn.disabled = true;
@@ -2384,7 +2395,6 @@ function runSearch() {
       });
     });
 }
-
 // ==== GROUP SETTINGS ====
 
 function viewGroupMembers() {
@@ -2492,7 +2502,9 @@ function joinRoom(groupId) {
   typingStatus.textContent = "";
 
   db.collection("groups").doc(groupId).get().then(doc => {
-    title.textContent = doc.exists ? (doc.data().name || "Group Chat") : "Group (Not Found)";
+    title.innerHTML = doc.exists
+      ? usernameWithBadge(null, doc.data().name || "Group Chat")
+      : "Group (Not Found)";
   });
 
   if (unsubscribeRoomMessages) unsubscribeRoomMessages();
@@ -2517,7 +2529,8 @@ function joinRoom(groupId) {
           const senderDoc = await db.collection("users").doc(msg.from).get();
           if (senderDoc.exists) {
             const user = senderDoc.data();
-            avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+            avatar = user.avatarBase64 || user.photoURL ||
+              `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
           }
         } catch (e) {
           console.warn("⚠️ Group sender avatar load failed:", e.message);
@@ -2525,7 +2538,8 @@ function joinRoom(groupId) {
 
         const decrypted = (() => {
           try {
-            return CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+            return CryptoJS.AES.decrypt(msg.text, "yourSecretKey")
+              .toString(CryptoJS.enc.Utf8) || "[Encrypted]";
           } catch {
             return "[Decryption failed]";
           }
@@ -2535,7 +2549,7 @@ function joinRoom(groupId) {
           <div class="msg-avatar"><img src="${avatar}" /></div>
           <div class="msg-content">
             <div class="msg-text">
-              <strong>${escapeHtml(msg.fromName || "User")}</strong><br>
+              <strong>${usernameWithBadge(msg.from, msg.fromName || "User")}</strong><br>
               ${escapeHtml(decrypted)}
             </div>
             <div class="message-time">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</div>
@@ -2547,6 +2561,7 @@ function joinRoom(groupId) {
 
       messageList.scrollTop = messageList.scrollHeight;
       renderWithMagnetSupport?.("roomMessages");
+      if (typeof lucide !== "undefined") lucide.createIcons(); // refresh icons
     }, err => {
       console.error("❌ Room message error:", err.message || err);
       alert("❌ Failed to load group chat.");
@@ -2559,7 +2574,7 @@ function messageUser(uid, username) {
   db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).get()
     .then(doc => {
       if (doc.exists) {
-        openThread(uid, username || "Friend");
+        openThread(uid, usernameWithBadge(uid, username || "Friend"));
         document.getElementById("userFullProfile").style.display = "none";
         document.getElementById("viewProfileModal").style.display = "none";
       } else {
