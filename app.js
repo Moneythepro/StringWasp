@@ -1896,38 +1896,46 @@ const USER_CACHE = {};
  * --------------------------------------------------------- */
 function buildTickMeta(msg, otherUid) {
   let status = "sent";
-  let tickClass = "tick-sent";
-  let icon = "check"; // single
+  let icon = "check"; // single tick
 
   if (msg.deliveredAt) {
     status = "delivered";
-    tickClass = "tick-sent";
     icon = "check-check";
   }
   if (Array.isArray(msg.seenBy) && msg.seenBy.includes(otherUid)) {
     status = "seen";
-    tickClass = "tick-seen";
     icon = "check-check";
   }
 
   const timeHtml = msg.timestamp?.toDate
-    ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>`
-    : "";
+    ? `<span class="msg-time">${formatTimeHM(msg.timestamp.toDate())}</span>`
+    : ""; // pending; we leave blank (CSS shows 0.6 opacity for pending)
 
   return `
     <span class="msg-meta-inline" data-status="${status}">
       ${timeHtml}
-      <i data-lucide="${icon}" class="tick-icon ${tickClass}"></i>
+      <i data-lucide="${icon}" class="tick-icon"></i>
     </span>
   `;
 }
 
 function buildOtherMeta(msg) {
+  const timeHtml = msg.timestamp?.toDate
+    ? `<span class="msg-time">${formatTimeHM(msg.timestamp.toDate())}</span>`
+    : "";
   return `
     <span class="msg-meta-inline" data-status="other">
-      ${msg.timestamp?.toDate ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>` : ""}
+      ${timeHtml}
     </span>
   `;
+}
+
+/* ---- Short time HH:MM ---- */
+function formatTimeHM(dateLike) {
+  const d = dateLike instanceof Date ? dateLike : new Date(dateLike);
+  const h = String(d.getHours()).padStart(2, "0");
+  const m = String(d.getMinutes()).padStart(2, "0");
+  return `${h}:${m}`;
 }
 
 /* ---------------------------------------------------------
@@ -2240,6 +2248,34 @@ function upgradeMetaInline(msgId, timeText, status, icon, tickClass) {
     }
     if (typeof lucide !== "undefined") lucide.createIcons();
   }
+}
+
+function renderOptimisticBubble(text, localDate) {
+  const area = document.getElementById("threadMessages");
+  if (!area) return;
+
+  const localHM = formatTimeHM(localDate);
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "message-bubble-wrapper right from-self grp-single pending";
+
+  wrapper.innerHTML = `
+    <div class="message-bubble right pending" data-msg-id="temp-${localDate.getTime()}" data-time="${localHM}">
+      <div class="msg-inner-wrapper">
+        <div class="msg-text-wrapper">
+          <span class="msg-text">${linkifyText(escapeHtml(text))}</span>
+          <span class="msg-meta-inline" data-status="pending">
+            <span class="msg-time">${localHM}</span>
+            <i data-lucide="clock" class="tick-icon"></i>
+          </span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  area.appendChild(wrapper);
+  setTimeout(() => scrollToBottomThread(true), 40);
+  if (typeof lucide !== "undefined") lucide.createIcons();
 }
 
 
