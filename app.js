@@ -3163,7 +3163,7 @@ async function loadVerifiedBadges() {
     }));
 
     console.log("Verified badge list loaded:", JSON.stringify(VERIFIED_BADGES, null, 2));
-    decorateUsernamesWithBadges(); // ensure update
+    decorateUsernamesWithBadges();
   } catch (err) {
     console.warn("⚠️ Could not load verified.json:", err);
   }
