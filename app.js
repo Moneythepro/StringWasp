@@ -1373,52 +1373,56 @@ function threadId(a, b) {
 }
 
 // ===== DM: Open Thread Chat =====
-let handleSendClick = null;
+/* =========================================================
+ * Enhanced openThread
+ * ======================================================= */
+let handleSendClick = null;          // will assign below
 let replyingTo = null;
 let touchStartX = 0;
 let touchMoveX = 0;
 let isSendingThread = false;
 
+/* Track touches for swipe-to-reply */
 function handleTouchStart(e) {
+  if (!e.touches || !e.touches[0]) return;
   touchStartX = e.touches[0].clientX;
+  touchMoveX = touchStartX;
 }
 function handleTouchMove(e) {
+  if (!e.touches || !e.touches[0]) return;
   touchMoveX = e.touches[0].clientX;
 }
-function handleSwipeToReply(msg, decrypted) {
+
+/* Swipe right -> reply */
+function handleSwipeToReply(ev, msg, decrypted) {
   const deltaX = touchMoveX - touchStartX;
   if (deltaX > 35 && deltaX < 150) {
-    const wrapper = event.target.closest(".message-bubble-wrapper");
-    if (wrapper) {
-      wrapper.classList.add("swiped");
-      setTimeout(() => wrapper.classList.remove("swiped"), 500);
+    const wrapper = ev.target.closest(".message-bubble-wrapper");
+    if (!wrapper) return;
 
-      replyingTo = {
-        msgId: msg.id,
-        text: decrypted
-      };
+    wrapper.classList.add("swiped");
+    setTimeout(() => wrapper.classList.remove("swiped"), 500);
 
-      const replyBox = document.getElementById("replyPreview");
-      if (replyBox) {
-        replyBox.innerHTML = `
-          <div class="reply-box-inner" onclick="scrollToReplyMessage('${msg.id}')">
-            <div class="reply-info">
-              <div class="reply-text clamp-text">${escapeHtml(decrypted)}</div>
-            </div>
-            <button class="reply-close" onclick="cancelReply()" aria-label="Cancel reply">
-              <i data-lucide="x"></i>
-            </button>
+    replyingTo = { msgId: msg.id, text: decrypted };
+
+    const replyBox = document.getElementById("replyPreview");
+    if (replyBox) {
+      replyBox.innerHTML = `
+        <div class="reply-box-inner" onclick="scrollToReplyMessage('${msg.id}')">
+          <div class="reply-info">
+            <div class="reply-text clamp-text">${escapeHtml(decrypted)}</div>
           </div>
-        `;
-        replyBox.style.display = "flex";
-        if (typeof lucide !== "undefined") lucide.createIcons();
-      }
-
-      const input = document.getElementById("threadInput");
-      if (input) {
-        requestAnimationFrame(() => input.focus({ preventScroll: true }));
-      }
+          <button class="reply-close" onclick="cancelReply()" aria-label="Cancel reply">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+      `;
+      replyBox.style.display = "flex";
+      if (typeof lucide !== "undefined") lucide.createIcons();
     }
+
+    const input = document.getElementById("threadInput");
+    if (input) requestAnimationFrame(() => input.focus({ preventScroll: true }));
   }
 }
 
@@ -1431,23 +1435,22 @@ function cancelReply() {
   }
 }
 
+/* =========================================================
+ * Link helpers
+ * ======================================================= */
 function linkifyText(text) {
   const urlRegex = /((https?:\/\/)[^\s]+)/gi;
   return text.replace(urlRegex, (url) => {
     let displayUrl = url;
-    if (displayUrl.length > 45) {
-      displayUrl = displayUrl.slice(0, 42) + "...";
-    }
+    if (displayUrl.length > 45) displayUrl = displayUrl.slice(0, 42) + "...";
     return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="chat-link">${displayUrl}</a>`;
   });
 }
-
 function extractFirstURL(text) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const match = text.match(urlRegex);
   return match ? match[0] : null;
 }
-
 async function fetchLinkPreview(url) {
   try {
     const res = await fetch(`https://api.linkpreview.net/?key=89175199788eee7477f5ac45e693cb53&q=${encodeURIComponent(url)}`);
@@ -1459,6 +1462,9 @@ async function fetchLinkPreview(url) {
   return null;
 }
 
+/* =========================================================
+ * Send message in thread
+ * ======================================================= */
 async function sendThreadMessage() {
   if (isSendingThread) return;
   isSendingThread = true;
@@ -1476,7 +1482,7 @@ async function sendThreadMessage() {
     return;
   }
 
-  input.value = ""; // Clear input to prevent duplicate sends
+  input.value = ""; // clear to avoid dup send
   cancelReply();
   replyingTo = null;
 
@@ -1487,7 +1493,7 @@ async function sendThreadMessage() {
   const threadIdStr = threadId(currentUser.uid, currentThreadUser);
   const threadRef = db.collection("threads").doc(threadIdStr);
 
-  // Encrypt message
+  // Encrypt
   const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
 
   const message = {
@@ -1498,7 +1504,7 @@ async function sendThreadMessage() {
     seenBy: [currentUser.uid]
   };
 
-  // Add reply info if present
+  // Reply
   if (replyingTo?.msgId && replyingTo?.text?.trim()) {
     message.replyTo = {
       msgId: replyingTo.msgId,
@@ -1506,7 +1512,7 @@ async function sendThreadMessage() {
     };
   }
 
-  // Optional link preview (only one preview per message)
+// Link preview (best effort, one)
   const urlMatch = rawText.match(/https?:\/\/[^\s]+/);
   if (urlMatch && urlMatch[0]) {
     try {
@@ -1550,47 +1556,43 @@ async function sendThreadMessage() {
     isSendingThread = false;
   }
 }
+
+/* Bind globals used in openThread */
+if (!handleSendClick) {
+  handleSendClick = () => sendThreadMessage();
+}
+if (typeof handleThreadKey !== "function") {
+  window.handleThreadKey = function handleThreadKey(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendThreadMessage();
+    }
+  };
+}
+
 /* =========================================================
  * Helpers for Enhanced Bubble Rendering
  * ======================================================= */
 
-/**
- * Rough emoji-only detector.
- * - Returns true if the string has at least one pictographic char
- *   AND contains no letters or digits.
- */
+/* Emoji-only detector */
 function isEmojiOnlyText(str = "") {
   if (typeof str !== "string") return false;
   const stripped = str.replace(/\s+/g, "");
   if (!stripped) return false;
   if (/[A-Za-z0-9]/.test(stripped)) return false;
-  // Extended pictographic range + common emoji blocks (fallback)
   return /[\p{Extended_Pictographic}\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(stripped);
 }
 
-/**
- * Compute grouping classes for an ordered message array.
- * msgs: [{...msgData, id, from, timestamp:FirestoreTimestamp, ...}]
- * Mutates each entry with ._grp
- * gapMs = max gap to join into a visual group (default 5 min)
- */
+/* Compute grp-* flags */
 function computeGroupClasses(msgs, gapMs = 5 * 60 * 1000) {
   for (let i = 0; i < msgs.length; i++) {
     const m = msgs[i];
     const ts = m.timestamp?.toMillis?.() ?? 0;
-
     const prev = msgs[i - 1];
     const next = msgs[i + 1];
 
-    const prevOk =
-      prev &&
-      prev.from === m.from &&
-      ts - (prev.timestamp?.toMillis?.() ?? 0) <= gapMs;
-
-    const nextOk =
-      next &&
-      next.from === m.from &&
-      (next.timestamp?.toMillis?.() ?? 0) - ts <= gapMs;
+    const prevOk = prev && prev.from === m.from && ts - (prev.timestamp?.toMillis?.() ?? 0) <= gapMs;
+    const nextOk = next && next.from === m.from && (next.timestamp?.toMillis?.() ?? 0) - ts <= gapMs;
 
     if (prevOk && nextOk) m._grp = "grp-mid";
     else if (prevOk && !nextOk) m._grp = "grp-end";
@@ -1600,23 +1602,17 @@ function computeGroupClasses(msgs, gapMs = 5 * 60 * 1000) {
   return msgs;
 }
 
-/**
- * Build tick status + icon markup for a self-sent message.
- * Uses msg.seenBy, msg.deliveredAt (optional), msg.timestamp.
- */
+/* Tick meta for self */
 function buildTickMeta(msg, otherUid) {
   let status = "sent";
   let tickClass = "tick-sent";
-  let icon = "check"; // default single check
+  let icon = "check"; // single
 
-  // deliveredAt optional (server set when reaches other user)
   if (msg.deliveredAt) {
     status = "delivered";
-    tickClass = "tick-sent"; // WA shows grey double
+    tickClass = "tick-sent";
     icon = "check-check";
   }
-
-  // seen receipt
   if (Array.isArray(msg.seenBy) && msg.seenBy.includes(otherUid)) {
     status = "seen";
     tickClass = "tick-seen";
@@ -1635,9 +1631,7 @@ function buildTickMeta(msg, otherUid) {
   `;
 }
 
-/**
- * Meta for messages NOT from self: just time (no ticks)
- */
+/* Meta for other */
 function buildOtherMeta(msg) {
   return `
     <span class="msg-meta-inline" data-status="other">
@@ -1646,19 +1640,14 @@ function buildOtherMeta(msg) {
   `;
 }
 
-/**
- * Build reply preview strip markup (text only for now).
- */
+/* Reply strip */
 function buildReplyStrip(msg) {
   if (!msg.replyTo) return "";
   const rText = escapeHtml(msg.replyTo.text || "");
   return `<div class="reply-to clamp-text" onclick="scrollToMessage('${msg.replyTo.id || ""}')">${rText}</div>`;
 }
 
-/**
- * Build link preview section (image + title + url).
- * Accepts an already-fetched preview or builds empty wrapper.
- */
+/* Link preview markup */
 function buildLinkPreviewHTML(preview, url) {
   if (!preview && !url) return "";
   const img = preview?.image ? `<img src="${preview.image}" class="preview-img">` : "";
@@ -1676,162 +1665,7 @@ function buildLinkPreviewHTML(preview, url) {
   `;
 }
 
-/**
- * Render an array of message objs into the thread area.
- * Handles grouping, emoji-only, deleted msgs, link previews, events, and seen updates.
- */
-async function renderThreadMessagesToArea({
-  area,
-  msgs,
-  otherUid,
-  threadIdStr,
-  isInitial,
-}) {
-  if (!area) return;
-
-  // Determine scroll behavior before re-render
-  const isNearBottom =
-    area.scrollHeight - area.scrollTop - area.clientHeight < 120;
-
-  // Compute grouping flags
-  computeGroupClasses(msgs);
-
-  // Clear area (simpler + ensures group classes correct)
-  if (isInitial) {
-    area.innerHTML = "";
-  } else {
-    // We'll rebuild each time; capture scroll offset from bottom
-    var distFromBottom = area.scrollHeight - area.scrollTop;
-    area.innerHTML = "";
-  }
-
-  // Build DOM fragments
-  const frag = document.createDocumentFragment();
-
-  for (const msg of msgs) {
-    const isSelf = msg.from === currentUser.uid;
-    const decrypted = decryptMsgText(msg); // defined below
-    const isDeleted = decrypted.isDeleted;
-    const displayText = decrypted.text;
-
-    // Emoji-only?
-    const emojiOnly = isEmojiOnlyText(displayText);
-
-    // Reply strip
-    const replyBox = !isDeleted ? buildReplyStrip(msg) : "";
-
-    // Meta
-    const meta = isSelf && !isDeleted
-      ? buildTickMeta(msg, otherUid)
-      : buildOtherMeta(msg);
-
-    // Truncation + Show-more
-    const textHtml = escapeHtml(displayText);
-    const shortText = textHtml.slice(0, 500);
-    const hasLong = textHtml.length > 500;
-    const content = hasLong
-      ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
-      : linkifyText(textHtml);
-
-    // Link preview (use existing if any, else lazy fetch)
-    let linkPreviewHTML = "";
-    if (msg.preview) {
-      linkPreviewHTML = buildLinkPreviewHTML(msg.preview, msg.preview.url);
-    } else {
-      const url = extractFirstURL(displayText);
-      if (url) {
-        try {
-          const preview = await fetchLinkPreview(url);
-          if (preview?.title || preview?.image) {
-            linkPreviewHTML = buildLinkPreviewHTML(preview, url);
-          }
-        } catch (_) {
-          /* ignore preview fetch failure */
-        }
-      }
-    }
-
-    // Wrapper
-    const wrapper = document.createElement("div");
-    wrapper.className = `message-bubble-wrapper fade-in ${
-      isSelf ? "right from-self" : "left from-other"
-    } ${msg._grp || "grp-single"}`;
-
-    // Build bubble
-    wrapper.innerHTML = `
-      <div class="message-bubble ${
-        isSelf ? "right" : "left"
-      } ${emojiOnly ? "emoji-only" : ""} ${msg._grp || ""}" data-msg-id="${
-      msg.id
-    }" data-time="${
-      msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""
-    }">
-        ${replyBox}
-        <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
-          <div class="msg-text-wrapper">
-            <span class="msg-text clamp-text" data-full="${textHtml}" data-short="${shortText}">
-              ${isDeleted ? decrypted.deletedHtml : content}
-            </span>
-            ${!isDeleted ? meta : ""}
-          </div>
-          ${linkPreviewHTML}
-        </div>
-      </div>
-    `;
-
-    // Attach gesture handlers (skip deleted)
-    if (!isDeleted) {
-      const bubbleEl = wrapper.querySelector(".message-bubble");
-      if (bubbleEl) {
-        bubbleEl.addEventListener("touchstart", handleTouchStart);
-        bubbleEl.addEventListener("touchmove", handleTouchMove);
-        bubbleEl.addEventListener("touchend", () => handleSwipeToReply(msg, displayText));
-        // Context menu (long-press)
-        bubbleEl.addEventListener("contextmenu", (e) => {
-          e.preventDefault();
-          handleLongPressMenu(msg, displayText, isSelf);
-        });
-      }
-    }
-
-    frag.appendChild(wrapper);
-
-    // Mark as seen (only once user loaded bubble into DOM)
-    if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
-      db.collection("threads")
-        .doc(threadIdStr)
-        .collection("messages")
-        .doc(msg.id)
-        .update({
-          seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid),
-        })
-        .catch(() => {});
-    }
-  }
-
-  area.appendChild(frag);
-
-  // Refresh lucide icons
-  if (typeof lucide !== "undefined") {
-    lucide.createIcons();
-  }
-
-  // Scroll restore
-  if (isInitial) {
-    // initial load handled externally (savedScroll or bottom)
-  } else if (isNearBottom) {
-    setTimeout(() => scrollToBottomThread(true), 40);
-  } else if (typeof distFromBottom === "number") {
-    // try to maintain viewport position after re-render
-    setTimeout(() => {
-      area.scrollTop = area.scrollHeight - distFromBottom;
-    }, 0);
-  }
-}
-
-/**
- * Decrypt & interpret msg text, returning {text, isDeleted, deletedHtml}
- */
+/* Decrypt & interpret msg text */
 function decryptMsgText(msg) {
   let decrypted = "";
   let isDeleted = false;
@@ -1861,155 +1695,231 @@ function decryptMsgText(msg) {
   return { text: decrypted, isDeleted: false, deletedHtml };
 }
 
-
 /* =========================================================
- * Enhanced openThread
+ * Render snapshot -> DOM
  * ======================================================= */
+async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, isInitial }) {
+  if (!area) return;
+
+  const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
+
+  computeGroupClasses(msgs);
+
+  let distFromBottom;
+  if (isInitial) {
+    area.innerHTML = "";
+  } else {
+    distFromBottom = area.scrollHeight - area.scrollTop;
+    area.innerHTML = "";
+  }
+
+  const frag = document.createDocumentFragment();
+
+  for (const msg of msgs) {
+    const isSelf = msg.from === currentUser.uid;
+    const decrypted = decryptMsgText(msg);
+    const isDeleted = decrypted.isDeleted;
+    const displayText = decrypted.text;
+    const emojiOnly = isEmojiOnlyText(displayText);
+
+    const replyBox = !isDeleted ? buildReplyStrip(msg) : "";
+    const meta = isSelf && !isDeleted ? buildTickMeta(msg, otherUid) : buildOtherMeta(msg);
+
+    const textHtml = escapeHtml(displayText);
+    const shortText = textHtml.slice(0, 500);
+    const hasLong = textHtml.length > 500;
+    const content = hasLong
+      ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
+      : linkifyText(textHtml);
+
+    let linkPreviewHTML = "";
+    if (msg.preview) {
+      linkPreviewHTML = buildLinkPreviewHTML(msg.preview, msg.preview.url);
+    } else {
+      const url = extractFirstURL(displayText);
+      if (url) {
+        try {
+          const preview = await fetchLinkPreview(url);
+          if (preview?.title || preview?.image) {
+            linkPreviewHTML = buildLinkPreviewHTML(preview, url);
+          }
+        } catch (_) {}
+      }
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}`;
+
+    wrapper.innerHTML = `
+      <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""} ${msg._grp || ""}"
+           data-msg-id="${msg.id}"
+           data-time="${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}">
+        ${replyBox}
+        <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
+          <div class="msg-text-wrapper">
+            <span class="msg-text clamp-text" data-full="${textHtml}" data-short="${shortText}">
+              ${isDeleted ? decrypted.deletedHtml : content}
+            </span>
+            ${!isDeleted ? meta : ""}
+          </div>
+          ${linkPreviewHTML}
+        </div>
+      </div>
+    `;
+
+    if (!isDeleted) {
+      const bubbleEl = wrapper.querySelector(".message-bubble");
+      if (bubbleEl) {
+        bubbleEl.addEventListener("touchstart", handleTouchStart);
+        bubbleEl.addEventListener("touchmove", handleTouchMove);
+        bubbleEl.addEventListener("touchend", (ev) => handleSwipeToReply(ev, msg, displayText));
+        bubbleEl.addEventListener("contextmenu", (e) => {
+          e.preventDefault();
+          handleLongPressMenu(msg, displayText, isSelf);
+        });
+      }
+    }
+
+    frag.appendChild(wrapper);
+
+    // seen receipt
+    if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
+      db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
+        .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
+        .catch(() => {});
+    }
+  }
+
+  area.appendChild(frag);
+
+  if (typeof lucide !== "undefined") lucide.createIcons();
+
+  if (isInitial) {
+    // handled outside (saved scroll / bottom)
+  } else if (isNearBottom) {
+    setTimeout(() => scrollToBottomThread(true), 40);
+  } else if (typeof distFromBottom === "number") {
+    setTimeout(() => {
+      area.scrollTop = area.scrollHeight - distFromBottom;
+    }, 0);
+  }
+}
+
 async function openThread(uid, name) {
   if (!currentUser || !uid) return;
 
   try {
-    /* --- 1. Must be friends --- */
-    const friendDoc = await db
-      .collection("users")
-      .doc(currentUser.uid)
-      .collection("friends")
-      .doc(uid)
-      .get();
-
+    // 1. Must be friends
+    const friendDoc = await db.collection("users").doc(currentUser.uid)
+      .collection("friends").doc(uid).get();
     if (!friendDoc.exists) {
       alert("⚠️ You must be friends to start a chat.");
       return;
     }
 
-    /* --- 2. Switch UI tab --- */
+    // 2. Switch view
     switchTab("threadView");
 
-    /* --- 3. Bind input + send + emoji after view paints --- */
+    // 3. Bind input + send + emoji after paint
     setTimeout(() => {
       const input = document.getElementById("threadInput");
       if (input && !input.dataset.bound) {
         input.addEventListener("keydown", handleThreadKey);
         input.dataset.bound = "true";
       }
-
       const sendBtn = document.getElementById("sendButton");
       if (sendBtn && !sendBtn.dataset.bound) {
         sendBtn.addEventListener("click", handleSendClick);
         sendBtn.dataset.bound = "true";
       }
-
       if (typeof setupEmojiButton === "function") setupEmojiButton();
     }, 200);
 
-    /* --- 4. Header name --- */
-    document.getElementById("threadWithName").textContent =
-      typeof name === "string" ? name : name?.username || "Chat";
+    // 4. Header name
+    const headerNameEl = document.getElementById("threadWithName");
+    if (headerNameEl) {
+      headerNameEl.textContent = typeof name === "string" ? name : name?.username || "Chat";
+    }
 
-    // hide options menu (if open)
+    // hide options menu
     const opt = document.getElementById("chatOptionsMenu");
     if (opt) opt.style.display = "none";
 
-    /* --- 5. Track current chat context --- */
+    // 5. context
     currentThreadUser = uid;
     currentRoom = null;
 
     const threadIdStr = threadId(currentUser.uid, uid);
     const area = document.getElementById("threadMessages");
-    renderedMessageIds = new Set(); // kept for backward compat with old code
+    renderedMessageIds = new Set();
 
-    // Reset area only when thread changed
     if (area && lastThreadId !== threadIdStr) {
       area.innerHTML = "";
       lastThreadId = threadIdStr;
     }
 
-    /* --- 6. Restore scroll pos --- */
+    // 6. restore scroll
     const savedScrollKey = "threadScroll_" + threadIdStr;
     const savedScroll = sessionStorage.getItem(savedScrollKey);
     if (area) {
       if (savedScroll !== null && !isNaN(savedScroll)) {
-        setTimeout(() => {
-          area.scrollTop = parseInt(savedScroll, 10);
-        }, 300);
+        setTimeout(() => { area.scrollTop = parseInt(savedScroll, 10); }, 300);
       } else {
         setTimeout(() => scrollToBottomThread(true), 200);
       }
-      area.onscroll = () => {
-        sessionStorage.setItem(savedScrollKey, area.scrollTop);
-      };
+      area.onscroll = () => sessionStorage.setItem(savedScrollKey, area.scrollTop);
     }
 
-    /* --- 7. Load profile image for header --- */
+    // 7. header avatar
     try {
       const friendUserDoc = await db.collection("users").doc(uid).get();
       if (friendUserDoc.exists) {
         const user = friendUserDoc.data();
         const headerImg = document.getElementById("chatProfilePic");
         if (headerImg) {
-          headerImg.src =
-            user.avatarBase64 ||
-            user.photoURL ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(
-              user.username || "User"
-            )}`;
+          headerImg.src = user.avatarBase64 || user.photoURL ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
         }
       }
     } catch (e) {
       console.warn("⚠️ Could not load friend image:", e);
     }
 
-    /* --- 8. Cleanup existing listeners --- */
+    // 8. clean old listeners
     if (typeof unsubscribeThread === "function") unsubscribeThread();
     if (typeof unsubscribeTyping === "function") unsubscribeTyping();
 
-    /* --- 9. Live typing indicator for friend --- */
+    // 9. typing indicator
     listenToTyping(threadIdStr, "thread");
 
-    /* --- 10. Reset unread counter for self in thread doc --- */
-    await db
-      .collection("threads")
-      .doc(threadIdStr)
+    // 10. reset unread counter for self
+    await db.collection("threads").doc(threadIdStr)
       .set({ unread: { [currentUser.uid]: 0 } }, { merge: true });
 
-    /* --- 11. Live status (Online / Typing / Last seen) --- */
-    db.collection("users")
-      .doc(uid)
-      .onSnapshot((doc) => {
-        const data = doc.data();
-        const status = document.getElementById("chatStatus");
-        if (!status || !data) return;
+    // 11. live status
+    db.collection("users").doc(uid).onSnapshot((doc) => {
+      const data = doc.data();
+      const status = document.getElementById("chatStatus");
+      if (!status || !data) return;
+      if (data.typingFor === currentUser.uid) status.textContent = "Typing...";
+      else if (data.status === "online") status.textContent = "Online";
+      else if (data.lastSeen?.toDate) status.textContent = "Last seen " + timeSince(data.lastSeen.toDate());
+      else status.textContent = "Offline";
+    });
 
-        if (data.typingFor === currentUser.uid) {
-          status.textContent = "Typing...";
-        } else if (data.status === "online") {
-          status.textContent = "Online";
-        } else if (data.lastSeen?.toDate) {
-          status.textContent = "Last seen " + timeSince(data.lastSeen.toDate());
-        } else {
-          status.textContent = "Offline";
-        }
-      });
-
-    /* --- 12. Subscribe to thread messages --- */
-    unsubscribeThread = db
-      .collection("threads")
-      .doc(threadIdStr)
-      .collection("messages")
-      .orderBy("timestamp")
+    // 12. subscribe to messages
+    unsubscribeThread = db.collection("threads").doc(threadIdStr)
+      .collection("messages").orderBy("timestamp")
       .onSnapshot(async (snapshot) => {
         if (!area) return;
 
-        // Build a normalized array of msgs from snapshot.docs
         const msgs = snapshot.docs.map((d) => {
           const m = d.data();
           m.id = d.id;
           return m;
         });
 
-        // Render (full rebuild each snapshot for clean grouping)
-        const isInitial =
-          area.childElementCount === 0 || renderedMessageIds.size === 0;
+        const isInitial = area.childElementCount === 0 || renderedMessageIds.size === 0;
         await renderThreadMessagesToArea({
           area,
           msgs,
@@ -2018,15 +1928,57 @@ async function openThread(uid, name) {
           isInitial,
         });
 
-        // Track rendered IDs (legacy)
         renderedMessageIds.clear();
         msgs.forEach((m) => renderedMessageIds.add(m.id));
       });
+
   } catch (err) {
     console.error("❌ openThread error:", err);
     alert("❌ Could not open chat: " + (err.message || JSON.stringify(err)));
   }
-          }
+}
+
+
+/* =========================================================
+ * Legacy renderMessage() (fallback if other code still calls it)
+ * Returns markup string (NOT auto-binding events).
+ * Use only where quick render needed; recommended to migrate
+ * to renderThreadMessagesToArea().
+ * ======================================================= */
+function renderMessage(msg, isOwn) {
+  const { text, isDeleted, deletedHtml } = decryptMsgText(msg);
+  const escaped = escapeHtml(text);
+
+  const replyHtml = msg.replyTo && !isDeleted
+    ? `<div class="reply-to">${escapeHtml(msg.replyTo.text || "")}</div>`
+    : "";
+
+  const meta = isOwn && !isDeleted
+    ? buildTickMeta(msg, isOwn ? currentThreadUser : currentUser.uid)  // guess other uid
+    : buildOtherMeta(msg);
+
+  const linkPreviewHtml = msg.preview && !isDeleted
+    ? buildLinkPreviewHTML(msg.preview, msg.preview.url)
+    : "";
+
+  const bodyHtml = isDeleted ? deletedHtml : linkifyText(escaped);
+  const emojiOnly = isEmojiOnlyText(text) ? "emoji-only" : "";
+
+  return `
+    <div class="message-bubble-wrapper ${isOwn ? 'right from-self' : 'left from-other'} grp-single">
+      <div class="message-bubble ${isOwn ? 'right' : 'left'} ${emojiOnly}" data-msg-id="${msg.id}">
+        ${replyHtml}
+        <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
+          <div class="msg-text-wrapper">
+            <span class="msg-text">${bodyHtml}</span>
+            ${!isDeleted ? meta : ""}
+          </div>
+          ${linkPreviewHtml}
+        </div>
+      </div>
+    </div>
+  `;
+}
 
 function toggleChatOptions(event) {
   event.stopPropagation();
@@ -2089,66 +2041,6 @@ function closeOptionsModal(event) {
     modal.classList.add("hidden");
     modal.removeEventListener("click", closeOptionsModal);
   }
-}
-
-function renderMessage(msg, isOwn) {
-  let decrypted = "[Encrypted]";
-  let isDeleted = false;
-
-  try {
-    decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8);
-    if (!decrypted) decrypted = "[Encrypted]";
-  } catch {
-    decrypted = "[Error decoding]";
-  }
-
-  if (msg.text === "") {
-    decrypted = '<i data-lucide="trash-2"></i> Message deleted';
-    isDeleted = true;
-  }
-
-  const escaped = escapeHtml(decrypted);
-
-  const replyHtml = msg.replyTo && !isDeleted
-    ? `<div class="reply-to">${escapeHtml(msg.replyTo.text || "")}</div>`
-    : "";
-
-  const meta = `
-    <div class="msg-meta-inline">
-      ${msg.timestamp?.toDate ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>` : ""}
-      ${msg.edited ? `<span class="edited-tag">(edited)</span>` : ""}
-      ${isOwn && !isDeleted ? '<i data-lucide="check-check" class="tick-icon tick-sent"></i>' : ""}
-    </div>
-  `;
-
-  const linkPreviewHtml = msg.preview && !isDeleted
-    ? `
-      <div class="link-preview">
-        ${msg.preview.image ? `<img src="${msg.preview.image}" alt="Link image" class="preview-img">` : ""}
-        <div class="preview-info">
-          <div class="preview-title">${escapeHtml(msg.preview.title)}</div>
-          <div class="preview-url">${escapeHtml(msg.preview.url)}</div>
-        </div>
-      </div>
-    `
-    : "";
-
-  return `
-    <div class="message-bubble-wrapper ${isOwn ? 'right' : 'left'}">
-      <div class="message-bubble ${isOwn ? 'right' : 'left'}" 
-           oncontextmenu="handleLongPressMenu(${JSON.stringify(msg)}, \`${escaped}\`, ${isOwn}); return false;"
-           data-msg-id="${msg.id}">
-        ${replyHtml}
-        <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
-          <div class="msg-text-wrapper">
-            <div class="msg-text">${linkifyText(escaped)}</div>
-            ${meta}
-          </div>
-          ${linkPreviewHtml}
-        </div>
-      </div>
-    </div>
-  `;
 }
 
 // Edit message modal
