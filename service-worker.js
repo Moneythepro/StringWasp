@@ -1,4 +1,4 @@
-const CACHE_NAME = "stringwasp-v1.2"; // Bump version to force update
+const CACHE_NAME = "stringwasp-v1.3"; // Bump version to force update
 const urlsToCache = [
   "/",
   "/index.html",
@@ -8,7 +8,6 @@ const urlsToCache = [
   "/manifest.json",
   "/favicon.png",
   "/notif.mp3",
-  "/verified.json", // Added for badge data
   "https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js",
   "https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js",
   "https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js",
@@ -23,13 +22,13 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// Fetch strategy: network-first for verified.json and dynamic files
+// Fetch strategy: network-first for verified.json
 self.addEventListener("fetch", (event) => {
   const requestURL = new URL(event.request.url);
 
   // Always fetch latest verified.json
   if (requestURL.pathname.endsWith("verified.json")) {
-    event.respondWith(fetch(event.request, { cache: "no-store" }));
+    event.respondWith(fetch(event.request, { cache: "no-store" }).catch(() => caches.match(event.request)));
     return;
   }
 
