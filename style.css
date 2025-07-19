@@ -2358,3 +2358,53 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
   
+/* =========================================================
+ * INPUT BAR (Improved Height & Layout)
+ * ======================================================= */
+.chat-input-bar {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;   /* more padding for better height */
+  gap: 10px;            /* space between icons and input */
+  border-top: 1px solid #ccc;
+  background: var(--inputbar-bg);
+  box-shadow: 0 -1px 3px rgba(0,0,0,0.06);
+}
+
+.chat-input-bar .icon-btn {
+  font-size: 22px;      /* larger icons */
+  color: #444;
+  cursor: pointer;
+}
+
+#threadInput {
+  flex: 1;
+  padding: 10px 14px;   /* increased padding for better height */
+  font-size: 16px;      /* slightly larger font */
+  border-radius: 22px;  /* rounder edges like WhatsApp */
+  border: 1px solid #ccc;
+  outline: none;
+  background: #fff;
+  font-family: var(--sw-font-stack);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+#threadInput:focus {
+  border-color: var(--tick-seen-color);
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(79,195,247,.25);
+}
+
+#emojiToggleBtn { order: -1; }
+.emoji-btn {
+  margin-right: 6px;
+  cursor: pointer;
+  color: var(--fg-muted);
+  font-size: 1.5em;
+  display: flex;
+  align-items: center;
+}
+
+/* Dark Mode Adjustments */
+body.dark .chat-input-bar { background: var(--inputbar-bg); border-top-color: #333; }
+body.dark #threadInput { background: #222; color: #eee; border-color: #444; }
+body.dark .chat-input-bar .icon-btn { color: #bbb; }
