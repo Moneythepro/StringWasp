@@ -3464,11 +3464,8 @@ function renderWithMagnetSupport(containerId) {
 
     window.addEventListener("resize", viewportChanged);
     if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", viewportChanged);
+      window. visualViewport.addEventListener("resize", viewportChanged);
       window.visualViewport.addEventListener("scroll", viewportChanged);
     }
-  });
-})();
-}
   });
 })();
