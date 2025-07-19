@@ -1927,27 +1927,26 @@ body {
 .chat-input-bar {
   display: flex;
   align-items: center;
-  padding: 6px 8px; /* slimmer */
+  padding: 6px 8px;
   gap: 6px;
   border-top: 1px solid #ccc;
   background: var(--inputbar-bg);
+  position: relative; /* Needed for absolute emoji inside */
 }
-.chat-input-bar .icon-btn {
-  font-size: 18px;
-  color: #444;
-}
+
 #threadInput {
   flex: 1;
-  padding: 10px 14px; /* slightly smaller height & width */
-  font-size: 15px; /* slightly smaller text */
-  border-radius: 8px; /* smoother but less rounded */
-  border: 1px solid #d1d1d6; /* soft iOS border */
+  padding: 10px 40px 10px 14px; /* right padding to fit emoji inside */
+  font-size: 15px;
+  border-radius: 8px;
+  border: 1px solid #d1d1d6;
   outline: none;
   background: #f9f9f9;
   color: #000;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  position: relative;
 }
 
 #threadInput:focus {
@@ -1955,29 +1954,25 @@ body {
   background: #fff;
   box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
 }
-#emojiToggleBtn { order: -1; }
-.emoji-btn {
-  margin-right: 4px;
+
+#emojiToggleBtn {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 1.3em;
   cursor: pointer;
   color: var(--fg-muted);
-  font-size: 1.3em;
   display: flex;
   align-items: center;
-}
-body.dark .chat-input-bar { background: var(--inputbar-bg); border-top-color: #333; }
-
-body.dark .chat-input-bar .icon-btn { color: #bbb; }
-body.dark #threadInput {
-  background: #1c1c1e; /* dark iOS background */
-  color: #fff;
-  border-color: #3a3a3c;
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.05);
+  z-index: 2;
 }
 
-body.dark #threadInput:focus {
-  border-color: #0a84ff; /* iOS dark mode blue */
-  background: #2c2c2e;
-  box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.2);
+body.dark #emojiToggleBtn {
+  color: #aaa;
 }
 /* =========================================================
  * RESPONSIVE
