@@ -1938,20 +1938,22 @@ body {
 }
 #threadInput {
   flex: 1;
-  padding: 12px 14px; /* taller input */
-  font-size: 15px;
-  border-radius: 6px; /* squarish corners */
-  border: 1px solid #ccc;
+  padding: 14px 16px; /* smooth, tall padding */
+  font-size: 16px;
+  border-radius: 12px; /* smooth iOS-like edges */
+  border: 1px solid #d1d1d6; /* soft gray border like iOS */
   outline: none;
-  background: #fff;
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
-  font-family: var(--sw-font-stack);
-  min-height: 42px; /* ensure consistent tall shape */
+  background: #f9f9f9; /* soft white, not harsh */
+  color: #000;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05); /* subtle inner shadow */
 }
+
 #threadInput:focus {
-  border-color: var(--tick-seen-color);
+  border-color: #007aff; /* iOS blue */
   background: #fff;
-  box-shadow: 0 0 0 2px rgba(79,195,247,.25);
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2); /* subtle focus ring */
 }
 #emojiToggleBtn { order: -1; }
 .emoji-btn {
@@ -1963,9 +1965,20 @@ body {
   align-items: center;
 }
 body.dark .chat-input-bar { background: var(--inputbar-bg); border-top-color: #333; }
-body.dark #threadInput { background: #222; color: #eee; border-color: #444; }
-body.dark .chat-input-bar .icon-btn { color: #bbb; }
 
+body.dark .chat-input-bar .icon-btn { color: #bbb; }
+body.dark #threadInput {
+  background: #1c1c1e; /* dark iOS background */
+  color: #fff;
+  border-color: #3a3a3c;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.05);
+}
+
+body.dark #threadInput:focus {
+  border-color: #0a84ff; /* iOS dark mode blue */
+  background: #2c2c2e;
+  box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.2);
+}
 /* =========================================================
  * RESPONSIVE
  * ======================================================= */
