@@ -1664,11 +1664,21 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
   const distFromBottom = !isInitial ? (area.scrollHeight - area.scrollTop) : 0;
 
   const frag = document.createDocumentFragment();
+  let lastMsgDate = null;  // Track last message day for separators
 
   for (const msg of msgs) {
     const isSelf = msg.from === currentUser.uid;
     const { text: displayText, isDeleted, deletedHtml } = decryptMsgText(msg);
     const emojiOnly = isEmojiOnlyText(displayText);
+
+    const msgDate = msg.timestamp?.toDate ? msg.timestamp.toDate() : null;
+    if (msgDate && (!lastMsgDate || !isSameDay(lastMsgDate, msgDate))) {
+      const separator = document.createElement("div");
+      separator.className = "day-separator";
+      separator.textContent = formatDaySeparator(msgDate);
+      frag.appendChild(separator);
+    }
+    if (msgDate) lastMsgDate = msgDate;
 
     const showPfp = msg._grp === "grp-start" || msg._grp === "grp-single";
     const prof    = isSelf ? selfProfile : otherProfile;
@@ -1686,7 +1696,6 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       : "";
 
     const replyBox = !isDeleted ? buildReplyStrip(msg) : "";
-
     const metaHtml = isSelf ? buildTickMeta(msg, otherUid) : buildOtherMeta(msg);
 
     const textHtml  = escapeHtml(displayText);
@@ -1698,7 +1707,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
         ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
         : linkifyText(textHtml);
 
-    // Link preview (if present)
+    // Link preview
     let linkPreviewHTML = "";
     if (!isDeleted) {
       if (msg.preview) {
@@ -1716,7 +1725,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       }
     }
 
-    // Create bubble wrapper
+    // Bubble wrapper
     const wrapper = document.createElement("div");
     wrapper.className =
       `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}` +
@@ -1748,7 +1757,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       </div>
     `;
 
-    // Attach gestures/context menu
+    // Gesture events
     if (!isDeleted) {
       const bubbleEl = wrapper.querySelector(".message-bubble");
       if (bubbleEl) {
@@ -1764,7 +1773,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
     frag.appendChild(wrapper);
 
-    // Mark seen
+    // Seen receipt
     if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
       db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
         .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
@@ -2559,6 +2568,7 @@ function listenMessages() {
       messagesDiv.innerHTML = "";
       const frag = document.createDocumentFragment();
       const renderedIds = new Set();
+      let lastMsgDate = null;  // Track last day for separators
 
       snapshot.forEach(doc => {
         const msg = doc.data();
@@ -2580,6 +2590,16 @@ function listenMessages() {
           console.error("Decryption failed:", e);
           decrypted = "[Decryption error]";
         }
+
+        /* --- Insert day separator --- */
+        const msgDate = msg.timestamp?.toDate ? msg.timestamp.toDate() : null;
+        if (msgDate && (!lastMsgDate || !isSameDay(lastMsgDate, msgDate))) {
+          const separator = document.createElement("div");
+          separator.className = "day-separator";
+          separator.textContent = formatDaySeparator(msgDate);
+          frag.appendChild(separator);
+        }
+        if (msgDate) lastMsgDate = msgDate;
 
         /* --- Emoji-only bubble --- */
         const emojiOnly = isEmojiOnlyText(decrypted) ? "emoji-only" : "";
@@ -2717,6 +2737,24 @@ function viewUserFullProfile() {
   closeProfilePreview();
   viewUserProfile(currentThreadUser);
 }
+
+function isSameDay(date1, date2) {
+  return date1.getFullYear() === date2.getFullYear() &&
+         date1.getMonth() === date2.getMonth() &&
+         date1.getDate() === date2.getDate();
+}
+
+function formatDaySeparator(date) {
+  const now = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(now.getDate() - 1);
+
+  if (isSameDay(date, now)) return "Today";
+  if (isSameDay(date, yesterday)) return "Yesterday";
+
+  // Default full date
+  return date.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+    }
 
 
 
