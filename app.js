@@ -1320,18 +1320,6 @@ function loadGroupInfo(groupId) {
   });
 }
 
-// ===== DM Utilities =====
-function threadId(a, b) {
-  return [a, b].sort().join("_");
-}
-
-// ===== DM: Open Thread Chat =====
-let handleSendClick = null;
-let replyingTo = null;
-let touchStartX = 0;
-let touchMoveX = 0;
-let isSendingThread = false;
-
 function setupEmojiButton() {
   const emojiBtn = document.getElementById("emojiToggleBtn");
   const input = document.getElementById("threadInput");
@@ -1353,14 +1341,14 @@ function setupEmojiButton() {
         zIndex: 9999
       });
 
-      emojiPicker.on("emoji", emoji => {
+      emojiPicker.on("emoji", selection => {
+        const chosenEmoji = selection.emoji;
         const start = input.selectionStart;
         const end = input.selectionEnd;
         const text = input.value;
 
-        // ✅ Insert the actual emoji character
-        input.value = text.slice(0, start) + emoji.emoji + text.slice(end);
-        input.selectionStart = input.selectionEnd = start + emoji.emoji.length;
+        input.value = text.slice(0, start) + chosenEmoji + text.slice(end);
+        input.selectionStart = input.selectionEnd = start + chosenEmoji.length;
 
         autoResizeInput(input);
         input.focus();
@@ -1378,6 +1366,18 @@ function setupEmojiButton() {
     }
   });
 }
+
+// ===== DM Utilities =====
+function threadId(a, b) {
+  return [a, b].sort().join("_");
+}
+
+// ===== DM: Open Thread Chat =====
+let handleSendClick = null;
+let replyingTo = null;
+let touchStartX = 0;
+let touchMoveX = 0;
+let isSendingThread = false;
 
 function handleTouchStart(e) {
   touchStartX = e.touches[0].clientX;
@@ -1431,6 +1431,17 @@ function cancelReply() {
   }
 }
 
+function linkifyText(text) {
+  const urlRegex = /((https?:\/\/)[^\s]+)/gi;
+  return text.replace(urlRegex, (url) => {
+    let displayUrl = url;
+    if (displayUrl.length > 45) {
+      displayUrl = displayUrl.slice(0, 42) + "...";
+    }
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="chat-link">${displayUrl}</a>`;
+  });
+}
+
 function extractFirstURL(text) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const match = text.match(urlRegex);
@@ -1458,13 +1469,14 @@ async function sendThreadMessage() {
     return;
   }
 
-  const text = input.value.trim();
+  const rawText = input.value;
+  const text = rawText.trim();
   if (!text) {
     isSendingThread = false;
     return;
   }
 
-  input.value = ""; // Clear first to prevent duplicate sends
+  input.value = ""; // Clear input to prevent duplicate sends
   cancelReply();
   replyingTo = null;
 
@@ -1486,7 +1498,7 @@ async function sendThreadMessage() {
     seenBy: [currentUser.uid]
   };
 
-  // Add reply data
+  // Add reply info if present
   if (replyingTo?.msgId && replyingTo?.text?.trim()) {
     message.replyTo = {
       msgId: replyingTo.msgId,
@@ -1494,20 +1506,20 @@ async function sendThreadMessage() {
     };
   }
 
-  // Optional link preview
-  const urlMatch = text.match(/https?:\/\/[^\s]+/);
-  if (urlMatch) {
+  // Optional link preview (only one preview per message)
+  const urlMatch = rawText.match(/https?:\/\/[^\s]+/);
+  if (urlMatch && urlMatch[0]) {
     try {
       const preview = await fetchLinkPreview(urlMatch[0]);
       if (preview?.title) {
         message.preview = {
           title: preview.title,
           image: preview.image || "",
-          url: preview.url
+          url: preview.url || urlMatch[0]
         };
       }
     } catch (err) {
-      console.warn("⚠️ Preview fetch failed:", err);
+      console.warn("⚠️ Link preview fetch failed:", err);
     }
   }
 
@@ -1676,19 +1688,10 @@ async function openThread(uid, name) {
             decrypted = "[Invalid text]";
           }
 
-          const wrapper = document.createElement("div");
-          wrapper.className = "message-bubble-wrapper fade-in " + (isSelf ? "right" : "left");
-
-          const bubble = document.createElement("div");
-          bubble.className = "message-bubble " + (isSelf ? "right" : "left");
-          bubble.dataset.msgId = msg.id;
-
-          // Reply text block
           const replyBox = msg.replyTo && !isDeleted
             ? `<div class="reply-to clamp-text">${escapeHtml(msg.replyTo.text || "")}</div>`
             : "";
 
-          // Meta info
           const seenClass = msg.seenBy?.includes(currentThreadUser) ? "tick-seen" : "tick-sent";
           const meta = `
             <span class="msg-meta-inline">
@@ -1742,27 +1745,30 @@ async function openThread(uid, name) {
             }
           }
 
-          bubble.innerHTML = `
-            ${replyBox}
-            <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
-              ${textPreview}
-              ${linkPreviewHTML}
+          const wrapper = document.createElement("div");
+          wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right" : "left"}`;
+          wrapper.innerHTML = `
+            <div class="message-bubble ${isSelf ? "right" : "left"}" data-msg-id="${msg.id}">
+              ${replyBox}
+              <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
+                ${textPreview}
+                ${linkPreviewHTML}
+              </div>
             </div>
           `;
 
           if (!isDeleted) {
-            bubble.addEventListener("touchstart", handleTouchStart);
-            bubble.addEventListener("touchmove", handleTouchMove);
-            bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted));
+            wrapper.querySelector(".message-bubble")?.addEventListener("touchstart", handleTouchStart);
+            wrapper.querySelector(".message-bubble")?.addEventListener("touchmove", handleTouchMove);
+            wrapper.querySelector(".message-bubble")?.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted));
             if (isSelf) {
-              bubble.addEventListener("contextmenu", e => {
+              wrapper.querySelector(".message-bubble")?.addEventListener("contextmenu", e => {
                 e.preventDefault();
                 handleLongPressMenu(msg, decrypted, true);
               });
             }
           }
 
-          wrapper.appendChild(bubble);
           area.appendChild(wrapper);
 
           if (!msg.seenBy?.includes(currentUser.uid)) {
@@ -1781,7 +1787,7 @@ async function openThread(uid, name) {
     console.error("❌ openThread error:", err);
     alert("❌ Could not open chat: " + (err.message || JSON.stringify(err)));
   }
-}
+  }
 
 function toggleChatOptions(event) {
   event.stopPropagation();
@@ -1866,14 +1872,17 @@ function renderMessage(msg, isOwn) {
   }
 
   const escaped = escapeHtml(decrypted);
+
   const replyHtml = msg.replyTo && !isDeleted
-    ? `<div class="reply-to"><i data-lucide="corner-up-left"></i> ${escapeHtml(msg.replyTo.text || "")}</div>`
+    ? `<div class="reply-to">${escapeHtml(msg.replyTo.text || "")}</div>`
     : "";
 
   const meta = `
-    <span class="msg-time">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</span>
-    ${msg.edited ? `<span class="edited-tag">(edited)</span>` : ""}
-    ${isOwn && !isDeleted ? '<i data-lucide="check-check" class="tick-icon tick-sent"></i>' : ""}
+    <div class="msg-meta-inline">
+      ${msg.timestamp?.toDate ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>` : ""}
+      ${msg.edited ? `<span class="edited-tag">(edited)</span>` : ""}
+      ${isOwn && !isDeleted ? '<i data-lucide="check-check" class="tick-icon tick-sent"></i>' : ""}
+    </div>
   `;
 
   const linkPreviewHtml = msg.preview && !isDeleted
@@ -1889,14 +1898,18 @@ function renderMessage(msg, isOwn) {
     : "";
 
   return `
-    <div class="message-bubble ${isOwn ? 'right' : 'left'}" 
-         oncontextmenu="handleLongPressMenu(${JSON.stringify(msg)}, \`${escaped}\`, ${isOwn}); return false;"
-         data-msg-id="${msg.id}">
-      <div class="msg-content ${isDeleted ? 'msg-deleted' : ''}">
+    <div class="message-bubble-wrapper ${isOwn ? 'right' : 'left'}">
+      <div class="message-bubble ${isOwn ? 'right' : 'left'}" 
+           oncontextmenu="handleLongPressMenu(${JSON.stringify(msg)}, \`${escaped}\`, ${isOwn}); return false;"
+           data-msg-id="${msg.id}">
         ${replyHtml}
-        <span class="msg-text">${linkifyText(escaped)}</span>
-        ${linkPreviewHtml}
-        <div class="msg-meta">${meta}</div>
+        <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
+          <div class="msg-text-wrapper">
+            <div class="msg-text">${linkifyText(escaped)}</div>
+            ${meta}
+          </div>
+          ${linkPreviewHtml}
+        </div>
       </div>
     </div>
   `;
