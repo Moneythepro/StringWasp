@@ -3120,62 +3120,68 @@ const DEV_UIDS = [
   // "yourFirebaseUIDHere" // Add your actual Firebase UID if needed
 ];
 
+/* ---------------------------------------------------------
+ * Dynamic Verified Badge System (via verified.json)
+ * --------------------------------------------------------- */
+let VERIFIED_USERS = ["moneythepro"]; // Default fallback
+
+// Load verified usernames from a JSON file in your repository
+async function loadVerifiedUsers() {
+  try {
+    const res = await fetch("./verified.json"); // Path to your JSON file
+    if (!res.ok) throw new Error("Failed to fetch verified.json");
+    const data = await res.json();
+    if (Array.isArray(data.verified)) {
+      VERIFIED_USERS = data.verified.map(u => u.toLowerCase());
+    }
+    console.log("Verified list loaded:", VERIFIED_USERS);
+  } catch (err) {
+    console.warn("⚠️ Could not load verified.json:", err);
+  }
+}
+
+// Call this once on page load
+document.addEventListener("DOMContentLoaded", loadVerifiedUsers);
+
+// Function to add badge next to usernames
 function usernameWithBadge(uidOrName, maybeName) {
   let uid = uidOrName;
   let name = maybeName;
 
-  // One-argument form: usernameWithBadge(nameOnly)
   if (typeof maybeName === "undefined") {
     name = uidOrName;
     uid = "";
   }
 
-  const rawName = name || "User";
+  const rawName = (name || "User");
+  const lowerName = rawName.toLowerCase();
+  const lowerUid = (uid || "").toLowerCase();
+
+  const isVerified = VERIFIED_USERS.includes(lowerName) || VERIFIED_USERS.includes(lowerUid);
   const safe = escapeHtml(rawName);
 
-  const lowerUid = (uid || "").toLowerCase();
-  const lowerName = (rawName || "").toLowerCase();
-
-  const isDev =
-    lowerName === "moneythepro" ||
-    lowerUid === "moneythepro" ||
-    DEV_UIDS.includes(uid);
-
-  if (isDev) {
-    return `${safe} <i data-lucide="badge-check" class="dev-badge" aria-label="Verified"></i>`;
-  }
-  return safe;
+  return isVerified
+    ? `${safe} <i data-lucide="badge-check" class="dev-badge" aria-label="Verified"></i>`
+    : safe;
 }
 
-// ✅ Add Developer Badge Everywhere
-function applyDeveloperBadge(usernameElement, username) {
-  if (!usernameElement || !username) return;
-  if (username.trim().toLowerCase() === "moneythepro") {
-    if (!usernameElement.querySelector(".dev-badge")) {
-      const badge = document.createElement("i");
-      badge.setAttribute("data-lucide", "badge-check");
-      badge.className = "dev-badge";
-      badge.style.marginLeft = "4px";
-      usernameElement.appendChild(badge);
-      if (typeof lucide !== "undefined") lucide.createIcons();
-    }
-  }
-}
-
-// ✅ Decorate usernames globally
+// Automatically apply badges to username elements
 function decorateUsernamesWithBadges() {
   document.querySelectorAll(
     ".search-username, .username-display, .chat-username, .message-username"
   ).forEach(el => {
-    const raw = el.textContent.replace("@", "").trim();
-    if (raw.toLowerCase() === "moneythepro") {
-      applyDeveloperBadge(el, raw);
+    const raw = el.textContent.replace("@", "").trim().toLowerCase();
+    if (VERIFIED_USERS.includes(raw)) {
+      if (!el.querySelector(".dev-badge")) {
+        const badge = document.createElement("i");
+        badge.setAttribute("data-lucide", "badge-check");
+        badge.className = "dev-badge";
+        el.appendChild(badge);
+        if (typeof lucide !== "undefined") lucide.createIcons();
+      }
     }
   });
 }
-
-// Auto-run badge decoration after DOM updates
-document.addEventListener("DOMContentLoaded", decorateUsernamesWithBadges);
 
 // Observe DOM changes to auto-add badges
 const badgeObserver = new MutationObserver(() => {
