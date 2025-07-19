@@ -1815,9 +1815,6 @@ function viewMedia() { alert("🖼️ View media feature coming soon."); }
 function exportChat() { alert("📁 Export chat feature coming soon."); }
 function deleteChat() { alert("🗑️ Delete chat feature coming soon."); }
 
-function linkifyText(text) {
-  return text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="link-text">$1</a>');
-}
 
 
 // Long press modal
@@ -2618,11 +2615,6 @@ function scrollToBottom(divId) {
   if (div) div.scrollTop = div.scrollHeight;
 }
 
-// ✅ Emoji Picker
-function insertEmoji(targetId, emoji) {
-  const input = document.getElementById(targetId);
-  if (input) input.value += emoji;
-}
 
 // ✅ Group Invite to inbox
 function inviteToGroup(uid) {
