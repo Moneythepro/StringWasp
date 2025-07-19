@@ -1087,30 +1087,6 @@ function listenToTyping(targetId, context) {
   });
 }
 
-function escapeHtml(text) {
-  return text?.replace(/[&<>"']/g, m => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  })[m]) || "";
-}
-
-function timeSince(date) {
-  const seconds = Math.floor((new Date() - date) / 1000);
-  const intervals = [
-    { label: "year", seconds: 31536000 },
-    { label: "month", seconds: 2592000 },
-    { label: "day", seconds: 86400 },
-    { label: "hour", seconds: 3600 },
-    { label: "minute", seconds: 60 },
-    { label: "second", seconds: 1 }
-  ];
-  for (const i of intervals) {
-    const count = Math.floor(seconds / i.seconds);
-    if (count >= 1) return `${count} ${i.label}${count > 1 ? "s" : ""} ago`;
-  }
-  return "just now";
-}
-
-
 // ===== Load Inbox Items (Cards + Badge) =====
 function listenInbox() {
   const list = document.getElementById("inboxList");
@@ -1943,7 +1919,6 @@ async function getUserProfileCached(uid) {
 
 
 let renderedMessageIds = new Set();
-let lastThreadId = null;
 let isSendingThread = false;
 
 /* ---------- Open Thread ---------- */
@@ -2634,6 +2609,117 @@ document.addEventListener("DOMContentLoaded", () => {
     menuBtn.dataset.bound = "true";
   }
 });
+
+let selectedMessageForAction = null;
+let editingMessageData = null;
+
+function handleLongPressMenu(msg, text, isSelf) {
+  selectedMessageForAction = { msg, text };
+
+  const modal = document.getElementById("messageOptionsModal");
+  if (!modal) return;
+
+  // Show Edit only if it's your own message
+  modal.querySelector('[onclick="editMessage()"]').style.display = isSelf ? "flex" : "none";
+  modal.querySelector('[onclick="deleteForMe()"]').style.display = "flex";
+  modal.querySelector('[onclick="deleteForEveryone()"]').style.display = isSelf ? "flex" : "none";
+
+  openOptionsModal();
+}
+
+function openOptionsModal() {
+  const modal = document.getElementById("messageOptionsModal");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  modal.addEventListener("click", closeOptionsModal);
+  if (typeof lucide !== "undefined") lucide.createIcons();
+}
+
+function closeOptionsModal(event) {
+  const modal = document.getElementById("messageOptionsModal");
+  if (!modal) return;
+  if (!event || event.target === modal) {
+    modal.classList.add("hidden");
+    modal.removeEventListener("click", closeOptionsModal);
+  }
+}
+
+/* ===== Edit Message ===== */
+function editMessage() {
+  closeOptionsModal();
+  if (!selectedMessageForAction || selectedMessageForAction.msg.from !== currentUser.uid)
+    return alert("⚠️ You can only edit your own messages.");
+
+  editingMessageData = selectedMessageForAction;
+  document.getElementById("editMessageInput").value = editingMessageData.text;
+  document.getElementById("editMessageModal").style.display = "flex";
+}
+
+function saveEditedMessage() {
+  const newText = document.getElementById("editMessageInput").value.trim();
+  if (!newText || !editingMessageData) return;
+
+  const encrypted = CryptoJS.AES.encrypt(newText, "yourSecretKey").toString();
+  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+
+  db.collection("threads").doc(threadIdStr)
+    .collection("messages").doc(editingMessageData.msg.id)
+    .update({ text: encrypted, edited: true })
+    .then(() => {
+      showToast(" Message edited");
+      closeEditModal();
+      editingMessageData = null;
+    })
+    .catch(err => console.error("❌ Failed to edit:", err));
+}
+
+function closeEditModal() {
+  editingMessageData = null;
+  document.getElementById("editMessageModal").style.display = "none";
+}
+
+/* ===== Delete Options ===== */
+function deleteForMe() {
+  closeOptionsModal();
+  if (!selectedMessageForAction) return;
+  const { msg } = selectedMessageForAction;
+  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+  db.collection("threads").doc(threadIdStr)
+    .collection("messages").doc(msg.id)
+    .update({ [`deletedFor.${currentUser.uid}`]: true })
+    .then(() => {
+      showToast("🗑️ Message deleted for you");
+      document.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`)?.parentElement?.remove();
+    })
+    .catch(console.error);
+}
+
+function deleteForEveryone() {
+  closeOptionsModal();
+  if (!selectedMessageForAction || selectedMessageForAction.msg.from !== currentUser.uid)
+    return alert("⚠️ You can only delete your own messages.");
+  const { msg } = selectedMessageForAction;
+  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+  db.collection("threads").doc(threadIdStr)
+    .collection("messages").doc(msg.id)
+    .update({
+      text: "",
+      deletedFor: { [currentUser.uid]: true, [currentThreadUser]: true }
+    })
+    .then(() => {
+      showToast("✅ Message deleted for everyone");
+      document.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`)?.parentElement?.remove();
+    })
+    .catch(console.error);
+}
+
+function showToast(message) {
+  const toast = document.getElementById("chatToast");
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 1800);
+}
 
 /* =========================================================
  * SEARCH (Users + Groups)
