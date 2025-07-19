@@ -2020,3 +2020,157 @@ body.dark .msg-edited-tag {
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+/* === FIX: Images inside bubbles === */
+.message-bubble img,
+.message-bubble video {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+}
+/* =========================================================
+ * PROFILE PICTURE FIX (Alignment with Bubble)
+ * ======================================================= */
+.message-bubble-wrapper.has-pfp {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px; /* Gap between PFP and bubble */
+}
+.message-bubble-wrapper.has-pfp.right {
+  flex-direction: row-reverse; /* Align PFP on right for self */
+}
+
+/* Profile picture sizing */
+.bubble-pfp {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+/* Make bubbles align vertically with PFP */
+.message-bubble-wrapper.has-pfp .message-bubble {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* =========================================================
+ * FORWARDED TAG
+ * ======================================================= */
+.forwarded-tag {
+  font-size: 11px;
+  color: #777;
+  font-style: italic;
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.forwarded-tag::before {
+  content: "↪";
+  font-size: 12px;
+  color: #888;
+}
+
+/* =========================================================
+ * DELETED MESSAGE
+ * ======================================================= */
+.message-bubble.deleted {
+  background: #f4f4f4 !important;
+  color: #888 !important;
+  font-style: italic;
+  text-align: center;
+}
+.message-bubble.deleted::after {
+  display: none;
+}
+
+/* =========================================================
+ * SYSTEM MESSAGES (DATE SEPARATORS, STATUS)
+ * ======================================================= */
+.system-message {
+  text-align: center;
+  font-size: 12px;
+  color: #666;
+  background: #e6e6e6;
+  padding: 4px 10px;
+  border-radius: 10px;
+  display: inline-block;
+  margin: 8px auto;
+  font-weight: 500;
+}
+body.dark .system-message {
+  background: #333;
+  color: #aaa;
+}
+
+/* "User joined" banners */
+.joined-banner,
+.left-banner {
+  text-align: center;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  margin: 6px auto;
+  background: #f0f0f0;
+  color: #555;
+}
+body.dark .joined-banner,
+body.dark .left-banner {
+  background: #222;
+  color: #bbb;
+}
+
+/* =========================================================
+ * BUBBLE SHADOW ENHANCEMENTS
+ * ======================================================= */
+.message-bubble {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06), 
+              0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.message-bubble.right {
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.07),
+              0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Add subtle hover effect */
+.message-bubble:hover {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+}
+
+/* =========================================================
+ * TYPING INDICATOR
+ * ======================================================= */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 20px;
+  padding: 4px 8px;
+  border-radius: 10px;
+  background: var(--other-bubble-bg);
+  box-shadow: var(--bubble-shadow);
+  margin: 4px auto;
+}
+
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  background: #888;
+  border-radius: 50%;
+  animation: typingBlink 1.3s infinite ease-in-out;
+}
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingBlink {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
