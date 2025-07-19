@@ -1458,7 +1458,7 @@ body.dark .msg-meta {
   --bubble-padding-x: 8px;
   --bubble-padding: var(--bubble-padding-y) var(--bubble-padding-x);
 
-  /* Base corner shapes (1st bubble in a stack) */
+  /* Base corner shapes (1st blow in a stack) */
   --bubble-radius: 16px 16px 16px 0px;
   --bubble-radius-right: 16px 16px 0px 16px;
 
@@ -1536,7 +1536,8 @@ body.dark {
   align-items: flex-start;
   padding: 0;
   margin: var(--bubble-margin);
-  animation: bubbleFadeInUp var(--bubble-anim-duration) var(--bubble-anim-ease) 1;
+  opacity: 0;
+  animation: bubbleFadeInUp var(--bubble-anim-duration) var(--bubble-anim-ease) forwards;
   will-change: transform, opacity;
 }
 .message-bubble-wrapper.right,
@@ -1544,25 +1545,21 @@ body.dark {
   align-items: flex-end;
 }
 
-/* For avatar alignment */
+/* When wrapper includes an avatar beside the bubble */
 .message-bubble-wrapper.has-pfp {
   flex-direction: row;
   align-items: flex-end;
   gap: var(--pfp-gap);
 }
-.message-bubble-wrapper.has-pfp.right {
+.message-bubble-wrapper.has-pfp.right,
+.message-bubble-wrapper.has-pfp.from-self {
   flex-direction: row-reverse;
+  align-items: flex-end;
 }
-.bubble-pfp {
-  width: var(--pfp-size);
-  height: var(--pfp-size);
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease;
-}
-.bubble-pfp:active { transform: scale(0.95); }
+
+/* Indent continuation bubbles (no avatar) to line up under text col */
+.message-bubble-wrapper.indent-other { margin-left: calc(var(--pfp-size) + var(--pfp-gap)); }
+.message-bubble-wrapper.indent-self  { margin-right: calc(var(--pfp-size) + var(--pfp-gap)); }
 
 /* Compact vertical gap when grouped */
 .message-bubble-wrapper.grp-mid,
@@ -1574,6 +1571,22 @@ body.dark {
 }
 
 /* =========================================================
+ * AVATAR (PFP)
+ * ======================================================= */
+.bubble-pfp {
+  width: var(--pfp-size);
+  height: var(--pfp-size);
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.08);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.bubble-pfp:hover { transform: scale(1.05); }
+.bubble-pfp:active { transform: scale(.95); }
+
+/* =========================================================
  * BUBBLE CORE
  * ======================================================= */
 .message-bubble {
@@ -1581,7 +1594,7 @@ body.dark {
   padding: var(--bubble-padding);
   font-size: var(--bubble-font-size);
   line-height: var(--bubble-line-height);
-  font-weight: 500; /* Slightly bold */
+  font-weight: 500; /* Slightly bold = premium */
   background: var(--other-bubble-bg);
   border-radius: var(--bubble-radius);
   box-shadow: var(--bubble-shadow);
@@ -1740,9 +1753,10 @@ body.dark {
   font-size: var(--meta-font-size);
   color: var(--meta-color);
   margin-left: 6px;
-  opacity: 0.85;
   white-space: nowrap;
   line-height: 1;
+  opacity: 0;
+  transition: opacity 0.12s ease;
 }
 .message-bubble.right .msg-meta-inline,
 .message-bubble.from-self .msg-meta-inline {
@@ -1762,6 +1776,11 @@ body.dark {
 .msg-meta-inline[data-status="delivered"] .tick-icon { color: var(--tick-delivered-color); }
 .msg-meta-inline[data-status="seen"] .tick-icon { color: var(--tick-seen-color); }
 .msg-meta-inline[data-status="pending"] .tick-icon { color: var(--tick-pending-color); }
+
+/* Reveal meta once timestamp arrives (JS sets data-time attr) */
+.message-bubble[data-time]:not([data-time=""]) .msg-meta-inline {
+  opacity: 0.85;
+}
 
 /* =========================================================
  * REPLY STRIP
