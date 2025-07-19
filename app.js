@@ -3127,26 +3127,28 @@ let VERIFIED_BADGES = {
   bronze: []
 };
 
-// Load verified badge data (cached)
+// Load verified badge data (cached or from JSON)
 async function loadVerifiedBadges() {
   const now = Date.now();
   try {
-    // Check cache
+    // 1. Check cache
     const cached = localStorage.getItem(BADGE_CACHE_KEY);
     if (cached) {
       const parsed = JSON.parse(cached);
       if (now - parsed.timestamp < BADGE_CACHE_TIME) {
         VERIFIED_BADGES = parsed.data;
-        console.log("Badges loaded from cache:", VERIFIED_BADGES);
+        console.log("Badges loaded from cache:", JSON.stringify(VERIFIED_BADGES, null, 2));
+        decorateUsernamesWithBadges();
         return;
       }
     }
 
-    // Fetch from verified.json
-    const res = await fetch("./verified.json");
+    // 2. Fetch from verified.json (with cache-busting)
+    const res = await fetch("./verified.json?cb=" + Date.now());
     if (!res.ok) throw new Error("Failed to fetch verified.json");
     const data = await res.json();
 
+    // 3. Normalize data
     VERIFIED_BADGES = {
       developer: (data.developer || []).map(u => u.toLowerCase()),
       gold: (data.gold || []).map(u => u.toLowerCase()),
@@ -3154,13 +3156,14 @@ async function loadVerifiedBadges() {
       bronze: (data.bronze || []).map(u => u.toLowerCase())
     };
 
-    // Save to cache
+    // 4. Save to cache
     localStorage.setItem(BADGE_CACHE_KEY, JSON.stringify({
       timestamp: now,
       data: VERIFIED_BADGES
     }));
 
     console.log("Verified badge list loaded:", JSON.stringify(VERIFIED_BADGES, null, 2));
+    decorateUsernamesWithBadges(); // ensure update
   } catch (err) {
     console.warn("⚠️ Could not load verified.json:", err);
   }
@@ -3238,8 +3241,8 @@ function decorateUsernamesWithBadges() {
     }
   });
 }
-document.addEventListener("DOMContentLoaded", decorateUsernamesWithBadges);
 
+// Observe DOM for dynamic updates
 const badgeObserver = new MutationObserver(() => {
   requestAnimationFrame(decorateUsernamesWithBadges);
 });
@@ -3254,13 +3257,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.body.addEventListener("click", (e) => {
     if (e.target.classList.contains("dev-badge")) {
-      modal.classList.remove("hidden");
+      modal?.classList.remove("hidden");
     }
   });
 
-  closeBtn?.addEventListener("click", () => modal.classList.add("hidden"));
+  closeBtn?.addEventListener("click", () => modal?.classList.add("hidden"));
   modal?.addEventListener("click", (e) => {
-    if (e.target === modal) modal.classList.add("hidden");
+    if (e.target === modal) modal?.classList.add("hidden");
   });
 });
 
