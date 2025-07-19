@@ -166,6 +166,9 @@ function loadMainUI() {
 
     switchTab("chatTab");
 
+    // Ensure Lucide icons are refreshed globally
+    if (typeof lucide !== "undefined") lucide.createIcons();
+
     setTimeout(hideLoading, 300);
   });
 }
@@ -209,7 +212,12 @@ auth.onAuthStateChanged(async user => {
       return;
     }
 
-    document.getElementById("usernameDisplay").textContent = data.username;
+    // ✅ Show username with badge
+    const usernameDisplay = document.getElementById("usernameDisplay");
+    if (usernameDisplay) {
+      usernameDisplay.innerHTML = usernameWithBadge(user.uid, data.username || "User");
+      if (typeof lucide !== "undefined") lucide.createIcons();
+    }
 
     // ✅ Avatar edit trigger
     const label = document.querySelector(".profile-edit-label");
@@ -258,7 +266,14 @@ function saveProfile() {
         if (extra.avatarBase64) {
           document.getElementById("profilePicPreview").src = extra.avatarBase64;
         }
-        document.getElementById("usernameDisplay").textContent = updates.username;
+
+        // ✅ Update global username with badge
+        const header = document.getElementById("usernameDisplay");
+        if (header) {
+          header.innerHTML = usernameWithBadge(currentUser.uid, updates.username || "User");
+          if (typeof lucide !== "undefined") lucide.createIcons();
+        }
+
         alert("✅ Profile updated.");
       })
       .catch(err => {
@@ -296,17 +311,39 @@ function loadProfile(callback) {
 
     const data = doc.data() || {};
 
-    document.getElementById("profileName").value = data.name || "";
-    document.getElementById("profileBio").value = data.bio || "";
-    document.getElementById("profileGender").value = data.gender || "";
-    document.getElementById("profilePhone").value = data.phone || "";
-    document.getElementById("profileEmail").value = data.publicEmail || data.email || "";
-    document.getElementById("profileUsername").value = data.username || "";
+    // ---- Form fields (raw values, no badge markup!) ----
+    const nameEl     = document.getElementById("profileName");
+    const bioEl      = document.getElementById("profileBio");
+    const genderEl   = document.getElementById("profileGender");
+    const phoneEl    = document.getElementById("profilePhone");
+    const emailEl    = document.getElementById("profileEmail");
+    const userEl     = document.getElementById("profileUsername");
+    const previewImg = document.getElementById("profilePicPreview");
 
-    const preview = document.getElementById("profilePicPreview");
-    preview.src = data.avatarBase64
-      || data.photoURL
-      || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username || "User")}&background=random`;
+    if (nameEl)   nameEl.value   = data.name || "";
+    if (bioEl)    bioEl.value    = data.bio || "";
+    if (genderEl) genderEl.value = data.gender || "";
+    if (phoneEl)  phoneEl.value  = data.phone || "";
+    if (emailEl)  emailEl.value  = data.publicEmail || data.email || "";
+    if (userEl)   userEl.value   = data.username || "";
+
+    if (previewImg) {
+      previewImg.src =
+        data.avatarBase64 ||
+        data.photoURL ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(
+          data.username || "User"
+        )}&background=random`;
+    }
+
+    // ---- Global header username (with badge) ----
+    const headerUser = document.getElementById("usernameDisplay");
+    if (headerUser) {
+      // Use innerHTML so badge icon renders.
+      headerUser.innerHTML = usernameWithBadge(currentUser.uid, data.username || "User");
+      // Lucide redraw (badge-check)
+      if (typeof lucide !== "undefined") lucide.createIcons();
+    }
 
     callback?.();
   }, err => {
@@ -407,38 +444,44 @@ function viewUserProfile(uid) {
     if (!doc.exists) return alert("User not found");
 
     const user = doc.data();
-    const avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+    const avatar = user.avatarBase64 || user.photoURL || 
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
 
     document.getElementById("viewProfilePic").src = avatar;
-document.getElementById("viewProfileName").textContent = user.name || "Unnamed";
+    document.getElementById("viewProfileName").textContent = user.name || "Unnamed";
 
-// ✅ Apply badge to username
-document.getElementById("viewProfileUsername").innerHTML =
-  `@${usernameWithBadge(user.username || "unknown")}`;
+    // ✅ Apply badge to username
+    document.getElementById("viewProfileUsername").innerHTML =
+      `@${usernameWithBadge(uid, user.username || "unknown")}`;
 
-document.getElementById("viewProfileBio").textContent = user.bio || "No bio";
-document.getElementById("viewProfileEmail").textContent = user.email || "";
-document.getElementById("viewProfileStatus").textContent = user.status || "";
+    document.getElementById("viewProfileBio").textContent = user.bio || "No bio";
+    document.getElementById("viewProfileEmail").textContent = user.email || "";
+    document.getElementById("viewProfileStatus").textContent = user.status || "";
 
     document.getElementById("viewProfileModal").style.display = "flex";
 
+    // Refresh Lucide icons for the badge
+    if (typeof lucide !== "undefined") lucide.createIcons();
+
+    // Handle friend/unfriend buttons
     const btnGroup = document.querySelector("#viewProfileModal .btn-group");
     if (!btnGroup) return;
     btnGroup.innerHTML = "";
 
-    db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).get().then(friendDoc => {
-      if (friendDoc.exists) {
+    db.collection("users").doc(currentUser.uid)
+      .collection("friends").doc(uid)
+      .get()
+      .then(friendDoc => {
         const btn = document.createElement("button");
-        btn.textContent = "Unfriend";
-        btn.onclick = () => removeFriend(uid);
+        if (friendDoc.exists) {
+          btn.textContent = "Unfriend";
+          btn.onclick = () => removeFriend(uid);
+        } else {
+          btn.textContent = "Add Friend";
+          btn.onclick = () => addFriend(uid);
+        }
         btnGroup.appendChild(btn);
-      } else {
-        const btn = document.createElement("button");
-        btn.textContent = "Add Friend";
-        btn.onclick = () => addFriend(uid);
-        btnGroup.appendChild(btn);
-      }
-    });
+      });
   });
 }
 
@@ -467,20 +510,48 @@ function loadGroups() {
   const dropdown = document.getElementById("roomDropdown");
   if (!dropdown || !currentUser) return;
 
-  if (unsubscribeGroups) unsubscribeGroups(); // optional if used elsewhere
+  // Remember current selection so we can restore it after refresh
+  const prevSelected = dropdown.value;
+
+  if (unsubscribeGroups) unsubscribeGroups(); // clear old listener
+
+  const SHOW_HASH_PREFIX = true; // flip to false if you don't want '#'
 
   unsubscribeGroups = db.collection("groups")
     .where("members", "array-contains", currentUser.uid)
     .onSnapshot(
       snapshot => {
         dropdown.innerHTML = "";
+
+        if (snapshot.empty) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.disabled = true;
+          opt.selected = true;
+          opt.textContent = "No groups yet";
+          dropdown.appendChild(opt);
+          return;
+        }
+
+        let restored = false;
+
         snapshot.forEach(doc => {
           const group = doc.data();
-          const option = document.createElement("option");
-          option.value = doc.id;
-          option.textContent = group.name || doc.id;
-          dropdown.appendChild(option);
+          const opt = document.createElement("option");
+          opt.value = doc.id;
+          const label = group.name || doc.id;
+          opt.textContent = SHOW_HASH_PREFIX ? `#${label}` : label;
+          if (doc.id === prevSelected) {
+            opt.selected = true;
+            restored = true;
+          }
+          dropdown.appendChild(opt);
         });
+
+        // If we couldn't restore (maybe group deleted), select first
+        if (!restored && dropdown.options.length > 0) {
+          dropdown.selectedIndex = 0;
+        }
       },
       err => {
         console.error("❌ Real-time group loading error:", err.message || err);
@@ -560,9 +631,10 @@ function loadRealtimeGroups() {
       snapshot.forEach(doc => {
         const group = doc.data();
         const icon = group.icon || "group-icon.png";
-        const name = group.name || "Group";
+        const name = escapeHtml(group.name || "Group");
         const unread = group.unread?.[currentUser.uid] || 0;
 
+        // Last message preview
         let lastMsg = "[No messages]";
         if (typeof group.lastMessage === "string") {
           lastMsg = group.lastMessage;
@@ -582,7 +654,7 @@ function loadRealtimeGroups() {
           <img class="group-avatar" src="${icon}" />
           <div class="details">
             <div class="name-row">
-              <span class="name">#${usernameWithBadge(name)}</span>
+              <span class="name">#${name}</span>
               <span class="time">${updatedTime}</span>
             </div>
             <div class="last-message">${escapeHtml(lastMsg)}</div>
@@ -592,11 +664,15 @@ function loadRealtimeGroups() {
 
         list.appendChild(card);
       });
+
+      // Refresh icons (if lucide icons are used in last message or elsewhere)
+      if (typeof lucide !== "undefined") lucide.createIcons();
     }, err => {
       console.error("❌ Group snapshot error:", err.message || err);
       list.innerHTML = `<div class="no-results">Failed to load group chats.</div>`;
     });
 }
+
 // ===== Direct Message Threads =====
 function loadFriendThreads() {
   const list = document.getElementById("chatList");
@@ -608,7 +684,7 @@ function loadFriendThreads() {
     .where("participants", "array-contains", currentUser.uid)
     .orderBy("updatedAt", "desc")
     .onSnapshot(async snapshot => {
-      list.innerHTML = ""; // ✅ Clear previous content
+      list.innerHTML = ""; // Clear previous content
 
       if (snapshot.empty) {
         list.innerHTML = `<div class="no-results">No personal chats found.</div>`;
@@ -617,13 +693,12 @@ function loadFriendThreads() {
 
       const userCache = {};
 
-      // Process all threads in parallel (faster)
-      const promises = snapshot.docs.map(async doc => {
-        const thread = doc.data();
+      const promises = snapshot.docs.map(async threadDoc => {
+        const thread = threadDoc.data();
         const otherUid = thread.participants.find(uid => uid !== currentUser.uid);
         if (!otherUid) return null;
 
-        // 🧠 Use cache if already fetched
+        // Pull user (cached)
         let user = userCache[otherUid];
         if (!user) {
           try {
@@ -636,14 +711,21 @@ function loadFriendThreads() {
           }
         }
 
-        const avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-        const name = user.username || "Friend";
+        const avatar =
+          user.avatarBase64 ||
+          user.photoURL ||
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
 
+        // Raw name (no escaping yet; needed for badge + header)
+        const rawName = user.username || user.name || "Friend";
+        const nameHtml = usernameWithBadge(otherUid, rawName); // helper escapes internally
+
+        // Last message preview
         let lastMsg = "[No messages]";
         if (typeof thread.lastMessage === "string") {
           lastMsg = thread.lastMessage;
-        } else if (typeof thread.lastMessage === "object") {
-          lastMsg = thread.lastMessage?.text || "[No messages]";
+        } else if (thread.lastMessage && typeof thread.lastMessage === "object") {
+          lastMsg = thread.lastMessage.text || "[No messages]";
         }
 
         const updatedTime = thread.updatedAt?.toDate?.()
@@ -654,25 +736,28 @@ function loadFriendThreads() {
 
         const card = document.createElement("div");
         card.className = "chat-card personal-chat";
-        card.onclick = () => openThread(otherUid, name);
+        // Pass rawName so openThread can re-render w/ badge
+        card.onclick = () => openThread(otherUid, rawName);
+
         card.innerHTML = `
           <img class="friend-avatar" src="${avatar}" />
           <div class="details">
             <div class="name-row">
-              <span class="name">#${usernameWithBadge(name)}</span>
+              <span class="name">${nameHtml}</span>
               <span class="time">${updatedTime}</span>
             </div>
             <div class="last-message">${escapeHtml(lastMsg)}</div>
           </div>
           ${unread > 0 ? `<span class="badge">${unread}</span>` : ""}
         `;
-
         return card;
       });
 
-      // Wait for all cards to build, then render
       const cards = await Promise.all(promises);
       cards.filter(Boolean).forEach(card => list.appendChild(card));
+
+      // Render Lucide icons (verified badge)
+      if (typeof lucide !== "undefined") lucide.createIcons();
     }, err => {
       console.error("❌ Thread snapshot error:", err.message || err);
       list.innerHTML = `<div class="no-results">Failed to load personal chats.</div>`;
@@ -687,11 +772,16 @@ function searchChats(term) {
   let anyVisible = false;
 
   chats.forEach(chat => {
-    const name = chat.querySelector(".name")?.textContent?.toLowerCase() || "";
-    const lastMsg = chat.querySelector(".last-message")?.textContent?.toLowerCase() || "";
+    const nameEl = chat.querySelector(".name");
+    const lastMsgEl = chat.querySelector(".last-message");
+
+    // Extract plain text (ignore badge icons)
+    const name = nameEl ? nameEl.textContent.toLowerCase() : "";
+    const lastMsg = lastMsgEl ? lastMsgEl.textContent.toLowerCase() : "";
 
     const match = name.includes(normalized) || lastMsg.includes(normalized);
     chat.style.display = match ? "flex" : "none";
+
     if (match) anyVisible = true;
   });
 
@@ -706,8 +796,8 @@ function searchChats(term) {
       msg.textContent = "No chats match your search.";
       list.appendChild(msg);
     }
-  } else {
-    if (noResult) noResult.remove();
+  } else if (noResult) {
+    noResult.remove();
   }
 }
 
@@ -722,76 +812,98 @@ function loadGroupMessages(groupId) {
     .orderBy("timestamp", "asc")
     .onSnapshot(snapshot => {
       box.innerHTML = "";
+      const frag = document.createDocumentFragment();
+
       snapshot.forEach(doc => {
         const msg = doc.data();
-        const isSelf = msg.senderId === currentUser.uid;
-        const msgText = msg.text || "";
-        let decrypted = "";
-
-        try {
-          if (typeof msgText === "string") {
-            decrypted = CryptoJS.AES.decrypt(msgText, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
-          } else {
-            decrypted = "[Invalid]";
-          }
-        } catch {
-          decrypted = "[Decryption error]";
-        }
+        msg.id = doc.id;
 
         // Skip if deleted for this user
         if (msg.deletedFor?.[currentUser.uid]) return;
 
-        const bubble = document.createElement("div");
-        bubble.className = `message-bubble ${isSelf ? "right" : "left"}`;
+        const isSelf = msg.senderId === currentUser.uid;
 
-        // ✅ Support reply
-        if (msg.replyTo?.text) {
-          const reply = document.createElement("div");
-          reply.className = "reply-preview";
-          reply.textContent = `↪ ${msg.replyTo.text.slice(0, 50)}...`;
-          bubble.appendChild(reply);
+        /* --- Decrypt --- */
+        let decrypted;
+        try {
+          decrypted = typeof msg.text === "string"
+            ? (CryptoJS.AES.decrypt(msg.text, "yourSecretKey")
+                .toString(CryptoJS.enc.Utf8) || "[Encrypted]")
+            : "[Invalid]";
+        } catch {
+          decrypted = "[Decryption error]";
         }
 
-        // ✅ Sender name
-        const sender = document.createElement("div");
-        sender.className = "sender-info";
-        sender.innerHTML = `<strong>${escapeHtml(msg.senderName || "User")}</strong>`;
-        bubble.appendChild(sender);
+        /* --- Reply strip --- */
+        const replyHtml = msg.replyTo?.text
+          ? `<div class="reply-to clamp-text">↪ ${escapeHtml(msg.replyTo.text || "").slice(0, 120)}</div>`
+          : "";
 
-        // ✅ Message content
-        const content = document.createElement("div");
-        content.className = "msg-content";
-        content.innerHTML = linkifyText(escapeHtml(decrypted));
-        bubble.appendChild(content);
+        /* --- Sender name w/ badge (show for others; optional for self) --- */
+        // Strip any markup that may have been stored in senderName
+        const rawSenderName = (msg.senderName || "").replace(/<[^>]*>/g, "");
+        const senderLabel = !isSelf
+          ? `<div class="msg-author">${usernameWithBadge(msg.senderId, rawSenderName || "User")}</div>`
+          : "";
 
-        // ✅ Timestamp
-        const time = document.createElement("div");
-        time.className = "message-time";
-        time.textContent = timeSince(msg.timestamp?.toDate?.() || new Date());
-        bubble.appendChild(time);
+        /* --- Meta (time only; group msgs don’t show ticks) --- */
+        const metaHtml = `
+          <span class="msg-meta-inline" data-status="other">
+            ${msg.timestamp?.toDate ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>` : ""}
+          </span>
+        `;
 
-        // ✅ Touch / right-click handlers
-        bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
-        bubble.addEventListener("touchmove", handleTouchMove, { passive: true });
-        bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted), { passive: true });
-        bubble.addEventListener("contextmenu", e => {
-          e.preventDefault();
-          handleLongPressMenu(msg, decrypted, isSelf);
-        });
+        /* --- Message body --- */
+        const bodyHtml = linkifyText(escapeHtml(decrypted));
 
-        box.appendChild(bubble);
+        /* --- Build wrapper/bubble --- */
+        const wrapper = document.createElement("div");
+        wrapper.className = `message-bubble-wrapper ${isSelf ? "right from-self" : "left from-other"} grp-single`;
 
-        // ✅ Mark as seen
+        wrapper.innerHTML = `
+          <div class="message-bubble ${isSelf ? "right" : "left"}" data-msg-id="${msg.id}">
+            ${senderLabel}
+            ${replyHtml}
+            <div class="msg-inner-wrapper">
+              <div class="msg-text-wrapper">
+                <span class="msg-text">${bodyHtml}</span>
+                ${metaHtml}
+              </div>
+            </div>
+          </div>
+        `;
+
+        /* --- Gestures / context menu --- */
+        const bubbleEl = wrapper.querySelector(".message-bubble");
+        if (bubbleEl) {
+          bubbleEl.addEventListener("touchstart", handleTouchStart, { passive: true });
+          bubbleEl.addEventListener("touchmove", handleTouchMove, { passive: true });
+          bubbleEl.addEventListener("touchend", ev => handleSwipeToReply(ev, msg, decrypted), { passive: true });
+          bubbleEl.addEventListener("contextmenu", e => {
+            e.preventDefault();
+            handleLongPressMenu(msg, decrypted, isSelf);
+          });
+        }
+
+        frag.appendChild(wrapper);
+
+        /* --- Mark as seen --- */
         if (!msg.seenBy?.includes(currentUser.uid)) {
           db.collection("groups").doc(groupId).collection("messages")
-            .doc(doc.id)
+            .doc(msg.id)
             .update({
               seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
             }).catch(() => {});
         }
       });
 
+      box.appendChild(frag);
+
+      // Scroll to bottom after render
       box.scrollTop = box.scrollHeight;
+
+      // Refresh Lucide icons (badge-check, etc.)
+      if (typeof lucide !== "undefined") lucide.createIcons();
     }, err => {
       console.error("❌ Group message load failed:", err.message || err);
     });
@@ -803,9 +915,13 @@ function sendRoomMessage() {
   const text = input?.value.trim();
   if (!text || !currentRoom || !currentUser) return;
 
-  const fromName = document.getElementById("usernameDisplay")?.textContent || "User";
+  // Use proper username from user data (with badge if moneythepro)
+  const fromName = usernameWithBadge(currentUser.uid, document.getElementById("usernameDisplay")?.textContent || "User");
+
+  // Encrypt text
   const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
 
+  // Message object
   const message = {
     text: encryptedText,
     senderId: currentUser.uid,
@@ -814,6 +930,7 @@ function sendRoomMessage() {
     seenBy: [currentUser.uid]
   };
 
+  // Reply feature
   if (replyingTo?.msgId && replyingTo?.text) {
     message.replyTo = {
       msgId: replyingTo.msgId,
@@ -827,6 +944,7 @@ function sendRoomMessage() {
     input.value = "";
     cancelReply();
 
+    // Update group metadata
     groupRef.set({
       lastMessage: text,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -839,6 +957,7 @@ function sendRoomMessage() {
       });
     });
 
+    // Scroll to bottom
     setTimeout(() => {
       const msgArea = document.getElementById("groupMessages");
       if (msgArea) msgArea.scrollTop = msgArea.scrollHeight;
@@ -950,7 +1069,7 @@ function listenInbox() {
                   const senderData = senderDoc.data();
                   senderCache[fromUID] = {
                     name: senderData.username || senderData.name || "Unknown",
-                    avatar: senderData.photoURL || 
+                    avatar: senderData.avatarBase64 || senderData.photoURL || 
                             `https://ui-avatars.com/api/?name=${encodeURIComponent(senderData.username || "User")}`
                   };
                 }
@@ -969,10 +1088,10 @@ function listenInbox() {
             senderName = data.from.name || "Unknown";
           }
 
-          // 🏷️ Message type (with badge applied to @username)
+          // 🏷️ Message type with badge
           const typeText =
             data.type === "friend"
-              ? `👤 Friend request from @${usernameWithBadge(senderName)}`
+              ? `👤 Friend request from @${usernameWithBadge(fromUID, senderName)}`
               : data.type === "group"
               ? `📣 Group invite: ${escapeHtml(data.groupName || "Unnamed Group")}`
               : "📩 Notification";
@@ -999,6 +1118,10 @@ function listenInbox() {
           badge.textContent = unreadCount ? unreadCount : "";
           badge.style.display = unreadCount > 0 ? "inline-block" : "none";
         }
+
+        // Render Lucide icons (for badge-check)
+        if (typeof lucide !== "undefined") lucide.createIcons();
+
       } catch (err) {
         console.error("❌ Inbox render error:", err.message || err);
         alert("❌ Failed to load inbox");
@@ -1119,7 +1242,8 @@ function markAllRead() {
 }
 
 function renderInboxCard(data) {
-  const name = usernameWithBadge(data.name || "Unknown");
+  const uid = data.fromUID || "";  
+  const name = usernameWithBadge(uid, data.name || "Unknown");
   const msg = escapeHtml(data.message || "Notification");
   const photo = data.photo || "default-avatar.png";
 
@@ -1131,7 +1255,7 @@ function renderInboxCard(data) {
         <small>${msg}</small>
       </div>
       <div class="btn-group">
-        <button onclick="acceptInbox('${data.id}', '${data.type}', '${data.fromUID || ""}')">✔</button>
+        <button onclick="acceptInbox('${data.id}', '${data.type}', '${uid}')">✔</button>
         <button onclick="declineInbox('${data.id}')">✖</button>
       </div>
     </div>
@@ -1145,8 +1269,10 @@ function loadFriends() {
 
   container.innerHTML = "Loading...";
 
-  db.collection("users").doc(currentUser.uid).collection("friends")
-    .onSnapshot(async snapshot => {
+  db.collection("users")
+    .doc(currentUser.uid)
+    .collection("friends")
+    .onSnapshot(async (snapshot) => {
       if (snapshot.empty) {
         container.innerHTML = `<div class="no-results">You have no friends yet.</div>`;
         return;
@@ -1162,8 +1288,15 @@ function loadFriends() {
           if (!friendDoc.exists) continue;
 
           const user = friendDoc.data();
-          const avatar = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+          const avatar =
+            user.avatarBase64 ||
+            user.photoURL ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+              user.username || "User"
+            )}`;
           const isOnline = user.status === "online";
+
+          const displayName = usernameWithBadge(friendId, user.username || "User");
 
           const card = document.createElement("div");
           card.className = "friend-card";
@@ -1172,7 +1305,7 @@ function loadFriends() {
           card.innerHTML = `
             <img src="${avatar}" alt="Avatar" />
             <div class="friend-info">
-              <div class="name">${escapeHtml(user.username || "User")}</div>
+              <div class="name">${displayName}</div>
               <div class="bio">${escapeHtml(user.bio || "")}</div>
             </div>
             <div class="status-dot ${isOnline ? "online" : "offline"}" title="${isOnline ? "Online" : "Offline"}"></div>
@@ -1184,7 +1317,10 @@ function loadFriends() {
           console.warn("❌ Failed to load friend data:", err.message || err);
         }
       }
-    }, err => {
+
+      // Refresh Lucide icons (for badge-check, etc.)
+      if (typeof lucide !== "undefined") lucide.createIcons();
+    }, (err) => {
       console.error("❌ Friend snapshot failed:", err.message || err);
       container.innerHTML = `<div class="error">Error loading friends.</div>`;
     });
@@ -1266,46 +1402,83 @@ function addFriend(uid) {
 }
 
 // ===== Group Info Loader =====
-function loadGroupInfo(groupId) {
+async function loadGroupInfo(groupId) {
   if (!groupId) return;
 
-  const ownerLabel = document.getElementById("groupOwner");
+  const ownerLabel  = document.getElementById("groupOwner");
   const adminsLabel = document.getElementById("groupAdmins");
-  const memberList = document.getElementById("groupMembers");
-
+  const memberList  = document.getElementById("groupMembers");
   if (!ownerLabel || !adminsLabel || !memberList) return;
 
   // Reset UI
-  ownerLabel.textContent = "Owner: ...";
+  ownerLabel.textContent  = "Owner: ...";
   adminsLabel.textContent = "Admins: ...";
-  memberList.innerHTML = `<div class="loading">Loading members...</div>`;
+  memberList.innerHTML    = `<div class="loading">Loading members...</div>`;
 
-  db.collection("groups").doc(groupId).get().then(doc => {
-    if (!doc.exists) {
-      ownerLabel.textContent = "Owner: Unknown";
+  try {
+    const groupDoc = await db.collection("groups").doc(groupId).get();
+    if (!groupDoc.exists) {
+      ownerLabel.textContent  = "Owner: Unknown";
       adminsLabel.textContent = "Admins: Unknown";
-      memberList.innerHTML = `<div class="error">Group not found.</div>`;
+      memberList.innerHTML    = `<div class="error">Group not found.</div>`;
       return;
     }
 
-    const data = doc.data();
-    const admins = data.admins || [];
-    const members = data.members || [];
+    const data      = groupDoc.data();
+    const admins    = Array.isArray(data.admins) ? data.admins : [];
+    const members   = Array.isArray(data.members) ? data.members : [];
+    const ownerUid  = data.owner || data.createdBy || null;
 
-    // Apply badge to owner and admin lists
-    ownerLabel.innerHTML = "Owner: " + usernameWithBadge(data.createdBy, data.createdBy || "Unknown");
-    adminsLabel.innerHTML = "Admins: " + (admins.length 
-      ? admins.map(a => usernameWithBadge(a, a)).join(", ") 
-      : "None");
+    /* ---------- Fetch all needed users in one go ---------- */
+    const needUids = new Set([...members, ...admins, ownerUid].filter(Boolean));
+    const userMap  = {}; // uid -> { username, name, avatar }
 
+    if (needUids.size) {
+      const promises = [];
+      needUids.forEach(uid => {
+        promises.push(
+          db.collection("users").doc(uid).get().then(uDoc => {
+            if (uDoc.exists) {
+              const udata = uDoc.data();
+              userMap[uid] = udata;
+            } else {
+              userMap[uid] = null; // preserve key
+            }
+          }).catch(() => { userMap[uid] = null; })
+        );
+      });
+      await Promise.all(promises);
+    }
+
+    const getDisplayName = uid => {
+      const u = userMap[uid];
+      return u?.username || u?.name || uid || "User";
+    };
+
+    /* ---------- Owner label ---------- */
+    if (ownerUid) {
+      ownerLabel.innerHTML = "Owner: " + usernameWithBadge(ownerUid, getDisplayName(ownerUid));
+    } else {
+      ownerLabel.textContent = "Owner: Unknown";
+    }
+
+    /* ---------- Admins label ---------- */
+    if (admins.length) {
+      const adminHtml = admins.map(a => usernameWithBadge(a, getDisplayName(a))).join(", ");
+      adminsLabel.innerHTML = "Admins: " + adminHtml;
+    } else {
+      adminsLabel.textContent = "Admins: None";
+    }
+
+    /* ---------- Member list ---------- */
     memberList.innerHTML = "";
-
-    members.forEach(uid => {
-      db.collection("users").doc(uid).get().then(userDoc => {
-        const user = userDoc.data();
-        const name = user?.username || uid;
+    if (!members.length) {
+      memberList.innerHTML = `<div class="no-results">No members.</div>`;
+    } else {
+      members.forEach(uid => {
+        const name    = getDisplayName(uid);
         const isAdmin = admins.includes(uid);
-        const isOwner = uid === data.createdBy;
+        const isOwner = uid === ownerUid;
 
         const div = document.createElement("div");
         div.className = "member-entry";
@@ -1315,17 +1488,18 @@ function loadGroupInfo(groupId) {
           ${isAdmin && !isOwner ? `<span class="badge admin-badge">Admin</span>` : ""}
         `;
         memberList.appendChild(div);
-      }).catch(err => {
-        console.warn("⚠️ Failed to fetch user:", err.message);
       });
-    });
+    }
 
-  }).catch(err => {
-    console.error("❌ Group info fetch failed:", err.message);
-    ownerLabel.textContent = "Owner: Error";
+    // Re-draw Lucide icons (badge-check, etc.)
+    if (typeof lucide !== "undefined") lucide.createIcons();
+
+  } catch (err) {
+    console.error("❌ Group info fetch failed:", err.message || err);
+    ownerLabel.textContent  = "Owner: Error";
     adminsLabel.textContent = "Admins: Error";
-    memberList.innerHTML = `<div class="error">Failed to load group info.</div>`;
-  });
+    memberList.innerHTML    = `<div class="error">Failed to load group info.</div>`;
+  }
 }
 
 function setupEmojiButton() {
@@ -1710,9 +1884,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
   if (!area) return;
 
   const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
-
-  // Compute grouping (grp-start, grp-mid, grp-end, grp-single)
-  computeGroupClasses(msgs);
+  computeGroupClasses(msgs); // Group messages visually
 
   let distFromBottom;
   if (isInitial) {
@@ -1729,21 +1901,21 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     const { text: displayText, isDeleted, deletedHtml } = decryptMsgText(msg);
     const emojiOnly = isEmojiOnlyText(displayText);
 
-    /* ------ Username Row (only on group-start / single to reduce clutter) ------ */
-    const showAuthorRow = msg._grp === "grp-start" || msg._grp === "grp-single";
+    /* -------- Author Name (only for other users) -------- */
+    const showAuthorRow = !isSelf && (msg._grp === "grp-start" || msg._grp === "grp-single");
     const authorHtml = showAuthorRow
       ? `<div class="msg-author">${usernameWithBadge(msg.from, msg.fromName)}</div>`
       : "";
 
-    /* ------ Reply Strip ------ */
+    /* -------- Reply Strip -------- */
     const replyBox = !isDeleted ? buildReplyStrip(msg) : "";
 
-    /* ------ Meta (time + ticks) ------ */
+    /* -------- Meta (time + ticks) -------- */
     const meta = isSelf && !isDeleted
       ? buildTickMeta(msg, otherUid)
       : buildOtherMeta(msg);
 
-    /* ------ Text / truncation ------ */
+    /* -------- Text Content -------- */
     const textHtml = escapeHtml(displayText);
     const shortText = textHtml.slice(0, 500);
     const hasLong = textHtml.length > 500;
@@ -1751,7 +1923,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
       : linkifyText(textHtml);
 
-    /* ------ Link Preview ------ */
+    /* -------- Link Preview -------- */
     let linkPreviewHTML = "";
     if (msg.preview) {
       linkPreviewHTML = buildLinkPreviewHTML(msg.preview, msg.preview.url);
@@ -1763,15 +1935,14 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
           if (preview?.title || preview?.image) {
             linkPreviewHTML = buildLinkPreviewHTML(preview, url);
           }
-        } catch (_) {}
+        } catch (_) { /* ignore */ }
       }
     }
 
-    /* ------ Wrapper ------ */
+    /* -------- Wrapper -------- */
     const wrapper = document.createElement("div");
     wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}`;
 
-    /* ------ Bubble Markup ------ */
     wrapper.innerHTML = `
       <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""} ${msg._grp || ""}"
            data-msg-id="${msg.id}"
@@ -1790,7 +1961,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       </div>
     `;
 
-    /* ------ Gestures (skip deleted) ------ */
+    /* -------- Gestures -------- */
     if (!isDeleted) {
       const bubbleEl = wrapper.querySelector(".message-bubble");
       if (bubbleEl) {
@@ -1806,7 +1977,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
     frag.appendChild(wrapper);
 
-    /* ------ Seen receipt ------ */
+    /* -------- Seen Receipt -------- */
     if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
       db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
         .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
@@ -1816,24 +1987,48 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
   area.appendChild(frag);
 
-  /* Render Lucide icons (ticks, badge-check, trash, etc.) */
+  /* Refresh Lucide Icons */
   if (typeof lucide !== "undefined") lucide.createIcons();
 
-  /* Scroll behavior */
+  /* Scroll Behavior */
   if (isInitial) {
-    // initial scroll handled externally
+    // Initial scroll handled externally
   } else if (isNearBottom) {
     setTimeout(() => scrollToBottomThread(true), 40);
   } else if (typeof distFromBottom === "number") {
-    setTimeout(() => {
-      area.scrollTop = area.scrollHeight - distFromBottom;
-    }, 0);
+    setTimeout(() => { area.scrollTop = area.scrollHeight - distFromBottom; }, 0);
   }
 }
 
-function usernameWithBadge(uid, name) {
-  const safe = escapeHtml(name || "User");
-  if ((uid || "").toLowerCase() === "moneythepro") {
+// Known developer UIDs (add yours if you want UID-based matching)
+const DEV_UIDS = [
+  // "abc123FirebaseUID",  // <-- put your actual Firebase UID here if you want
+];
+
+// Unified helper: accepts (uid, name) OR (nameOnly)
+function usernameWithBadge(uidOrName, maybeName) {
+  // If called as usernameWithBadge(nameOnly)
+  let uid = uidOrName;
+  let name = maybeName;
+
+  if (typeof maybeName === "undefined") {
+    // One-arg form: treat arg as display name; no uid known
+    name = uidOrName;
+    uid = "";
+  }
+
+  const rawName = name || "User";
+  const safe = escapeHtml(rawName);
+
+  const lowerUid = (uid || "").toLowerCase();
+  const lowerName = (rawName || "").toLowerCase();
+
+  const isDev =
+    lowerName === "moneythepro" ||
+    lowerUid === "moneythepro" ||   // if ever passed username in uid slot
+    DEV_UIDS.includes(uid);         // explicit UID match
+
+  if (isDev) {
     return `${safe} <i data-lucide="badge-check" class="dev-badge" aria-label="Verified"></i>`;
   }
   return safe;
@@ -1872,15 +2067,17 @@ async function openThread(uid, name) {
     // 4. Header name with badge
     const headerNameEl = document.getElementById("threadWithName");
     if (headerNameEl) {
-      const displayName = typeof name === "string" ? name : name?.username || "Chat";
+      const displayName = typeof name === "string"
+        ? name
+        : name?.username || "Chat";
       headerNameEl.innerHTML = usernameWithBadge(uid, displayName);
     }
 
-    // hide options menu
+    // Hide options menu
     const opt = document.getElementById("chatOptionsMenu");
     if (opt) opt.style.display = "none";
 
-    // 5. context
+    // 5. Context
     currentThreadUser = uid;
     currentRoom = null;
 
@@ -1893,7 +2090,7 @@ async function openThread(uid, name) {
       lastThreadId = threadIdStr;
     }
 
-    // 6. restore scroll
+    // 6. Restore scroll
     const savedScrollKey = "threadScroll_" + threadIdStr;
     const savedScroll = sessionStorage.getItem(savedScrollKey);
     if (area) {
@@ -1905,44 +2102,49 @@ async function openThread(uid, name) {
       area.onscroll = () => sessionStorage.setItem(savedScrollKey, area.scrollTop);
     }
 
-    // 7. header avatar
+    // 7. Header avatar
     try {
       const friendUserDoc = await db.collection("users").doc(uid).get();
       if (friendUserDoc.exists) {
         const user = friendUserDoc.data();
         const headerImg = document.getElementById("chatProfilePic");
         if (headerImg) {
-          headerImg.src = user.avatarBase64 || user.photoURL ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+          headerImg.src =
+            user.avatarBase64 ||
+            user.photoURL ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+              user.username || "User"
+            )}`;
         }
       }
     } catch (e) {
       console.warn("⚠️ Could not load friend image:", e);
     }
 
-    // 8. clean old listeners
+    // 8. Clean old listeners
     if (typeof unsubscribeThread === "function") unsubscribeThread();
     if (typeof unsubscribeTyping === "function") unsubscribeTyping();
 
-    // 9. typing indicator
+    // 9. Typing indicator
     listenToTyping(threadIdStr, "thread");
 
-    // 10. reset unread counter for self
+    // 10. Reset unread counter for self
     await db.collection("threads").doc(threadIdStr)
       .set({ unread: { [currentUser.uid]: 0 } }, { merge: true });
 
-    // 11. live status
+    // 11. Live status
     db.collection("users").doc(uid).onSnapshot((doc) => {
       const data = doc.data();
       const status = document.getElementById("chatStatus");
       if (!status || !data) return;
       if (data.typingFor === currentUser.uid) status.textContent = "Typing...";
       else if (data.status === "online") status.textContent = "Online";
-      else if (data.lastSeen?.toDate) status.textContent = "Last seen " + timeSince(data.lastSeen.toDate());
+      else if (data.lastSeen?.toDate) status.textContent =
+        "Last seen " + timeSince(data.lastSeen.toDate());
       else status.textContent = "Offline";
     });
 
-    // 12. subscribe to messages
+    // 12. Subscribe to messages
     unsubscribeThread = db.collection("threads").doc(threadIdStr)
       .collection("messages").orderBy("timestamp")
       .onSnapshot(async (snapshot) => {
@@ -1984,28 +2186,35 @@ function renderMessage(msg, isOwn) {
   const { text, isDeleted, deletedHtml } = decryptMsgText(msg);
   const escaped = escapeHtml(text);
 
-  // Add author row with verified tick if it's moneythepro
-  const authorHtml = `<div class="msg-author">${usernameWithBadge(msg.from, msg.fromName)}</div>`;
+  // Determine display name (fallback if missing)
+  const authorName = escapeHtml(msg.fromName || "User");
 
+  // Add author row with verified tick if it's moneythepro
+  const authorHtml = `<div class="msg-author">${usernameWithBadge(msg.from, authorName)}</div>`;
+
+  // Reply section (if exists)
   const replyHtml = msg.replyTo && !isDeleted
     ? `<div class="reply-to">${escapeHtml(msg.replyTo.text || "")}</div>`
     : "";
 
+  // Meta info (ticks/time)
   const meta = isOwn && !isDeleted
-    ? buildTickMeta(msg, isOwn ? currentThreadUser : currentUser.uid)  // guess other uid
+    ? buildTickMeta(msg, currentThreadUser)  // correct other uid
     : buildOtherMeta(msg);
 
+  // Link preview (if exists)
   const linkPreviewHtml = msg.preview && !isDeleted
     ? buildLinkPreviewHTML(msg.preview, msg.preview.url)
     : "";
 
+  // Final message text
   const bodyHtml = isDeleted ? deletedHtml : linkifyText(escaped);
   const emojiOnly = isEmojiOnlyText(text) ? "emoji-only" : "";
 
   return `
     <div class="message-bubble-wrapper ${isOwn ? 'right from-self' : 'left from-other'} grp-single">
       <div class="message-bubble ${isOwn ? 'right' : 'left'} ${emojiOnly}" data-msg-id="${msg.id}">
-        ${authorHtml}
+        ${!isOwn ? authorHtml : ""}  <!-- Show author only for other users -->
         ${replyHtml}
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
           <div class="msg-text-wrapper">
@@ -2209,21 +2418,25 @@ function renderChatCard(chat) {
 
 
 // ===== DM: Send Thread Message with AES Encryption ====
-
-
 function listenMessages() {
   const messagesDiv = document.getElementById("groupMessages");
   if (!messagesDiv || !currentRoom) return;
 
+  // Tear down prior listener
   if (unsubscribeMessages) unsubscribeMessages();
 
-  unsubscribeMessages = db.collection("groups").doc(currentRoom).collection("messages")
+  const groupMsgRef = db.collection("groups").doc(currentRoom).collection("messages");
+
+  unsubscribeMessages = groupMsgRef
     .orderBy("timestamp")
     .onSnapshot(snapshot => {
-      const prevScroll = messagesDiv.scrollTop;
-      const isNearBottom = messagesDiv.scrollHeight - prevScroll - messagesDiv.clientHeight < 100;
+      // Scroll state before rebuild
+      const prevScrollTop = messagesDiv.scrollTop;
+      const isNearBottom =
+        messagesDiv.scrollHeight - prevScrollTop - messagesDiv.clientHeight < 100;
 
       messagesDiv.innerHTML = "";
+      const frag = document.createDocumentFragment();
       const renderedIds = new Set();
 
       snapshot.forEach(doc => {
@@ -2232,74 +2445,112 @@ function listenMessages() {
         if (!msg || renderedIds.has(msgId)) return;
         renderedIds.add(msgId);
 
+        // Skip if deleted for this user
+        if (msg.deletedFor?.[currentUser.uid]) return;
+
         const isSelf = msg.senderId === currentUser.uid;
 
-        const bubble = document.createElement("div");
-        bubble.className = "message-bubble " + (isSelf ? "right" : "left");
-        bubble.dataset.msgId = msgId;
-
-        if (msg.deletedFor?.[currentUser.uid]) {
-          bubble.classList.add("deleted");
-          bubble.textContent = "This message was deleted";
-          messagesDiv.appendChild(bubble);
-          return;
-        }
-
-        // ✅ Decrypt safely
+        /* --- Decrypt --- */
         let decrypted = "";
         try {
-          decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+          decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey")
+            .toString(CryptoJS.enc.Utf8) || "[Encrypted]";
         } catch (e) {
           console.error("Decryption failed:", e);
           decrypted = "[Decryption error]";
         }
 
-        // ✅ Sender Info
-        const sender = document.createElement("div");
-        sender.className = "sender-info";
-        sender.innerHTML = `<strong>${escapeHtml(msg.senderName || "Unknown")}</strong>`;
-        bubble.appendChild(sender);
+        /* --- Clean sender name (strip stored markup) --- */
+        const cleanSenderName = (msg.senderName || "User").replace(/<[^>]*>/g, "");
 
-        // ✅ Reply Preview (optional)
-        if (msg.replyTo?.text) {
-          const reply = document.createElement("div");
-          reply.className = "reply-preview";
-          reply.textContent = "↪ " + msg.replyTo.text.slice(0, 60) + (msg.replyTo.text.length > 60 ? "..." : "");
-          bubble.appendChild(reply);
+        /* --- Sender label (show for everyone incl. self? change here) --- */
+        const senderLabel = `<div class="msg-author">${usernameWithBadge(
+          msg.senderId,
+          cleanSenderName
+        )}</div>`;
+
+        /* --- Reply preview --- */
+        const replyHtml = msg.replyTo?.text
+          ? `<div class="reply-to clamp-text">↪ ${escapeHtml(msg.replyTo.text).slice(0, 120)}</div>`
+          : "";
+
+        /* --- Meta (time only in group) --- */
+        const metaHtml = `
+          <span class="msg-meta-inline" data-status="other">
+            ${
+              msg.timestamp?.toDate
+                ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>`
+                : ""
+            }
+          </span>
+        `;
+
+        /* --- Body --- */
+        const bodyHtml = linkifyText(escapeHtml(decrypted));
+
+        /* --- Build DOM wrapper --- */
+        const wrapper = document.createElement("div");
+        wrapper.className = `message-bubble-wrapper ${
+          isSelf ? "right from-self" : "left from-other"
+        } grp-single`;
+
+        wrapper.innerHTML = `
+          <div class="message-bubble ${isSelf ? "right" : "left"}" data-msg-id="${msgId}">
+            ${senderLabel}
+            ${replyHtml}
+            <div class="msg-inner-wrapper">
+              <div class="msg-text-wrapper">
+                <span class="msg-text">${bodyHtml}</span>
+                ${metaHtml}
+              </div>
+            </div>
+          </div>
+        `;
+
+        /* --- Gestures / context menu --- */
+        const bubbleEl = wrapper.querySelector(".message-bubble");
+        if (bubbleEl) {
+          bubbleEl.addEventListener("touchstart", handleTouchStart, { passive: true });
+          bubbleEl.addEventListener("touchmove", handleTouchMove, { passive: true });
+          bubbleEl.addEventListener("touchend", ev => handleSwipeToReply(ev, msg, decrypted), {
+            passive: true
+          });
+          bubbleEl.addEventListener("contextmenu", e => {
+            e.preventDefault();
+            handleLongPressMenu(msg, decrypted, isSelf);
+          });
         }
 
-        // ✅ Message text
-        const textDiv = document.createElement("div");
-        textDiv.innerHTML = linkifyText(escapeHtml(decrypted));
-        bubble.appendChild(textDiv);
+        frag.appendChild(wrapper);
 
-        // ✅ Timestamp
-        if (msg.timestamp?.toDate) {
-          const meta = document.createElement("div");
-          meta.className = "msg-meta";
-          meta.textContent = timeSince(msg.timestamp.toDate());
-          bubble.appendChild(meta);
+        /* --- Seen receipt --- */
+        if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
+          groupMsgRef
+            .doc(msgId)
+            .update({
+              seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+            })
+            .catch(() => {});
         }
-
-        // ✅ Touch & Right-click
-        bubble.addEventListener("touchstart", handleTouchStart, { passive: true });
-        bubble.addEventListener("touchmove", handleTouchMove, { passive: true });
-        bubble.addEventListener("touchend", () => handleSwipeToReply(msg, decrypted), { passive: true });
-        bubble.addEventListener("contextmenu", (e) => {
-          e.preventDefault();
-          handleLongPressMenu(msg, decrypted, isSelf);
-        });
-
-        messagesDiv.appendChild(bubble);
       });
 
+      messagesDiv.appendChild(frag);
+
+      // Scroll restore
       if (isNearBottom) {
         requestAnimationFrame(() => {
           messagesDiv.scrollTop = messagesDiv.scrollHeight;
         });
+      } else {
+        // preserve previous relative position (optional; else do nothing)
+        // messagesDiv.scrollTop = prevScrollTop;
       }
 
-      renderWithMagnetSupport("groupMessages");
+      // Re-run Lucide for badge-check icons
+      if (typeof lucide !== "undefined") lucide.createIcons();
+
+      // If you still use magnet layout plugin:
+      renderWithMagnetSupport?.("groupMessages");
     });
 }
 
@@ -2310,64 +2561,86 @@ function switchSearchView(view) {
 }
 
 function runSearch() {
-  const term = document.getElementById("searchInput").value.trim().toLowerCase();
-  if (!term || !currentUser) return;
+  const inputEl = document.getElementById("searchInput");
+  if (!inputEl || !currentUser) return;
 
-  const userResults = document.getElementById("searchResultsUser");
+  const rawTerm = inputEl.value.trim();
+  if (!rawTerm) return;
+
+  const termLower = rawTerm.toLowerCase(); // for any client-side filtering if needed
+
+  const userResults  = document.getElementById("searchResultsUser");
   const groupResults = document.getElementById("searchResultsGroup");
-  userResults.innerHTML = "";
-  groupResults.innerHTML = "";
+  if (userResults)  userResults.innerHTML  = "";
+  if (groupResults) groupResults.innerHTML = "";
 
-  // 🔍 USER SEARCH
+  /* ---------------- USER SEARCH ---------------- */
   db.collection("users")
-    .where("username", ">=", term)
-    .where("username", "<=", term + "\uf8ff")
+    // Use rawTerm for Firestore (case-sensitive prefix search)
+    .where("username", ">=", rawTerm)
+    .where("username", "<=", rawTerm + "\uf8ff")
     .get()
-    .then(snapshot => {
+    .then(async snapshot => {
+      if (!userResults) return;
       if (snapshot.empty) {
         userResults.innerHTML = `<div class="no-results">No users found.</div>`;
         return;
       }
 
-      snapshot.forEach(async doc => {
+      const friendChecks = [];
+
+      snapshot.forEach(doc => {
         if (doc.id === currentUser.uid) return; // skip self
+
         const user = doc.data();
-        const avatar = user.avatarBase64 || user.photoURL || 
+        const avatar = user.avatarBase64 || user.photoURL ||
           `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+
+        const rawName = user.username || "unknown";
+        const unameHtml = usernameWithBadge(doc.id, rawName);
 
         const card = document.createElement("div");
         card.className = "search-result";
         card.innerHTML = `
           <img src="${avatar}" class="search-avatar" />
           <div class="search-info">
-            <div class="username">@${usernameWithBadge(user.username || "unknown")}</div>
+            <div class="username">@${unameHtml}</div>
             <div class="bio">${escapeHtml(user.bio || "No bio")}</div>
           </div>
           <button id="friendBtn_${doc.id}">Add Friend</button>
         `;
         userResults.appendChild(card);
 
+        // friend status check (async)
         const btn = card.querySelector("button");
-
-        // ✅ Check if already friends
-        const friendDoc = await db.collection("users").doc(currentUser.uid)
-          .collection("friends").doc(doc.id).get();
-        if (friendDoc.exists) {
-          btn.textContent = "Friend";
-          btn.disabled = true;
-          btn.classList.add("disabled-btn");
-        } else {
-          btn.onclick = () => addFriend(doc.id);
+        if (btn) {
+          const p = db.collection("users").doc(currentUser.uid)
+            .collection("friends").doc(doc.id).get()
+            .then(friendDoc => {
+              if (friendDoc.exists) {
+                btn.textContent = "Friend";
+                btn.disabled = true;
+                btn.classList.add("disabled-btn");
+              } else {
+                btn.onclick = () => addFriend(doc.id);
+              }
+            })
+            .catch(() => {/* ignore */});
+          friendChecks.push(p);
         }
       });
+
+      await Promise.all(friendChecks);
+      if (typeof lucide !== "undefined") lucide.createIcons();
     });
 
-  // 🔍 GROUP SEARCH
+  /* ---------------- GROUP SEARCH ---------------- */
   db.collection("groups")
-    .where("name", ">=", term)
-    .where("name", "<=", term + "\uf8ff")
+    .where("name", ">=", rawTerm)
+    .where("name", "<=", rawTerm + "\uf8ff")
     .get()
     .then(snapshot => {
+      if (!groupResults) return;
       if (snapshot.empty) {
         groupResults.innerHTML = `<div class="no-results">No groups found.</div>`;
         return;
@@ -2393,6 +2666,8 @@ function runSearch() {
         `;
         groupResults.appendChild(card);
       });
+
+      if (typeof lucide !== "undefined") lucide.createIcons();
     });
 }
 // ==== GROUP SETTINGS ====
@@ -2503,8 +2778,9 @@ function joinRoom(groupId) {
 
   db.collection("groups").doc(groupId).get().then(doc => {
     title.innerHTML = doc.exists
-      ? usernameWithBadge(null, doc.data().name || "Group Chat")
+      ? usernameWithBadge(groupId, doc.data().name || "Group Chat")
       : "Group (Not Found)";
+    if (typeof lucide !== "undefined") lucide.createIcons();
   });
 
   if (unsubscribeRoomMessages) unsubscribeRoomMessages();
@@ -2561,7 +2837,7 @@ function joinRoom(groupId) {
 
       messageList.scrollTop = messageList.scrollHeight;
       renderWithMagnetSupport?.("roomMessages");
-      if (typeof lucide !== "undefined") lucide.createIcons(); // refresh icons
+      if (typeof lucide !== "undefined") lucide.createIcons();
     }, err => {
       console.error("❌ Room message error:", err.message || err);
       alert("❌ Failed to load group chat.");
@@ -2574,7 +2850,7 @@ function messageUser(uid, username) {
   db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).get()
     .then(doc => {
       if (doc.exists) {
-        openThread(uid, usernameWithBadge(uid, username || "Friend"));
+        openThread(uid, username || "Friend");
         document.getElementById("userFullProfile").style.display = "none";
         document.getElementById("viewProfileModal").style.display = "none";
       } else {
@@ -2726,12 +3002,15 @@ function copyRoomId() {
 // ✅ Add Developer Badge Everywhere
 function applyDeveloperBadge(usernameElement, username) {
   if (!usernameElement || !username) return;
-  if (username === "moneythepro") {
-    const badge = document.createElement("i");
-    badge.setAttribute("data-lucide", "badge-check");
-    badge.className = "dev-badge";
-    usernameElement.appendChild(badge);
-    if (typeof lucide !== "undefined") lucide.createIcons();
+  if (username.trim().toLowerCase() === "moneythepro") {
+    if (!usernameElement.querySelector(".dev-badge")) {
+      const badge = document.createElement("i");
+      badge.setAttribute("data-lucide", "badge-check");
+      badge.className = "dev-badge";
+      badge.style.marginLeft = "4px";
+      usernameElement.appendChild(badge);
+      if (typeof lucide !== "undefined") lucide.createIcons();
+    }
   }
 }
 
@@ -2740,16 +3019,20 @@ function decorateUsernamesWithBadges() {
   document.querySelectorAll(
     ".search-username, .username-display, .chat-username, .message-username"
   ).forEach(el => {
-    const username = el.textContent.replace("@", "").trim();
-    if (username === "moneythepro" && !el.querySelector(".dev-badge")) {
-      applyDeveloperBadge(el, username);
+    const raw = el.textContent.replace("@", "").trim();
+    if (raw.toLowerCase() === "moneythepro") {
+      applyDeveloperBadge(el, raw);
     }
   });
 }
 
 // Auto-run badge decoration after DOM updates
 document.addEventListener("DOMContentLoaded", decorateUsernamesWithBadges);
-const badgeObserver = new MutationObserver(decorateUsernamesWithBadges);
+
+// Observe DOM changes to auto-add badges
+const badgeObserver = new MutationObserver(() => {
+  requestAnimationFrame(decorateUsernamesWithBadges);
+});
 badgeObserver.observe(document.body, { childList: true, subtree: true });
 
 // ✅ Group controls
