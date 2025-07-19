@@ -2678,27 +2678,41 @@ function copyRoomId() {
   alert("Group ID copied!");
 }
 
-// ✅ Add Developer Badge
+// ✅ Add Developer Badge (with Lucide Tick)
 function applyDeveloperBadge(uid, usernameElement) {
-  if (uid === "moneythepro") {
-    const badge = document.createElement("span");
-    badge.textContent = "🛠️ Developer";
-    badge.className = "badge developer";
+  if (!usernameElement) return;
+
+  const username = (uid || "").trim().toLowerCase();
+  if (username === "moneythepro") {
+    // Remove old badge if exists
+    if (usernameElement.querySelector(".dev-badge")) return;
+
+    const badge = document.createElement("i");
+    badge.setAttribute("data-lucide", "badge-check");
+    badge.className = "dev-badge lucide-icon";
+    badge.style.marginLeft = "6px";
+    badge.style.color = "#1da1f2"; // Instagram/official style (blue tick)
     usernameElement.appendChild(badge);
+
+    if (typeof lucide !== "undefined") lucide.createIcons();
   }
 }
 
+// ✅ Decorate All Usernames with Developer Tick
 function decorateUsernamesWithBadges() {
-  const usernames = document.querySelectorAll(".search-username");
+  const usernames = document.querySelectorAll(".search-username, .username-display, .chat-username");
   usernames.forEach(el => {
-    const username = el.textContent.replace("@", "").trim();
-    if (username === "moneythepro") {
-      const badge = document.createElement("span");
-      badge.textContent = " 🛠️";
-      badge.style.color = "#f39c12";
+    const username = el.textContent.replace("@", "").trim().toLowerCase();
+    if (username === "moneythepro" && !el.querySelector(".dev-badge")) {
+      const badge = document.createElement("i");
+      badge.setAttribute("data-lucide", "badge-check");
+      badge.className = "dev-badge lucide-icon";
+      badge.style.marginLeft = "6px";
+      badge.style.color = "#1da1f2";
       el.appendChild(badge);
     }
   });
+  if (typeof lucide !== "undefined") lucide.createIcons();
 }
 
 // ✅ Group controls
