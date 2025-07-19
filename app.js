@@ -2023,11 +2023,8 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
   if (!area) return;
 
   const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
-
-  /* --- Group messages (adds _grp) --- */
   computeGroupClasses(msgs);
 
-  /* --- Preload avatars for both participants --- */
   const selfProfile  = await getUserProfileCached(currentUser.uid);
   const otherProfile = await getUserProfileCached(otherUid);
 
@@ -2046,29 +2043,23 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     const { text: displayText, isDeleted, deletedHtml } = decryptMsgText(msg);
     const emojiOnly = isEmojiOnlyText(displayText);
 
-    /* -------- Avatar logic -------- */
     const showPfp = msg._grp === "grp-start" || msg._grp === "grp-single";
-    const prof = isSelf ? selfProfile : otherProfile;
-    const safeUser = escapeHtml(prof.username || "User");
+    const prof    = isSelf ? selfProfile : otherProfile;
     const pfpHtml = showPfp
-      ? `<img class="bubble-pfp ${isSelf ? "pfp-self" : "pfp-other"}" src="${prof.avatar}" alt="${safeUser}" onclick="viewUserProfile('${isSelf ? currentUser.uid : otherUid}')">`
+      ? `<img class="bubble-pfp ${isSelf ? "pfp-self" : "pfp-other"}" src="${prof.avatar}" alt="${escapeHtml(prof.username)}" onclick="viewUserProfile('${isSelf ? currentUser.uid : otherUid}')">`
       : "";
 
-    /* -------- Author Name (only show for OTHER user on start/single) -------- */
     const showAuthorRow = !isSelf && showPfp;
     const authorHtml = showAuthorRow
       ? `<div class="msg-author">${usernameWithBadge(otherUid, prof.username)}</div>`
       : "";
 
-    /* -------- Reply Strip -------- */
     const replyBox = !isDeleted ? buildReplyStrip(msg) : "";
 
-    /* -------- Meta (time + ticks) -------- */
     const meta = isSelf && !isDeleted
       ? buildTickMeta(msg, otherUid)
       : buildOtherMeta(msg);
 
-    /* -------- Message Text -------- */
     const textHtml  = escapeHtml(displayText);
     const shortText = textHtml.slice(0, 500);
     const hasLong   = textHtml.length > 500;
@@ -2076,7 +2067,6 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
       : linkifyText(textHtml);
 
-    /* -------- Link Preview -------- */
     let linkPreviewHTML = "";
     if (msg.preview) {
       linkPreviewHTML = buildLinkPreviewHTML(msg.preview, msg.preview.url);
@@ -2088,28 +2078,26 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
           if (preview?.title || preview?.image) {
             linkPreviewHTML = buildLinkPreviewHTML(preview, url);
           }
-        } catch (_) { /* ignore */ }
+        } catch (_) {}
       }
     }
 
-    /* -------- Time attr (empty until available -> CSS meta fade) -------- */
-    const timeAttr = msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : "";
-
-    /* -------- Wrapper -------- */
     const wrapper = document.createElement("div");
     wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}`;
-    if (showPfp) {
-      wrapper.classList.add("has-pfp");
-    } else {
-      wrapper.classList.add(isSelf ? "indent-self" : "indent-other");
+    if (showPfp) wrapper.classList.add("has-pfp");
+
+    // indent follow-up bubbles that *don't* show a pfp
+    if (!showPfp) {
+      const indent = "calc(var(--pfp-size) + var(--pfp-gap))";
+      if (isSelf) wrapper.style.marginRight = indent;
+      else wrapper.style.marginLeft = indent;
     }
 
-    /* -------- Bubble Markup -------- */
     wrapper.innerHTML = `
       ${pfpHtml}
       <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""} ${msg._grp || ""}"
            data-msg-id="${msg.id}"
-           data-time="${timeAttr}">
+           data-time="${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}">
         ${authorHtml}
         ${replyBox}
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
@@ -2124,14 +2112,13 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       </div>
     `;
 
-    /* -------- Gestures -------- */
     if (!isDeleted) {
       const bubbleEl = wrapper.querySelector(".message-bubble");
       if (bubbleEl) {
         bubbleEl.addEventListener("touchstart", handleTouchStart);
         bubbleEl.addEventListener("touchmove", handleTouchMove);
-        bubbleEl.addEventListener("touchend", (ev) => handleSwipeToReply(ev, msg, displayText));
-        bubbleEl.addEventListener("contextmenu", (e) => {
+        bubbleEl.addEventListener("touchend", ev => handleSwipeToReply(ev, msg, displayText));
+        bubbleEl.addEventListener("contextmenu", e => {
           e.preventDefault();
           handleLongPressMenu(msg, displayText, isSelf);
         });
@@ -2140,7 +2127,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
     frag.appendChild(wrapper);
 
-    /* -------- Seen Receipt -------- */
+    // seen
     if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
       db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
         .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
@@ -2150,12 +2137,10 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
   area.appendChild(frag);
 
-  /* Refresh Lucide Icons (ticks + badge) */
   if (typeof lucide !== "undefined") lucide.createIcons();
 
-  /* Scroll Behavior */
   if (isInitial) {
-    // outside handles initial scroll
+    // handled elsewhere
   } else if (isNearBottom) {
     setTimeout(() => scrollToBottomThread(true), 40);
   } else if (typeof distFromBottom === "number") {
