@@ -1449,15 +1449,15 @@ body.dark .msg-meta {
 
 :root {
   --bubble-max-width: 92%;
-  --bubble-padding: 4px 8px;
+  --bubble-padding: 2px 6px;
   --bubble-radius: 7px 7px 7px 0px;
   --bubble-radius-right: 7px 7px 0px 7px;
-  --bubble-margin: 1px 2px;
-  --bubble-font-size: 15px;
-  --bubble-line-height: 1.35;
+  --bubble-margin: 1px 0px;
+  --bubble-font-size: 14px;
+  --bubble-line-height: 1.25;
 
-  --msg-font-size: 15px;
-  --msg-line-height: 1.35;
+  --msg-font-size: 14px;
+  --msg-line-height: 1.25;
 
   --self-bubble-bg: #dcf8c6;
   --other-bubble-bg: #ffffff;
@@ -1487,6 +1487,9 @@ body.dark {
   --reply-bg: #333;
   --reply-color: #ccc;
   --reply-border-color: #666;
+  --inputbar-bg: #111;
+  background: #0e0e0e;
+  color: #eee;
 }
 
 /* === Bubble Wrapper === */
@@ -1501,7 +1504,7 @@ body.dark {
   align-items: flex-end;
 }
 
-/* === Bubble Itself === */
+/* === Bubble === */
 .message-bubble {
   max-width: var(--bubble-max-width);
   padding: var(--bubble-padding);
@@ -1512,7 +1515,8 @@ body.dark {
   border-radius: var(--bubble-radius);
   box-shadow: var(--bubble-shadow);
   word-break: break-word;
-  display: inline-block;
+  display: inline-flex;
+  flex-direction: column;
   position: relative;
 }
 .message-bubble.right {
@@ -1557,9 +1561,9 @@ body.dark {
 }
 .msg-text-wrapper {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: flex-end;
-  gap: 4px;
+  gap: 3px;
   flex-wrap: nowrap;
 }
 
@@ -1582,19 +1586,17 @@ body.dark {
 .msg-meta-inline {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   font-size: var(--meta-font-size);
   color: var(--meta-color);
   white-space: nowrap;
-  margin-left: 6px;
+  margin-left: 4px;
 }
 .tick-icon {
   width: var(--tick-size);
   height: var(--tick-size);
   vertical-align: middle;
 }
-
-/* === Ticks === */
 .tick-seen {
   color: var(--tick-seen-color);
 }
@@ -1602,7 +1604,7 @@ body.dark {
   color: var(--tick-sent-color);
 }
 
-/* === Reply Strip Inside Bubble === */
+/* === Reply Strip === */
 .reply-to {
   font-size: var(--reply-font-size);
   color: var(--reply-color);
@@ -1615,7 +1617,7 @@ body.dark {
   white-space: nowrap;
 }
 
-/* === Hover Timestamp on Bubble === */
+/* === Hover Timestamp === */
 .message-bubble:hover::before {
   content: attr(data-time);
   position: absolute;
@@ -1663,17 +1665,6 @@ body.dark {
 }
 
 /* === DARK MODE === */
-body.dark {
-  --self-bubble-bg: #2e3a2f;
-  --other-bubble-bg: #1e1e1e;
-  --meta-color: #aaa;
-  --reply-bg: #333;
-  --reply-color: #ccc;
-  --reply-border-color: #666;
-  --inputbar-bg: #111;
-  background: #0e0e0e;
-  color: #eee;
-}
 body.dark .message-bubble {
   box-shadow: none;
 }
@@ -1689,7 +1680,7 @@ body.dark .msg-meta-inline {
   color: var(--meta-color);
 }
 
-/* === RESPONSIVE TWEAKS === */
+/* === RESPONSIVE === */
 @media (max-width: 480px) {
   .chat-input-bar {
     padding: 8px 10px;
@@ -1700,6 +1691,7 @@ body.dark .msg-meta-inline {
   }
 }
 
+/* === Reset === */
 body, html {
   margin: 0;
   padding: 0;
