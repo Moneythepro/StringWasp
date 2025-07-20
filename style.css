@@ -2004,8 +2004,8 @@ body {
 /* Input field with typing animation */
 #threadInput {
   flex: 1;
-  height: 44px;
-  padding: 0 12px;
+  height: 35px;
+  padding: 0 10px;
   font-size: 15px;
   border: none;
   background: transparent;
