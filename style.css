@@ -2088,3 +2088,150 @@ main, .thread-main {
   opacity: 1;
   transform: translateX(-50%) translateY(-10px);
 }
+
+:root {
+  /* === COLORS === */
+  --self-bubble-bg: #dcf8c6;
+  --other-bubble-bg: #ffffff;
+  --self-bubble-bg-grad: var(--self-bubble-bg);
+  --other-bubble-bg-grad: var(--other-bubble-bg);
+  --meta-color: #777;
+  --meta-color-on-self: #555;
+  --reply-strip-color: #d1f0c3;
+  --reply-text-color: #333;
+
+  /* === FONTS === */
+  --msg-font-size: 14px;
+  --meta-font-size: 11px;
+  --reply-font-size: 13px;
+  --msg-line-height: 1.35;
+
+  /* === SPACING === */
+  --bubble-padding: 6px 8px 4px 8px;
+  --bubble-spacing: 2px;
+  --bubble-max-width: 92%;
+
+  /* === BORDERS === */
+  --bubble-rad-lg: 8px;
+  --bubble-radius-right: 8px 0 8px 8px;
+  --bubble-radius-left: 0 8px 8px 8px;
+
+  /* === SHADOW === */
+  --bubble-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+}
+
+/* ==== WRAPPER (STACKING, SIDE) ==== */
+.message-bubble-wrapper {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  margin-bottom: var(--bubble-spacing);
+  padding: 0;
+}
+.message-bubble-wrapper.from-self {
+  align-items: flex-end;
+  margin-left: auto;
+}
+.message-bubble-wrapper.from-other {
+  align-items: flex-start;
+  margin-right: auto;
+}
+
+/* ==== BUBBLE SHAPE + TAIL ==== */
+.message-bubble {
+  position: relative;
+  padding: var(--bubble-padding);
+  margin: 0;
+  max-width: var(--bubble-max-width);
+  font-size: var(--msg-font-size);
+  line-height: var(--msg-line-height);
+  border-radius: var(--bubble-rad-lg);
+  box-shadow: var(--bubble-shadow);
+  background: var(--other-bubble-bg-grad);
+  color: #111;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+.message-bubble.from-self {
+  background: var(--self-bubble-bg-grad);
+  border-radius: var(--bubble-radius-right);
+}
+.message-bubble.from-other {
+  background: var(--other-bubble-bg-grad);
+  border-radius: var(--bubble-radius-left);
+}
+
+/* ==== BUBBLE TAIL ==== */
+.message-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+}
+.message-bubble.from-other::after {
+  border-right-color: var(--other-bubble-bg);
+  left: -6px;
+  border-left: 0;
+}
+.message-bubble.from-self::after {
+  border-left-color: var(--self-bubble-bg);
+  right: -6px;
+  border-right: 0;
+}
+
+/* Hide tail for grouped messages */
+.message-bubble.grp-start::after,
+.message-bubble.grp-mid::after {
+  display: none;
+}
+
+/* ==== INLINE TEXT + META ==== */
+.msg-text-wrapper {
+  display: inline-flex;
+  align-items: flex-end;
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+.msg-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  display: inline;
+}
+.msg-meta-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--meta-font-size);
+  line-height: 1;
+  color: var(--meta-color);
+  opacity: 0.85;
+}
+.message-bubble.from-self .msg-meta-inline {
+  color: var(--meta-color-on-self);
+}
+
+/* ==== REPLY PREVIEW (COMPACT) ==== */
+.reply-to {
+  background: var(--reply-strip-color);
+  color: var(--reply-text-color);
+  font-size: var(--reply-font-size);
+  padding: 2px 6px;
+  margin-bottom: 2px;
+  border-left: 3px solid #a2e19f;
+  border-radius: 4px;
+  max-height: 3.6em; /* 3 lines max */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ==== TIMESTAMP / META ADJUSTMENT ==== */
+.message-bubble .msg-meta-inline svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
