@@ -2267,8 +2267,8 @@ html, body, #threadView {
 /* === CHAT BODY SCROLL === */
 .chat-scroll-area {
   position: absolute;
-  top: 56px;       /* header height */
-  bottom: 63px;    /* input bar height */
+  top: 56px;
+  bottom: 63px;
   left: 0;
   right: 0;
   overflow-y: auto;
@@ -2277,6 +2277,7 @@ html, body, #threadView {
   padding: 0 8px 10px;
   display: flex;
   flex-direction: column;
+  z-index: 0; /* ✅ IMPORTANT */
 }
 
 /* === MESSAGES === */
@@ -2293,14 +2294,13 @@ html, body, #threadView {
   left: 0;
   right: 0;
   height: 63px;
-  padding: 6px 8px;
+  z-index: 1000; /* ✅ make sure it's very high */
   background: #fff;
   border-top: 1px solid #ccc;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  z-index: 200;
+  padding: 6px 8px;
   box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -2322,7 +2322,9 @@ html, body, #threadView {
   overflow: hidden;
 }
 
-#threadInput {
+ #threadInput {
+  pointer-events: auto;
+  z-index: 2;
   flex: 1;
   border: none;
   background: transparent;
