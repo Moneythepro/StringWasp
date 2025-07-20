@@ -1997,7 +1997,7 @@ body {
 .chat-input-bar .icon-btn {
   background: none;
   border: none;
-  padding: 6px;
+  padding: 8px;
   font-size: 1.5rem;
   color: #444;
   display: flex;
@@ -2026,21 +2026,26 @@ body {
   gap: 6px;
 }
 
-.chat-input-bar input {
+.chat-input-bar input,
+#threadInput {
   flex: 1;
   height: 44px;
-  padding: 0 8px;
+  padding: 0 12px;
   font-size: 15px;
   border: none;
   background: transparent;
   color: #333;
   outline: none;
-  min-width: 0;
   font-family: 'Segoe UI', sans-serif;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
-.chat-input-bar .emoji-btn {
-  margin-left: auto;
+/* Ensure threadInput shows properly */
+#threadInput {
+  display: block;
+  visibility: visible;
+  opacity: 1;
 }
 
 /* Dark Mode */
@@ -2062,71 +2067,19 @@ body.dark .icon-btn:hover {
   color: #fff;
 }
 
-body.dark input {
-  color: #fff;
-}
-
-.icon-btn {
-  background: none;
-  border: none;
-  padding: 8px;
-  font-size: 1.5rem;
-  color: #444;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-  border-radius: 50%;
-  height: 40px;
-  width: 40px;
-}
-
-.icon-btn:hover {
-  background: #f0f0f0;
-  color: #000;
-}
-
-#threadInput {
-  flex: 1;
-  height: 44px;
-  padding: 0 12px;
-  font-size: 16px;
-  border: none;
-  background: transparent;
-  color: #333;
-  font-family: 'Segoe UI', sans-serif;
-  outline: none;
-  box-sizing: border-box;
-}
-
-#threadInput:focus {
-  background: transparent;
-}
-
-/* Dark mode */
-body.dark .chat-input-bar {
-  background: #1a1a1a;
-  border-top: 1px solid #333;
-}
-
+body.dark input,
 body.dark #threadInput {
   color: #fff;
 }
 
-body.dark .input-wrapper {
-  background: #2c2c2e;
+/* Scroll area setup */
+.chat-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px; /* prevent overlap from input bar */
 }
 
-body.dark .icon-btn {
-  color: #ccc;
-}
-
-body.dark .icon-btn:hover {
-  background: #3a3a3a;
-  color: #fff;
-}
-
+/* Page Layout Fix */
 body, html {
   height: 100%;
   margin: 0;
@@ -2137,22 +2090,5 @@ main, .thread-main {
   display: flex;
   flex-direction: column;
   height: 100vh;
-}
-
-.chat-scroll-area {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.chat-input-bar {
-  background: red !important; /* test visibility */
-}
-
-#threadInput {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  height: 40px !important;
-  width: 100% !important;
-  border: 1px solid red;
+  overflow: hidden;
 }
