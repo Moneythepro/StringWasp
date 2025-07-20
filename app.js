@@ -1736,48 +1736,51 @@ async function fetchLinkPreview(url) {
 /* =========================================================
  * Send message in thread
  * ======================================================= */
-function renderMessage(msg, isOwn) {
-  const { text, isDeleted, deletedHtml } = decryptMsgText(msg);
-  const escaped = escapeHtml(text);
+function sendThreadMessage() {
+  const input = document.getElementById("threadInput");
+  const text = input?.value.trim();
+  if (!text || !currentThreadUser) return;
 
-  const authorName = escapeHtml(msg.fromName || "User");
-  const authorHtml = !isOwn
-    ? `<div class="msg-author">${usernameWithBadge(msg.from, authorName)}</div>`
-    : "";
+  const fromName = currentUser.displayName || "User";
+  const toName = document.getElementById("threadWithName")?.textContent || "Friend";
 
-  const replyHtml = msg.replyTo && !isDeleted
-    ? `<div class="reply-to">${escapeHtml(msg.replyTo.text || "")}</div>`
-    : "";
+  const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
+  const docId = threadId(currentUser.uid, currentThreadUser);
+  const threadRef = db.collection("threads").doc(docId);
 
-  const meta = isOwn && !isDeleted
-    ? buildTickMeta(msg, currentThreadUser)
-    : buildOtherMeta(msg);
+  const message = {
+    text: encryptedText,
+    from: currentUser.uid,
+    fromName,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    seenBy: [currentUser.uid]
+  };
 
-  const linkPreviewHtml = msg.preview && !isDeleted
-    ? buildLinkPreviewHTML(msg.preview, msg.preview.url)
-    : "";
+  threadRef.collection("messages").add(message)
+    .then(() => {
+      input.value = "";
+      setTimeout(() => input.focus(), 50);
+      setTimeout(() => scrollToBottomThread(true), 80);
 
-  const bodyHtml = isDeleted ? deletedHtml : linkifyText(escaped);
-  const emojiOnly = isEmojiOnlyText(text) ? "emoji-only" : "";
-
-  return `
-    <div class="message-bubble-wrapper ${isOwn ? 'right from-self' : 'left from-other'} ${msg._grp || 'grp-single'}">
-      <div class="message-bubble ${isOwn ? 'right' : 'left'} ${emojiOnly}" data-msg-id="${msg.id}">
-        ${authorHtml}
-        ${replyHtml}
-        <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
-          <div class="msg-text-wrapper" style="padding-bottom:18px; position:relative;">
-            <span class="msg-text">${bodyHtml}</span>
-            <div class="bubble-meta-inline" style="position:absolute; bottom:4px; right:6px;">
-              ${!isDeleted ? meta : ""}
-            </div>
-          </div>
-          ${linkPreviewHtml}
-        </div>
-      </div>
-    </div>
-  `;
-                }
+      threadRef.set({
+        participants: [currentUser.uid, currentThreadUser],
+        names: {
+          [currentUser.uid]: fromName,
+          [currentThreadUser]: toName
+        },
+        lastMessage: text,
+        unread: {
+          [currentUser.uid]: 0,
+          [currentThreadUser]: firebase.firestore.FieldValue.increment(1)
+        },
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    })
+    .catch(err => {
+      console.error("❌ Send failed:", err.message || err);
+      alert("❌ Failed to send message.");
+    });
+}
 
 /* =========================================================
  * Helpers for Enhanced Bubble Rendering
