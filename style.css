@@ -1941,10 +1941,10 @@ body {
 /* 📌 Unified Thread Input */
 #threadInput {
   flex: 1;
-  height: 56px; /* Final height */
+  height: 64px; /* 🔼 Increased from 56px */
   padding: 0 20px 0 16px;
-  font-size: 16px;
-  border-radius: 28px;
+  font-size: 17px;
+  border-radius: 30px;
   border: 1.5px solid #ccc;
   outline: none;
   background: #fff;
@@ -1952,7 +1952,7 @@ body {
   font-family: 'Segoe UI', sans-serif;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
-  margin-right: 42px; /* Ensures no collision with emoji button */
+  margin-right: 42px;
 }
 
 /* 🧼 Clean Focus — no ugly glow */
