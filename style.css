@@ -2283,3 +2283,20 @@ body.dark #threadInput {
   opacity: 1;
   transform: translateX(-50%) translateY(-10px);
 }
+
+.date-divider-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
+}
+.date-divider {
+  font-size: 13px;
+  color: #777;
+  background: #e0e0e0;
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+body.dark .date-divider {
+  background: #222;
+  color: #aaa;
+}
