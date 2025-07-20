@@ -124,19 +124,41 @@
     <button class="back-btn" onclick="switchTab('chatTab')" aria-label="Back">
       <i data-lucide="arrow-left"></i>
     </button>
+
     <img id="chatProfilePic" class="header-avatar" src="default-avatar.png" alt="Profile Picture" />
-    <div class="chat-info">
+    
+    <div id="threadHeaderInfo" class="chat-info" onclick="toggleChatOptions(event)">
       <h3 id="threadWithName">Friend Name</h3>
       <p id="chatStatus">last seen recently</p>
     </div>
-    <button class="menu-btn" onclick="toggleChatOptions(event)" aria-label="Menu">
-      <i data-lucide="more-vertical"></i>
-    </button>
+
+    <!-- 🔽 Hidden dropdown that appears on profile/name tap -->
     <div id="chatOptionsMenu" class="chat-options-horizontal" role="menu">
-      <span onclick="blockUser()">Block</span>
-      <span onclick="viewMedia()">Media</span>
-      <span onclick="exportChat()">Export</span>
-      <span onclick="deleteChat()">Delete</span>
+      <div class="profile-section">
+        <img id="profilePicLarge" class="profile-pic-large" src="default-avatar.png" alt="Profile Picture" />
+        <div class="profile-info">
+          <div id="profileFullName" class="profile-name">Full Name</div>
+          <div id="profileUsername" class="profile-username">@username</div>
+          <div id="profileGender" class="profile-gender">Gender: Not set</div>
+        </div>
+      </div>
+      <hr />
+      <span onclick="viewMedia()">
+        <i data-lucide="image"></i>
+        <span>View Media</span>
+      </span>
+      <span onclick="exportChat()">
+        <i data-lucide="file-text"></i>
+        <span>Export Chat</span>
+      </span>
+      <span onclick="blockUser()">
+        <i data-lucide="user-x"></i>
+        <span>Block</span>
+      </span>
+      <span onclick="deleteChat()">
+        <i data-lucide="trash-2"></i>
+        <span>Delete Chat</span>
+      </span>
     </div>
   </header>
 
@@ -151,33 +173,33 @@
   </div>
 
   <!-- ✅ Chat Input Bar (Fixed at Bottom) -->
-<footer class="chat-input-bar">
-  <!-- Left side: Reply + Mic -->
-  <div class="left-actions">
-    <button class="icon-btn" onclick="openReplyModal()" aria-label="Reply Modal">
-      <i data-lucide="message-square"></i>
-    </button>
-    <button class="icon-btn" onclick="startVoiceInput()" aria-label="Voice Message">
-      <i data-lucide="mic"></i>
-    </button>
-  </div>
+  <footer class="chat-input-bar">
+    <!-- Left side: Reply + Mic -->
+    <div class="left-actions">
+      <button class="icon-btn" onclick="openReplyModal()" aria-label="Reply Modal">
+        <i data-lucide="message-square"></i>
+      </button>
+      <button class="icon-btn" onclick="startVoiceInput()" aria-label="Voice Message">
+        <i data-lucide="mic"></i>
+      </button>
+    </div>
 
-  <!-- Right side: Input + Emoji -->
-  <div class="input-wrapper">
-    <input
-      id="threadInput"
-      type="text"
-      placeholder="Type a message…"
-      autocomplete="off"
-      autocapitalize="sentences"
-      enterkeyhint="send"
-      aria-label="Message input"
-    />
-    <button class="icon-btn emoji-btn" id="emojiToggleBtn" aria-label="Emoji">
-      <i data-lucide="smile"></i>
-    </button>
-  </div>
-</footer>
+    <!-- Right side: Input + Emoji -->
+    <div class="input-wrapper">
+      <input
+        id="threadInput"
+        type="text"
+        placeholder="Type a message…"
+        autocomplete="off"
+        autocapitalize="sentences"
+        enterkeyhint="send"
+        aria-label="Message input"
+      />
+      <button class="icon-btn emoji-btn" id="emojiToggleBtn" aria-label="Emoji">
+        <i data-lucide="smile"></i>
+      </button>
+    </div>
+  </footer>
 </div>
 
 <!-- ✅ Message Options Modal -->
