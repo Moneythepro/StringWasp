@@ -2379,6 +2379,28 @@ function renderMessage(msg, isOwn) {
   `;
 }
 
+function toggleChatOptions(event) {
+  event?.stopPropagation();
+  const menu = document.getElementById("chatOptionsMenu");
+  if (!menu) return;
+
+  const isOpen = menu.classList.contains("show");
+  if (isOpen) {
+    menu.classList.remove("show");
+  } else {
+    menu.classList.add("show");
+    document.addEventListener("click", (e) => {
+      if (!menu.contains(e.target)) {
+        menu.classList.remove("show");
+      }
+    }, { once: true });
+  }
+}
+
+document.getElementById("chatOptionsMenu")?.addEventListener("click", e => e.stopPropagation());
+
+// Open menu when clicking thread header username/avatar
+document.getElementById("threadHeaderInfo")?.addEventListener("click", toggleChatOptions);
 
 // Long press modal
 let selectedMessageForAction = null;
