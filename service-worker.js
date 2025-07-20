@@ -49,13 +49,13 @@ self.addEventListener("fetch", (event) => {
 
 // Activate: Remove old caches
 self.addEventListener("activate", (event) => {
-  console.log("[SW] Activate event");
+  
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
         keys.filter((key) => key !== CACHE_NAME)
           .map((key) => {
-            console.log("[SW] Deleting old cache:", key);
+            
             return caches.delete(key);
           })
       )
