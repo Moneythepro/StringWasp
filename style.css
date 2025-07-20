@@ -1520,3 +1520,46 @@ body.dark .reply-label {
   opacity: 1;
   transform: translateX(-50%) translateY(-10px);
 }
+
+.message-bubble-wrapper.left .msg-avatar-img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.message-bubble-wrapper.right .msg-avatar-img {
+  display: none; /* For your own sent messages */
+}
+
+.message-bubble-wrapper {
+  display: flex;
+  align-items: flex-end;
+  margin: 4px 8px;
+  gap: 6px;
+}
+
+.message-bubble {
+  border-radius: 10px;
+  padding: 6px 10px;
+  background-color: #f0f0f0;
+  max-width: 80%;
+  position: relative;
+  font-size: 14px;
+}
+
+.message-bubble.left {
+  background-color: #ffffff;
+}
+
+.message-bubble.right {
+  background-color: #dcf8c6;
+  margin-left: auto;
+}
+.message-bubble-wrapper.left {
+  flex-direction: row;
+}
+.message-bubble-wrapper.right {
+  flex-direction: row-reverse;
+}
