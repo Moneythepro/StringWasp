@@ -2058,3 +2058,29 @@ body.dark .icon-btn:hover {
   background: #3a3a3a;
   color: #fff;
 }
+.chat-input-bar {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  background: #fff;
+  border-top: 1px solid #ccc;
+  position: relative;
+  z-index: 10;
+}
+
+.chat-input-bar input {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  outline: none;
+}
+
+.chat-input-bar button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  margin: 0 6px;
+}
