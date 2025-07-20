@@ -2328,14 +2328,14 @@ body.dark .bubble-meta-top {
 }
 
 
-/* === Final Chat Input Bar === */
+/* === Final Chat Input Bar — 25% Taller === */
 .chat-input-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 48px;
-  padding: 4px 6px;
+  height: 60px; /* ⬆️ increased from 48px */
+  padding: 6px 8px; /* slight increase for vertical alignment */
   background: #fff;
   border-top: 1px solid #ccc;
   display: flex;
@@ -2358,9 +2358,9 @@ body.dark .bubble-meta-top {
   display: flex;
   align-items: center;
   background: #f0f0f0;
-  border-radius: 18px;
-  height: 36px;
-  padding: 0 8px;
+  border-radius: 20px;
+  height: 45px; /* ⬆️ was 36px */
+  padding: 0 10px;
   gap: 6px;
   overflow: hidden;
 }
@@ -2371,24 +2371,24 @@ body.dark .bubble-meta-top {
   border: none;
   background: transparent;
   outline: none;
-  font-size: 14px;
-  height: 34px;
-  line-height: 34px;
+  font-size: 15px;
+  height: 43px; /* ⬆️ was 34px */
+  line-height: 43px;
   padding: 0;
   color: #222;
 }
 
 /* Buttons (icons) */
 .icon-btn {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
+  width: 40px; /* ⬆️ was 36px */
+  height: 40px;
+  min-width: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: none;
   border: none;
-  font-size: 17px;
+  font-size: 18px;
   color: #444;
   border-radius: 50%;
   cursor: pointer;
@@ -2401,7 +2401,7 @@ body.dark .bubble-meta-top {
 
 /* Emoji-specific button */
 .emoji-btn {
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   color: #888;
 }
 .emoji-btn:hover {
@@ -2411,25 +2411,25 @@ body.dark .bubble-meta-top {
 /* Responsive */
 @media (max-width: 480px) {
   .chat-input-bar {
-    height: 46px;
-    padding: 3px 5px;
+    height: 54px;
+    padding: 5px 6px;
   }
 
   .icon-btn {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     font-size: 16px;
   }
 
   .input-wrapper {
-    height: 34px;
-    padding: 0 6px;
+    height: 40px;
+    padding: 0 8px;
   }
 
   #threadInput {
-    font-size: 13.5px;
-    height: 32px;
-    line-height: 32px;
+    font-size: 14px;
+    height: 38px;
+    line-height: 38px;
   }
 }
 
