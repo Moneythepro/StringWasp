@@ -2443,3 +2443,85 @@ body.dark .msg-text {
     transform: scale(1);
   }
 }
+
+.thread-container {
+  padding-bottom: 60px; /* Leave room for fixed input bar */
+}
+/* === ✏️ Input Bar – Unified === */
+.chat-input-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  padding: 6px 10px;
+  background: var(--inputbar-bg, #fff);
+  border-top: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 100;
+  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* === Input Field === */
+.chat-input-bar .input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: #f1f1f1;
+  border-radius: 20px;
+  padding: 0 10px;
+  height: 42px;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.chat-input-bar input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 15px;
+  height: 100%;
+  color: #222;
+}
+
+/* === Buttons === */
+.chat-input-bar .icon-btn {
+  width: 38px;
+  height: 38px;
+  background: none;
+  border: none;
+  color: #444;
+  font-size: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.chat-input-bar .icon-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.emoji-btn {
+  font-size: 1.4em;
+  color: #777;
+}
+
+/* === Dark Mode === */
+body.dark .chat-input-bar {
+  background: #1a1a1a;
+  border-top-color: #333;
+}
+body.dark .input-wrapper {
+  background: #2c2c2e;
+}
+body.dark input {
+  color: #eee;
+}
+body.dark .icon-btn {
+  color: #bbb;
+}
