@@ -3147,7 +3147,7 @@ async function loadVerifiedBadges() {
       const parsed = JSON.parse(cached);
       if (now - parsed.timestamp < BADGE_CACHE_TIME) {
         VERIFIED_BADGES = parsed.data;
-        console.log("Badges loaded from cache:", JSON.stringify(VERIFIED_BADGES, null, 2));
+        
         decorateUsernamesWithBadges();
         return;
       }
@@ -3172,7 +3172,6 @@ async function loadVerifiedBadges() {
       data: VERIFIED_BADGES
     }));
 
-    console.log("Verified badge list loaded:", JSON.stringify(VERIFIED_BADGES, null, 2));
     decorateUsernamesWithBadges();
   } catch (err) {
     console.warn("⚠️ Could not load verified.json:", err);
