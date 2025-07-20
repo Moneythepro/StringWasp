@@ -2336,11 +2336,19 @@ body.dark .meta-inline-wrap {
   opacity: 0.7;
 }
 
-.edited-tag {
+/* 🔼 Edited Tag + Timestamp to Top Right */
+.bubble-meta-top {
+  display: flex;
+  justify-content: flex-end;
   font-size: 11px;
-  color: var(--meta-color);
-  opacity: 0.7;
-  margin-right: 4px;
+  color: #888;
+  margin-bottom: 4px;
+  gap: 4px;
+}
+
+.bubble-meta-top .edited-tag {
+  font-style: italic;
+  color: #999;
 }
 
 /* === Bubble Wrapper === */
