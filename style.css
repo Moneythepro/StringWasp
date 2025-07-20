@@ -1954,38 +1954,54 @@ body {
 }
 
 /* ✅ Input focus border */
-#threadInput:focus {
-  border-color: #00c853;
+#threadInput {
+  flex: 1;
+  height: 54px; /* Taller input */
+  padding: 0 16px;
+  font-size: 16px;
+  border-radius: 28px;
+  border: 1.5px solid #ccc;
+  outline: none;
   background: #fff;
-  box-shadow: 0 0 0 1.5px rgba(0, 200, 83, 0.25);
+  color: #000;
+  font-family: 'Segoe UI', sans-serif;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-/* ✅ Emoji button OUTSIDE input */
+/* Clean focus style, NO green glow */
+#threadInput:focus {
+  border-color: #888;
+  background: #fff;
+  box-shadow: none;
+}
+
+/* 🟦 Emoji Toggle Button - Soft Whitish */
 #emojiToggleBtn {
   background: none;
   border: none;
-  font-size: 1.5em;
+  font-size: 1.6em;
   cursor: pointer;
-  color: #00c853;
+  color: #aaa; /* Soft gray */
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 8px;
 }
-/* 🟩 Consistent scroll area height */
+
+/* 🟨 Consistent scroll area height */
 .chat-scroll-area {
   overflow-y: auto;
   height: calc(100vh - 140px); /* adjust for header + footer */
   padding: 16px 8px 80px; /* bottom space for input bar */
 }
 
-/* ✅ Unified Icon Buttons (mic, emoji, reply) */
+/* 🟩 Unified Icon Buttons (Mic, Emoji, Reply) - Whitish Theme */
 .icon-btn {
-  background: #e7f9ee; /* light green background */
+  background: #f5f5f7; /* light grayish-white */
   border: none;
   padding: 10px;
   border-radius: 50%;
-  color: #00c853; /* green color */
+  color: #555; /* soft black */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1998,9 +2014,10 @@ body {
   height: 20px;
 }
 
+/* 🧊 On Hover: slightly darker white */
 .icon-btn:hover {
-  background: #d4f5e1;
-  color: #00b248;
+  background: #e0e0e0;
+  color: #333;
 }
 
 /* 🌙 Dark Mode */
