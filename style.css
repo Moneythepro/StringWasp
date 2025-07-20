@@ -1866,78 +1866,77 @@ body {
 /* =========================================================
  * INPUT BAR
  * ======================================================= */
-/* === Chat Input Bar (Compact Like WhatsApp iOS) === */
+/* === Chat Input Bar (Compact) === */
 .chat-input-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 8px;
+  padding: 4px 6px;
   background: var(--inputbar-bg, #fff);
   border-top: 1px solid #ccc;
-  gap: 6px;
+  gap: 4px;
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   z-index: 999;
-  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05);
   height: auto;
 }
 
-/* Wrapper around input field */
+/* Input wrapper */
 .chat-input-bar .input-wrapper {
   flex: 1;
   display: flex;
   align-items: center;
   background: #f0f0f0;
-  border-radius: 18px;
+  border-radius: 20px;
   padding: 0 8px;
   gap: 4px;
-  height: 36px;
+  height: 32px;
   overflow: hidden;
 }
 
-/* Input Field */
+/* Text input */
 #threadInput {
   flex: 1;
-  font-size: 14px;
-  padding: 6px 0;
+  font-size: 13.5px;
+  padding: 4px 0;
   border: none;
   background: transparent;
   outline: none;
   color: #222;
-  height: 36px;
-  line-height: 36px;
-  font-family: 'Segoe UI', sans-serif;
+  height: 28px;
+  line-height: 28px;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Send / Emoji Buttons */
+/* Buttons (mic, emoji, send, reply) */
 .chat-input-bar .icon-btn {
-  height: 36px;
-  width: 36px;
-  min-width: 36px;
-  padding: 0;
+  height: 32px;
+  width: 32px;
+  min-width: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: none;
   border: none;
   color: #444;
-  font-size: 17px;
+  font-size: 15.5px;
   border-radius: 50%;
+  padding: 0;
   cursor: pointer;
   transition: background 0.2s ease;
 }
 
 .chat-input-bar .icon-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.05);
 }
 
-/* Emoji button */
+/* Emoji icon */
 .emoji-btn {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   color: #888;
-  cursor: pointer;
   display: flex;
   align-items: center;
 }
@@ -1948,29 +1947,29 @@ body {
 /* === Responsive for small screens === */
 @media (max-width: 480px) {
   .chat-input-bar {
-    padding: 5px 6px;
+    padding: 4px 5px;
   }
   .chat-input-bar .input-wrapper {
     padding: 0 6px;
-    height: 34px;
+    height: 30px;
   }
   #threadInput {
     font-size: 13px;
-    height: 34px;
-    line-height: 34px;
+    height: 28px;
+    line-height: 28px;
   }
   .chat-input-bar .icon-btn {
-    height: 34px;
-    width: 34px;
-    font-size: 16px;
+    height: 30px;
+    width: 30px;
+    font-size: 15px;
   }
 }
 
 /* === Dark Mode === */
 body.dark .chat-input-bar {
   background: #1a1a1a;
-  border-top-color: #333;
-  box-shadow: 0 -2px 10px rgba(255, 255, 255, 0.05);
+  border-top: 1px solid #2a2a2a;
+  box-shadow: 0 -1px 6px rgba(255, 255, 255, 0.04);
 }
 body.dark .input-wrapper {
   background: #2c2c2e;
