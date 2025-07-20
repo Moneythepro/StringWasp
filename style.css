@@ -1866,123 +1866,6 @@ body {
 /* =========================================================
  * INPUT BAR
  * ======================================================= */
-/* === Chat Input Bar (Compact) === */
-.chat-input-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 6px;
-  background: var(--inputbar-bg, #fff);
-  border-top: 1px solid #ccc;
-  gap: 4px;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 999;
-  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05);
-  height: auto;
-}
-
-/* Input wrapper */
-.chat-input-bar .input-wrapper {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  background: #f0f0f0;
-  border-radius: 20px;
-  padding: 0 8px;
-  gap: 4px;
-  height: 32px;
-  overflow: hidden;
-}
-
-/* Text input */
-#threadInput {
-  flex: 1;
-  font-size: 13.5px;
-  padding: 4px 0;
-  border: none;
-  background: transparent;
-  outline: none;
-  color: #222;
-  height: 28px;
-  line-height: 28px;
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-/* Buttons (mic, emoji, send, reply) */
-.chat-input-bar .icon-btn {
-  height: 32px;
-  width: 32px;
-  min-width: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: #444;
-  font-size: 15.5px;
-  border-radius: 50%;
-  padding: 0;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.chat-input-bar .icon-btn:hover {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-/* Emoji icon */
-.emoji-btn {
-  font-size: 1.2rem;
-  color: #888;
-  display: flex;
-  align-items: center;
-}
-.emoji-btn:hover {
-  color: #111;
-}
-
-/* === Responsive for small screens === */
-@media (max-width: 480px) {
-  .chat-input-bar {
-    padding: 4px 5px;
-  }
-  .chat-input-bar .input-wrapper {
-    padding: 0 6px;
-    height: 30px;
-  }
-  #threadInput {
-    font-size: 13px;
-    height: 28px;
-    line-height: 28px;
-  }
-  .chat-input-bar .icon-btn {
-    height: 30px;
-    width: 30px;
-    font-size: 15px;
-  }
-}
-
-/* === Dark Mode === */
-body.dark .chat-input-bar {
-  background: #1a1a1a;
-  border-top: 1px solid #2a2a2a;
-  box-shadow: 0 -1px 6px rgba(255, 255, 255, 0.04);
-}
-body.dark .input-wrapper {
-  background: #2c2c2e;
-}
-body.dark #threadInput {
-  color: #eee;
-}
-body.dark .icon-btn {
-  color: #ccc;
-}
-body.dark .icon-btn:hover {
-  background: #333;
-}
 
 /* =========================================================
  * ANIMATIONS
@@ -2485,4 +2368,126 @@ body.dark .bubble-meta-top {
 }
 .chat-options-horizontal span:hover {
   background: #f5f5f5;
+}
+
+/* === Chat Input Bar (Final Compact iOS Style) === */
+.chat-input-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px;
+  background: var(--inputbar-bg, #fff);
+  border-top: 1px solid #ccc;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  gap: 6px;
+  height: 48px; /* fixed total height */
+  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05);
+  z-index: 999;
+}
+
+/* Input wrapper */
+.chat-input-bar .input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: #f0f0f0;
+  border-radius: 18px;
+  padding: 0 10px;
+  height: 36px;
+  gap: 6px;
+  overflow: hidden;
+}
+
+/* Text input field */
+#threadInput {
+  flex: 1;
+  font-size: 14px;
+  height: 34px;
+  line-height: 34px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: #222;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Icon buttons */
+.chat-input-bar .icon-btn {
+  height: 36px;
+  width: 36px;
+  min-width: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  font-size: 17px;
+  color: #444;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.chat-input-bar .icon-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Emoji icon */
+.emoji-btn {
+  font-size: 1.3rem;
+  color: #888;
+  display: flex;
+  align-items: center;
+}
+.emoji-btn:hover {
+  color: #000;
+}
+
+/* === Responsive Adjustments === */
+@media (max-width: 480px) {
+  .chat-input-bar {
+    height: 46px;
+    padding: 4px 5px;
+  }
+
+  .chat-input-bar .input-wrapper {
+    height: 34px;
+    padding: 0 8px;
+  }
+
+  #threadInput {
+    font-size: 13.5px;
+    height: 32px;
+    line-height: 32px;
+  }
+
+  .chat-input-bar .icon-btn {
+    height: 34px;
+    width: 34px;
+    font-size: 16px;
+  }
+}
+
+/* === Dark Mode === */
+body.dark .chat-input-bar {
+  background: #1a1a1a;
+  border-top-color: #333;
+  box-shadow: 0 -1px 4px rgba(255, 255, 255, 0.03);
+}
+body.dark .input-wrapper {
+  background: #2c2c2e;
+}
+body.dark #threadInput {
+  color: #eee;
+}
+body.dark .icon-btn {
+  color: #ccc;
+}
+body.dark .icon-btn:hover {
+  background: #333;
 }
