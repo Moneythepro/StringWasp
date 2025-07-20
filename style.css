@@ -1759,14 +1759,7 @@ body {
 /* =========================================================
  * RESPONSIVE
  * ======================================================= */
-@media (max-width: 480px) {
-  :root {
-    --bubble-font-size: 14px;
-    --msg-font-size: 14px;
-  }
-  .chat-input-bar { padding: 5px 6px; }
-  #threadInput { font-size: 14px; padding: 6px 10px; }
-}
+
 
 /* =========================================================
  * ANIMATIONS
@@ -2019,17 +2012,20 @@ body {
   flex: 1;
   display: flex;
   align-items: center;
-  margin: 0 8px;
+  background: #f0f0f0;
+  border-radius: 22px;
+  margin-left: 8px;
+  padding-right: 4px;
+  overflow: hidden;
 }
 
 #threadInput {
-  width: 100%;
+  flex: 1;
   height: 44px;
-  padding: 0 16px;
+  padding: 0 12px;
   font-size: 16px;
-  border-radius: 22px;
   border: none;
-  background: #f0f0f0;
+  background: transparent;
   color: #333;
   font-family: 'Segoe UI', sans-serif;
   outline: none;
@@ -2037,7 +2033,7 @@ body {
 }
 
 #threadInput:focus {
-  background: #e9e9e9;
+  background: transparent;
 }
 
 /* Dark mode */
@@ -2047,8 +2043,11 @@ body.dark .chat-input-bar {
 }
 
 body.dark #threadInput {
-  background: #2c2c2e;
   color: #fff;
+}
+
+body.dark .input-wrapper {
+  background: #2c2c2e;
 }
 
 body.dark .icon-btn {
