@@ -1924,19 +1924,6 @@ body {
 /* =========================================================
  * INPUT BAR
  * ======================================================= */
-.chat-input-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: var(--inputbar-bg, #fff);
-  border-top: 1px solid #ddd;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 999;
-}
 
 /* 🟩 Consistent scroll area height */
 .chat-scroll-area {
@@ -1971,11 +1958,27 @@ body {
 
 /* 🧠 Input Field */
 /* 🧠 Refined Input Field */
+.chat-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: var(--inputbar-bg, #fff);
+  border-top: 1px solid #ddd;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+}
+
+/* ✅ Input Fixed Height and Padding */
 #threadInput {
   flex: 1;
-  padding: 14px 48px 14px 16px; /* extra right for emoji space */
+  height: 46px;
+  padding: 12px 16px;
   font-size: 15px;
-  border-radius: 24px;
+  border-radius: 22px;
   border: 1px solid #d1d1d6;
   outline: none;
   background: #f9f9f9;
@@ -1983,9 +1986,6 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  position: relative;
-  height: 48px; /* smooth vertical height */
-  line-height: 20px;
 }
 
 /* 🔵 Focus Ring */
@@ -1995,23 +1995,17 @@ body {
   box-shadow: 0 0 0 2px rgba(0, 200, 83, 0.2);
 }
 
-/* 😄 Emoji Button Positioned */
+/* ✅ Emoji Outside, Matching Style */
 #emojiToggleBtn {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
   background: none;
   border: none;
-  font-size: 1.4em;
+  font-size: 1.5em;
   cursor: pointer;
   color: #00c853;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
-  z-index: 2;
-  pointer-events: auto;
+  padding: 8px;
 }
 
 /* 🌙 Dark Mode */
