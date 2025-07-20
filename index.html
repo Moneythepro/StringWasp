@@ -152,17 +152,17 @@
 
   <!-- ✅ Chat Input Bar (Fixed at Bottom) -->
 <footer class="chat-input-bar">
-  <!-- Reply Button -->
-  <button class="icon-btn" onclick="openReplyModal()" aria-label="Reply Modal">
-    <i data-lucide="message-square"></i>
-  </button>
+  <!-- Left side: Reply + Mic -->
+  <div class="left-actions">
+    <button class="icon-btn" onclick="openReplyModal()" aria-label="Reply Modal">
+      <i data-lucide="message-square"></i>
+    </button>
+    <button class="icon-btn" onclick="startVoiceInput()" aria-label="Voice Message">
+      <i data-lucide="mic"></i>
+    </button>
+  </div>
 
-  <!-- Mic Button -->
-  <button class="icon-btn" onclick="startVoiceInput()" aria-label="Voice Message">
-    <i data-lucide="mic"></i>
-  </button>
-
-  <!-- Input + Emoji inside wrapper -->
+  <!-- Right side: Input + Emoji -->
   <div class="input-wrapper">
     <input
       id="threadInput"
