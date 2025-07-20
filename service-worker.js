@@ -17,12 +17,12 @@ const urlsToCache = [
 
 // Install: Cache essential files
 self.addEventListener("install", (event) => {
-  console.log("[SW] Install event");
+  
   self.skipWaiting(); // Activate immediately
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(urlsToCache))
-      .then(() => console.log("[SW] Cached all core assets"))
+      .then(() => )
   );
 });
 
