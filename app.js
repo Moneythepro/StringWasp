@@ -1884,7 +1884,7 @@ const USER_CACHE = {};
 function buildTickMeta(msg, otherUid) {
   let status = "sent";
   let tickClass = "tick-sent";
-  let icon = "check"; // single
+  let icon = "check"; // single tick
 
   if (msg.deliveredAt) {
     status = "delivered";
@@ -1898,21 +1898,28 @@ function buildTickMeta(msg, otherUid) {
   }
 
   const timeHtml = msg.timestamp?.toDate
-    ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>`
+    ? `<span class="msg-time">${formatTimestamp(msg.timestamp.toDate())}</span>`
     : "";
+
+  const editedHtml = msg.edited ? `<span class="edited-tag">(edited)</span>` : "";
 
   return `
     <span class="msg-meta-inline" data-status="${status}">
-      ${timeHtml}
+      ${editedHtml}${timeHtml}
       <i data-lucide="${icon}" class="tick-icon ${tickClass}"></i>
     </span>
   `;
 }
 
 function buildOtherMeta(msg) {
+  const editedHtml = msg.edited ? `<span class="edited-tag">(edited)</span>` : "";
+  const timeHtml = msg.timestamp?.toDate
+    ? `<span class="msg-time">${formatTimestamp(msg.timestamp.toDate())}</span>`
+    : "";
+
   return `
     <span class="msg-meta-inline" data-status="other">
-      ${msg.timestamp?.toDate ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>` : ""}
+      ${editedHtml}${timeHtml}
     </span>
   `;
 }
