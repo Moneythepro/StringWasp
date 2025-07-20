@@ -1913,23 +1913,32 @@ body.dark .date-divider {
   vertical-align: bottom;
   gap: 4px;
   float: right;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Make .msg-text a flex container so meta can align */
 .msg-text {
-  display: inline-flex !important;
+  display: flex; /* ✅ changed from inline-flex */
   align-items: flex-end;
   justify-content: space-between;
   flex-wrap: wrap;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
   position: relative;
 }
 
 /* Ensure inner message text respects meta layout */
 .msg-text span:not(.meta-inline-wrap) {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   white-space: pre-wrap;
   word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Override in dark mode */
@@ -1945,6 +1954,13 @@ body.dark .meta-inline-wrap {
   color: #888;
   margin-bottom: 4px;
   gap: 4px;
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  z-index: 2;
+  opacity: 0.8;
+  align-items: center;
+  background: transparent;
 }
 
 .bubble-meta-top .edited-tag {
@@ -1959,6 +1975,8 @@ body.dark .meta-inline-wrap {
   align-items: flex-start;
   margin: 0;
   padding: 0;
+  width: 100%;
+  max-width: 100%;
 }
 .message-bubble-wrapper.right {
   align-items: flex-end;
@@ -1966,22 +1984,23 @@ body.dark .meta-inline-wrap {
 
 /* === Bubble === */
 .message-bubble {
-  max-width: var(--bubble-max-width);
-  padding: var(--bubble-padding);
-  margin: var(--bubble-gap-y) 0;
-  font-size: var(--bubble-font-size);
-  line-height: var(--bubble-line-height);
-  background: var(--other-bubble-bg-grad);
-  border-radius: var(--bubble-radius-left);
-  box-shadow: var(--bubble-shadow);
+  max-width: var(--bubble-max-width, 80%);
+  padding: var(--bubble-padding, 8px 12px);
+  margin: var(--bubble-gap-y, 6px) 0;
+  font-size: var(--bubble-font-size, 15px);
+  line-height: var(--bubble-line-height, 1.4);
+  background: var(--other-bubble-bg-grad, #f1f1f1);
+  border-radius: var(--bubble-radius-left, 12px);
+  box-shadow: var(--bubble-shadow, 0 1px 3px rgba(0,0,0,0.1));
   word-break: break-word;
-  display: inline-block;
   position: relative;
-  transition: background var(--bubble-anim-duration) var(--bubble-anim-ease);
+  transition: background var(--bubble-anim-duration, 0.3s) var(--bubble-anim-ease, ease);
+  overflow-wrap: break-word;
+  width: fit-content;
 }
 .message-bubble.right {
-  background: var(--self-bubble-bg-grad);
-  border-radius: var(--bubble-radius-right);
+  background: var(--self-bubble-bg-grad, #dcf8c6);
+  border-radius: var(--bubble-radius-right, 12px);
   margin-left: auto;
 }
 .message-bubble.left {
@@ -1994,6 +2013,7 @@ body.dark .meta-inline-wrap {
   flex-direction: column;
   gap: 1px;
   padding: 0;
+  max-width: 100%;
 }
 .msg-inner-wrapper {
   display: inline-block;
@@ -2004,18 +2024,21 @@ body.dark .meta-inline-wrap {
   justify-content: space-between;
   align-items: flex-end;
   gap: 6px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+  max-width: 100%;
 }
 
 /* === Text === */
 .msg-text {
-  font-size: var(--msg-font-size);
-  line-height: var(--msg-line-height);
+  font-size: var(--msg-font-size, 14px);
+  line-height: var(--msg-line-height, 1.4);
   white-space: pre-wrap;
   word-break: break-word;
-  display: inline;
+  display: flex;
   margin: 0;
   padding: 0;
+  max-width: 100%;
+  min-width: 0;
 }
 .msg-text img.emoji {
   height: 1.2em;
@@ -2026,37 +2049,37 @@ body.dark .meta-inline-wrap {
 .msg-meta-inline {
   display: inline-flex;
   align-items: center;
-  font-size: var(--meta-font-size);
-  color: var(--meta-color);
+  font-size: var(--meta-font-size, 11px);
+  color: var(--meta-color, #999);
   gap: 3px;
   margin-left: 4px;
   white-space: nowrap;
 }
 .msg-meta-inline[data-status="seen"] {
-  color: var(--tick-seen-color);
+  color: var(--tick-seen-color, #4caf50);
 }
 .tick-icon {
-  width: var(--tick-size);
-  height: var(--tick-size);
+  width: var(--tick-size, 14px);
+  height: var(--tick-size, 14px);
   vertical-align: middle;
 }
 
 /* === Avatar === */
 .bubble-pfp {
-  width: var(--pfp-size);
-  height: var(--pfp-size);
+  width: var(--pfp-size, 36px);
+  height: var(--pfp-size, 36px);
   border-radius: 50%;
-  margin: 0 var(--pfp-gap);
+  margin: 0 var(--pfp-gap, 8px);
   object-fit: cover;
 }
 
 /* === Reply Strip === */
 .reply-to {
-  font-size: var(--reply-font-size);
-  color: var(--reply-color);
-  background: var(--reply-bg);
+  font-size: var(--reply-font-size, 13px);
+  color: var(--reply-color, #444);
+  background: var(--reply-bg, #f0f0f0);
   padding: 3px 6px;
-  border-left: 2px solid var(--reply-border-color);
+  border-left: 2px solid var(--reply-border-color, #ccc);
   margin-bottom: 2px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2095,18 +2118,8 @@ body.dark {
 body.dark .bubble-meta-top {
   color: #bbb;
 }
-.bubble-meta-top {
-  position: absolute;
-  top: 6px;
-  right: 10px;
-  font-size: 11px;
-  color: var(--fg-muted, #999);
-  opacity: 0.8;
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
 
+/* === Options Menu === */
 .chat-options-menu {
   position: absolute;
   top: 56px;
@@ -2166,7 +2179,6 @@ body.dark .bubble-meta-top {
   font-size: 14px;
   transition: background 0.2s;
 }
-
 .menu-item:hover {
   background: #f2f2f2;
 }
