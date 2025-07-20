@@ -3533,3 +3533,17 @@ document.querySelectorAll('.msg-text').forEach(el => {
     el.parentElement.classList.add('emoji-only');
   }
 });
+
+function applyGrouping(messages) {
+  for (let i = 0; i < messages.length; i++) {
+    const curr = messages[i];
+    const prev = messages[i - 1];
+    const next = messages[i + 1];
+
+    const sameAsPrev = prev && prev.senderId === curr.senderId;
+    const sameAsNext = next && next.senderId === curr.senderId;
+
+    if (!sameAsPrev) curr.classList.add("first");
+    if (!sameAsNext) curr.classList.add("last");
+  }
+}
