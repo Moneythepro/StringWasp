@@ -1754,113 +1754,7 @@ body {
 /* =========================================================
  * INPUT BAR
  * ======================================================= */
-/* ✅ Chat Scroll Area */
-.chat-scroll-area {
-  overflow-y: auto;
-  height: calc(100vh - 72px); /* adjust based on input bar height */
-  padding: 16px 8px 8px;
-  box-sizing: border-box;
-}
 
-.chat-input-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  background: #fff;
-  border-top: 1px solid #ccc;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 999;
-  height: 72px; /* Slightly increased */
-  box-sizing: border-box;
-}
-
-/* 💬 Input container wrapper */
-.input-wrapper {
-  position: relative;
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-
-/* 💬 Text input */
-#threadInput {
-  width: 100%;
-  height: 48px;
-  padding: 10px 40px 10px 16px; /* padding-right leaves space for emoji button */
-  font-size: 15px;
-  border-radius: 24px;
-  border: 1px solid #ccc;
-  background: #f7f7f7;
-  color: #333;
-  font-family: 'Segoe UI', sans-serif;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
-  outline: none;
-}
-
-/* 😊 Emoji button inside input */
-#emojiToggleBtn {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 1.2rem;
-  background: none;
-  border: none;
-  color: #777;
-  cursor: pointer;
-  z-index: 2;
-}
-
-/* Icon Buttons (chat/mic) */
-.icon-btn {
-  background: none;
-  border: none;
-  padding: 8px;
-  font-size: 1.4rem;
-  color: #444;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-/* ✨ Focus style */
-#threadInput:focus {
-  border-color: #007aff;
-  background: #fff;
-  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
-}
-
-.icon-btn:hover {
-  background: #e0e0e0;
-  color: #333;
-}
-/* 🌙 Dark Mode */
-body.dark .chat-input-bar {
-  background: #1a1a1a;
-  border-top-color: #333;
-}
-body.dark #threadInput {
-  background: #1c1c1e;
-  color: #fff;
-  border-color: #3a3a3c;
-}
-body.dark #threadInput:focus {
-  border-color: #555;
-  background: #2c2c2e;
-}
-body.dark .icon-btn {
-  background: #2c2c2c;
-  color: #90ee90;
-}
-body.dark .icon-btn:hover {
-  background: #3a3a3a;
-  color: #a5f5a5;
-}
 
 /* =========================================================
  * RESPONSIVE
@@ -2083,4 +1977,127 @@ body.dark .icon-btn:hover {
 .toast.show {
   opacity: 1;
   transform: translateX(-50%) translateY(-10px);
+}
+/* ✅ Chat Scroll Area */
+.chat-scroll-area {
+  overflow-y: auto;
+  padding: 16px 8px 8px;
+  height: calc(100vh - 72px); /* Leave room for input bar */
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+}
+
+/* ✅ Chat Input Bar */
+.chat-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #fff;
+  border-top: 1px solid #ccc;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 72px;
+  z-index: 999;
+  box-sizing: border-box;
+}
+
+/* ✅ Icon Buttons (Reply, Mic, etc.) */
+.icon-btn {
+  background: none;
+  border: none;
+  padding: 8px;
+  font-size: 1.4rem;
+  color: #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.2s, color 0.2s;
+}
+
+.icon-btn:hover {
+  background: #e0e0e0;
+  color: #222;
+}
+
+/* ✅ Input + Emoji Wrapper */
+.input-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+/* ✅ Text Input */
+#threadInput {
+  width: 100%;
+  height: 48px;
+  padding: 10px 42px 10px 16px;
+  font-size: 15px;
+  border-radius: 24px;
+  border: 1px solid #ccc;
+  background: #f7f7f7;
+  color: #333;
+  font-family: 'Segoe UI', sans-serif;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+/* ✅ Focused Input */
+#threadInput:focus {
+  border-color: #007aff;
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.15);
+}
+
+/* ✅ Emoji Button (inside input) */
+#emojiToggleBtn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: #777;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  height: 28px;
+  width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+/* 🌙 Dark Mode Overrides */
+body.dark .chat-input-bar {
+  background: #1a1a1a;
+  border-top: 1px solid #333;
+}
+body.dark #threadInput {
+  background: #1c1c1e;
+  color: #fff;
+  border-color: #3a3a3c;
+}
+body.dark #threadInput:focus {
+  border-color: #555;
+  background: #2c2c2e;
+}
+body.dark .icon-btn {
+  background: #2c2c2c;
+  color: #90ee90;
+}
+body.dark .icon-btn:hover {
+  background: #3a3a3a;
+  color: #a5f5a5;
+}
+body.dark #emojiToggleBtn {
+  color: #ccc;
 }
