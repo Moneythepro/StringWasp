@@ -1961,27 +1961,27 @@ function decryptMsgText(msg) {
   let decrypted = "";
   let isDeleted = false;
 
-  if (typeof msg.text === "string") {
-    if (msg.text === "") {
-      isDeleted = true;
-      decrypted = "";
-    } else {
-      try {
-        const bytes = CryptoJS.AES.decrypt(msg.text, "yourSecretKey");
-        decrypted = bytes.toString(CryptoJS.enc.Utf8) || "[Encrypted]";
-      } catch {
-        decrypted = "[Decryption error]";
-      }
-    }
-  } else {
-    // 🔥 Defensive fix
-    decrypted = typeof msg.text === "object" ? JSON.stringify(msg.text) : String(msg.text);
-  }
-console.log("🧪 Decrypted:", decrypted, "Type:", typeof decrypted);
   const deletedHtml = `<i data-lucide="trash-2"></i> <span class="deleted-msg-label">Message deleted</span>`;
 
-  return { text: decrypted, isDeleted, deletedHtml };
-        }
+  if (typeof msg.text === "string") {
+    if (msg.text === "") {
+      return { text: "", isDeleted: true, deletedHtml };
+    }
+    try {
+      const bytes = CryptoJS.AES.decrypt(msg.text, "yourSecretKey");
+      decrypted = bytes.toString(CryptoJS.enc.Utf8);
+      if (!decrypted) decrypted = "[Encrypted]";
+    } catch (e) {
+      console.warn("Decryption failed:", e);
+      decrypted = "[Decryption error]";
+    }
+  } else {
+    // 🔥 force any unexpected type to string
+    decrypted = JSON.stringify(msg.text ?? "[Invalid text]");
+  }
+
+  return { text: decrypted, isDeleted: false, deletedHtml };
+}
 
 
 /* ---------------------------------------------------------
@@ -2053,11 +2053,13 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     const isSelf = msg.from === currentUser.uid;
     const { text, isDeleted, deletedHtml } = decryptMsgText(msg);
 
-    const displayText = typeof text === "string" ? text : String(text || "");
+    const rawText = typeof text === "string" ? text : String(text ?? "");
+    const displayText = escapeHtml(rawText);
     const emojiOnly = isEmojiOnlyText(displayText);
 
     const showPfp = msg._grp === "grp-start" || msg._grp === "grp-single";
     const prof = isSelf ? selfProfile : otherProfile;
+
     const pfpHtml = showPfp
       ? `<img class="bubble-pfp ${isSelf ? "pfp-self" : "pfp-other"}" src="${prof.avatar}" alt="${escapeHtml(prof.username)}" onclick="viewUserProfile('${isSelf ? currentUser.uid : otherUid}')">`
       : "";
@@ -2073,15 +2075,14 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       ? buildTickMeta(msg, otherUid)
       : buildOtherMeta(msg);
 
-    const textHtml = escapeHtml(displayText);
-    const shortText = textHtml.slice(0, 500);
-    const hasLong = textHtml.length > 500;
+    const shortText = displayText.slice(0, 500);
+    const hasLong = displayText.length > 500;
 
     const content = isDeleted
       ? deletedHtml
       : hasLong
         ? `${linkifyText(shortText)}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
-        : linkifyText(textHtml);
+        : linkifyText(displayText);
 
     let linkPreviewHTML = "";
     if (msg.preview) {
@@ -2098,7 +2099,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       }
     }
 
-    // 👉 Date divider
+    // 📆 Add date divider if needed
     let dateDivider = "";
     const msgDate = msg.timestamp?.toDate?.();
     if (msgDate) {
@@ -2115,6 +2116,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       frag.appendChild(divider);
     }
 
+    // 🧱 Bubble Wrapper
     const wrapper = document.createElement("div");
     wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}`;
     if (showPfp) wrapper.classList.add("has-pfp");
@@ -2134,10 +2136,10 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
         ${replyBox}
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
           <div class="msg-text-wrapper">
-            <div class="msg-text clamp-text" data-full="${textHtml}" data-short="${shortText}">
+            <div class="msg-text clamp-text" data-full="${escapeHtml(displayText)}" data-short="${escapeHtml(shortText)}">
               ${content}
             </div>
-            ${!isDeleted ? `<div class="msg-meta-inline-wrap">${meta}</div>` : ""}
+            ${!isDeleted ? meta : ""}
           </div>
           ${linkPreviewHTML}
         </div>
@@ -2159,7 +2161,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
     frag.appendChild(wrapper);
 
-    // Mark as seen
+    // ✅ Mark as seen
     if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
       db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
         .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
@@ -2181,7 +2183,6 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     }, 0);
   }
 }
-
 
 async function openThread(uid, name) {
   if (!currentUser || !uid) return;
