@@ -2402,6 +2402,14 @@ document.getElementById("chatOptionsMenu")?.addEventListener("click", e => e.sto
 // Open menu when clicking thread header username/avatar
 document.getElementById("threadHeaderInfo")?.addEventListener("click", toggleChatOptions);
 
+async function openThreadView(otherUid) {
+  const profile = await getUserProfileCached(otherUid);
+  document.getElementById("profilePicLarge").src = profile.avatar;
+  document.getElementById("profileFullName").textContent = profile.displayName || "No name";
+  document.getElementById("profileUsername").textContent = "@" + (profile.username || "unknown");
+  document.getElementById("profileGender").textContent = "Gender: " + (profile.gender || "Not set");
+}
+
 // Long press modal
 let selectedMessageForAction = null;
 
