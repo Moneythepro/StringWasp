@@ -2702,3 +2702,160 @@ body.dark .modal-content {
   color: #667781 !important;
   opacity: 0.9 !important;
 }
+
+/* === THREAD VIEW CONTAINER === */
+#threadView.thread-container {
+  position: fixed !important;
+  inset: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #fff !important;
+  z-index: 99 !important;
+  height: 100vh !important;
+}
+
+.thread-main {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* === HEADER === */
+.chat-header {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 56px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 10px !important;
+  background: #f0f0f0 !important;
+  border-bottom: 1px solid #ccc !important;
+  z-index: 100 !important;
+}
+
+/* === SCROLLABLE AREA === */
+.chat-scroll-area {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 6px 10px 12px !important;
+  background: #fafafa !important;
+  margin-top: 56px !important; /* header offset */
+  margin-bottom: 56px !important; /* input bar offset */
+}
+
+#threadMessages {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+/* === MESSAGE BUBBLE === */
+.message-bubble-wrapper {
+  display: flex !important;
+  align-items: flex-end !important;
+  gap: 4px !important;
+  margin: 2px 6px !important;
+}
+
+.message-bubble {
+  position: relative !important;
+  max-width: 85% !important;
+  padding: 6px 10px 18px 10px !important; /* extra bottom padding for meta */
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  flex-direction: column !important;
+  font-size: 13.5px !important;
+  line-height: 1.4 !important;
+  background: #dcf8c6 !important;
+}
+
+.message-bubble.left {
+  background: #fff !important;
+  border-radius: 0 8px 8px 8px !important;
+}
+
+.message-bubble.right {
+  background: #dcf8c6 !important;
+  border-radius: 8px 0 8px 8px !important;
+  margin-left: auto !important;
+}
+
+/* === META (time + ticks) === */
+.bubble-meta-inline {
+  position: absolute !important;
+  bottom: 4px !important;
+  right: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  font-size: 11px !important;
+  color: #667781 !important;
+  opacity: 0.85 !important;
+  white-space: nowrap !important;
+}
+
+.message-bubble.right .bubble-meta-inline {
+  color: #4fc3f7 !important;
+}
+
+.msg-ticks {
+  display: inline-flex !important;
+  gap: 2px !important;
+  align-items: center !important;
+}
+
+/* === INPUT BAR === */
+.chat-input-bar {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 12px !important;
+  background: #fff !important;
+  border-top: 1px solid #ddd !important;
+  height: 56px !important;
+  box-sizing: border-box !important;
+  z-index: 100 !important;
+}
+
+.chat-input-bar .input-wrapper {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  background: #fff !important;
+  border-radius: 20px !important;
+  border: 1px solid #ccc !important;
+  padding: 4px 10px !important;
+  height: 40px !important;
+}
+
+.chat-input-bar input {
+  flex: 1 !important;
+  border: none !important;
+  outline: none !important;
+  font-size: 15px !important;
+  background: transparent !important;
+  padding: 0 !important;
+  color: #111 !important;
+}
+
+.icon-btn {
+  width: 34px !important;
+  height: 34px !important;
+  background: none !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+}
