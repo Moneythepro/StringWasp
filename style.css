@@ -1912,6 +1912,7 @@ body {
 }
 
 /* Buttons */
+/* Buttons with shadows and animations */
 .chat-input-bar .icon-btn {
   background: none;
   border: none;
@@ -1925,12 +1926,24 @@ body {
   border-radius: 50%;
   height: 40px;
   width: 40px;
-  transition: background 0.2s, color 0.2s, transform 0.1s ease-in-out;
+  transition: 
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.1s ease-in-out,
+    box-shadow 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
+
 .chat-input-bar .icon-btn:hover {
   background: #f0f0f0;
   color: #000;
-  transform: scale(1.05);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.chat-input-bar .icon-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 /* Input wrapper */
