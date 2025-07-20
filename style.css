@@ -1885,46 +1885,7 @@ body {
 /* =========================================================
  * INPUT BAR
  * ======================================================= */
-.chat-input-bar {
-  display: flex;
-  align-items: center;
-  padding: 10px 12px;
-  gap: 8px;
-  border-top: 1px solid #ccc;
-  background: var(--inputbar-bg);
-}
-.chat-input-bar .icon-btn {
-  font-size: 18px;
-  color: #444;
-}
-#threadInput {
-  flex: 1;
-  padding: 10px 14px;
-  font-size: 16px;
-  border-radius: 20px;
-  border: 1px solid #ccc;
-  outline: none;
-  background: #fff;
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
-  font-family: var(--sw-font-stack);
-}
-#threadInput:focus {
-  border-color: var(--tick-seen-color);
-  background: #fff;
-  box-shadow: 0 0 0 2px rgba(79,195,247,.25);
-}
-#emojiToggleBtn { order: -1; }
-.emoji-btn {
-  margin-right: 4px;
-  cursor: pointer;
-  color: var(--fg-muted);
-  font-size: 1.4em;
-  display: flex;
-  align-items: center;
-}
-body.dark .chat-input-bar { background: var(--inputbar-bg); border-top-color: #333; }
-body.dark #threadInput { background: #222; color: #eee; border-color: #444; }
-body.dark .chat-input-bar .icon-btn { color: #bbb; }
+
 
 /* =========================================================
  * RESPONSIVE
@@ -2242,7 +2203,7 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
 
 /* === ✅ Input Bar (fixed) === */
 .chat-input-bar {
-  position: fixed;
+  position: flex;
   bottom: 0;
   left: 0;
   right: 0;
