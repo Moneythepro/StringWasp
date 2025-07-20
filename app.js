@@ -1094,20 +1094,27 @@ function escapeHtml(text) {
 }
 
 function timeSince(date) {
-  const seconds = Math.floor((new Date() - date) / 1000);
-  const intervals = [
-    { label: "year", seconds: 31536000 },
-    { label: "month", seconds: 2592000 },
-    { label: "day", seconds: 86400 },
-    { label: "hour", seconds: 3600 },
-    { label: "minute", seconds: 60 },
-    { label: "second", seconds: 1 }
-  ];
-  for (const i of intervals) {
-    const count = Math.floor(seconds / i.seconds);
-    if (count >= 1) return `${count} ${i.label}${count > 1 ? "s" : ""} ago`;
-  }
-  return "just now";
+  if (!(date instanceof Date)) return "";
+
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+function getDateLabel(date) {
+  const today = new Date();
+  const msgDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const nowDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  const diffTime = msgDate.getTime() - nowDate.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === -1) return "Yesterday";
+
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = date.toLocaleString("default", { month: "short" });
+  return `${day} ${month}`;
 }
 
 
@@ -2036,6 +2043,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
   }
 
   const frag = document.createDocumentFragment();
+  let lastDateLabel = null;
 
   for (const msg of msgs) {
     const isSelf = msg.from === currentUser.uid;
@@ -2081,11 +2089,27 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       }
     }
 
+    // 👉 Add date divider
+    let dateDivider = "";
+    const msgDate = msg.timestamp?.toDate?.();
+    if (msgDate) {
+      const label = getDateLabel(msgDate);
+      if (label !== lastDateLabel) {
+        lastDateLabel = label;
+        dateDivider = `<div class="date-divider">${label}</div>`;
+      }
+    }
+    if (dateDivider) {
+      const divider = document.createElement("div");
+      divider.className = "date-divider-wrapper";
+      divider.innerHTML = dateDivider;
+      frag.appendChild(divider);
+    }
+
     const wrapper = document.createElement("div");
     wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}`;
     if (showPfp) wrapper.classList.add("has-pfp");
 
-    // indent follow-up bubbles that *don't* show a pfp
     if (!showPfp) {
       const indent = "calc(var(--pfp-size) + var(--pfp-gap))";
       if (isSelf) wrapper.style.marginRight = indent;
@@ -2126,7 +2150,6 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
     frag.appendChild(wrapper);
 
-    // seen
     if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
       db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
         .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
@@ -2139,7 +2162,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
   if (typeof lucide !== "undefined") lucide.createIcons();
 
   if (isInitial) {
-    // handled elsewhere
+    // Initial scroll
   } else if (isNearBottom) {
     setTimeout(() => scrollToBottomThread(true), 40);
   } else if (typeof distFromBottom === "number") {
