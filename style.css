@@ -1754,54 +1754,66 @@ body {
 /* =========================================================
  * INPUT BAR
  * ======================================================= */
+
+/* 💬 Fixed Input Bar Container */
 .chat-input-bar {
   display: flex;
   align-items: center;
-  padding: 6px 8px;
   gap: 6px;
+  padding: 6px 10px;
+  background: var(--inputbar-bg, #fff);
   border-top: 1px solid #ccc;
-  background: var(--inputbar-bg);
-  position: relative;
+  position: fixed;         /* ✅ Make sure it's fixed */
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 68px;            /* ✅ Visible height */
+  z-index: 1000;           /* ✅ Ensure it's above other elements */
+  box-sizing: border-box;
 }
 
+/* 📝 Input Field: Expanded, padded, non-colliding */
 #threadInput {
   flex: 1;
-  padding: 10px 40px 10px 14px;
+  height: 48px;
+  padding: 0 44px 0 14px;   /* 🧩 Left for text, right space for emoji */
   font-size: 15px;
-  border-radius: 8px;
+  border-radius: 14px;
   border: 1px solid #d1d1d6;
   outline: none;
   background: #f9f9f9;
   color: #000;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
   position: relative;
 }
 
+/* ✨ Focused State */
 #threadInput:focus {
   border-color: #007aff;
   background: #fff;
   box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
 }
 
-/* 😊 Emoji Button - Fixed Size & Alignment */
+/* 😊 Emoji Button */
 #emojiToggleBtn {
+  position: absolute;
+  right: 18px;
+  bottom: 14px;
   background: none;
   border: none;
-  font-size: 1.5em;
+  font-size: 1.4em;
   cursor: pointer;
   color: #aaa;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px;
-  width: 38px;
-  height: 38px;
-  box-sizing: border-box;
+  z-index: 10;
 }
 
-/* 🎛️ Icon Buttons (mic, reply, etc.) */
+/* 🎛️ Icon Buttons (Mic, etc.) */
 .icon-btn {
   background: #f5f5f7;
   border: none;
@@ -1814,17 +1826,16 @@ body {
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
 }
-
 .icon-btn i {
   width: 20px;
   height: 20px;
 }
-
 .icon-btn:hover {
   background: #e0e0e0;
   color: #333;
 }
 
+/* 🌙 Dark Mode */
 body.dark .chat-input-bar {
   background: #1a1a1a;
   border-top-color: #333;
@@ -1846,8 +1857,9 @@ body.dark .icon-btn:hover {
   background: #3a3a3a;
   color: #a5f5a5;
 }
-
-
+body.dark #emojiToggleBtn {
+  color: #90ee90;
+}
 
 /* =========================================================
  * RESPONSIVE
