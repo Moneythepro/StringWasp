@@ -1975,8 +1975,8 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
   const otherProfile = await getUserProfileCached(otherUid);
 
   let distFromBottom;
+  area.innerHTML = "";
   if (!isInitial) distFromBottom = area.scrollHeight - area.scrollTop;
-  area.innerHTML = ""; // Always reset for fresh render
 
   const frag = document.createDocumentFragment();
   let lastDateLabel = null;
@@ -1991,6 +1991,14 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
     const replyBox = !isDeleted ? buildReplyStrip(msg) : "";
     const meta = isSelf && !isDeleted ? buildTickMeta(msg, otherUid) : buildOtherMeta(msg);
+    const shortText = displayText.slice(0, 500);
+    const hasLong = displayText.length > 500;
+
+    const content = isDeleted
+      ? deletedHtml
+      : hasLong
+        ? `${linkifyText(shortText)}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
+        : linkifyText(displayText);
 
     // Date divider
     const msgDate = msg.timestamp?.toDate?.();
@@ -2005,26 +2013,20 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       }
     }
 
-    const shortText = displayText.slice(0, 500);
-    const hasLong = displayText.length > 500;
-    const content = isDeleted
-      ? deletedHtml
-      : hasLong
-        ? `${linkifyText(shortText)}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
-        : linkifyText(displayText);
-
     // Bubble
     const wrapper = document.createElement("div");
     wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}`;
 
+    const editedTag = msg.edited ? `<span class="edited-tag">edited</span>` : "";
+
     wrapper.innerHTML = `
-      <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""}">
+      <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""}" data-msg-id="${msg.id}">
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
           ${replyBox}
           <div class="msg-text-wrapper" style="position: relative; padding-bottom: 18px;">
             <div class="msg-text clamp-text">${content}</div>
-            <div class="bubble-meta-inline" style="position: absolute; bottom: 2px; right: 4px;">
-              <span class="meta-time-tick">${meta}</span>
+            <div class="bubble-meta-inline" style="position: absolute; bottom: 4px; right: 6px;">
+              <span class="meta-time-tick">${meta}</span> ${editedTag}
             </div>
           </div>
         </div>
@@ -2033,7 +2035,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
     frag.appendChild(wrapper);
 
-    // Mark as seen
+    // Mark seen
     if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
       db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
         .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
@@ -2044,10 +2046,11 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
   area.appendChild(frag);
 
   if (typeof lucide !== "undefined") lucide.createIcons();
-  setTimeout(() => {
-    if (isNearBottom || isInitial) scrollToBottomThread(true);
-    else if (typeof distFromBottom === "number") area.scrollTop = area.scrollHeight - distFromBottom;
-  }, 40);
+  if (isNearBottom || isInitial) {
+    setTimeout(() => scrollToBottomThread(true), 40);
+  } else if (typeof distFromBottom === "number") {
+    setTimeout(() => { area.scrollTop = area.scrollHeight - distFromBottom; }, 0);
+  }
 }
 
 async function openThread(uid, name) {
@@ -2139,9 +2142,8 @@ async function openThread(uid, name) {
  * ======================================================= */
 function renderMessage(msg, isOwn) {
   const { text, isDeleted, deletedHtml } = decryptMsgText(msg);
-  const escaped = escapeHtml(text || "");
+  const escaped = escapeHtml(text);
   const authorName = escapeHtml(msg.fromName || "User");
-
   const authorHtml = `<div class="msg-author">${usernameWithBadge(msg.from, authorName)}</div>`;
   const replyHtml = msg.replyTo && !isDeleted
     ? `<div class="reply-to">${escapeHtml(msg.replyTo.text || "")}</div>`
@@ -2150,6 +2152,10 @@ function renderMessage(msg, isOwn) {
   const meta = isOwn && !isDeleted
     ? buildTickMeta(msg, currentThreadUser)
     : buildOtherMeta(msg);
+
+  const linkPreviewHtml = msg.preview && !isDeleted
+    ? buildLinkPreviewHTML(msg.preview, msg.preview.url)
+    : "";
 
   const bodyHtml = isDeleted ? deletedHtml : linkifyText(escaped);
   const emojiOnly = isEmojiOnlyText(text) ? "emoji-only" : "";
@@ -2160,12 +2166,11 @@ function renderMessage(msg, isOwn) {
         ${!isOwn ? authorHtml : ""}
         ${replyHtml}
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
-          <div class="msg-text-wrapper" style="position: relative; padding-bottom: 18px;">
+          <div class="msg-text-wrapper">
             <span class="msg-text">${bodyHtml}</span>
-            <div class="bubble-meta-inline" style="position: absolute; bottom: 2px; right: 4px;">
-              ${!isDeleted ? meta : ""}
-            </div>
+            ${!isDeleted ? `<div class="bubble-meta-inline">${meta}</div>` : ""}
           </div>
+          ${linkPreviewHtml}
         </div>
       </div>
     </div>
