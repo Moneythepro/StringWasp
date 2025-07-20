@@ -2147,3 +2147,12 @@ main, .thread-main {
 .chat-input-bar {
   background: red !important; /* test visibility */
 }
+
+#threadInput {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  height: 40px !important;
+  width: 100% !important;
+  border: 1px solid red;
+}
