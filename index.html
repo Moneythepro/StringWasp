@@ -117,6 +117,7 @@
       <button onclick="logout()">Logout</button>
       <button onclick="contactSupport()">Contact Us</button>
     </div>
+    
 <!-- 💬 Thread View -->
 <div id="threadView" class="thread-container tab" role="region" style="display:none;">
   <header class="chat-header">
@@ -150,18 +151,19 @@
   </div>
 
   <!-- ✅ Chat Input Bar (Fixed at Bottom) -->
-  <footer class="chat-input-bar">
-    <!-- Custom Reply Modal Button -->
-    <button class="icon-btn" onclick="openReplyModal()" aria-label="Reply Modal">
-      <i data-lucide="message-square"></i>
-    </button>
+<footer class="chat-input-bar">
+  <!-- Reply Modal Button -->
+  <button class="icon-btn" onclick="openReplyModal()" aria-label="Reply Modal">
+    <i data-lucide="message-square"></i>
+  </button>
 
-    <!-- Microphone Button -->
-    <button class="icon-btn" onclick="startVoiceInput()" aria-label="Voice Message">
-      <i data-lucide="mic"></i>
-    </button>
+  <!-- Microphone Button -->
+  <button class="icon-btn" onclick="startVoiceInput()" aria-label="Voice Message">
+    <i data-lucide="mic"></i>
+  </button>
 
-    <!-- Message Input -->
+  <!-- Input Wrapper (input + emoji) -->
+  <div class="input-wrapper">
     <input
       id="threadInput"
       type="text"
@@ -171,12 +173,11 @@
       enterkeyhint="send"
       aria-label="Message input"
     />
-
-    <!-- Emoji Button -->
     <button class="icon-btn emoji-btn" id="emojiToggleBtn" aria-label="Emoji">
       <i data-lucide="smile"></i>
     </button>
-  </footer>
+  </div>
+</footer>
 </div>
 
 <!-- ✅ Message Options Modal -->
