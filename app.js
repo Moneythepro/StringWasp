@@ -2136,9 +2136,9 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
         ${replyBox}
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
           <div class="msg-text-wrapper">
+            ${!isDeleted ? `<div class="bubble-meta-top">${meta}</div>` : ""}
             <div class="msg-text clamp-text" data-full="${escapeHtml(displayText)}" data-short="${escapeHtml(shortText)}">
               ${content}
-              ${!isDeleted ? `<span class="meta-inline-wrap">${meta}</span>` : ""}
             </div>
           </div>
           ${linkPreviewHTML}
