@@ -2537,3 +2537,126 @@ body.dark .modal-content {
   outline: none !important;
   background: #fff !important;
 }
+
+/* ===== CHAT SCROLL AREA ===== */
+.chat-scroll-area {
+  position: absolute !important;
+  top: 56px !important;     /* Header height */
+  bottom: 60px !important;  /* Input bar height */
+  left: 0 !important;
+  right: 0 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  background: #fafafa !important;
+  padding: 0 8px 8px !important;
+}
+
+/* ===== MESSAGE BUBBLE ===== */
+.message-bubble {
+  position: relative !important;
+  max-width: 85% !important;
+  padding: 6px 10px 18px 10px !important; /* bottom space for meta */
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  word-break: break-word !important;
+  display: inline-flex !important;
+  flex-direction: column !important;
+  transition: all 0.25s ease !important;
+}
+
+.message-bubble.left {
+  background: #fff !important;
+  border-radius: 0 8px 8px 8px !important;
+}
+
+.message-bubble.right {
+  background: #dcf8c6 !important;
+  border-radius: 8px 0 8px 8px !important;
+  margin-left: auto !important;
+}
+
+/* ===== BUBBLE META ===== */
+.bubble-meta-inline {
+  position: absolute !important;
+  bottom: 4px !important;
+  right: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  font-size: 11px !important;
+  color: #667781 !important;
+  opacity: 0.85 !important;
+}
+
+.message-bubble.right .bubble-meta-inline {
+  color: #4fc3f7 !important;
+}
+
+/* ===== CHAT INPUT BAR ===== */
+.chat-input-bar {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 8px 12px !important;
+  gap: 8px !important;
+  background: #fff !important;
+  border-top: 1px solid #ccc !important;
+  height: 60px !important;
+  box-sizing: border-box !important;
+  z-index: 100 !important;
+}
+
+.left-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.input-wrapper {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  background: #fff !important;
+  border: 1px solid #ddd !important;
+  border-radius: 20px !important;
+  padding: 4px 10px !important;
+  height: 40px !important;
+  gap: 4px !important;
+}
+
+#threadInput {
+  flex: 1 !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  font-size: 15px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  height: 100% !important;
+  color: #111 !important;
+}
+
+.icon-btn {
+  background: none !important;
+  border: none !important;
+  padding: 6px !important;
+  width: 34px !important;
+  height: 34px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 18px !important;
+  color: #444 !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  transition: background 0.2s ease !important;
+}
+
+.icon-btn:hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+}
