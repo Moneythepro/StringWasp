@@ -1962,31 +1962,26 @@ function decryptMsgText(msg) {
   let isDeleted = false;
 
   if (typeof msg.text === "string") {
-    if (msg.text.trim() === "") {
+    if (msg.text === "") {
       isDeleted = true;
       decrypted = "";
     } else {
       try {
         const bytes = CryptoJS.AES.decrypt(msg.text, "yourSecretKey");
-        decrypted = bytes.toString(CryptoJS.enc.Utf8);
-        if (!decrypted) decrypted = "[Encrypted]";
-      } catch (err) {
+        decrypted = bytes.toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+      } catch {
         decrypted = "[Decryption error]";
       }
     }
   } else {
-    decrypted = "[Invalid text]";
+    // 🔥 Defensive fix
+    decrypted = typeof msg.text === "object" ? JSON.stringify(msg.text) : String(msg.text);
   }
+console.log("🧪 Decrypted:", decrypted, "Type:", typeof decrypted);
+  const deletedHtml = `<i data-lucide="trash-2"></i> <span class="deleted-msg-label">Message deleted</span>`;
 
-  const deletedHtml =
-    '<i data-lucide="trash-2"></i> <span class="deleted-msg-label">Message deleted</span>';
-
-  return {
-    text: String(decrypted), // guarantee string
-    isDeleted,
-    deletedHtml,
-  };
-}
+  return { text: decrypted, isDeleted, deletedHtml };
+        }
 
 
 /* ---------------------------------------------------------
