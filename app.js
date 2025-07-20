@@ -1,4 +1,4 @@
-// ====== StringWasp App.js Final Unified Version ======
+// ====== StringWasp App.js PocketBase Version ======
 
 // 🔐 UUID Generator
 function uuidv4() {
@@ -7,29 +7,17 @@ function uuidv4() {
   );
 }
 
-// ===== Firebase & Storage Init =====
-const auth = firebase.auth();
-const db = firebase.firestore();
-const storage = firebase.storage();
+// ===== PocketBase Init =====
+const pb = new PocketBase("https://your-pocketbase-url");  // Change this
+let currentUser = pb.authStore.model;
 
 // ===== Invite Link via URL =====
 const urlParams = new URLSearchParams(window.location.search);
 const joinGroupId = urlParams.get("join");
 
-// ===== WebTorrent Init =====
-let client = null;
-
 // ===== Global State =====
-let currentUser = null;
 let currentRoom = null;
 let currentThreadUser = null;
-let lastThreadId = null;
-let unsubscribeMessages = null;
-let unsubscribeThread = null;
-let unsubscribeInbox = null;
-let unsubscribeTyping = null;
-let unsubscribeThreads = null;
-let unsubscribeGroups = null;
 
 // ===== Loading Overlay =====
 function showLoading(message = "Loading...") {
@@ -38,211 +26,108 @@ function showLoading(message = "Loading...") {
   if (overlay) overlay.style.display = "flex";
   if (text) text.textContent = message;
 }
-
 function hideLoading() {
   const overlay = document.getElementById("loadingOverlay");
   if (overlay) overlay.style.display = "none";
 }
-
 function switchTab(tabId) {
   document.querySelectorAll(".tab").forEach(t => t.style.display = "none");
-
   const selected = document.getElementById(tabId);
   if (selected) selected.style.display = "block";
-
-  // ✅ Hide 3-dot chat options menu
   const menu = document.getElementById("chatOptionsMenu");
   if (menu) menu.classList.remove("show");
-
-  // ✅ Optionally hide keyboard on mobile
   document.activeElement?.blur?.();
 }
 
 // ===== Login/Register =====
-function login() {
+async function login() {
   const email = document.getElementById("email")?.value.trim();
   const password = document.getElementById("password")?.value.trim();
 
-  if (!email || !password) {
-    alert("Please enter both email and password.");
-    return;
-  }
+  if (!email || !password) return alert("Please enter both email and password.");
 
   showLoading("Logging in...");
-
-  auth.signInWithEmailAndPassword(email, password)
-    .then(() => {
-      console.log("✅ Logged in");
-    })
-    .catch(err => {
-      console.error("❌ Login failed:", err.message);
-      alert("❌ Login failed: " + err.message);
-    })
-    .finally(hideLoading);
-}
-
-function register() {
-  const email = document.getElementById("email")?.value.trim();
-  const password = document.getElementById("password")?.value.trim();
-
-  if (!email || !password) {
-    alert("Please enter both email and password.");
-    return;
-  }
-
-  showLoading("Creating account...");
-
-  auth.createUserWithEmailAndPassword(email, password)
-    .then(() => {
-      console.log("✅ Registered");
-      switchTab("usernameDialog");
-      setTimeout(() => document.getElementById("newUsername")?.focus(), 100);
-    })
-    .catch(err => {
-      console.error("❌ Registration failed:", err.message);
-      alert("❌ Registration failed: " + err.message);
-    })
-    .finally(hideLoading);
-}
-
-function saveUsername() {
-  const username = document.getElementById("newUsername")?.value.trim();
-
-  if (!username) {
-    alert("Please enter a username.");
-    return;
-  }
-
-  showLoading("Saving username...");
-
-  db.collection("users").doc(currentUser.uid).set({
-    username,
-    email: currentUser.email,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true })
-    .then(() => {
-      document.getElementById("usernameDisplay").textContent = username;
-      loadMainUI();
-    })
-    .catch(err => {
-      console.error("❌ Username save error:", err.message);
-      alert("❌ Failed to save username");
-    })
-    .finally(hideLoading);
-}
-
-function checkUsername() {
-  showLoading("Checking profile...");
-
-  db.collection("users").doc(currentUser.uid).get()
-    .then(doc => {
-      const data = doc.data();
-      if (!doc.exists || !data?.username) {
-        switchTab("usernameDialog");
-      } else {
-        document.getElementById("usernameDisplay").textContent = data.username;
-        loadMainUI();
-      }
-    })
-    .catch(err => {
-      console.error("❌ Username check failed:", err.message);
-      alert("❌ Failed to load user profile.");
-    })
-    .finally(hideLoading);
-}
-
-// ===== Main App Load UI =====
-function loadMainUI() {
-  showLoading("Loading your dashboard...");
-
-  const appPage = document.getElementById("appPage");
-  if (appPage) appPage.style.display = "block";
-
-  loadProfile(() => {
-    try { loadChatList(); } catch (e) { console.warn("⚠️ Chats failed", e); }
-    try { loadFriends(); } catch (e) { console.warn("⚠️ Friends failed", e); }
-    try { loadGroups?.(); } catch (e) { console.warn("⚠️ Groups skipped", e); }
-    try { listenInbox(); } catch (e) { console.warn("⚠️ Inbox failed", e); }
-
-    switchTab("chatTab");
-
-    // Ensure Lucide icons are refreshed globally
-    if (typeof lucide !== "undefined") lucide.createIcons();
-
-    setTimeout(hideLoading, 300);
-  });
-}
-
-auth.onAuthStateChanged(async user => {
-  if (!user) {
-    switchTab("loginPage");
-    hideLoading();
-    return;
-  }
-
-  currentUser = user;
-  const userRef = db.collection("users").doc(user.uid);
-
   try {
-    // ✅ Mark user as online
-    await userRef.update({
-      status: "online",
-      lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    // ✅ Update last seen on tab close
-    window.addEventListener("beforeunload", () => {
-      try {
-        userRef.update({
-          status: "offline",
-          lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      } catch (e) {
-        console.warn("⚠️ Unload update failed");
-      }
-    });
-
-    // ✅ Get user document
-    const doc = await userRef.get();
-    const data = doc.data();
-
-    if (!data?.username) {
-      switchTab("usernameDialog");
-      hideLoading();
-      return;
-    }
-
-    // ✅ Show username with badge
-    const usernameDisplay = document.getElementById("usernameDisplay");
-    if (usernameDisplay) {
-      usernameDisplay.innerHTML = usernameWithBadge(user.uid, data.username || "User");
-      if (typeof lucide !== "undefined") lucide.createIcons();
-    }
-
-    // ✅ Avatar edit trigger
-    const label = document.querySelector(".profile-edit-label");
-    if (label) label.onclick = () => document.getElementById("profilePic")?.click();
-
-    loadMainUI();
-
-    // ✅ Handle group invite via joinGroupId (optional)
-    if (joinGroupId) {
-      try {
-        await tryJoinGroup(joinGroupId);
-      } catch (e) {
-        console.warn("⚠️ Auto group join failed:", e);
-      }
-    }
-
-    switchTab("chatTab");
-
+    const authData = await pb.collection('users').authWithPassword(email, password);
+    currentUser = authData.record;
+    console.log("✅ Logged in:", currentUser);
+    checkUsername();
   } catch (err) {
-    console.error("❌ Failed to load user:", err.message);
-    alert("❌ Could not load user info: " + (err.message || "Unknown error"));
+    console.error("❌ Login failed:", err.message || err);
+    alert("❌ Login failed: " + err.message);
   } finally {
     hideLoading();
   }
-});
+}
+
+async function register() {
+  const email = document.getElementById("email")?.value.trim();
+  const password = document.getElementById("password")?.value.trim();
+
+  if (!email || !password) return alert("Please enter both email and password.");
+
+  showLoading("Creating account...");
+  try {
+    await pb.collection('users').create({ email, password, passwordConfirm: password });
+    alert("✅ Registered successfully! Please login.");
+    switchTab("loginPage");
+  } catch (err) {
+    console.error("❌ Registration failed:", err.message || err);
+    alert("❌ Registration failed: " + err.message);
+  } finally {
+    hideLoading();
+  }
+}
+
+async function saveUsername() {
+  const username = document.getElementById("newUsername")?.value.trim();
+  if (!username) return alert("Please enter a username.");
+
+  showLoading("Saving username...");
+  try {
+    await pb.collection('users').update(currentUser.id, {
+      username,
+      email: currentUser.email
+    });
+    currentUser.username = username;
+    document.getElementById("usernameDisplay").textContent = username;
+    loadMainUI();
+  } catch (err) {
+    console.error("❌ Username save error:", err.message || err);
+    alert("❌ Failed to save username");
+  } finally {
+    hideLoading();
+  }
+}
+
+async function checkUsername() {
+  if (!currentUser) {
+    switchTab("loginPage");
+    return;
+  }
+  showLoading("Checking profile...");
+  try {
+    const userData = await pb.collection('users').getOne(currentUser.id);
+    currentUser = userData;
+    if (!userData.username) {
+      switchTab("usernameDialog");
+    } else {
+      document.getElementById("usernameDisplay").textContent = userData.username;
+      loadMainUI();
+    }
+  } catch (err) {
+    console.error("❌ Username check failed:", err.message || err);
+    alert("❌ Failed to load user profile.");
+  } finally {
+    hideLoading();
+  }
+}
+
+function logout() {
+  pb.authStore.clear();
+  currentUser = null;
+  switchTab("loginPage");
+}
 
 // ===== Save Profile Data =====
 function saveProfile() {
