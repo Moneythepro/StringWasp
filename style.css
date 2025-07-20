@@ -1928,7 +1928,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 10px;
+  padding: 10px 12px;
   background: var(--inputbar-bg, #fff);
   border-top: 1px solid #ddd;
   position: fixed;
@@ -1936,15 +1936,16 @@ body {
   left: 0;
   right: 0;
   z-index: 999;
+  height: 78px; /* 🔧 Fixes layout shift & padding */
 }
 
-/* 📌 Unified Thread Input */
+/* Input styling */
 #threadInput {
   flex: 1;
-  height: 64px; /* 🔼 Increased from 56px */
-  padding: 0 20px 0 16px;
-  font-size: 17px;
-  border-radius: 30px;
+  height: 56px; /* 🔼 More vertical space */
+  padding: 0 16px;
+  font-size: 16px;
+  border-radius: 28px;
   border: 1.5px solid #ccc;
   outline: none;
   background: #fff;
@@ -1952,8 +1953,8 @@ body {
   font-family: 'Segoe UI', sans-serif;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
-  margin-right: 42px;
 }
+
 
 /* 🧼 Clean Focus — no ugly glow */
 #threadInput:focus {
