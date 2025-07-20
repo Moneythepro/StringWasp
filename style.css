@@ -2455,3 +2455,17 @@ body.dark {
   color: #eee;
 }
 
+body.dark .bubble-meta-top {
+  color: #bbb;
+}
+.bubble-meta-top {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-size: 11px;
+  color: var(--fg-muted, #999);
+  opacity: 0.8;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
