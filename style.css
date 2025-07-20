@@ -1925,11 +1925,28 @@ body {
  * INPUT BAR
  * ======================================================= */
 /* 🧼 Main Input Bar Container */
+/* 🧼 Full Page Setup */
+body, html {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 📜 Chat Scrollable Area */
+.chat-scroll-area {
+  overflow-y: auto;
+  height: calc(100vh - 64px); /* Adjusted for reduced input bar */
+  padding: 16px 8px 8px; /* Minimal bottom padding */
+}
+
+/* 💬 Input Bar Container */
 .chat-input-bar {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   background: var(--inputbar-bg, #fff);
   border-top: 1px solid #ddd;
   position: fixed;
@@ -1937,17 +1954,17 @@ body {
   left: 0;
   right: 0;
   z-index: 999;
-  height: 70px; /* 🔧 Fixed height */
+  height: 64px; /* 🔽 Reduced height */
   box-sizing: border-box;
 }
 
-/* 📝 Input Field: Taller, Non-Colliding, Clean */
+/* ✏️ Input Field: Rectangular w/ iOS-smooth edges */
 #threadInput {
   flex: 1;
-  height: 50px;
-  padding: 0 16px;
-  font-size: 16px;
-  border-radius: 28px;
+  height: 42px;
+  padding: 0 14px;
+  font-size: 15px;
+  border-radius: 14px; /* iOS-style smooth corners */
   border: 1.5px solid #ccc;
   outline: none;
   background: #fff;
@@ -1957,27 +1974,30 @@ body {
   box-sizing: border-box;
 }
 
-/* ☑️ Consistent Focus State */
+/* ☑️ Focus State - Clean & No glow */
 #threadInput:focus {
   border-color: #888;
   background: #fff;
   box-shadow: none;
 }
 
-/* 😄 Emoji Toggle (Right-side Button) */
+/* 😊 Emoji Button - Fixed Size & Alignment */
 #emojiToggleBtn {
   background: none;
   border: none;
-  font-size: 1.6em;
+  font-size: 1.5em;
   cursor: pointer;
   color: #aaa;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 8px;
+  width: 38px;
+  height: 38px;
+  box-sizing: border-box;
 }
 
-/* 🎛️ Icon Buttons (Mic, Reply, etc.) */
+/* 🎛️ Icon Buttons (mic, reply, etc.) */
 .icon-btn {
   background: #f5f5f7;
   border: none;
