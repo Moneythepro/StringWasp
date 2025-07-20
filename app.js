@@ -2054,7 +2054,9 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
   for (const msg of msgs) {
     const isSelf = msg.from === currentUser.uid;
-    const { text: displayText, isDeleted, deletedHtml } = decryptMsgText(msg);
+    const { text, isDeleted, deletedHtml } = decryptMsgText(msg);
+
+    const displayText = typeof text === "string" ? text : JSON.stringify(text || "");
     const emojiOnly = isEmojiOnlyText(displayText);
 
     const showPfp = msg._grp === "grp-start" || msg._grp === "grp-single";
@@ -2077,9 +2079,12 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     const textHtml = escapeHtml(displayText);
     const shortText = textHtml.slice(0, 500);
     const hasLong = textHtml.length > 500;
-    const content = hasLong
-      ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
-      : linkifyText(textHtml);
+
+    const content = isDeleted
+      ? deletedHtml
+      : hasLong
+        ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
+        : linkifyText(textHtml);
 
     let linkPreviewHTML = "";
     if (msg.preview) {
@@ -2133,7 +2138,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
           <div class="msg-text-wrapper">
             <div class="msg-text clamp-text" data-full="${textHtml}" data-short="${shortText}">
-              ${isDeleted ? deletedHtml : content}
+              ${content}
               ${!isDeleted ? `<span class="meta-inline-wrap">${meta}</span>` : ""}
             </div>
           </div>
@@ -2157,6 +2162,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
     frag.appendChild(wrapper);
 
+    // ✅ Mark as seen
     if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
       db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
         .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
@@ -2169,7 +2175,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
   if (typeof lucide !== "undefined") lucide.createIcons();
 
   if (isInitial) {
-    // Initial scroll
+    // Skip scroll
   } else if (isNearBottom) {
     setTimeout(() => scrollToBottomThread(true), 40);
   } else if (typeof distFromBottom === "number") {
