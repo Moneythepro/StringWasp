@@ -1,4 +1,4 @@
-const CACHE_NAME = "stringwasp-v1.3"; // Bump version to force update
+const CACHE_NAME = "stringwasp-v1.3"; // Increment version to force updates
 const urlsToCache = [
   "/",
   "/index.html",
@@ -8,46 +8,57 @@ const urlsToCache = [
   "/manifest.json",
   "/favicon.png",
   "/notif.mp3",
-  "/verified.json", // Ensure badge data is cached
+  "/verified.json", // Badge data
   "https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js",
   "https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js",
   "https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js",
   "https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"
 ];
 
-// Install and cache essential files
+// Install: Cache essential files
 self.addEventListener("install", (event) => {
+  console.log("[SW] Install event");
   self.skipWaiting(); // Activate immediately
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(urlsToCache))
+      .then(() => console.log("[SW] Cached all core assets"))
   );
 });
 
-// Fetch strategy: always fetch the latest verified.json
+// Fetch: Cache-first strategy except for verified.json
 self.addEventListener("fetch", (event) => {
   const requestURL = new URL(event.request.url);
 
   // Always bypass cache for verified.json
   if (requestURL.pathname.endsWith("verified.json")) {
     event.respondWith(
-      fetch(event.request, { cache: "no-store" }).catch(() => caches.match("/verified.json"))
+      fetch(event.request, { cache: "no-store" })
+        .catch(() => caches.match("/verified.json"))
     );
     return;
   }
 
   // Cache-first for all other requests
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+    caches.match(event.request).then((cachedResponse) => {
+      return cachedResponse || fetch(event.request);
     })
   );
 });
 
-// Activate and remove old caches
+// Activate: Remove old caches
 self.addEventListener("activate", (event) => {
+  console.log("[SW] Activate event");
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
+      Promise.all(
+        keys.filter((key) => key !== CACHE_NAME)
+          .map((key) => {
+            console.log("[SW] Deleting old cache:", key);
+            return caches.delete(key);
+          })
+      )
     )
   );
   self.clients.claim();
