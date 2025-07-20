@@ -2342,3 +2342,197 @@ body.dark .meta-inline-wrap {
   opacity: 0.7;
   margin-right: 4px;
 }
+
+/* === Bubble Wrapper === */
+.message-bubble-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 0;
+  padding: 0;
+}
+.message-bubble-wrapper.right {
+  align-items: flex-end;
+}
+
+/* === Bubble === */
+.message-bubble {
+  max-width: var(--bubble-max-width);
+  padding: var(--bubble-padding);
+  margin: var(--bubble-gap-y) 0;
+  font-size: var(--bubble-font-size);
+  line-height: var(--bubble-line-height);
+  background: var(--other-bubble-bg-grad);
+  border-radius: var(--bubble-radius-left);
+  box-shadow: var(--bubble-shadow);
+  word-break: break-word;
+  display: inline-block;
+  position: relative;
+  transition: background var(--bubble-anim-duration) var(--bubble-anim-ease);
+}
+.message-bubble.right {
+  background: var(--self-bubble-bg-grad);
+  border-radius: var(--bubble-radius-right);
+  margin-left: auto;
+}
+.message-bubble.left {
+  margin-right: auto;
+}
+
+/* === Message Content === */
+.msg-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0;
+}
+.msg-inner-wrapper {
+  display: inline-block;
+  max-width: 100%;
+}
+.msg-text-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+/* === Text === */
+.msg-text {
+  font-size: var(--msg-font-size);
+  line-height: var(--msg-line-height);
+  white-space: pre-wrap;
+  word-break: break-word;
+  display: inline;
+  margin: 0;
+  padding: 0;
+}
+.msg-text img.emoji {
+  height: 1.2em;
+  vertical-align: middle;
+}
+
+/* === Meta: Timestamps + Ticks === */
+.msg-meta-inline {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--meta-font-size);
+  color: var(--meta-color);
+  gap: 3px;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+.msg-meta-inline[data-status="seen"] {
+  color: var(--tick-seen-color);
+}
+.tick-icon {
+  width: var(--tick-size);
+  height: var(--tick-size);
+  vertical-align: middle;
+}
+.edited-tag {
+  font-size: var(--meta-font-size);
+  opacity: 0.6;
+  margin-right: 3px;
+}
+
+/* === Avatar === */
+.bubble-pfp {
+  width: var(--pfp-size);
+  height: var(--pfp-size);
+  border-radius: 50%;
+  margin: 0 var(--pfp-gap);
+  object-fit: cover;
+}
+
+/* === Reply Strip === */
+.reply-to {
+  font-size: var(--reply-font-size);
+  color: var(--reply-color);
+  background: var(--reply-bg);
+  padding: 3px 6px;
+  border-left: 2px solid var(--reply-border-color);
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* === Date Divider === */
+.date-divider-wrapper {
+  text-align: center;
+  font-size: 11px;
+  color: #777;
+  margin: 6px 0 4px;
+}
+.date-divider {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #eee;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* === Input Bar === */
+.chat-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--inputbar-bg);
+  border-top: 1px solid #ccc;
+}
+.chat-input-bar input {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 14px;
+  border-radius: 18px;
+  border: 1px solid #ccc;
+  outline: none;
+}
+.chat-input-bar .icon-btn {
+  font-size: 17px;
+  color: #444;
+  padding: 4px;
+}
+
+/* === Emoji Button === */
+.emoji-btn {
+  font-size: 1.3em;
+  margin-right: 2px;
+  cursor: pointer;
+  color: var(--fg-muted);
+  display: flex;
+  align-items: center;
+}
+
+/* === Dark Mode Overrides === */
+body.dark {
+  --self-bubble-bg-grad: linear-gradient(180deg, #2e3a2f 0%, #1f2a20 100%);
+  --other-bubble-bg-grad: linear-gradient(180deg, #1e1e1e 0%, #2b2b2b 100%);
+  --meta-color: #aaa;
+  --reply-bg: #333;
+  --reply-color: #ccc;
+  --reply-border-color: #666;
+  --inputbar-bg: #111;
+  background: #0e0e0e;
+  color: #eee;
+}
+body.dark .chat-input-bar input {
+  background: #222;
+  color: #eee;
+  border-color: #444;
+}
+
+/* === Responsive === */
+@media (max-width: 480px) {
+  .chat-input-bar {
+    padding: 5px 8px;
+  }
+  .chat-input-bar input {
+    font-size: 13px;
+    padding: 7px 9px;
+  }
+}
