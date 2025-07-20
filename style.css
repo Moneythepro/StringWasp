@@ -1885,7 +1885,7 @@ body {
 /* =========================================================
  * INPUT BAR
  * ======================================================= */
-/* === INPUT BAR FIXED === */
+/* === Chat Input Bar === */
 .chat-input-bar {
   position: fixed;
   bottom: 0;
@@ -1903,13 +1903,13 @@ body {
   gap: 10px;
 }
 
-/* Left side icons */
+/* Left actions (reply, mic) */
 .chat-input-bar .left-actions {
   display: flex;
   gap: 8px;
 }
 
-/* Icon buttons */
+/* Buttons */
 .chat-input-bar .icon-btn {
   background: none;
   border: none;
@@ -1943,7 +1943,7 @@ body {
   overflow: hidden;
 }
 
-/* Actual input field */
+/* Input field */
 #threadInput {
   flex: 1;
   height: 44px;
@@ -1961,16 +1961,17 @@ body {
   opacity: 1 !important;
 }
 
-/* Emoji button */
+/* Emoji Button */
 .emoji-btn {
   cursor: pointer;
   font-size: 1.4rem;
   display: flex;
   align-items: center;
   color: var(--fg-muted, #888);
+  margin-left: 4px;
 }
 
-/* Dark mode */
+/* Dark Mode */
 body.dark .chat-input-bar {
   background: #1a1a1a;
   border-top-color: #333;
@@ -1987,14 +1988,13 @@ body.dark .icon-btn:hover {
 }
 body.dark #threadInput {
   color: #fff;
-  background: transparent;
 }
 
-/* Scrollable chat area with space for input */
+/* Chat Scroll Area */
 .chat-scroll-area {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 84px; /* leave room for fixed input */
+  padding-bottom: 84px; /* space for input bar */
 }
 
 /* Full height layout */
@@ -2003,6 +2003,7 @@ html, body {
   margin: 0;
   padding: 0;
 }
+
 main, .thread-main {
   display: flex;
   flex-direction: column;
