@@ -2300,3 +2300,38 @@ body.dark .date-divider {
   background: #222;
   color: #aaa;
 }
+
+/* === INLINE META (timestamp + tick) === */
+.meta-inline-wrap {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72em;
+  opacity: 0.6;
+  margin-left: 6px;
+  white-space: nowrap;
+  vertical-align: bottom;
+  gap: 4px;
+  float: right;
+}
+
+/* Make .msg-text a flex container so meta can align */
+.msg-text {
+  display: inline-flex !important;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  width: 100%;
+  position: relative;
+}
+
+/* Ensure inner message text respects meta layout */
+.msg-text span:not(.meta-inline-wrap) {
+  flex: 1;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Override in dark mode */
+body.dark .meta-inline-wrap {
+  opacity: 0.7;
+}
