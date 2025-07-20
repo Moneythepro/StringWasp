@@ -1925,159 +1925,151 @@ body {
 /* =========================================================
  * INPUT BAR
  * ======================================================= */
+/* === Input Bar (Universal) === */
 .chat-input-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--inputbar-bg, #fff);
+  border-top: 1px solid #ccc;
+  gap: 8px;
+  height: auto;
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 72px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  background: var(--inputbar-bg, #fff);
-  border-top: 1px solid #ccc;
   z-index: 999;
-  box-sizing: border-box;
-  gap: 10px;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
 }
 
-/* Left actions (reply, mic) */
-.chat-input-bar .left-actions {
-  display: flex;
-  gap: 8px;
-}
-
-/* Buttons */
-/* Buttons with shadows and animations */
-.chat-input-bar .icon-btn {
-  background: none;
-  border: none;
-  padding: 8px;
-  font-size: 1.5rem;
-  color: #444;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  border-radius: 50%;
-  height: 40px;
-  width: 40px;
-  transition: 
-    background 0.2s ease,
-    color 0.2s ease,
-    transform 0.1s ease-in-out,
-    box-shadow 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-.chat-input-bar .icon-btn:hover {
-  background: #f0f0f0;
-  color: #000;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-.chat-input-bar .icon-btn:active {
-  transform: scale(0.96);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-/* Input wrapper */
+/* Input Wrapper */
 .chat-input-bar .input-wrapper {
   flex: 1;
   display: flex;
   align-items: center;
   background: #f0f0f0;
-  border-radius: 22px;
-  padding: 0 8px;
+  border-radius: 20px;
+  padding: 2px 8px;
   gap: 6px;
   overflow: hidden;
-  transition: box-shadow 0.3s;
-}
-.chat-input-bar .input-wrapper:focus-within {
-  box-shadow: 0 0 0 2px #d0d0d0;
 }
 
-/* Input field with typing animation */
+/* Input Field */
 #threadInput {
   flex: 1;
-  height: 35px;
-  padding: 0 10px;
-  font-size: 15px;
+  font-size: 14.5px;
+  padding: 7px 10px;
   border: none;
+  border-radius: 16px;
   background: transparent;
-  color: #333;
   outline: none;
-  font-family: 'Segoe UI', sans-serif;
-  min-width: 0;
-  box-sizing: border-box;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  animation: typingFadeIn 0.3s ease-in-out;
+  color: #333;
+  min-height: 36px;
 }
 
-/* Typing animation */
-@keyframes typingFadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Action Buttons */
+.chat-input-bar .icon-btn {
+  height: 36px;
+  width: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #444;
+  font-size: 18px;
+  border-radius: 50%;
+  transition: background 0.2s ease;
+}
+
+.chat-input-bar .icon-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
 }
 
 /* Emoji Button */
 .emoji-btn {
+  font-size: 1.3rem;
+  color: #888;
   cursor: pointer;
-  font-size: 1.4rem;
   display: flex;
   align-items: center;
-  color: var(--fg-muted, #888);
-  margin-left: 4px;
   transition: color 0.2s ease;
 }
 .emoji-btn:hover {
   color: #222;
 }
 
-/* Dark Mode */
+/* === Thread InputBar Variant === */
+.thread-inputbar {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  background: var(--inputbar-bg, #fff);
+  border-top: 1px solid #ccc;
+  gap: 6px;
+}
+
+.thread-inputbar input[type="text"] {
+  flex: 1;
+  font-size: 14.5px;
+  padding: 7px 10px;
+  border-radius: 18px;
+  border: 1px solid #ccc;
+  background: #fff;
+  outline: none;
+  height: 36px;
+}
+
+.thread-inputbar button,
+.thread-inputbar .icon-btn {
+  background: none;
+  border: none;
+  height: 36px;
+  width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* === Responsive (Mobile) === */
+@media (max-width: 480px) {
+  .chat-input-bar {
+    padding: 5px 8px;
+  }
+  .chat-input-bar .input-wrapper {
+    padding: 2px 6px;
+  }
+  #threadInput {
+    font-size: 13px;
+    padding: 6px 8px;
+  }
+}
+
+/* === Dark Mode === */
 body.dark .chat-input-bar {
   background: #1a1a1a;
-  border-top-color: #333;
-  box-shadow: 0 -2px 10px rgba(255, 255, 255, 0.04);
+  border-top: 1px solid #333;
+  box-shadow: 0 -2px 10px rgba(255, 255, 255, 0.05);
 }
+
 body.dark .input-wrapper {
   background: #2c2c2e;
 }
+
+body.dark #threadInput {
+  color: #f1f1f1;
+}
+
 body.dark .icon-btn {
   color: #ccc;
 }
 body.dark .icon-btn:hover {
-  background: #3a3a3a;
+  background: #333;
   color: #fff;
-}
-body.dark #threadInput {
-  color: #fff;
-}
-
-
-
-/* =========================================================
- * RESPONSIVE
- * ======================================================= */
-@media (max-width: 480px) {
-  :root {
-    --bubble-font-size: 15px;
-    --msg-font-size: 15px;
-  }
-  .chat-input-bar { padding: 8px 10px; }
-  #threadInput { font-size: 15px; padding: 10px 12px; }
 }
 
 /* =========================================================
@@ -2439,11 +2431,6 @@ body.dark .meta-inline-wrap {
   height: var(--tick-size);
   vertical-align: middle;
 }
-.edited-tag {
-  font-size: var(--meta-font-size);
-  opacity: 0.6;
-  margin-right: 3px;
-}
 
 /* === Avatar === */
 .bubble-pfp {
@@ -2483,39 +2470,6 @@ body.dark .meta-inline-wrap {
   font-weight: 500;
 }
 
-/* === Input Bar === */
-.chat-input-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  background: var(--inputbar-bg);
-  border-top: 1px solid #ccc;
-}
-.chat-input-bar input {
-  flex: 1;
-  padding: 8px 10px;
-  font-size: 14px;
-  border-radius: 18px;
-  border: 1px solid #ccc;
-  outline: none;
-}
-.chat-input-bar .icon-btn {
-  font-size: 17px;
-  color: #444;
-  padding: 4px;
-}
-
-/* === Emoji Button === */
-.emoji-btn {
-  font-size: 1.3em;
-  margin-right: 2px;
-  cursor: pointer;
-  color: var(--fg-muted);
-  display: flex;
-  align-items: center;
-}
-
 /* === Dark Mode Overrides === */
 body.dark {
   --self-bubble-bg-grad: linear-gradient(180deg, #2e3a2f 0%, #1f2a20 100%);
@@ -2528,69 +2482,4 @@ body.dark {
   background: #0e0e0e;
   color: #eee;
 }
-body.dark .chat-input-bar input {
-  background: #222;
-  color: #eee;
-  border-color: #444;
-}
 
-/* === Responsive === */
-@media (max-width: 480px) {
-  .chat-input-bar {
-    padding: 5px 8px;
-  }
-  .chat-input-bar input {
-    font-size: 13px;
-    padding: 7px 9px;
-  }
-}
-
-/* 🔽 Thread Input Bar Fix */
-.thread-inputbar {
-  display: flex;
-  align-items: center;
-  padding: 4px 8px;
-  background: var(--inputbar-bg, #f5f5f5);
-  border-top: 1px solid #ddd;
-  gap: 6px;
-  min-height: 44px; /* Tight and compact */
-}
-
-.thread-inputbar input[type="text"] {
-  flex: 1;
-  font-size: 14.5px;
-  padding: 6px 10px;
-  border-radius: 18px;
-  border: 1px solid #ccc;
-  background: #fff;
-  outline: none;
-  line-height: 1.4;
-  height: 36px; /* Match button height */
-  display: flex;
-  align-items: center;
-  vertical-align: middle;
-}
-
-.thread-inputbar button,
-.thread-inputbar .icon-btn {
-  background: none;
-  border: none;
-  padding: 6px;
-  height: 36px;
-  width: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.thread-inputbar button:hover {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-/* Optional: shrink icon sizes */
-.thread-inputbar svg {
-  width: 20px;
-  height: 20px;
-}
