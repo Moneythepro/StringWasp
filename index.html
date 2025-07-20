@@ -2,6 +2,102 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fixed Chat Input Bar</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f3f3f3;
+      overflow: hidden;
+    }
+
+    .chat-container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-scroll-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .chat-input-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: #fff;
+      border-top: 1px solid #ccc;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 68px;
+      z-index: 1000;
+      box-sizing: border-box;
+    }
+
+    #threadInput {
+      flex: 1;
+      height: 48px;
+      padding: 0 44px 0 14px;
+      font-size: 15px;
+      border-radius: 14px;
+      border: 1px solid #d1d1d6;
+      outline: none;
+      background: #f9f9f9;
+      color: #000;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+      position: relative;
+    }
+
+    #threadInput:focus {
+      border-color: #007aff;
+      background: #fff;
+      box-shadow: 0 0 0 2px rgba(0,122,255,0.2);
+    }
+
+    #emojiToggleBtn {
+      position: absolute;
+      right: 20px;
+      bottom: 18px;
+      font-size: 1.3em;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="chat-container">
+    <div class="chat-scroll-area">
+      <p>Chat messages appear here.</p>
+      <p>Scroll content...</p>
+      <p>Keep scrolling...</p>
+      <p>To test layout and visibility.</p>
+      <p>🧪 Test the input bar visibility.</p>
+    </div>
+
+    <div class="chat-input-bar">
+      <input type="text" id="threadInput" placeholder="Type a message..." />
+      <button id="emojiToggleBtn">😊</button>
+    </div>
+  </div>
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
   <meta name="theme-color" content="#1a1a1a" />
   <title>StringWasp</title>
