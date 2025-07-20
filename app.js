@@ -3520,3 +3520,16 @@ function showToast(msg) {
     }
   });
 })();
+
+function isEmojiOnly(text) {
+  const stripped = text.replace(/\s/g, '');
+  return /^(\p{Emoji_Presentation}|\p{Extended_Pictographic})+$/u.test(stripped);
+}
+
+// Usage:
+document.querySelectorAll('.msg-text').forEach(el => {
+  const text = el.textContent.trim();
+  if (isEmojiOnly(text)) {
+    el.parentElement.classList.add('emoji-only');
+  }
+});
