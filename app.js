@@ -1888,7 +1888,6 @@ function buildTickMeta(msg, otherUid) {
 
   if (msg.deliveredAt) {
     status = "delivered";
-    tickClass = "tick-sent";
     icon = "check-check";
   }
   if (Array.isArray(msg.seenBy) && msg.seenBy.includes(otherUid)) {
@@ -1898,11 +1897,12 @@ function buildTickMeta(msg, otherUid) {
   }
 
   const timeHtml = msg.timestamp?.toDate
-    ? `<span class="msg-time">${String(formatTimestamp(msg.timestamp.toDate()))}</span>`
+    ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>`
     : "";
 
   const editedHtml = msg.edited ? `<span class="edited-tag">(edited)</span>` : "";
 
+  // ✅ MUST return string
   return `
     <span class="msg-meta-inline" data-status="${status}">
       ${editedHtml}${timeHtml}
