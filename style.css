@@ -2537,3 +2537,52 @@ body.dark .chat-input-bar input {
   }
 }
 
+/* 🔽 Thread Input Bar Fix */
+.thread-inputbar {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  background: var(--inputbar-bg, #f5f5f5);
+  border-top: 1px solid #ddd;
+  gap: 6px;
+  min-height: 44px; /* Tight and compact */
+}
+
+.thread-inputbar input[type="text"] {
+  flex: 1;
+  font-size: 14.5px;
+  padding: 6px 10px;
+  border-radius: 18px;
+  border: 1px solid #ccc;
+  background: #fff;
+  outline: none;
+  line-height: 1.4;
+  height: 36px; /* Match button height */
+  display: flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.thread-inputbar button,
+.thread-inputbar .icon-btn {
+  background: none;
+  border: none;
+  padding: 6px;
+  height: 36px;
+  width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.thread-inputbar button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* Optional: shrink icon sizes */
+.thread-inputbar svg {
+  width: 20px;
+  height: 20px;
+}
