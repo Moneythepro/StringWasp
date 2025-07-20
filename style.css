@@ -415,180 +415,10 @@ border-bottom: 1px solid #ccc;
   }
 }
 
-/* === INPUT BAR === */
-.chat-input-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 56px;
-  padding: 6px 8px;
-  background: #fff;
-  border-top: 1px solid #ddd;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  z-index: 100;
-}
-.chat-input-bar input {
-  flex: 1;
-  padding: 8px 12px;
-  border-radius: 18px;
-  border: 1px solid #ccc;
-  font-size: 13px;
-}
-.chat-input-bar button {
-  width: 36px;
-  height: 36px;
-  background: #128C7E;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
-/* === HIDDEN FILE INPUT === */
-input[type="file"]#threadFile {
-  position: absolute !important;
-  left: -9999px !important;
-  top: -9999px !important;
-  opacity: 0 !important;
-  pointer-events: none;
-}
 
-/* === MESSAGES === */
-.message-bubble-wrapper {
-  display: flex;
-  align-items: flex-end;
-  margin: 2px 6px;
-  gap: 4px;
-  word-wrap: break-word;
-}
-.message-bubble-wrapper.left {
-  flex-direction: row;
-}
-.message-bubble-wrapper.right {
-  flex-direction: row-reverse;
-}
-.message-bubble-wrapper.left .msg-avatar-img {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-.message-bubble-wrapper.right .msg-avatar-img {
-  display: none;
-}
-.message-bubble {
-  max-width: 85%;
-  background: #dcf8c6;
-  padding: 6px 10px;
-  border-radius: 8px;
-  display: inline-flex;
-  flex-direction: column;
-  font-size: 13.5px;
-  line-height: 1.4;
-  word-break: break-word;
-  transition: all 0.25s ease;
-}
-.message-bubble.deleted {
-  background: #eee;
-  color: #555;
-  font-style: italic;
-  padding: 8px 12px;
-  border-radius: 12px;
-  max-width: 75%;
-  font-size: 13px;
-}
-.message-bubble.left {
-  background: #fff;
-  border-radius: 0 8px 8px 8px;
-}
-.message-bubble.right {
-  background: #dcf8c6;
-  border-radius: 8px 0 8px 8px;
-  margin-left: auto;
-}
-.message-bubble.long-msg {
-  font-size: 13px;
-  padding: 5px 8px;
-  line-height: 1.3;
-}
-.message-bubble:last-child {
-  margin-bottom: 8px;
-}
-/* === MESSAGE TEXT + META === */
-.msg-content {
-  display: inline-flex;
-  align-items: flex-end;
-  gap: 6px;
-  flex-wrap: wrap;
-  word-break: break-word;
-  min-width: 0;
-}
-.msg-text {
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.4;
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-  min-width: 0;
-  flex: 0 1 auto;
-}
-.msg-meta {
-  display: inline-flex;
-  align-items: center;
-  font-size: 10px;
-  color: #667781;
-  gap: 2px;
-  margin-left: 6px;
-  white-space: nowrap;
-  opacity: 0.85;
-  flex-shrink: 0;
-}
-.message-bubble.right .msg-meta {
-  color: #4fc3f7;
-}
-.msg-ticks {
-  display: inline-flex;
-  gap: 2px;
-  font-size: 11px;
-  color: #777;
-  align-items: center;
-  margin-left: 4px;
-}
-.msg-ticks svg {
-  width: 16px;
-  height: 16px;
-  stroke-width: 2.2;
-}
-.msg-ticks.delivered svg {
-  stroke: #aaa;
-}
-.msg-ticks.double svg {
-  stroke: #4fc3f7;
-}
 
-/* === FILE LINK === */
-.file-link {
-  color: #007bff;
-  text-decoration: none;
-  font-weight: 500;
-  word-break: break-word;
-}
-.file-link:hover {
-  text-decoration: underline;
-}
-.msg-text i[data-lucide="file"] {
-  margin-right: 6px;
-  stroke: #555;
-  width: 16px;
-  height: 16px;
-}
+
 
 .message-options-modal {
   position: fixed;
@@ -1961,24 +1791,23 @@ body, html {
 /* ✏️ Input Field: Rectangular w/ iOS-smooth edges */
 #threadInput {
   flex: 1;
-  height: 42px;
-  padding: 0 14px;
-  font-size: 15px;
-  border-radius: 14px; /* iOS-style smooth corners */
+  height: 52px;             /* 🟢 Fix resting height */
+  padding: 0 16px;          /* 🧼 Consistent padding */
+  font-size: 16px;
+  border-radius: 12px;
   border: 1.5px solid #ccc;
   outline: none;
   background: #fff;
   color: #000;
   font-family: 'Segoe UI', sans-serif;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
 }
 
-/* ☑️ Focus State - Clean & No glow */
+/* Focus should only change border-color (not size/padding!) */
 #threadInput:focus {
   border-color: #888;
   background: #fff;
-  box-shadow: none;
+  box-shadow: none;        /* ✅ No glowing effect */
 }
 
 /* 😊 Emoji Button - Fixed Size & Alignment */
