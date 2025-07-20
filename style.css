@@ -1233,123 +1233,6 @@ body.dark .chat-options-horizontal span:hover {
   background: #121b22; /* WhatsApp dark mode background */
 }
 
-/* === ✅ Input Bar (fixed bottom) === */
-.chat-input-bar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 63px;
-  background: #fff;
-  border-top: 1px solid #d1d1d1;
-  padding: 6px 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05);
-  z-index: 999;
-}
-.dark-mode .chat-input-bar {
-  background: #202c33;
-  border-top: 1px solid #2b3b43;
-  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.4);
-}
-
-/* === 🎤 Left Action Buttons (emoji, attach, etc) === */
-.left-actions {
-  display: flex;
-  gap: 6px;
-}
-
-/* === 📝 Input Wrapper === */
-.input-wrapper {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  background: #f0f0f0;
-  border-radius: 24px;
-  height: 46px;
-  padding: 0 12px;
-  gap: 6px;
-  overflow: hidden;
-}
-.dark-mode .input-wrapper {
-  background: #2a3942;
-}
-
-/* === ✏️ Text Input Field === */
-#threadInput {
-  flex: 1;
-  border: none;
-  background: transparent;
-  outline: none;
-  font-size: 15px;
-  height: 42px;
-  line-height: 42px;
-  padding: 0;
-  color: #222;
-  pointer-events: auto;
-  z-index: 2;
-}
-.dark-mode #threadInput {
-  color: #eee;
-}
-
-/* === 🎯 Icon Buttons (emoji, mic, send, attach) === */
-.icon-btn {
-  width: 38px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  font-size: 17px;
-  color: #4a4a4a;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-.icon-btn:hover {
-  background: rgba(0, 0, 0, 0.08);
-}
-.dark-mode .icon-btn {
-  color: #ccc;
-}
-.dark-mode .icon-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-/* === 😄 Emoji Button Specific === */
-.emoji-btn {
-  font-size: 1.4rem;
-  color: #888;
-  margin-left: 2px;
-}
-.emoji-btn:hover {
-  color: #111;
-}
-.dark-mode .emoji-btn {
-  color: #aaa;
-}
-.dark-mode .emoji-btn:hover {
-  color: #fff;
-}
-
-/* === 🎙️ Mic & Send Icons Behavior === */
-.send-btn,
-.mic-btn {
-  font-size: 1.4rem;
-}
-.send-btn.active {
-  color: #1aa260;
-}
-.dark-mode .send-btn.active {
-  color: #25d366;
-}
-
-/* === MASSAGES ALL FUCK */
-
 /* 🌐 Base Layout */
 body {
   font-family: 'Segoe UI', sans-serif;
@@ -1374,15 +1257,16 @@ body {
 /* 💬 Message Bubble */
 .msg-bubble {
   max-width: 80%;
-  padding: 7px 11px 5px;
+  padding: 8px 12px 6px;
   font-size: 14px;
-  line-height: 1.4;
+  line-height: 1.5;
   border-radius: 7.5px;
   display: flex;
   flex-direction: column;
   position: relative;
   animation: fadeIn 0.2s ease-out;
   word-break: break-word;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 .msg-row.self .msg-bubble {
   background-color: #dcf8c6;
@@ -1519,9 +1403,9 @@ body {
 
 /* ✅ Ticks (Lucide) */
 .tick-icon {
-  width: 16px;
-  height: 16px;
-  stroke-width: 2.2;
+  width: 13px;
+  height: 13px;
+  stroke-width: 2;
 }
 .tick-icon.tick-sent {
   color: #999;
@@ -1586,9 +1470,140 @@ body {
   background-color: rgba(255, 255, 255, 0.05);
 }
 
+/* === 💬 Chat Scroll Area === */
+.chat-scroll-area {
+  position: absolute;
+  top: 56px;
+  bottom: 63px;
+  left: 0;
+  right: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 10px 12px;
+  background: #eae6df;
+  z-index: 1;
+}
+.dark-mode .chat-scroll-area {
+  background: #121b22;
+}
+
+/* === ✅ Input Bar (fixed bottom) === */
+.chat-input-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 63px;
+  background: #fff;
+  border-top: 1px solid #d1d1d1;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05);
+  z-index: 999;
+}
+.dark-mode .chat-input-bar {
+  background: #202c33;
+  border-top: 1px solid #2b3b43;
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* === 🎤 Left Action Buttons (emoji, attach, etc) === */
+.left-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* === 📝 Input Wrapper === */
+.input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: #f0f0f0;
+  border-radius: 24px;
+  height: 46px;
+  padding: 0 12px;
+  gap: 6px;
+  overflow: hidden;
+}
+.dark-mode .input-wrapper {
+  background: #2a3942;
+}
+
+/* === ✏️ Text Input Field === */
+#threadInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 15px;
+  height: 42px;
+  line-height: 42px;
+  padding: 0;
+  color: #222;
+  pointer-events: auto;
+  z-index: 2;
+}
+.dark-mode #threadInput {
+  color: #eee;
+}
+
+/* === 🎯 Icon Buttons (emoji, mic, send, attach) === */
+.icon-btn {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  font-size: 17px;
+  color: #4a4a4a;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.icon-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+.dark-mode .icon-btn {
+  color: #ccc;
+}
+.dark-mode .icon-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* === 😄 Emoji Button Specific === */
+.emoji-btn {
+  font-size: 1.4rem;
+  color: #888;
+  margin-left: 2px;
+}
+.emoji-btn:hover {
+  color: #111;
+}
+.dark-mode .emoji-btn {
+  color: #aaa;
+}
+.dark-mode .emoji-btn:hover {
+  color: #fff;
+}
+
+/* === 🎙️ Mic & Send Icons Behavior === */
+.send-btn,
+.mic-btn {
+  font-size: 1.4rem;
+}
+.send-btn.active {
+  color: #1aa260;
+}
+.dark-mode .send-btn.active {
+  color: #25d366;
+}
+
 /* 🎬 Fade-in Animation */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
