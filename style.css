@@ -1754,41 +1754,48 @@ body {
 /* =========================================================
  * INPUT BAR
  * ======================================================= */
-
-/* 💬 Fixed Input Bar Container */
-.chat-input-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  background: var(--inputbar-bg, #fff);
-  border-top: 1px solid #ccc;
-  position: fixed;         /* ✅ Make sure it's fixed */
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 68px;            /* ✅ Visible height */
-  z-index: 1000;           /* ✅ Ensure it's above other elements */
+/* ✅ Chat Scroll Area */
+.chat-scroll-area {
+  overflow-y: auto;
+  height: calc(100vh - 72px); /* adjust based on input bar height */
+  padding: 16px 8px 8px;
   box-sizing: border-box;
 }
 
-/* 📝 Input Field: Expanded, padded, non-colliding */
+/* ✅ Input Bar Container */
+.chat-input-bar {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  gap: 8px;
+  background: var(--inputbar-bg, #fff);
+  border-top: 1px solid #ccc;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  z-index: 999;
+  box-sizing: border-box;
+}
+
+/* ✅ Message Input Field */
 #threadInput {
   flex: 1;
-  height: 48px;
-  padding: 0 44px 0 14px;   /* 🧩 Left for text, right space for emoji */
+  height: 44px;
+  padding: 10px 42px 10px 16px; /* left + right room for emoji */
   font-size: 15px;
-  border-radius: 14px;
+  border-radius: 8px;
   border: 1px solid #d1d1d6;
-  outline: none;
   background: #f9f9f9;
   color: #000;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Segoe UI', sans-serif;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  outline: none;
   position: relative;
 }
 
-/* ✨ Focused State */
+/* ✨ Focus style */
 #threadInput:focus {
   border-color: #007aff;
   background: #fff;
@@ -1798,22 +1805,20 @@ body {
 /* 😊 Emoji Button */
 #emojiToggleBtn {
   position: absolute;
-  right: 18px;
-  bottom: 14px;
+  right: 20px;
+  bottom: 12px;
   background: none;
   border: none;
   font-size: 1.4em;
   cursor: pointer;
-  color: #aaa;
-  width: 32px;
-  height: 32px;
+  color: #888;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10;
+  padding: 4px;
 }
 
-/* 🎛️ Icon Buttons (Mic, etc.) */
+/* 🎛 Icon Buttons */
 .icon-btn {
   background: #f5f5f7;
   border: none;
@@ -1825,10 +1830,6 @@ body {
   justify-content: center;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
-}
-.icon-btn i {
-  width: 20px;
-  height: 20px;
 }
 .icon-btn:hover {
   background: #e0e0e0;
@@ -1856,9 +1857,6 @@ body.dark .icon-btn {
 body.dark .icon-btn:hover {
   background: #3a3a3a;
   color: #a5f5a5;
-}
-body.dark #emojiToggleBtn {
-  color: #90ee90;
 }
 
 /* =========================================================
