@@ -2246,20 +2246,20 @@ body.dark .modal-content {
   align-self: flex-start !important;
 }
 
-=========================================================
+/* ==========================================================
  * BADGE STYLES (Levels + Developer Style) — Enhanced Visuals
- * ======================================================= */
+ * ========================================================== */
 .dev-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   vertical-align: middle;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   margin-left: 4px;
-  stroke-width: 2.2px;
+  stroke-width: 2px;
   color: #1da1f2;
-  transition: transform 0.2s ease, color 0.2s ease, filter 0.3s ease;
+  transition: transform 0.25s ease, color 0.25s ease, filter 0.3s ease;
   animation: badgePulse 3s ease-in-out infinite;
 }
 
@@ -2267,7 +2267,7 @@ body.dark .modal-content {
 .dev-badge:hover {
   transform: scale(1.2);
   color: #0d8ddb;
-  filter: brightness(1.2);
+  filter: brightness(1.3);
 }
 
 /* =================== Badge Levels =================== */
@@ -2275,29 +2275,29 @@ body.dark .modal-content {
 /* Supreme Developer */
 .dev-badge.supreme {
   color: #ff5722;
-  filter: drop-shadow(0 0 4px rgba(255, 87, 34, 0.7));
+  filter: drop-shadow(0 0 6px rgba(255, 87, 34, 0.9));
   animation: shine 2.5s linear infinite, badgePulse 4s ease-in-out infinite;
 }
 
 /* Gold */
 .dev-badge.gold {
   color: #ffb300;
-  filter: drop-shadow(0 0 3px rgba(255, 179, 0, 0.5));
-  animation: subtleShimmer 5s infinite ease-in-out;
+  filter: drop-shadow(0 0 4px rgba(255, 179, 0, 0.8));
+  animation: subtleShimmer 5s ease-in-out infinite, glowGold 3s ease-in-out infinite;
 }
 
 /* Silver */
 .dev-badge.silver {
   color: #c0c0c0;
-  filter: drop-shadow(0 0 2px rgba(192, 192, 192, 0.5));
-  animation: subtleShimmer 5s infinite ease-in-out;
+  filter: drop-shadow(0 0 3px rgba(192, 192, 192, 0.7));
+  animation: subtleShimmer 5s ease-in-out infinite;
 }
 
 /* Bronze */
 .dev-badge.bronze {
   color: #cd7f32;
-  filter: drop-shadow(0 0 2px rgba(205, 127, 50, 0.5));
-  animation: subtleShimmer 5s infinite ease-in-out;
+  filter: drop-shadow(0 0 3px rgba(205, 127, 50, 0.7));
+  animation: subtleShimmer 5s ease-in-out infinite;
 }
 
 /* =================== Placement =================== */
@@ -2306,8 +2306,8 @@ body.dark .modal-content {
 .chat-username .dev-badge,
 .message-username .dev-badge {
   margin-left: 6px;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
 /* =================== Author Styling =================== */
@@ -2351,7 +2351,7 @@ body.dark .modal-content {
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   max-width: 320px;
   text-align: left;
-  animation: scaleIn 0.2s ease forwards;
+  animation: scaleIn 0.25s ease forwards;
 }
 .badge-legend-content h3 {
   margin: 0 0 12px;
@@ -2397,13 +2397,18 @@ body.dark .modal-content {
 
 @keyframes shine {
   0% { filter: drop-shadow(0 0 4px #ff5722); }
-  50% { filter: drop-shadow(0 0 8px #ffa270); }
+  50% { filter: drop-shadow(0 0 10px #ffa270); }
   100% { filter: drop-shadow(0 0 4px #ff5722); }
 }
 
 @keyframes subtleShimmer {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.85; }
+}
+
+@keyframes glowGold {
+  0%, 100% { filter: drop-shadow(0 0 4px #ffb300); }
+  50% { filter: drop-shadow(0 0 8px #ffe066); }
 }
 
 /* =================== Toast (Unchanged) =================== */
