@@ -414,39 +414,6 @@ border-bottom: 1px solid #ccc;
 }
 
 /* === INPUT BAR === */
-.chat-input-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 56px;
-  padding: 6px 8px;
-  background: #fff;
-  border-top: 1px solid #ddd;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  z-index: 100;
-}
-.chat-input-bar input {
-  flex: 1;
-  padding: 8px 12px;
-  border-radius: 18px;
-  border: 1px solid #ccc;
-  font-size: 13px;
-}
-.chat-input-bar button {
-  width: 36px;
-  height: 36px;
-  background: #128C7E;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
 
 
@@ -1233,377 +1200,243 @@ body.dark .chat-options-horizontal span:hover {
   background: #121b22; /* WhatsApp dark mode background */
 }
 
-/* 🌐 Base Layout */
+:root {
+  --sw-font-stack: "Inter", "Roboto", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --bubble-max-width: 92%;
+  --bubble-padding-y: 2px;
+  --bubble-padding-x: 8px;
+  --bubble-padding: var(--bubble-padding-y) var(--bubble-padding-x);
+  --bubble-rad-lg: 20px;
+  --bubble-rad-md: 14px;
+  --bubble-rad-sm: 6px;
+  --bubble-radius-left: var(--bubble-rad-lg) var(--bubble-rad-lg) var(--bubble-rad-lg) var(--bubble-rad-sm);
+  --bubble-radius-right: var(--bubble-rad-lg) var(--bubble-rad-lg) var(--bubble-rad-sm) var(--bubble-rad-lg);
+  --bubble-radius-mid: var(--bubble-rad-sm);
+  --bubble-gap-y: 1px;
+  --bubble-margin: 4px 0px;
+  --bubble-font-size: 16px;
+  --bubble-line-height: 1.32;
+  --msg-font-size: 16px;
+  --msg-line-height: 1.32;
+  --self-bubble-bg: #dcf8c6;
+  --other-bubble-bg: #ffffff;
+  --self-bubble-bg-grad: linear-gradient(180deg,#e6ffd5 0%,#dcf8c6 100%);
+  --other-bubble-bg-grad: linear-gradient(180deg,#ffffff 0%,#f8f8f8 100%);
+  --self-bubble-bg-press: #c8eab0;
+  --other-bubble-bg-press: #f3f3f3;
+  --meta-font-size: 10px;
+  --meta-color: #5e5e5e;
+  --meta-color-on-self: rgba(0,0,0,0.45);
+  --tick-size: 11px;
+  --tick-seen-color: #4fc3f7;
+  --tick-delivered-color: #9e9e9e;
+  --tick-sent-color: #bdbdbd;
+  --tick-pending-color: #ccc;
+  --reply-font-size: 13px;
+  --reply-color: #555;
+  --reply-bg: #f0f0f0;
+  --reply-border-color: #999;
+  --inputbar-bg: #f5f5f5;
+  --fg-muted: #666;
+  --bubble-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+  --bubble-anim-duration: 0.22s;
+  --bubble-anim-ease: cubic-bezier(.16,.84,.44,1);
+  --pfp-size: 28px;
+  --pfp-gap: 6px;
+}
+
+/* DARK MODE OVERRIDES */
+body.dark {
+  --self-bubble-bg: #2e3a2f;
+  --other-bubble-bg: #1e1e1e;
+  --self-bubble-bg-grad: linear-gradient(180deg,#3d4b3f 0%,#2e3a2f 100%);
+  --other-bubble-bg-grad: linear-gradient(180deg,#2a2a2a 0%,#1e1e1e 100%);
+  --self-bubble-bg-press: #3a4a3e;
+  --other-bubble-bg-press: #2a2a2a;
+  --meta-color: #aaa;
+  --meta-color-on-self: rgba(255,255,255,0.5);
+  --reply-bg: #333;
+  --reply-color: #ccc;
+  --reply-border-color: #666;
+  --inputbar-bg: #111;
+  background: #0e0e0e;
+  color: #eee;
+}
+
 body {
-  font-family: 'Segoe UI', sans-serif;
-  margin: 0;
-  padding: 0;
-  background: #f3f8f9;
-  color: #111;
+  font-family: var(--sw-font-stack);
 }
 
-/* 🟩 Message Row Layout */
-.msg-row {
-  display: flex;
-  margin: 0 10px 2px;
-}
-.msg-row.self {
-  justify-content: flex-end;
-}
-.msg-row.other {
-  justify-content: flex-start;
-}
-
-/* 💬 Message Bubble */
-.msg-bubble {
-  max-width: 80%;
-  padding: 8px 12px 6px;
-  font-size: 14px;
-  line-height: 1.5;
-  border-radius: 7.5px;
-  display: flex;
-  flex-direction: column;
+/* Shared Bubble Reset & Core */
+.message-bubble {
   position: relative;
-  animation: fadeIn 0.2s ease-out;
+  padding: var(--bubble-padding);
+  max-width: var(--bubble-max-width);
+  font-size: var(--bubble-font-size);
+  line-height: var(--bubble-line-height);
+  background: var(--other-bubble-bg-grad);
+  border-radius: var(--bubble-radius-left);
   word-break: break-word;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-}
-.msg-row.self .msg-bubble {
-  background-color: #dcf8c6;
-  align-self: flex-end;
-}
-.msg-row.other .msg-bubble {
-  background-color: #ffffff;
-  align-self: flex-start;
-}
-
-/* ✅ Corner Radius Logic */
-.msg-row.self.first.last .msg-bubble { border-bottom-right-radius: 2px; }
-.msg-row.self.first:not(.last) .msg-bubble {
-  border-bottom-right-radius: 4px;
-  border-top-right-radius: 18px;
-  border-top-left-radius: 18px;
-  border-bottom-left-radius: 18px;
-}
-.msg-row.self:not(.first):not(.last) .msg-bubble {
-  border-radius: 8px;
-}
-.msg-row.self.last:not(.first) .msg-bubble {
-  border-top-right-radius: 4px;
-}
-
-.msg-row.other.first.last .msg-bubble { border-bottom-left-radius: 2px; }
-.msg-row.other.first:not(.last) .msg-bubble {
-  border-bottom-left-radius: 4px;
-}
-.msg-row.other:not(.first):not(.last) .msg-bubble {
-  border-radius: 8px;
-}
-.msg-row.other.last:not(.first) .msg-bubble {
-  border-top-left-radius: 4px;
-}
-
-/* ✨ Emoji-Only Styling */
-.msg-bubble.emoji-only {
-  font-size: 40px;
-  padding: 8px 14px;
-  line-height: 1.1;
-  background-color: #dcf8c6;
   display: inline-flex;
   flex-direction: column;
-  align-items: center;
-  border-radius: 16px;
+  box-shadow: var(--bubble-shadow);
+  transition: background 0.08s ease, transform 0.08s ease;
 }
-.msg-row.other .msg-bubble.emoji-only {
-  background-color: #ffffff;
+.message-bubble.right,
+.message-bubble.from-self {
+  background: var(--self-bubble-bg-grad);
+  border-radius: var(--bubble-radius-right);
+  margin-left: auto;
 }
-.msg-bubble.emoji-only .msg-meta-inline {
-  margin-top: 4px;
-  font-size: 11px;
-  opacity: 0.75;
+.message-bubble.left,
+.message-bubble.from-other {
+  margin-right: auto;
+}
+.message-bubble:active {
+  transform: scale(.98);
+}
+.message-bubble.left:active,
+.message-bubble.from-other:active {
+  background: var(--other-bubble-bg-press);
+}
+.message-bubble.right:active,
+.message-bubble.from-self:active {
+  background: var(--self-bubble-bg-press);
 }
 
-/* 🧾 Reply Preview */
-.msg-bubble.reply {
-  padding-top: 4px;
+/* Emoji-only bubbles */
+.message-bubble.emoji-only {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 2px !important;
 }
-.reply-preview {
-  border-left: 4px solid #4fc3f7;
-  padding-left: 6px;
-  margin-bottom: 4px;
-  overflow: hidden;
+.message-bubble.emoji-only .msg-text {
+  font-size: calc(var(--msg-font-size) * 2.2) !important;
+  line-height: 1.05 !important;
 }
-.reply-user {
-  font-size: 12px;
-  font-weight: bold;
-  color: #4fc3f7;
+.message-bubble.emoji-only .msg-meta-inline {
+  margin-left: 6px;
+  opacity: 0.85 !important;
 }
-.reply-user.self {
-  color: #999;
-  font-weight: normal;
+
+/* Message Content */
+.msg-content {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+  word-break: break-word;
 }
-.reply-text {
-  font-size: 13px;
-  color: #444;
+.msg-text {
+  flex: 1 1 auto;
+  font-size: var(--msg-font-size);
+  line-height: var(--msg-line-height);
+  word-break: break-word;
+  white-space: pre-wrap;
+  margin: 0;
+}
+.msg-text img.emoji {
+  height: 1.3em;
+  vertical-align: middle;
+}
+.msg-meta-inline {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--meta-font-size);
+  gap: 2px;
   white-space: nowrap;
+  margin-left: 4px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  color: var(--meta-color);
+}
+.message-bubble.right .msg-meta-inline,
+.message-bubble.from-self .msg-meta-inline {
+  color: var(--meta-color-on-self);
+}
+.message-bubble[data-time]:not([data-time=""]) .msg-meta-inline {
+  opacity: 0.85;
+}
+.tick-icon {
+  width: var(--tick-size);
+  height: var(--tick-size);
+  vertical-align: middle;
+}
+.msg-meta-inline[data-status="sent"] .tick-icon { color: var(--tick-sent-color); }
+.msg-meta-inline[data-status="delivered"] .tick-icon { color: var(--tick-delivered-color); }
+.msg-meta-inline[data-status="seen"] .tick-icon { color: var(--tick-seen-color); }
+.msg-meta-inline[data-status="pending"] .tick-icon { color: var(--tick-pending-color); }
+
+/* Reply inside bubble */
+.reply-to {
+  font-size: var(--reply-font-size);
+  color: var(--reply-color);
+  background: var(--reply-bg);
+  padding: 4px 6px;
+  margin-bottom: 4px;
+  border-left: 3px solid var(--reply-border-color);
+  border-radius: 4px;
+  max-height: calc(1.3em * 3);
+  line-height: 1.3em;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* 🌐 Link Preview */
-.preview-card {
-  display: flex;
-  flex-direction: column;
-  border-radius: 10px;
-  overflow: hidden;
-  border: 1px solid #e0e0e0;
-  margin-bottom: 6px;
-  background-color: #fefefe;
-}
-.preview-thumb {
-  width: 100%;
-  max-height: 140px;
-  object-fit: cover;
-  border-bottom: 1px solid #eee;
-}
-.preview-info {
-  padding: 8px;
-}
-.preview-title {
-  font-size: 13px;
-  font-weight: bold;
-  color: #222;
-  margin-bottom: 4px;
-}
-.preview-url {
-  font-size: 12px;
-  color: #888;
-}
-
-/* 🕒 Meta (time, ticks, edited) */
-.msg-meta-inline {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-  font-size: 11px;
-  color: #667781;
-  margin-top: 2px;
-  align-self: flex-end;
-  opacity: 0.85;
-  white-space: nowrap;
-}
-
-.edited-tag {
-  font-size: 10px;
-  margin-left: 4px;
-  color: #999;
-  font-style: italic;
-}
-
-/* ✅ Ticks (Lucide) */
-.tick-icon {
-  width: 13px;
-  height: 13px;
-  stroke-width: 2;
-}
-.tick-icon.tick-sent {
-  color: #999;
-}
-.tick-icon.tick-seen {
-  color: #4fc3f7;
-}
-
-/* 📱 Touch Feedback */
-.msg-bubble:active {
-  background-color: rgba(0, 0, 0, 0.04);
-}
-
-/* 🌙 Dark Mode */
-.dark-mode body {
-  background-color: #121212;
-  color: #ddd;
-}
-.dark-mode .msg-row.self .msg-bubble {
-  background-color: #005c4b;
-  color: #e6fdf5;
-}
-.dark-mode .msg-row.other .msg-bubble {
-  background-color: #1e1e1e;
-  color: #ddd;
-}
-.dark-mode .msg-bubble.emoji-only {
-  color: #fff;
-}
-.dark-mode .reply-preview {
-  border-left-color: #4fc3f7;
-}
-.dark-mode .reply-user {
-  color: #4fc3f7;
-}
-.dark-mode .reply-text {
-  color: #ccc;
-}
-.dark-mode .msg-meta-inline {
-  color: #999;
-}
-.dark-mode .edited-tag {
-  color: #aaa;
-}
-.dark-mode .preview-card {
-  background-color: #262626;
-  border-color: #333;
-}
-.dark-mode .preview-title {
-  color: #ddd;
-}
-.dark-mode .preview-url {
-  color: #888;
-}
-.dark-mode .tick-icon.tick-sent {
-  color: #aaa;
-}
-.dark-mode .tick-icon.tick-seen {
-  color: #4fc3f7;
-}
-.dark-mode .msg-bubble:active {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-/* === 💬 Chat Scroll Area === */
-.chat-scroll-area {
+/* Reply Preview Above Input */
+#replyPreview {
   position: absolute;
-  top: 56px;
-  bottom: 63px;
+  bottom: 62px;
   left: 0;
   right: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 10px 12px;
-  background: #eae6df;
-  z-index: 1;
+  background: #f0f0f0;
+  border-top: 1px solid #ddd;
+  padding: 6px 10px;
+  display: none;
+  z-index: 2;
+  font-size: 14px;
+  font-family: sans-serif;
+  box-shadow: 0 -1px 2px rgba(0,0,0,0.08);
 }
-.dark-mode .chat-scroll-area {
-  background: #121b22;
+#replyPreview .reply-text {
+  font-weight: 500;
+  max-width: 220px;
+  color: #333;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  display: -webkit-box;
+  text-overflow: ellipsis;
+  line-height: 1.3em;
+  max-height: calc(1.3em * 3);
 }
-
-/* === ✅ Input Bar (fixed bottom) === */
-.chat-input-bar {
+#replyPreview .reply-text::after {
+  content: '';
   position: absolute;
   bottom: 0;
-  left: 0;
-  right: 0;
-  height: 63px;
-  background: #fff;
-  border-top: 1px solid #d1d1d1;
-  padding: 6px 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05);
-  z-index: 999;
-}
-.dark-mode .chat-input-bar {
-  background: #202c33;
-  border-top: 1px solid #2b3b43;
-  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.4);
+  height: 1.3em;
+  background: linear-gradient(to bottom, rgba(240, 240, 240, 0), #f0f0f0);
 }
 
-/* === 🎤 Left Action Buttons (emoji, attach, etc) === */
-.left-actions {
-  display: flex;
-  gap: 6px;
+/* Edited Tag */
+.edited-tag {
+  font-size: 10px;
+  color: #999;
+  margin-left: 5px;
+  vertical-align: middle;
 }
 
-/* === 📝 Input Wrapper === */
-.input-wrapper {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  background: #f0f0f0;
-  border-radius: 24px;
-  height: 46px;
-  padding: 0 12px;
-  gap: 6px;
-  overflow: hidden;
+/* Animation */
+@keyframes bubblePopIn {
+  0% { opacity: 0; transform: translateY(4px) scale(.98); }
+  60% { opacity: 1; transform: translateY(0) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
-.dark-mode .input-wrapper {
-  background: #2a3942;
-}
-
-/* === ✏️ Text Input Field === */
-#threadInput {
-  flex: 1;
-  border: none;
-  background: transparent;
-  outline: none;
-  font-size: 15px;
-  height: 42px;
-  line-height: 42px;
-  padding: 0;
-  color: #222;
-  pointer-events: auto;
-  z-index: 2;
-}
-.dark-mode #threadInput {
-  color: #eee;
-}
-
-/* === 🎯 Icon Buttons (emoji, mic, send, attach) === */
-.icon-btn {
-  width: 38px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  font-size: 17px;
-  color: #4a4a4a;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-.icon-btn:hover {
-  background: rgba(0, 0, 0, 0.08);
-}
-.dark-mode .icon-btn {
-  color: #ccc;
-}
-.dark-mode .icon-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-/* === 😄 Emoji Button Specific === */
-.emoji-btn {
-  font-size: 1.4rem;
-  color: #888;
-  margin-left: 2px;
-}
-.emoji-btn:hover {
-  color: #111;
-}
-.dark-mode .emoji-btn {
-  color: #aaa;
-}
-.dark-mode .emoji-btn:hover {
-  color: #fff;
-}
-
-/* === 🎙️ Mic & Send Icons Behavior === */
-.send-btn,
-.mic-btn {
-  font-size: 1.4rem;
-}
-.send-btn.active {
-  color: #1aa260;
-}
-.dark-mode .send-btn.active {
-  color: #25d366;
-}
-
-/* 🎬 Fade-in Animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+@keyframes bubblePendingPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(.98); opacity: .85; }
 }
