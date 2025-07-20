@@ -2034,12 +2034,8 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
   const otherProfile = await getUserProfileCached(otherUid);
 
   let distFromBottom;
-  if (isInitial) {
-    area.innerHTML = "";
-  } else {
-    distFromBottom = area.scrollHeight - area.scrollTop;
-    area.innerHTML = "";
-  }
+  area.innerHTML = "";
+  if (!isInitial) distFromBottom = area.scrollHeight - area.scrollTop;
 
   const frag = document.createDocumentFragment();
   let lastDateLabel = null;
@@ -2055,22 +2051,8 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     const showPfp = msg._grp === "grp-start" || msg._grp === "grp-single";
     const prof = isSelf ? selfProfile : otherProfile;
 
-    const pfpHtml = showPfp
-      ? `<img class="bubble-pfp ${isSelf ? "pfp-self" : "pfp-other"}" src="${prof.avatar}" alt="${escapeHtml(prof.username)}" onclick="viewUserProfile('${isSelf ? currentUser.uid : otherUid}')">`
-      : "";
-
-    const showAuthorRow = !isSelf && showPfp;
-    const authorHtml = showAuthorRow
-      ? `<div class="msg-author">${usernameWithBadge(otherUid, prof.username)}</div>`
-      : "";
-
     const replyBox = !isDeleted ? buildReplyStrip(msg) : "";
-
-    const metaRaw = isSelf && !isDeleted
-      ? buildTickMeta(msg, otherUid)
-      : buildOtherMeta(msg);
-    const meta = typeof metaRaw === "string" ? metaRaw : "";
-
+    const meta = isSelf && !isDeleted ? buildTickMeta(msg, otherUid) : buildOtherMeta(msg);
     const shortText = displayText.slice(0, 500);
     const hasLong = displayText.length > 500;
 
@@ -2080,86 +2062,45 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
         ? `${linkifyText(shortText)}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
         : linkifyText(displayText);
 
-    let linkPreviewHTML = "";
-    if (msg.preview) {
-      linkPreviewHTML = buildLinkPreviewHTML(msg.preview, msg.preview.url);
-    } else if (!isDeleted) {
-      const url = extractFirstURL(displayText);
-      if (url) {
-        try {
-          const preview = await fetchLinkPreview(url);
-          if (preview?.title || preview?.image) {
-            linkPreviewHTML = buildLinkPreviewHTML(preview, url);
-          }
-        } catch (_) {}
-      }
-    }
-
-    // 📆 Date divider
-    let dateDivider = "";
+    // === Date Divider ===
     const msgDate = msg.timestamp?.toDate?.();
     if (msgDate) {
       const label = getDateLabel(msgDate);
       if (label !== lastDateLabel) {
         lastDateLabel = label;
-        dateDivider = `<div class="date-divider">${label}</div>`;
+        const divider = document.createElement("div");
+        divider.className = "date-divider-wrapper";
+        divider.innerHTML = `<div class="date-divider">${label}</div>`;
+        frag.appendChild(divider);
       }
     }
-    if (dateDivider) {
-      const divider = document.createElement("div");
-      divider.className = "date-divider-wrapper";
-      divider.innerHTML = dateDivider;
-      frag.appendChild(divider);
-    }
 
-    // 🧱 Bubble
+    // === Bubble Wrapper ===
     const wrapper = document.createElement("div");
     wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}`;
-    if (!showPfp) {
-      const indent = "calc(var(--pfp-size) + var(--pfp-gap))";
-      if (isSelf) wrapper.style.marginRight = indent;
-      else wrapper.style.marginLeft = indent;
-    }
 
     const editedTag = msg.edited ? `<span class="edited-tag">edited</span>` : "";
 
     wrapper.innerHTML = `
       <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""} ${msg._grp || ""}"
-           data-msg-id="${msg.id}"
-           data-time="${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}">
+           data-msg-id="${msg.id}">
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
           ${replyBox}
-          <div class="msg-text-wrapper">
+          <div class="msg-text-wrapper" style="position: relative; padding-bottom: 18px;">
             <div class="msg-text clamp-text" data-full="${escapeHtml(displayText)}" data-short="${escapeHtml(shortText)}">
               ${content}
             </div>
-            <div class="bubble-meta-inline">
-              <span class="meta-time-tick">${meta}</span>
-              ${editedTag}
+            <div class="bubble-meta-inline" style="position: absolute; bottom: 2px; right: 4px;">
+              <span class="meta-time-tick">${meta}</span> ${editedTag}
             </div>
           </div>
-          ${linkPreviewHTML}
         </div>
       </div>
     `;
 
-    // 👆 Touch + Long press
-    if (!isDeleted) {
-      const bubbleEl = wrapper.querySelector(".message-bubble");
-      if (bubbleEl) {
-        bubbleEl.addEventListener("touchstart", handleTouchStart);
-        bubbleEl.addEventListener("touchmove", handleTouchMove);
-        bubbleEl.addEventListener("touchend", ev => handleSwipeToReply(ev, msg, displayText));
-        bubbleEl.addEventListener("contextmenu", e => {
-          e.preventDefault();
-          handleLongPressMenu(msg, displayText, isSelf);
-        });
-      }
-    }
-
     frag.appendChild(wrapper);
 
-    // ✅ Mark seen
+    // Mark as seen
     if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
       db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
         .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
@@ -2171,14 +2112,10 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
   if (typeof lucide !== "undefined") lucide.createIcons();
 
-  if (isInitial) {
-    // skip scroll
-  } else if (isNearBottom) {
+  if (isNearBottom || isInitial) {
     setTimeout(() => scrollToBottomThread(true), 40);
   } else if (typeof distFromBottom === "number") {
-    setTimeout(() => {
-      area.scrollTop = area.scrollHeight - distFromBottom;
-    }, 0);
+    setTimeout(() => { area.scrollTop = area.scrollHeight - distFromBottom; }, 0);
   }
 }
 
