@@ -1902,26 +1902,25 @@ function buildTickMeta(msg, otherUid) {
 
   const editedHtml = msg.edited ? `<span class="edited-tag">(edited)</span>` : "";
 
-  // ✅ MUST return string
-  return `
+  // 🔥 This MUST return a plain string
+  return String(`
     <span class="msg-meta-inline" data-status="${status}">
       ${editedHtml}${timeHtml}
       <i data-lucide="${icon}" class="tick-icon ${tickClass}"></i>
     </span>
-  `;
+  `);
 }
-
 function buildOtherMeta(msg) {
   const editedHtml = msg.edited ? `<span class="edited-tag">(edited)</span>` : "";
   const timeHtml = msg.timestamp?.toDate
-    ? `<span class="msg-time">${String(formatTimestamp(msg.timestamp.toDate()))}</span>`
+    ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>`
     : "";
 
-  return `
+  return String(`
     <span class="msg-meta-inline" data-status="other">
       ${editedHtml}${timeHtml}
     </span>
-  `;
+  `);
 }
 
 /* ---------------------------------------------------------
@@ -2071,9 +2070,10 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
     const replyBox = !isDeleted ? buildReplyStrip(msg) : "";
 
-    const meta = isSelf && !isDeleted
+    const metaRaw = isSelf && !isDeleted
       ? buildTickMeta(msg, otherUid)
       : buildOtherMeta(msg);
+    const meta = typeof metaRaw === "string" ? metaRaw : "";
 
     const shortText = displayText.slice(0, 500);
     const hasLong = displayText.length > 500;
@@ -2099,7 +2099,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       }
     }
 
-    // 📆 Add date divider if needed
+    // 📆 Date divider
     let dateDivider = "";
     const msgDate = msg.timestamp?.toDate?.();
     if (msgDate) {
@@ -2116,7 +2116,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       frag.appendChild(divider);
     }
 
-    // 🧱 Bubble Wrapper
+    // 🧱 Bubble
     const wrapper = document.createElement("div");
     wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}`;
     if (showPfp) wrapper.classList.add("has-pfp");
@@ -2138,14 +2138,15 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
           <div class="msg-text-wrapper">
             <div class="msg-text clamp-text" data-full="${escapeHtml(displayText)}" data-short="${escapeHtml(shortText)}">
               ${content}
+              ${!isDeleted ? `<span class="meta-inline-wrap">${meta}</span>` : ""}
             </div>
-            ${!isDeleted ? meta : ""}
           </div>
           ${linkPreviewHTML}
         </div>
       </div>
     `;
 
+    // 👆 Touch + Long press
     if (!isDeleted) {
       const bubbleEl = wrapper.querySelector(".message-bubble");
       if (bubbleEl) {
@@ -2161,7 +2162,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
     frag.appendChild(wrapper);
 
-    // ✅ Mark as seen
+    // ✅ Mark seen
     if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
       db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
         .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
