@@ -1900,25 +1900,22 @@ function buildTickMeta(msg, otherUid) {
     ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>`
     : "";
 
-  const editedHtml = msg.edited ? `<span class="edited-tag">(edited)</span>` : "";
-
-  // 🔥 This MUST return a plain string
   return String(`
     <span class="msg-meta-inline" data-status="${status}">
-      ${editedHtml}${timeHtml}
+      ${timeHtml}
       <i data-lucide="${icon}" class="tick-icon ${tickClass}"></i>
     </span>
   `);
 }
+
 function buildOtherMeta(msg) {
-  const editedHtml = msg.edited ? `<span class="edited-tag">(edited)</span>` : "";
   const timeHtml = msg.timestamp?.toDate
     ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>`
     : "";
 
   return String(`
     <span class="msg-meta-inline" data-status="other">
-      ${editedHtml}${timeHtml}
+      ${timeHtml}
     </span>
   `);
 }
@@ -1958,12 +1955,12 @@ function buildLinkPreviewHTML(preview, url) {
  * --------------------------------------------------------- */
 function decryptMsgText(msg) {
   let decrypted = "";
-  let isDeleted = false;
+  const isDeleted = msg.text === "" || msg.deleted === true;
 
   const deletedHtml = `<i data-lucide="trash-2"></i> <span class="deleted-msg-label">Message deleted</span>`;
 
   if (typeof msg.text === "string") {
-    if (msg.text === "") {
+    if (isDeleted) {
       return { text: "", isDeleted: true, deletedHtml };
     }
     try {
@@ -1975,11 +1972,10 @@ function decryptMsgText(msg) {
       decrypted = "[Decryption error]";
     }
   } else {
-    // 🔥 force any unexpected type to string
     decrypted = JSON.stringify(msg.text ?? "[Invalid text]");
   }
 
-  return { text: decrypted, isDeleted: false, deletedHtml };
+  return { text: decrypted, isDeleted, deletedHtml };
 }
 
 
@@ -2119,26 +2115,27 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     // 🧱 Bubble
     const wrapper = document.createElement("div");
     wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}`;
-    if (showPfp) wrapper.classList.add("has-pfp");
-
     if (!showPfp) {
       const indent = "calc(var(--pfp-size) + var(--pfp-gap))";
       if (isSelf) wrapper.style.marginRight = indent;
       else wrapper.style.marginLeft = indent;
     }
 
+    const editedTag = msg.edited ? `<span class="edited-tag">edited</span>` : "";
+
     wrapper.innerHTML = `
-      ${pfpHtml}
       <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""} ${msg._grp || ""}"
            data-msg-id="${msg.id}"
            data-time="${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}">
-        ${authorHtml}
-        ${replyBox}
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
-          <div class="msg-text-wrapper" style="position: relative; display: flex; flex-direction: column;">
-            ${!isDeleted ? `<div class="bubble-meta-top">${meta}</div>` : ""}
+          ${replyBox}
+          <div class="msg-text-wrapper" style="display: flex; flex-direction: column;">
             <div class="msg-text clamp-text" data-full="${escapeHtml(displayText)}" data-short="${escapeHtml(shortText)}">
               ${content}
+            </div>
+            <div class="bubble-meta-inline" style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 4px;">
+              <span class="meta-time-tick">${meta}</span>
+              ${editedTag}
             </div>
           </div>
           ${linkPreviewHTML}
