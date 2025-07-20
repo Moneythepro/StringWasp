@@ -1736,110 +1736,48 @@ async function fetchLinkPreview(url) {
 /* =========================================================
  * Send message in thread
  * ======================================================= */
-async function sendThreadMessage() {
-  if (isSendingThread) return;
-  isSendingThread = true;
+function renderMessage(msg, isOwn) {
+  const { text, isDeleted, deletedHtml } = decryptMsgText(msg);
+  const escaped = escapeHtml(text);
 
-  const input = document.getElementById("threadInput");
-  if (!input || !currentThreadUser) {
-    isSendingThread = false;
-    return;
-  }
+  const authorName = escapeHtml(msg.fromName || "User");
+  const authorHtml = !isOwn
+    ? `<div class="msg-author">${usernameWithBadge(msg.from, authorName)}</div>`
+    : "";
 
-  const rawText = input.value;
-  const text = rawText.trim();
-  if (!text) {
-    isSendingThread = false;
-    return;
-  }
+  const replyHtml = msg.replyTo && !isDeleted
+    ? `<div class="reply-to">${escapeHtml(msg.replyTo.text || "")}</div>`
+    : "";
 
-  input.value = ""; // clear to avoid dup send
-  cancelReply();
-  replyingTo = null;
+  const meta = isOwn && !isDeleted
+    ? buildTickMeta(msg, currentThreadUser)
+    : buildOtherMeta(msg);
 
-  const fromName = document.getElementById("usernameDisplay")?.textContent || "User";
-  const toNameElem = document.getElementById("threadWithName");
-  const toName = toNameElem ? toNameElem.textContent : "Friend";
+  const linkPreviewHtml = msg.preview && !isDeleted
+    ? buildLinkPreviewHTML(msg.preview, msg.preview.url)
+    : "";
 
-  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
-  const threadRef = db.collection("threads").doc(threadIdStr);
+  const bodyHtml = isDeleted ? deletedHtml : linkifyText(escaped);
+  const emojiOnly = isEmojiOnlyText(text) ? "emoji-only" : "";
 
-  // Encrypt
-  const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
-
-  const message = {
-    text: encryptedText,
-    from: currentUser.uid,
-    fromName,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    seenBy: [currentUser.uid]
-  };
-
-  // Reply
-  if (replyingTo?.msgId && replyingTo?.text?.trim()) {
-    message.replyTo = {
-      msgId: replyingTo.msgId,
-      text: replyingTo.text
-    };
-  }
-
-// Link preview (best effort, one)
-  const urlMatch = rawText.match(/https?:\/\/[^\s]+/);
-  if (urlMatch && urlMatch[0]) {
-    try {
-      const preview = await fetchLinkPreview(urlMatch[0]);
-      if (preview?.title) {
-        message.preview = {
-          title: preview.title,
-          image: preview.image || "",
-          url: preview.url || urlMatch[0]
-        };
-      }
-    } catch (err) {
-      console.warn("⚠️ Link preview fetch failed:", err);
-    }
-  }
-
-  try {
-    await threadRef.collection("messages").add(message);
-
-    // Update thread metadata
-    await threadRef.set({
-      participants: [currentUser.uid, currentThreadUser],
-      names: {
-        [currentUser.uid]: fromName,
-        [currentThreadUser]: toName
-      },
-      lastMessage: text,
-      unread: {
-        [currentUser.uid]: 0,
-        [currentThreadUser]: firebase.firestore.FieldValue.increment(1)
-      },
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-
-    requestAnimationFrame(() => input.focus({ preventScroll: true }));
-    setTimeout(() => scrollToBottomThread(true), 100);
-  } catch (err) {
-    console.error("❌ Send failed:", err.message || err);
-    alert("❌ Failed to send message.");
-  } finally {
-    isSendingThread = false;
-  }
-}
-
-/* Bind globals used in openThread */
-if (!handleSendClick) {
-  handleSendClick = () => sendThreadMessage();
-}
-if (typeof handleThreadKey !== "function") {
-  window.handleThreadKey = function handleThreadKey(e) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendThreadMessage();
-    }
-  };
-}
+  return `
+    <div class="message-bubble-wrapper ${isOwn ? 'right from-self' : 'left from-other'} ${msg._grp || 'grp-single'}">
+      <div class="message-bubble ${isOwn ? 'right' : 'left'} ${emojiOnly}" data-msg-id="${msg.id}">
+        ${authorHtml}
+        ${replyHtml}
+        <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
+          <div class="msg-text-wrapper" style="padding-bottom:18px; position:relative;">
+            <span class="msg-text">${bodyHtml}</span>
+            <div class="bubble-meta-inline" style="position:absolute; bottom:4px; right:6px;">
+              ${!isDeleted ? meta : ""}
+            </div>
+          </div>
+          ${linkPreviewHtml}
+        </div>
+      </div>
+    </div>
+  `;
+                }
 
 /* =========================================================
  * Helpers for Enhanced Bubble Rendering
