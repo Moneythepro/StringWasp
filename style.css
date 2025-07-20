@@ -2045,3 +2045,109 @@ body.dark .modal-content {
     transform: scale(1);
   }
 }
+
+.chat-input-bar {
+  display: flex !important;
+  align-items: center !important;
+  padding: 8px 12px !important;
+  background: #fff !important;
+  border-top: 1px solid #ddd !important;
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 100 !important;
+  gap: 8px !important;
+}
+
+.chat-input-bar.dark {
+  background: #1e1e1e !important;
+  border-top: 1px solid #333 !important;
+}
+
+.left-actions {
+  display: flex !important;
+  gap: 8px !important;
+}
+
+.icon-btn {
+  background: none !important;
+  border: none !important;
+  padding: 6px !important;
+  font-size: 20px !important;
+  color: #444 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  border-radius: 50% !important;
+  transition: background 0.2s !important;
+}
+
+.icon-btn:hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.icon-btn:active {
+  background: rgba(0, 0, 0, 0.1) !important;
+}
+
+.icon-btn.dark {
+  color: #ccc !important;
+}
+
+.input-wrapper {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  background: #f1f1f1 !important;
+  border-radius: 24px !important;
+  padding: 6px 12px !important;
+  gap: 6px !important;
+}
+
+.input-wrapper.dark {
+  background: #2a2a2a !important;
+}
+
+.input-wrapper input {
+  flex: 1 !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  font-size: 15px !important;
+  padding: 4px 0 !important;
+  color: #111 !important;
+}
+
+.input-wrapper input.dark {
+  color: #eee !important;
+}
+
+.emoji-btn {
+  padding: 6px !important;
+  font-size: 18px !important;
+  color: #666 !important;
+  border-radius: 50% !important;
+}
+
+.emoji-btn:hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+@media (max-width: 600px) {
+  .chat-input-bar {
+    padding: 6px 8px !important;
+  }
+
+  .input-wrapper {
+    padding: 6px 10px !important;
+  }
+
+  .input-wrapper input {
+    font-size: 14px !important;
+  }
+
+  .icon-btn {
+    font-size: 18px !important;
+    padding: 5px !important;
+  }
+}
