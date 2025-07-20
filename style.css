@@ -1925,11 +1925,22 @@ body {
  * INPUT BAR
  * ======================================================= */
 .chat-input-bar {
-  position: fixed;      /* Make it stay in place */
-  bottom: 0;            /* Stick to the bottom */
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  gap: 6px;
+  border-top: 1px solid #ccc;
+  background: var(--inputbar-bg);
+  
+  position: fixed;     /* 🔧 Make it fixed */
+  bottom: 0;           /* 🔧 Stick to bottom */
   left: 0;
   right: 0;
-  z-index: 100;         /* Stay above most elements */
+  z-index: 999;        /* Stay above everything */
+}
+.chat-body {
+  padding-bottom: 72px; /* or slightly more than input height */
+  overflow-y: auto;
 }
 
 .icon-btn {
