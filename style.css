@@ -2328,8 +2328,57 @@ body.dark .bubble-meta-top {
 }
 
 
+/* === GLOBAL BASE FIXES === */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html, body {
+  height: 100%;
+  overflow: hidden; /* Prevents extra scroll */
+  touch-action: manipulation;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overscroll-behavior: none;
+}
+body {
+  background: #f5f5f5;
+}
+
+/* === ROOT APP CONTAINER === */
+#app, .thread-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* === MAIN THREAD WRAPPER === */
+.thread-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* === SCROLL AREA === */
+.chat-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0 8px;
+  padding-bottom: 70px; /* matches input bar height */
+  -webkit-overflow-scrolling: touch; /* Smooth iOS scroll */
+}
+
+/* === INPUT BAR FIXED === */
 .chat-input-bar {
-  position: absolute;
+  position: absolute; /* Or fixed if needed */
   bottom: 0;
   left: 0;
   right: 0;
@@ -2339,18 +2388,17 @@ body.dark .bubble-meta-top {
   border-top: 1px solid #ccc;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
+  z-index: 1000;
   box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05);
-  z-index: 999;
 }
 
-/* Left: Reply + Mic */
+/* === INPUT + ICONS === */
 .left-actions {
   display: flex;
   gap: 6px;
 }
-
-/* Input only */
 .input-wrapper {
   flex: 1;
   display: flex;
@@ -2358,24 +2406,21 @@ body.dark .bubble-meta-top {
   background: #f0f0f0;
   border-radius: 20px;
   height: 46px;
-  padding: 0 12px;
+  padding: 0 10px;
+  gap: 6px;
   overflow: hidden;
 }
-
-/* Input field */
 #threadInput {
   flex: 1;
-  font-size: 15px;
-  height: 42px;
-  line-height: 42px;
   border: none;
   background: transparent;
   outline: none;
-  color: #222;
+  font-size: 15px;
+  height: 42px;
+  line-height: 42px;
   padding: 0;
+  color: #222;
 }
-
-/* Icon buttons */
 .icon-btn {
   width: 38px;
   height: 38px;
@@ -2394,14 +2439,17 @@ body.dark .bubble-meta-top {
 .icon-btn:hover {
   background: rgba(0, 0, 0, 0.05);
 }
-
-/* Emoji-specific */
 .emoji-btn {
   font-size: 1.4rem;
   color: #888;
 }
 .emoji-btn:hover {
   color: #111;
+}
+
+/* === Prevent Horizontal Scroll Always === */
+body, html {
+  overflow-x: hidden !important;
 }
 
 /* Dark Mode */
