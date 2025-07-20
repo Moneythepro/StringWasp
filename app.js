@@ -1968,18 +1968,16 @@ async function getUserProfileCached(uid) {
 async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, isInitial }) {
   if (!area) return;
 
-  // Determine if we are near bottom for auto-scroll
   const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
-
   computeGroupClasses(msgs);
 
   const selfProfile = await getUserProfileCached(currentUser.uid);
   const otherProfile = await getUserProfileCached(otherUid);
 
-  let distFromBottom = 0;
+  let distFromBottom;
   if (!isInitial) distFromBottom = area.scrollHeight - area.scrollTop;
+  area.innerHTML = ""; // Always reset for fresh render
 
-  area.innerHTML = ""; // Clear area before rendering new set
   const frag = document.createDocumentFragment();
   let lastDateLabel = null;
 
@@ -1994,15 +1992,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     const replyBox = !isDeleted ? buildReplyStrip(msg) : "";
     const meta = isSelf && !isDeleted ? buildTickMeta(msg, otherUid) : buildOtherMeta(msg);
 
-    const shortText = displayText.slice(0, 500);
-    const hasLong = displayText.length > 500;
-    const content = isDeleted
-      ? deletedHtml
-      : hasLong
-        ? `${linkifyText(shortText)}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
-        : linkifyText(displayText);
-
-    // === Date Divider ===
+    // Date divider
     const msgDate = msg.timestamp?.toDate?.();
     if (msgDate) {
       const label = getDateLabel(msgDate);
@@ -2015,22 +2005,26 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       }
     }
 
-    // === Bubble Wrapper ===
-    const wrapper = document.createElement("div");
-    wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right" : "left"} ${msg._grp || "grp-single"}`;
+    const shortText = displayText.slice(0, 500);
+    const hasLong = displayText.length > 500;
+    const content = isDeleted
+      ? deletedHtml
+      : hasLong
+        ? `${linkifyText(shortText)}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
+        : linkifyText(displayText);
 
-    const editedTag = msg.edited ? `<span class="edited-tag">edited</span>` : "";
+    // Bubble
+    const wrapper = document.createElement("div");
+    wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}`;
 
     wrapper.innerHTML = `
-      <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""}" data-msg-id="${msg.id}">
+      <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""}">
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
           ${replyBox}
-          <div class="msg-text-wrapper" style="padding-bottom: 18px;">
-            <div class="msg-text clamp-text" data-full="${escapeHtml(displayText)}" data-short="${escapeHtml(shortText)}">
-              ${content}
-            </div>
-            <div class="bubble-meta-inline">
-              <span class="meta-time-tick">${meta}</span> ${editedTag}
+          <div class="msg-text-wrapper" style="position: relative; padding-bottom: 18px;">
+            <div class="msg-text clamp-text">${content}</div>
+            <div class="bubble-meta-inline" style="position: absolute; bottom: 2px; right: 4px;">
+              <span class="meta-time-tick">${meta}</span>
             </div>
           </div>
         </div>
@@ -2050,20 +2044,16 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
   area.appendChild(frag);
 
   if (typeof lucide !== "undefined") lucide.createIcons();
-
-  // Scroll behavior
-  if (isInitial || isNearBottom) {
-    setTimeout(() => scrollToBottomThread(true), 50);
-  } else if (distFromBottom) {
-    setTimeout(() => { area.scrollTop = area.scrollHeight - distFromBottom; }, 0);
-  }
+  setTimeout(() => {
+    if (isNearBottom || isInitial) scrollToBottomThread(true);
+    else if (typeof distFromBottom === "number") area.scrollTop = area.scrollHeight - distFromBottom;
+  }, 40);
 }
 
 async function openThread(uid, name) {
   if (!currentUser || !uid) return;
 
   try {
-    // Check if they are friends
     const friendDoc = await db.collection("users").doc(currentUser.uid)
       .collection("friends").doc(uid).get();
     if (!friendDoc.exists) {
@@ -2071,10 +2061,9 @@ async function openThread(uid, name) {
       return;
     }
 
-    // Switch to thread view
     switchTab("threadView");
 
-    // Bind input and send button
+    // Bind input + send
     setTimeout(() => {
       const input = document.getElementById("threadInput");
       if (input && !input.dataset.bound) {
@@ -2086,59 +2075,58 @@ async function openThread(uid, name) {
         sendBtn.addEventListener("click", handleSendClick);
         sendBtn.dataset.bound = "true";
       }
+      if (typeof setupEmojiButton === "function") setupEmojiButton();
     }, 200);
 
-    // Set header info
-    const headerNameEl = document.getElementById("threadWithName");
-    if (headerNameEl) headerNameEl.innerHTML = usernameWithBadge(uid, name || "Chat");
+    document.getElementById("threadWithName").innerHTML = usernameWithBadge(uid, name || "Chat");
 
-    const area = document.getElementById("threadMessages");
     currentThreadUser = uid;
     currentRoom = null;
     const threadIdStr = threadId(currentUser.uid, uid);
+    const area = document.getElementById("threadMessages");
+    renderedMessageIds = new Set();
+
     if (area) area.innerHTML = "";
 
-    // Listen to typing
+    if (typeof unsubscribeThread === "function") unsubscribeThread();
+    if (typeof unsubscribeTyping === "function") unsubscribeTyping();
+
     listenToTyping(threadIdStr, "thread");
 
-    // Reset unread
-    await db.collection("threads").doc(threadIdStr).set({
-      unread: { [currentUser.uid]: 0 }
-    }, { merge: true });
+    await db.collection("threads").doc(threadIdStr)
+      .set({ unread: { [currentUser.uid]: 0 } }, { merge: true });
 
-    // Status updates
-    db.collection("users").doc(uid).onSnapshot((doc) => {
+    db.collection("users").doc(uid).onSnapshot(doc => {
       const data = doc.data();
       const status = document.getElementById("chatStatus");
       if (!status || !data) return;
-      status.textContent = data.typingFor === currentUser.uid ? "Typing..."
-        : data.status === "online" ? "Online"
-        : data.lastSeen?.toDate ? "Last seen " + timeSince(data.lastSeen.toDate())
-        : "Offline";
+      status.textContent =
+        data.typingFor === currentUser.uid
+          ? "Typing..."
+          : data.status === "online"
+            ? "Online"
+            : data.lastSeen?.toDate
+              ? "Last seen " + timeSince(data.lastSeen.toDate())
+              : "Offline";
     });
 
-    // Unsubscribe old listeners
-    if (unsubscribeThread) unsubscribeThread();
-    if (unsubscribeTyping) unsubscribeTyping();
-
-    // Listen for messages
     unsubscribeThread = db.collection("threads").doc(threadIdStr)
       .collection("messages").orderBy("timestamp")
       .onSnapshot(async (snapshot) => {
-        if (!area) return;
-        const msgs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        const msgs = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
         await renderThreadMessagesToArea({
           area,
           msgs,
           otherUid: uid,
           threadIdStr,
-          isInitial: area.childElementCount === 0
+          isInitial: !renderedMessageIds.size,
         });
+        renderedMessageIds = new Set(msgs.map(m => m.id));
       });
 
   } catch (err) {
     console.error("❌ openThread error:", err);
-    alert("❌ Could not open chat: " + (err.message || err));
+    alert("❌ Could not open chat: " + (err.message || JSON.stringify(err)));
   }
 }
 
@@ -2151,11 +2139,10 @@ async function openThread(uid, name) {
  * ======================================================= */
 function renderMessage(msg, isOwn) {
   const { text, isDeleted, deletedHtml } = decryptMsgText(msg);
-  const escaped = escapeHtml(text);
-
+  const escaped = escapeHtml(text || "");
   const authorName = escapeHtml(msg.fromName || "User");
-  const authorHtml = `<div class="msg-author">${usernameWithBadge(msg.from, authorName)}</div>`;
 
+  const authorHtml = `<div class="msg-author">${usernameWithBadge(msg.from, authorName)}</div>`;
   const replyHtml = msg.replyTo && !isDeleted
     ? `<div class="reply-to">${escapeHtml(msg.replyTo.text || "")}</div>`
     : "";
@@ -2164,24 +2151,21 @@ function renderMessage(msg, isOwn) {
     ? buildTickMeta(msg, currentThreadUser)
     : buildOtherMeta(msg);
 
-  const linkPreviewHtml = msg.preview && !isDeleted
-    ? buildLinkPreviewHTML(msg.preview, msg.preview.url)
-    : "";
-
   const bodyHtml = isDeleted ? deletedHtml : linkifyText(escaped);
-  const emojiOnly = isEmojiOnlyText(escaped) ? "emoji-only" : "";
+  const emojiOnly = isEmojiOnlyText(text) ? "emoji-only" : "";
 
   return `
     <div class="message-bubble-wrapper ${isOwn ? 'right from-self' : 'left from-other'} grp-single">
       <div class="message-bubble ${isOwn ? 'right' : 'left'} ${emojiOnly}" data-msg-id="${msg.id}">
+        ${!isOwn ? authorHtml : ""}
+        ${replyHtml}
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
-          ${!isOwn ? authorHtml : ""}
-          ${replyHtml}
           <div class="msg-text-wrapper" style="position: relative; padding-bottom: 18px;">
             <span class="msg-text">${bodyHtml}</span>
-            ${!isDeleted ? `<div class="bubble-meta-inline"><span class="meta-time-tick">${meta}</span></div>` : ""}
+            <div class="bubble-meta-inline" style="position: absolute; bottom: 2px; right: 4px;">
+              ${!isDeleted ? meta : ""}
+            </div>
           </div>
-          ${linkPreviewHtml}
         </div>
       </div>
     </div>
