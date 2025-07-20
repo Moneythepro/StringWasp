@@ -1925,53 +1925,56 @@ body {
 /* =========================================================
  * INPUT BAR
  * ======================================================= */
-/* === Input Bar (Universal) === */
+/* === Chat Input Bar (Compact Like WhatsApp iOS) === */
 .chat-input-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px;
+  padding: 6px 8px;
   background: var(--inputbar-bg, #fff);
   border-top: 1px solid #ccc;
-  gap: 8px;
-  height: auto;
+  gap: 6px;
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   z-index: 999;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.04);
+  height: auto;
 }
 
-/* Input Wrapper */
+/* Wrapper around input field */
 .chat-input-bar .input-wrapper {
   flex: 1;
   display: flex;
   align-items: center;
   background: #f0f0f0;
-  border-radius: 20px;
-  padding: 2px 8px;
-  gap: 6px;
+  border-radius: 18px;
+  padding: 0 8px;
+  gap: 4px;
+  height: 36px;
   overflow: hidden;
 }
 
 /* Input Field */
 #threadInput {
   flex: 1;
-  font-size: 14.5px;
-  padding: 7px 10px;
+  font-size: 14px;
+  padding: 6px 0;
   border: none;
-  border-radius: 16px;
   background: transparent;
   outline: none;
-  color: #333;
-  min-height: 36px;
+  color: #222;
+  height: 36px;
+  line-height: 36px;
+  font-family: 'Segoe UI', sans-serif;
 }
 
-/* Action Buttons */
+/* Send / Emoji Buttons */
 .chat-input-bar .icon-btn {
   height: 36px;
   width: 36px;
+  min-width: 36px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -1979,97 +1982,66 @@ body {
   background: none;
   border: none;
   color: #444;
-  font-size: 18px;
+  font-size: 17px;
   border-radius: 50%;
+  cursor: pointer;
   transition: background 0.2s ease;
 }
 
 .chat-input-bar .icon-btn:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.06);
 }
 
-/* Emoji Button */
+/* Emoji button */
 .emoji-btn {
   font-size: 1.3rem;
   color: #888;
   cursor: pointer;
   display: flex;
   align-items: center;
-  transition: color 0.2s ease;
 }
 .emoji-btn:hover {
-  color: #222;
+  color: #111;
 }
 
-/* === Thread InputBar Variant === */
-.thread-inputbar {
-  display: flex;
-  align-items: center;
-  padding: 6px 10px;
-  background: var(--inputbar-bg, #fff);
-  border-top: 1px solid #ccc;
-  gap: 6px;
-}
-
-.thread-inputbar input[type="text"] {
-  flex: 1;
-  font-size: 14.5px;
-  padding: 7px 10px;
-  border-radius: 18px;
-  border: 1px solid #ccc;
-  background: #fff;
-  outline: none;
-  height: 36px;
-}
-
-.thread-inputbar button,
-.thread-inputbar .icon-btn {
-  background: none;
-  border: none;
-  height: 36px;
-  width: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-/* === Responsive (Mobile) === */
+/* === Responsive for small screens === */
 @media (max-width: 480px) {
   .chat-input-bar {
-    padding: 5px 8px;
+    padding: 5px 6px;
   }
   .chat-input-bar .input-wrapper {
-    padding: 2px 6px;
+    padding: 0 6px;
+    height: 34px;
   }
   #threadInput {
     font-size: 13px;
-    padding: 6px 8px;
+    height: 34px;
+    line-height: 34px;
+  }
+  .chat-input-bar .icon-btn {
+    height: 34px;
+    width: 34px;
+    font-size: 16px;
   }
 }
 
 /* === Dark Mode === */
 body.dark .chat-input-bar {
   background: #1a1a1a;
-  border-top: 1px solid #333;
+  border-top-color: #333;
   box-shadow: 0 -2px 10px rgba(255, 255, 255, 0.05);
 }
-
 body.dark .input-wrapper {
   background: #2c2c2e;
 }
-
 body.dark #threadInput {
-  color: #f1f1f1;
+  color: #eee;
 }
-
 body.dark .icon-btn {
   color: #ccc;
 }
 body.dark .icon-btn:hover {
   background: #333;
-  color: #fff;
 }
 
 /* =========================================================
