@@ -17,12 +17,11 @@ const urlsToCache = [
 
 // Install: Cache essential files
 self.addEventListener("install", (event) => {
-  
   self.skipWaiting(); // Activate immediately
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(urlsToCache))
-      .then(() => )
+      .then(() => console.log("Service Worker: Files cached successfully"))
   );
 });
 
@@ -49,15 +48,11 @@ self.addEventListener("fetch", (event) => {
 
 // Activate: Remove old caches
 self.addEventListener("activate", (event) => {
-  
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
         keys.filter((key) => key !== CACHE_NAME)
-          .map((key) => {
-            
-            return caches.delete(key);
-          })
+          .map((key) => caches.delete(key))
       )
     )
   );
