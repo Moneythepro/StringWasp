@@ -117,71 +117,77 @@
       <button onclick="logout()">Logout</button>
       <button onclick="contactSupport()">Contact Us</button>
     </div>
+<!-- 💬 Thread View -->
+<div id="threadView" class="thread-container tab" role="region" style="display:none;">
+  <header class="chat-header">
+    <button class="back-btn" onclick="switchTab('chatTab')" aria-label="Back">
+      <i data-lucide="arrow-left"></i>
+    </button>
+    <img id="chatProfilePic" class="header-avatar" src="default-avatar.png" alt="Profile Picture" />
+    <div class="chat-info">
+      <h3 id="threadWithName">Friend Name</h3>
+      <p id="chatStatus">last seen recently</p>
+    </div>
+    <button class="menu-btn" onclick="toggleChatOptions(event)" aria-label="Menu">
+      <i data-lucide="more-vertical"></i>
+    </button>
+    <div id="chatOptionsMenu" class="chat-options-horizontal" role="menu">
+      <span onclick="blockUser()">Block</span>
+      <span onclick="viewMedia()">Media</span>
+      <span onclick="exportChat()">Export</span>
+      <span onclick="deleteChat()">Delete</span>
+    </div>
+  </header>
 
-    <!-- 💬 Thread View -->
-    <div id="threadView" class="thread-container tab" role="region" style="display:none;">
-      <header class="chat-header">
-        <button class="back-btn" onclick="switchTab('chatTab')" aria-label="Back"><i data-lucide="arrow-left"></i></button>
-        <img id="chatProfilePic" class="header-avatar" src="default-avatar.png" alt="Profile Picture" />
-        <div class="chat-info">
-          <h3 id="threadWithName">Friend Name</h3>
-          <p id="chatStatus">last seen recently</p>
-        </div>
-        <button class="menu-btn" onclick="toggleChatOptions(event)" aria-label="Menu"><i data-lucide="more-vertical"></i></button>
-        <div id="chatOptionsMenu" class="chat-options-horizontal" role="menu">
-          <span onclick="blockUser()">Block</span>
-          <span onclick="viewMedia()">Media</span>
-          <span onclick="exportChat()">Export</span>
-          <span onclick="deleteChat()">Delete</span>
-        </div>
-      </header>
-
-      <div class="thread-main">
-        <div class="chat-scroll-area">
-          <div id="threadMessages" role="log" aria-live="polite"></div>
-          <div id="threadTypingStatus" class="typing-indicator" aria-hidden="true"><span></span><span></span><span></span></div>
-        </div>
-<footer class="chat-input-bar">
-  <!-- Custom Reply Modal Button -->
-  <button class="icon-btn" onclick="openReplyModal()" aria-label="Reply Modal">
-    <i data-lucide="message-square"></i>
-  </button>
-
-  <!-- Microphone Button -->
-  <button class="icon-btn" onclick="startVoiceInput()" aria-label="Voice Message">
-    <i data-lucide="mic"></i>
-  </button>
-
-  <!-- Message Input -->
-  <input
-    id="threadInput"
-    type="text"
-    placeholder="Type a message…"
-    autocomplete="off"
-    autocapitalize="sentences"
-    enterkeyhint="send"
-    aria-label="Message input"
-  />
-
-  <!-- Emoji Button (Inside Input - Right) -->
-  <button class="icon-btn emoji-btn" id="emojiToggleBtn" aria-label="Emoji">
-    <i data-lucide="smile"></i>
-  </button>
-</footer>
+  <!-- 🧾 Scrollable Message Area -->
+  <div class="thread-main">
+    <div class="chat-scroll-area">
+      <div id="threadMessages" role="log" aria-live="polite"></div>
+      <div id="threadTypingStatus" class="typing-indicator" aria-hidden="true">
+        <span></span><span></span><span></span>
       </div>
     </div>
+  </div>
 
-    <!-- ✅ Additional modals, toasts, edit, crop modals etc. not removed, still present -->
+  <!-- ✅ Chat Input Bar (Fixed at Bottom) -->
+  <footer class="chat-input-bar">
+    <!-- Custom Reply Modal Button -->
+    <button class="icon-btn" onclick="openReplyModal()" aria-label="Reply Modal">
+      <i data-lucide="message-square"></i>
+    </button>
 
-    <!-- Message Options -->
-    <div id="messageOptionsModal" class="message-options-modal hidden" onclick="closeOptionsModal(event)">
-      <div class="modal-inner" onclick="event.stopPropagation()">
-        <div class="option" onclick="editMessage()"><i data-lucide="edit-3"></i> Edit Message</div>
-        <div class="option" onclick="deleteForMe()"><i data-lucide="trash-2"></i> Delete for Me</div>
-        <div class="option" onclick="deleteForEveryone()"><i data-lucide="slash"></i> Delete for Everyone</div>
-        <div class="option cancel" onclick="closeOptionsModal()"><i data-lucide="x"></i> Cancel</div>
-      </div>
-    </div>
+    <!-- Microphone Button -->
+    <button class="icon-btn" onclick="startVoiceInput()" aria-label="Voice Message">
+      <i data-lucide="mic"></i>
+    </button>
+
+    <!-- Message Input -->
+    <input
+      id="threadInput"
+      type="text"
+      placeholder="Type a message…"
+      autocomplete="off"
+      autocapitalize="sentences"
+      enterkeyhint="send"
+      aria-label="Message input"
+    />
+
+    <!-- Emoji Button -->
+    <button class="icon-btn emoji-btn" id="emojiToggleBtn" aria-label="Emoji">
+      <i data-lucide="smile"></i>
+    </button>
+  </footer>
+</div>
+
+<!-- ✅ Message Options Modal -->
+<div id="messageOptionsModal" class="message-options-modal hidden" onclick="closeOptionsModal(event)">
+  <div class="modal-inner" onclick="event.stopPropagation()">
+    <div class="option" onclick="editMessage()"><i data-lucide="edit-3"></i> Edit Message</div>
+    <div class="option" onclick="deleteForMe()"><i data-lucide="trash-2"></i> Delete for Me</div>
+    <div class="option" onclick="deleteForEveryone()"><i data-lucide="slash"></i> Delete for Everyone</div>
+    <div class="option cancel" onclick="closeOptionsModal()"><i data-lucide="x"></i> Cancel</div>
+  </div>
+</div>
 
     <!-- Toast -->
     <div id="chatToast" class="chat-toast" style="display: none;"></div>
