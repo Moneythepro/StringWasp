@@ -415,49 +415,6 @@ border-bottom: 1px solid #ccc;
   }
 }
 
-/* === INPUT BAR === */
-.chat-input-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 56px;
-  padding: 6px 8px;
-  background: #fff;
-  border-top: 1px solid #ddd;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  z-index: 100;
-}
-.chat-input-bar input {
-  flex: 1;
-  padding: 8px 12px;
-  border-radius: 18px;
-  border: 1px solid #ccc;
-  font-size: 13px;
-}
-.chat-input-bar button {
-  width: 36px;
-  height: 36px;
-  background: #128C7E;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* === HIDDEN FILE INPUT === */
-input[type="file"]#threadFile {
-  position: absolute !important;
-  left: -9999px !important;
-  top: -9999px !important;
-  opacity: 0 !important;
-  pointer-events: none;
-}
 
 /* === MESSAGES === */
 .message-bubble-wrapper {
@@ -2370,124 +2327,79 @@ body.dark .bubble-meta-top {
   background: #f5f5f5;
 }
 
-/* === Chat Input Bar (Final Compact iOS Style) === */
+
+/* === iPhone WhatsApp-like Chat Input Bar === */
 .chat-input-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 6px;
-  background: var(--inputbar-bg, #fff);
-  border-top: 1px solid #ccc;
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  gap: 6px;
-  height: 48px; /* fixed total height */
-  box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05);
-  z-index: 999;
-}
-
-/* Input wrapper */
-.chat-input-bar .input-wrapper {
-  flex: 1;
+  height: 56px;
+  padding: 6px 8px;
+  background: #fff;
+  border-top: 1px solid #ddd;
   display: flex;
   align-items: center;
-  background: #f0f0f0;
-  border-radius: 18px;
-  padding: 0 10px;
-  height: 36px;
   gap: 6px;
-  overflow: hidden;
+  z-index: 100;
 }
 
-/* Text input field */
-#threadInput {
+/* Input field */
+.chat-input-bar input {
   flex: 1;
-  font-size: 14px;
-  height: 34px;
-  line-height: 34px;
-  padding: 0;
-  border: none;
-  background: transparent;
+  padding: 8px 12px;
+  border-radius: 18px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+  line-height: 20px;
   outline: none;
   color: #222;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f9f9f9;
 }
 
-/* Icon buttons */
-.chat-input-bar .icon-btn {
-  height: 36px;
+/* Buttons (Send / Emoji / Mic) */
+.chat-input-bar button {
   width: 36px;
-  min-width: 36px;
-  padding: 0;
+  height: 36px;
+  background: #128C7E;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: none;
-  border: none;
-  font-size: 17px;
-  color: #444;
-  border-radius: 50%;
   cursor: pointer;
   transition: background 0.2s ease;
 }
 
-.chat-input-bar .icon-btn:hover {
+.chat-input-bar button:hover {
+  background: #0e6d5f;
+}
+
+/* Optional: Emoji Button with Lucide icon */
+.chat-input-bar .emoji-btn {
+  background: none;
+  color: #666;
+  font-size: 17px;
+}
+.chat-input-bar .emoji-btn:hover {
   background: rgba(0, 0, 0, 0.05);
 }
 
-/* Emoji icon */
-.emoji-btn {
-  font-size: 1.3rem;
-  color: #888;
-  display: flex;
-  align-items: center;
-}
-.emoji-btn:hover {
-  color: #000;
-}
-
-/* === Responsive Adjustments === */
-@media (max-width: 480px) {
-  .chat-input-bar {
-    height: 46px;
-    padding: 4px 5px;
-  }
-
-  .chat-input-bar .input-wrapper {
-    height: 34px;
-    padding: 0 8px;
-  }
-
-  #threadInput {
-    font-size: 13.5px;
-    height: 32px;
-    line-height: 32px;
-  }
-
-  .chat-input-bar .icon-btn {
-    height: 34px;
-    width: 34px;
-    font-size: 16px;
-  }
-}
-
-/* === Dark Mode === */
+/* === Dark Mode Support === */
 body.dark .chat-input-bar {
-  background: #1a1a1a;
+  background: #1c1c1e;
   border-top-color: #333;
-  box-shadow: 0 -1px 4px rgba(255, 255, 255, 0.03);
 }
-body.dark .input-wrapper {
+body.dark .chat-input-bar input {
   background: #2c2c2e;
-}
-body.dark #threadInput {
+  border-color: #444;
   color: #eee;
 }
-body.dark .icon-btn {
-  color: #ccc;
+body.dark .chat-input-bar button {
+  background: #1da188;
 }
-body.dark .icon-btn:hover {
-  background: #333;
+body.dark .chat-input-bar .emoji-btn {
+  color: #aaa;
 }
