@@ -17,11 +17,16 @@ const urlsToCache = [
 
 // Install: Cache essential files
 self.addEventListener("install", (event) => {
+  console.log("[SW] Install event triggered");
   self.skipWaiting(); // Activate immediately
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(urlsToCache))
-      .then(() => console.log("Service Worker: Files cached successfully"))
+      .then((cache) => {
+        console.log("[SW] Caching essential files:", urlsToCache);
+        return cache.addAll(urlsToCache);
+      })
+      .then(() => console.log("[SW] All files cached successfully"))
+      .catch((err) => console.error("[SW] Caching failed:", err))
   );
 });
 
@@ -33,7 +38,14 @@ self.addEventListener("fetch", (event) => {
   if (requestURL.pathname.endsWith("verified.json")) {
     event.respondWith(
       fetch(event.request, { cache: "no-store" })
-        .catch(() => caches.match("/verified.json"))
+        .then((response) => {
+          console.log("[SW] Fetched latest verified.json");
+          return response;
+        })
+        .catch(() => {
+          console.warn("[SW] Network failed for verified.json, using cache");
+          return caches.match("/verified.json");
+        })
     );
     return;
   }
@@ -41,20 +53,29 @@ self.addEventListener("fetch", (event) => {
   // Cache-first for all other requests
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request);
+      if (cachedResponse) {
+        console.log("[SW] Serving from cache:", event.request.url);
+        return cachedResponse;
+      }
+      console.log("[SW] Fetching from network:", event.request.url);
+      return fetch(event.request);
     })
   );
 });
 
 // Activate: Remove old caches
 self.addEventListener("activate", (event) => {
+  console.log("[SW] Activate event triggered, cleaning old caches...");
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
         keys.filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
+          .map((key) => {
+            console.log(`[SW] Deleting old cache: ${key}`);
+            return caches.delete(key);
+          })
       )
-    )
+    ).then(() => console.log("[SW] Cleanup complete"))
   );
   self.clients.claim();
 });
