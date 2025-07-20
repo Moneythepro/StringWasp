@@ -1927,20 +1927,22 @@ body {
 .chat-input-bar {
   display: flex;
   align-items: center;
-  padding: 6px 8px;
-  gap: 6px;
-  border-top: 1px solid #ccc;
-  background: var(--inputbar-bg);
-  
-  position: fixed;     /* 🔧 Make it fixed */
-  bottom: 0;           /* 🔧 Stick to bottom */
+  gap: 8px;
+  padding: 8px;
+  background: var(--inputbar-bg, #fff);
+  border-top: 1px solid #ddd;
+
+  position: fixed;
+  bottom: 0;
   left: 0;
   right: 0;
-  z-index: 999;        /* Stay above everything */
+  z-index: 999;
 }
-.chat-body {
-  padding-bottom: 72px; /* or slightly more than input height */
+
+.chat-scroll-area {
   overflow-y: auto;
+  height: calc(100vh - 140px); /* adjust for header + footer */
+  padding: 16px 8px 80px; /* bottom space for input bar */
 }
 
 .icon-btn {
