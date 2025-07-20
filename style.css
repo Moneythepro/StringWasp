@@ -1309,3 +1309,293 @@ body.dark .chat-options-horizontal span:hover {
   color: #111;
 }
 
+
+/* === MASSAGES ALL FUCK */
+
+.msg-row {
+  display: flex;
+  margin: 2px 10px;
+}
+.msg-row.self {
+  justify-content: flex-end;
+}
+.msg-row.other {
+  justify-content: flex-start;
+}
+
+.msg-bubble {
+  max-width: 78%;
+  padding: 6px 10px;
+  font-size: 14px;
+  line-height: 1.4;
+  background-color: #dcf8c6;
+  border-radius: 8px 0 8px 8px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  animation: fadeIn 0.25s ease;
+}
+
+.msg-row.other .msg-bubble {
+  background-color: #ffffff;
+  border-radius: 0 8px 8px 8px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.msg-meta {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  color: #667781;
+  gap: 4px;
+  margin-top: 2px;
+  align-self: flex-end;
+  opacity: 0.85;
+}
+
+.tick-icon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.2;
+  color: #4fc3f7;
+}
+.edited-tag {
+  font-size: 10px;
+  color: #999;
+}
+
+/* Detect emoji-only and style it larger */
+.msg-bubble.emoji-only {
+  font-size: 34px;
+  padding: 6px 12px;
+  background-color: #dcf8c6;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+  border-radius: 16px;
+  max-width: fit-content;
+}
+
+.msg-row.other .msg-bubble.emoji-only {
+  background-color: #ffffff;
+}
+
+/* Emoji-only meta still shows, just smaller and aligned */
+.msg-bubble.emoji-only .msg-meta {
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.msg-bubble.reply {
+  padding-top: 4px;
+}
+
+.reply-preview {
+  border-left: 4px solid #4fc3f7;
+  padding-left: 6px;
+  margin-bottom: 4px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.reply-user {
+  font-size: 12px;
+  font-weight: bold;
+  color: #4fc3f7;
+}
+
+.reply-text {
+  font-size: 13px;
+  color: #444;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.reply-user.self {
+  color: #999;
+  font-weight: normal;
+}
+
+.msg-bubble.link-preview {
+  padding: 6px 8px;
+}
+
+.preview-card {
+  display: flex;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+  margin-bottom: 6px;
+  background-color: #fefefe;
+  flex-direction: column;
+}
+
+.preview-thumb {
+  width: 100%;
+  height: auto;
+  max-height: 140px;
+  object-fit: cover;
+  border-bottom: 1px solid #eee;
+}
+
+.preview-info {
+  padding: 8px;
+}
+
+.preview-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #222;
+  margin-bottom: 4px;
+}
+
+.preview-url {
+  font-size: 12px;
+  color: #888;
+}
+
+.msg-row .msg-bubble {
+  border-radius: 18px;
+  padding: 8px 12px;
+  max-width: 80%;
+  word-break: break-word;
+}
+
+/* Self bubbles (green) */
+.msg-row.self .msg-bubble {
+  background-color: #dcf8c6;
+  align-self: flex-end;
+}
+
+/* Other bubbles (white) */
+.msg-row.other .msg-bubble {
+  background-color: #fff;
+  align-self: flex-start;
+}
+
+/* Corner logic for self */
+.msg-row.self.first.last .msg-bubble {
+  border-bottom-right-radius: 2px;
+}
+.msg-row.self.first:not(.last) .msg-bubble {
+  border-bottom-right-radius: 4px;
+  border-top-right-radius: 18px;
+  border-top-left-radius: 18px;
+  border-bottom-left-radius: 18px;
+}
+.msg-row.self:not(.first):not(.last) .msg-bubble {
+  border-radius: 8px 8px 8px 8px;
+}
+.msg-row.self.last:not(.first) .msg-bubble {
+  border-top-right-radius: 4px;
+}
+
+/* Corner logic for others */
+.msg-row.other.first.last .msg-bubble {
+  border-bottom-left-radius: 2px;
+}
+.msg-row.other.first:not(.last) .msg-bubble {
+  border-bottom-left-radius: 4px;
+}
+.msg-row.other:not(.first):not(.last) .msg-bubble {
+  border-radius: 8px;
+}
+.msg-row.other.last:not(.first) .msg-bubble {
+  border-top-left-radius: 4px;
+}
+
+.msg-bubble:active {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.edited-tag {
+  font-size: 10px;
+  margin-left: 4px;
+  color: #999;
+  font-style: italic;
+}
+
+.tick-icon.double {
+  fill: #999;
+}
+.tick-icon.double.seen {
+  fill: #4fc3f7;
+}
+
+.msg-bubble {
+  animation: fadeIn 0.2s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dark-mode .msg-row.self .msg-bubble {
+  background-color: #005c4b; /* WhatsApp green bubble dark mode */
+  color: #e6fdf5;
+}
+
+.dark-mode .msg-row.other .msg-bubble {
+  background-color: #1e1e1e;
+  color: #ddd;
+}
+
+.dark-mode .emoji-only {
+  color: #fff;
+}
+
+.dark-mode .reply-preview {
+  border-left-color: #4fc3f7;
+}
+
+.dark-mode .reply-user {
+  color: #4fc3f7;
+}
+
+.dark-mode .reply-text {
+  color: #ccc;
+}
+
+.dark-mode .msg-meta {
+  color: #999;
+}
+
+.dark-mode .edited-tag {
+  color: #aaa;
+}
+
+.dark-mode .preview-card {
+  background-color: #262626;
+  border-color: #333;
+}
+
+.dark-mode .preview-title {
+  color: #ddd;
+}
+
+.dark-mode .preview-url {
+  color: #888;
+}
+
+.dark-mode .tick-icon.double {
+  fill: #aaa;
+}
+
+.dark-mode .tick-icon.double.seen {
+  fill: #4fc3f7;
+}
+
+.dark-mode body {
+  background-color: #121212;
+}
+
+.dark-mode .msg-bubble:active {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
