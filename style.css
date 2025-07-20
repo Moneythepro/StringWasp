@@ -1928,10 +1928,9 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px;
+  padding: 8px 12px;
   background: var(--inputbar-bg, #fff);
   border-top: 1px solid #ddd;
-
   position: fixed;
   bottom: 0;
   left: 0;
@@ -1939,28 +1938,43 @@ body {
   z-index: 999;
 }
 
+/* 🟩 Consistent scroll area height */
 .chat-scroll-area {
   overflow-y: auto;
   height: calc(100vh - 140px); /* adjust for header + footer */
   padding: 16px 8px 80px; /* bottom space for input bar */
 }
 
+/* ✅ Unified Icon Buttons (mic, emoji, reply) */
 .icon-btn {
-  background: none;
+  background: #e7f9ee; /* light green background */
   border: none;
-  padding: 4px;
-  font-size: 1.4em;
-  color: #444;
+  padding: 10px;
+  border-radius: 50%;
+  color: #00c853; /* green color */
   display: flex;
   align-items: center;
+  justify-content: center;
   cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
+.icon-btn i {
+  width: 20px;
+  height: 20px;
+}
+
+.icon-btn:hover {
+  background: #d4f5e1;
+  color: #00b248;
+}
+
+/* 🧠 Input Field */
 #threadInput {
   flex: 1;
-  padding: 10px 40px 10px 14px;
+  padding: 12px 44px 12px 14px;
   font-size: 15px;
-  border-radius: 8px;
+  border-radius: 22px;
   border: 1px solid #d1d1d6;
   outline: none;
   background: #f9f9f9;
@@ -1971,12 +1985,14 @@ body {
   position: relative;
 }
 
+/* 🔵 On focus effect */
 #threadInput:focus {
-  border-color: #007aff;
+  border-color: #00c853;
   background: #fff;
-  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(0, 200, 83, 0.2);
 }
 
+/* 😄 Emoji Button - same style */
 #emojiToggleBtn {
   position: absolute;
   right: 16px;
@@ -1987,19 +2003,24 @@ body {
   padding: 0;
   font-size: 1.3em;
   cursor: pointer;
-  color: #444;
+  color: #00c853;
   display: flex;
   align-items: center;
   z-index: 2;
 }
 
-/* Dark mode styles */
+/* 🌙 Dark Mode */
 body.dark .chat-input-bar {
-  background: var(--inputbar-bg);
+  background: var(--inputbar-bg, #1a1a1a);
   border-top-color: #333;
 }
 body.dark .icon-btn {
-  color: #bbb;
+  background: #2c2c2c;
+  color: #90ee90;
+}
+body.dark .icon-btn:hover {
+  background: #3a3a3a;
+  color: #a5f5a5;
 }
 body.dark #threadInput {
   background: #1c1c1e;
@@ -2008,12 +2029,12 @@ body.dark #threadInput {
   box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.05);
 }
 body.dark #threadInput:focus {
-  border-color: #0a84ff;
+  border-color: #00c853;
   background: #2c2c2e;
-  box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(0, 200, 83, 0.2);
 }
 body.dark #emojiToggleBtn {
-  color: #aaa;
+  color: #90ee90;
 }
 /* =========================================================
  * RESPONSIVE
