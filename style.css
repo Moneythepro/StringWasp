@@ -1885,46 +1885,130 @@ body {
 /* =========================================================
  * INPUT BAR
  * ======================================================= */
+/* === INPUT BAR FIXED === */
 .chat-input-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 72px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 10px 12px;
-  gap: 8px;
+  background: var(--inputbar-bg, #fff);
   border-top: 1px solid #ccc;
-  background: var(--inputbar-bg);
+  z-index: 999;
+  box-sizing: border-box;
+  gap: 10px;
 }
+
+/* Left side icons */
+.chat-input-bar .left-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Icon buttons */
 .chat-input-bar .icon-btn {
-  font-size: 18px;
+  background: none;
+  border: none;
+  padding: 8px;
+  font-size: 1.5rem;
   color: #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  height: 40px;
+  width: 40px;
+  transition: background 0.2s, color 0.2s;
 }
+
+.chat-input-bar .icon-btn:hover {
+  background: #f0f0f0;
+  color: #000;
+}
+
+/* Input wrapper */
+.chat-input-bar .input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: #f0f0f0;
+  border-radius: 22px;
+  padding: 0 8px;
+  gap: 6px;
+  overflow: hidden;
+}
+
+/* Actual input field */
 #threadInput {
   flex: 1;
-  padding: 10px 14px;
-  font-size: 16px;
-  border-radius: 20px;
-  border: 1px solid #ccc;
+  height: 44px;
+  padding: 0 12px;
+  font-size: 15px;
+  border: none;
+  background: transparent;
+  color: #333;
   outline: none;
-  background: #fff;
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
-  font-family: var(--sw-font-stack);
+  font-family: 'Segoe UI', sans-serif;
+  min-width: 0;
+  box-sizing: border-box;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
-#threadInput:focus {
-  border-color: var(--tick-seen-color);
-  background: #fff;
-  box-shadow: 0 0 0 2px rgba(79,195,247,.25);
-}
-#emojiToggleBtn { order: -1; }
+
+/* Emoji button */
 .emoji-btn {
-  margin-right: 4px;
   cursor: pointer;
-  color: var(--fg-muted);
-  font-size: 1.4em;
+  font-size: 1.4rem;
   display: flex;
   align-items: center;
+  color: var(--fg-muted, #888);
 }
-body.dark .chat-input-bar { background: var(--inputbar-bg); border-top-color: #333; }
-body.dark #threadInput { background: #222; color: #eee; border-color: #444; }
-body.dark .chat-input-bar .icon-btn { color: #bbb; }
+
+/* Dark mode */
+body.dark .chat-input-bar {
+  background: #1a1a1a;
+  border-top-color: #333;
+}
+body.dark .input-wrapper {
+  background: #2c2c2e;
+}
+body.dark .icon-btn {
+  color: #ccc;
+}
+body.dark .icon-btn:hover {
+  background: #3a3a3a;
+  color: #fff;
+}
+body.dark #threadInput {
+  color: #fff;
+  background: transparent;
+}
+
+/* Scrollable chat area with space for input */
+.chat-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 84px; /* leave room for fixed input */
+}
+
+/* Full height layout */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+main, .thread-main {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
 
 /* =========================================================
  * RESPONSIVE
@@ -2149,123 +2233,4 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
   transform: translateX(-50%) translateY(-10px);
 }
 
-/* Core Chat Input Bar */
-.chat-input-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  background: #fff;
-  border-top: 1px solid #ccc;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 72px;
-  z-index: 999;
-  box-sizing: border-box;
-  gap: 10px;
-}
 
-/* Left Icons */
-.chat-input-bar .left-actions {
-  display: flex;
-  gap: 8px;
-}
-
-/* Icons Styling */
-.chat-input-bar .icon-btn {
-  background: none;
-  border: none;
-  padding: 8px;
-  font-size: 1.5rem;
-  color: #444;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  border-radius: 50%;
-  height: 40px;
-  width: 40px;
-  transition: background 0.2s, color 0.2s;
-}
-
-.chat-input-bar .icon-btn:hover {
-  background: #f0f0f0;
-  color: #000;
-}
-
-/* Input Field */
-.chat-input-bar .input-wrapper {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  background: #f0f0f0;
-  border-radius: 22px;
-  padding: 0 8px;
-  gap: 6px;
-  overflow: hidden;
-}
-
-.chat-input-bar input,
-#threadInput {
-  flex: 1;
-  height: 44px;
-  padding: 0 12px;
-  font-size: 15px;
-  border: none;
-  background: transparent;
-  color: #333;
-  outline: none;
-  font-family: 'Segoe UI', sans-serif;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-/* Ensure it's visible */
-#threadInput {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-/* Dark Mode */
-body.dark .chat-input-bar {
-  background: #1a1a1a;
-  border-top: 1px solid #333;
-}
-body.dark .input-wrapper {
-  background: #2c2c2e;
-}
-body.dark .icon-btn {
-  color: #ccc;
-}
-body.dark .icon-btn:hover {
-  background: #3a3a3a;
-  color: #fff;
-}
-body.dark input,
-body.dark #threadInput {
-  color: #fff;
-}
-
-/* Scrollable Chat Area */
-.chat-scroll-area {
-  flex: 1;
-  overflow-y: auto;
-  padding-bottom: 80px; /* prevents input overlap */
-}
-
-/* Ensure full layout is tall and flexible */
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-main, .thread-main {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-}
