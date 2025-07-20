@@ -2536,3 +2536,13 @@ body.dark .chat-input-bar input {
     padding: 7px 9px;
   }
 }
+
+/* === Scrollable Chat Area === */
+.chat-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 8px;
+  scroll-behavior: smooth;
+}
