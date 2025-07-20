@@ -1978,20 +1978,10 @@ body {
   opacity: 1;
   transform: translateX(-50%) translateY(-10px);
 }
-/* ✅ Chat Scroll Area */
-.chat-scroll-area {
-  overflow-y: auto;
-  padding: 16px 8px 8px;
-  height: calc(100vh - 72px); /* Leave room for input bar */
-  box-sizing: border-box;
-  scroll-behavior: smooth;
-}
 
-/* ✅ Chat Input Bar */
 .chat-input-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
   padding: 10px 12px;
   background: #fff;
   border-top: 1px solid #ccc;
@@ -2004,87 +1994,68 @@ body {
   box-sizing: border-box;
 }
 
-/* ✅ Icon Buttons (Reply, Mic, etc.) */
 .icon-btn {
   background: none;
   border: none;
   padding: 8px;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   color: #444;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-radius: 50%;
   transition: background 0.2s, color 0.2s;
+  border-radius: 50%;
+  height: 40px;
+  width: 40px;
 }
 
 .icon-btn:hover {
-  background: #e0e0e0;
-  color: #222;
+  background: #f0f0f0;
+  color: #000;
 }
 
-/* ✅ Input + Emoji Wrapper */
 .input-wrapper {
-  position: relative;
   flex: 1;
   display: flex;
   align-items: center;
+  margin: 0 8px;
 }
 
-/* ✅ Text Input */
-
-
-/* ✅ Focused Input */
-#threadInput:focus {
-  border-color: #007aff;
-  background: #fff;
-  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.15);
-}
-
-/* ✅ Emoji Button (inside input) */
-#emojiToggleBtn {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
+#threadInput {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  font-size: 16px;
+  border-radius: 22px;
   border: none;
-  font-size: 1.3rem;
-  color: #777;
-  cursor: pointer;
-  padding: 0;
-  margin: 0;
-  height: 28px;
-  width: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2;
+  background: #f0f0f0;
+  color: #333;
+  font-family: 'Segoe UI', sans-serif;
+  outline: none;
+  box-sizing: border-box;
 }
 
-/* 🌙 Dark Mode Overrides */
+#threadInput:focus {
+  background: #e9e9e9;
+}
+
+/* Dark mode */
 body.dark .chat-input-bar {
   background: #1a1a1a;
   border-top: 1px solid #333;
 }
+
 body.dark #threadInput {
-  background: #1c1c1e;
-  color: #fff;
-  border-color: #3a3a3c;
-}
-body.dark #threadInput:focus {
-  border-color: #555;
   background: #2c2c2e;
+  color: #fff;
 }
+
 body.dark .icon-btn {
-  background: #2c2c2c;
-  color: #90ee90;
+  color: #ccc;
 }
+
 body.dark .icon-btn:hover {
   background: #3a3a3a;
-  color: #a5f5a5;
-}
-body.dark #emojiToggleBtn {
-  color: #ccc;
+  color: #fff;
 }
