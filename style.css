@@ -1754,46 +1754,35 @@ body {
 /* =========================================================
  * INPUT BAR
  * ======================================================= */
-/* 🧼 Main Input Bar Container */
-/* 💬 Input Bar Container */
 .chat-input-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  background: var(--inputbar-bg, #fff);
-  border-top: 1px solid #ddd;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 999;
-  height: 64px; /* 🔽 Reduced height */
-  box-sizing: border-box;
+  padding: 6px 8px;
+  gap: 6px;
+  border-top: 1px solid #ccc;
+  background: var(--inputbar-bg);
+  position: relative;
 }
 
-/* 📝 Thread Input: Tall, clean, edge-to-edge */
 #threadInput {
   flex: 1;
-  height: 56px;             /* ⬆️ Expanded vertical size */
-  padding: 0 0;             /* ❌ No horizontal padding */
-  font-size: 16px;
-  border-radius: 14px;
-  border: 1.5px solid #ccc;
+  padding: 10px 40px 10px 14px;
+  font-size: 15px;
+  border-radius: 8px;
+  border: 1px solid #d1d1d6;
   outline: none;
-  background: #fff;
+  background: #f9f9f9;
   color: #000;
-  font-family: 'Segoe UI', sans-serif;
-  box-sizing: border-box;
-  line-height: 1.5;
-  padding-left: 14px;       /* Optional: Add if needed inside typing space */
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  position: relative;
 }
 
-/* 🔍 Focused state stays consistent */
 #threadInput:focus {
-  border-color: #888;
+  border-color: #007aff;
   background: #fff;
-  box-shadow: none;
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
 }
 
 /* 😊 Emoji Button - Fixed Size & Alignment */
