@@ -1216,29 +1216,32 @@ body.dark .chat-options-horizontal span:hover {
   background: #f5f5f5;
 }
 
-/* === 💬 Scroll Area === */
+/* === 💬 Chat Scroll Area === */
 .chat-scroll-area {
   position: absolute;
   top: 56px;
-  bottom: 63px; /* height of input bar */
+  bottom: 63px;
   left: 0;
   right: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 10px 12px;
-  background: #fafafa;
+  background: #eae6df; /* WhatsApp light background */
   z-index: 1;
 }
+.dark-mode .chat-scroll-area {
+  background: #121b22; /* WhatsApp dark mode background */
+}
 
-/* === ✅ Input Bar (fixed) === */
+/* === ✅ Input Bar (fixed bottom) === */
 .chat-input-bar {
-  position: flex;
+  position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   height: 63px;
   background: #fff;
-  border-top: 1px solid #ccc;
+  border-top: 1px solid #d1d1d1;
   padding: 6px 8px;
   display: flex;
   align-items: center;
@@ -1246,27 +1249,35 @@ body.dark .chat-options-horizontal span:hover {
   box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.05);
   z-index: 999;
 }
+.dark-mode .chat-input-bar {
+  background: #202c33;
+  border-top: 1px solid #2b3b43;
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.4);
+}
 
-/* === Left icons */
+/* === 🎤 Left action buttons === */
 .left-actions {
   display: flex;
   gap: 6px;
 }
 
-/* === Input wrapper */
+/* === 📝 Input wrapper === */
 .input-wrapper {
   flex: 1;
   display: flex;
   align-items: center;
   background: #f0f0f0;
-  border-radius: 20px;
+  border-radius: 24px;
   height: 46px;
   padding: 0 12px;
   gap: 6px;
   overflow: hidden;
 }
+.dark-mode .input-wrapper {
+  background: #2a3942;
+}
 
-/* === Input field */
+/* === ✏️ Input field === */
 #threadInput {
   flex: 1;
   border: none;
@@ -1280,8 +1291,11 @@ body.dark .chat-options-horizontal span:hover {
   pointer-events: auto;
   z-index: 2;
 }
+.dark-mode #threadInput {
+  color: #eee;
+}
 
-/* === Icon Buttons */
+/* === 🔘 Icon buttons (emoji, mic, send) === */
 .icon-btn {
   width: 38px;
   height: 38px;
@@ -1291,15 +1305,22 @@ body.dark .chat-options-horizontal span:hover {
   background: none;
   border: none;
   font-size: 17px;
-  color: #444;
+  color: #4a4a4a;
   border-radius: 50%;
   cursor: pointer;
   transition: background 0.2s ease;
 }
 .icon-btn:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.08);
+}
+.dark-mode .icon-btn {
+  color: #ccc;
+}
+.dark-mode .icon-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
+/* === 😄 Emoji button === */
 .emoji-btn {
   font-size: 1.4rem;
   color: #888;
@@ -1308,7 +1329,12 @@ body.dark .chat-options-horizontal span:hover {
 .emoji-btn:hover {
   color: #111;
 }
-
+.dark-mode .emoji-btn {
+  color: #aaa;
+}
+.dark-mode .emoji-btn:hover {
+  color: #fff;
+}
 
 /* === MASSAGES ALL FUCK */
 
