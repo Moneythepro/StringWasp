@@ -2135,7 +2135,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
         ${authorHtml}
         ${replyBox}
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
-          <div class="msg-text-wrapper">
+          <div class="msg-text-wrapper" style="position: relative; display: flex; flex-direction: column;">
             ${!isDeleted ? `<div class="bubble-meta-top">${meta}</div>` : ""}
             <div class="msg-text clamp-text" data-full="${escapeHtml(displayText)}" data-short="${escapeHtml(shortText)}">
               ${content}
@@ -2378,33 +2378,6 @@ function renderMessage(msg, isOwn) {
     </div>
   `;
 }
-
-function toggleChatOptions(event) {
-  event.stopPropagation();
-  const menu = document.getElementById("chatOptionsMenu");
-  if (!menu) return;
-
-  const isOpen = menu.classList.contains("show");
-  if (isOpen) {
-    menu.classList.remove("show");
-  } else {
-    menu.classList.add("show");
-    document.addEventListener("click", (e) => {
-      if (!menu.contains(e.target)) {
-        menu.classList.remove("show");
-      }
-    }, { once: true });
-  }
-}
-
-document.getElementById("chatOptionsMenu")?.addEventListener("click", e => e.stopPropagation());
-
-// Placeholder functions
-function blockUser() { alert("🚫 Block user feature coming soon."); }
-function viewMedia() { alert("🖼️ View media feature coming soon."); }
-function exportChat() { alert("📁 Export chat feature coming soon."); }
-function deleteChat() { alert("🗑️ Delete chat feature coming soon."); }
-
 
 
 // Long press modal
