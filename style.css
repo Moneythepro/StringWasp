@@ -2056,6 +2056,8 @@ body.dark .modal-content {
   bottom: 0 !important;
   z-index: 100 !important;
   gap: 8px !important;
+  height: 56px !important;
+  box-sizing: border-box !important;
 }
 
 .chat-input-bar.dark {
@@ -2065,7 +2067,7 @@ body.dark .modal-content {
 
 .left-actions {
   display: flex !important;
-  gap: 8px !important;
+  gap: 6px !important;
 }
 
 .icon-btn {
@@ -2080,6 +2082,8 @@ body.dark .modal-content {
   cursor: pointer !important;
   border-radius: 50% !important;
   transition: background 0.2s !important;
+  height: 36px !important;
+  width: 36px !important;
 }
 
 .icon-btn:hover {
@@ -2099,9 +2103,10 @@ body.dark .modal-content {
   display: flex !important;
   align-items: center !important;
   background: #f1f1f1 !important;
-  border-radius: 24px !important;
-  padding: 6px 12px !important;
+  border-radius: 20px !important;
+  padding: 4px 10px !important;
   gap: 6px !important;
+  height: 40px !important;
 }
 
 .input-wrapper.dark {
@@ -2113,9 +2118,10 @@ body.dark .modal-content {
   border: none !important;
   outline: none !important;
   background: transparent !important;
-  font-size: 15px !important;
-  padding: 4px 0 !important;
+  font-size: 14px !important;
+  padding: 2px 0 !important;
   color: #111 !important;
+  height: 100% !important;
 }
 
 .input-wrapper input.dark {
@@ -2123,10 +2129,12 @@ body.dark .modal-content {
 }
 
 .emoji-btn {
-  padding: 6px !important;
+  padding: 4px !important;
   font-size: 18px !important;
   color: #666 !important;
   border-radius: 50% !important;
+  height: 32px !important;
+  width: 32px !important;
 }
 
 .emoji-btn:hover {
@@ -2135,19 +2143,23 @@ body.dark .modal-content {
 
 @media (max-width: 600px) {
   .chat-input-bar {
-    padding: 6px 8px !important;
+    padding: 6px 10px !important;
+    height: 52px !important;
   }
 
   .input-wrapper {
-    padding: 6px 10px !important;
+    padding: 4px 8px !important;
+    height: 36px !important;
   }
 
   .input-wrapper input {
-    font-size: 14px !important;
+    font-size: 13px !important;
   }
 
   .icon-btn {
     font-size: 18px !important;
     padding: 5px !important;
+    width: 32px !important;
+    height: 32px !important;
   }
 }
