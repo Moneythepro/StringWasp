@@ -2027,16 +2027,18 @@ async function getUserProfileCached(uid) {
 async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, isInitial }) {
   if (!area) return;
 
+  // Determine if we are near bottom for auto-scroll
   const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
+
   computeGroupClasses(msgs);
 
   const selfProfile = await getUserProfileCached(currentUser.uid);
   const otherProfile = await getUserProfileCached(otherUid);
 
-  let distFromBottom;
-  area.innerHTML = "";
+  let distFromBottom = 0;
   if (!isInitial) distFromBottom = area.scrollHeight - area.scrollTop;
 
+  area.innerHTML = ""; // Clear area before rendering new set
   const frag = document.createDocumentFragment();
   let lastDateLabel = null;
 
@@ -2048,14 +2050,11 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     const displayText = escapeHtml(rawText);
     const emojiOnly = isEmojiOnlyText(displayText);
 
-    const showPfp = msg._grp === "grp-start" || msg._grp === "grp-single";
-    const prof = isSelf ? selfProfile : otherProfile;
-
     const replyBox = !isDeleted ? buildReplyStrip(msg) : "";
     const meta = isSelf && !isDeleted ? buildTickMeta(msg, otherUid) : buildOtherMeta(msg);
+
     const shortText = displayText.slice(0, 500);
     const hasLong = displayText.length > 500;
-
     const content = isDeleted
       ? deletedHtml
       : hasLong
@@ -2077,20 +2076,19 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
     // === Bubble Wrapper ===
     const wrapper = document.createElement("div");
-    wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}`;
+    wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right" : "left"} ${msg._grp || "grp-single"}`;
 
     const editedTag = msg.edited ? `<span class="edited-tag">edited</span>` : "";
 
     wrapper.innerHTML = `
-      <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""} ${msg._grp || ""}"
-           data-msg-id="${msg.id}">
+      <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""}" data-msg-id="${msg.id}">
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
           ${replyBox}
-          <div class="msg-text-wrapper" style="position: relative; padding-bottom: 18px;">
+          <div class="msg-text-wrapper" style="padding-bottom: 18px;">
             <div class="msg-text clamp-text" data-full="${escapeHtml(displayText)}" data-short="${escapeHtml(shortText)}">
               ${content}
             </div>
-            <div class="bubble-meta-inline" style="position: absolute; bottom: 2px; right: 4px;">
+            <div class="bubble-meta-inline">
               <span class="meta-time-tick">${meta}</span> ${editedTag}
             </div>
           </div>
@@ -2112,9 +2110,10 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
   if (typeof lucide !== "undefined") lucide.createIcons();
 
-  if (isNearBottom || isInitial) {
-    setTimeout(() => scrollToBottomThread(true), 40);
-  } else if (typeof distFromBottom === "number") {
+  // Scroll behavior
+  if (isInitial || isNearBottom) {
+    setTimeout(() => scrollToBottomThread(true), 50);
+  } else if (distFromBottom) {
     setTimeout(() => { area.scrollTop = area.scrollHeight - distFromBottom; }, 0);
   }
 }
@@ -2123,7 +2122,7 @@ async function openThread(uid, name) {
   if (!currentUser || !uid) return;
 
   try {
-    // 1. Must be friends
+    // Check if they are friends
     const friendDoc = await db.collection("users").doc(currentUser.uid)
       .collection("friends").doc(uid).get();
     if (!friendDoc.exists) {
@@ -2131,10 +2130,10 @@ async function openThread(uid, name) {
       return;
     }
 
-    // 2. Switch view
+    // Switch to thread view
     switchTab("threadView");
 
-    // 3. Bind input + send + emoji after paint
+    // Bind input and send button
     setTimeout(() => {
       const input = document.getElementById("threadInput");
       if (input && !input.dataset.bound) {
@@ -2146,117 +2145,59 @@ async function openThread(uid, name) {
         sendBtn.addEventListener("click", handleSendClick);
         sendBtn.dataset.bound = "true";
       }
-      if (typeof setupEmojiButton === "function") setupEmojiButton();
     }, 200);
 
-    // 4. Header name with badge
+    // Set header info
     const headerNameEl = document.getElementById("threadWithName");
-    if (headerNameEl) {
-      const displayName = typeof name === "string"
-        ? name
-        : name?.username || "Chat";
-      headerNameEl.innerHTML = usernameWithBadge(uid, displayName);
-    }
+    if (headerNameEl) headerNameEl.innerHTML = usernameWithBadge(uid, name || "Chat");
 
-    // Hide options menu
-    const opt = document.getElementById("chatOptionsMenu");
-    if (opt) opt.style.display = "none";
-
-    // 5. Context
+    const area = document.getElementById("threadMessages");
     currentThreadUser = uid;
     currentRoom = null;
-
     const threadIdStr = threadId(currentUser.uid, uid);
-    const area = document.getElementById("threadMessages");
-    renderedMessageIds = new Set();
+    if (area) area.innerHTML = "";
 
-    if (area && lastThreadId !== threadIdStr) {
-      area.innerHTML = "";
-      lastThreadId = threadIdStr;
-    }
-
-    // 6. Restore scroll
-    const savedScrollKey = "threadScroll_" + threadIdStr;
-    const savedScroll = sessionStorage.getItem(savedScrollKey);
-    if (area) {
-      if (savedScroll !== null && !isNaN(savedScroll)) {
-        setTimeout(() => { area.scrollTop = parseInt(savedScroll, 10); }, 300);
-      } else {
-        setTimeout(() => scrollToBottomThread(true), 200);
-      }
-      area.onscroll = () => sessionStorage.setItem(savedScrollKey, area.scrollTop);
-    }
-
-    // 7. Header avatar
-    try {
-      const friendUserDoc = await db.collection("users").doc(uid).get();
-      if (friendUserDoc.exists) {
-        const user = friendUserDoc.data();
-        const headerImg = document.getElementById("chatProfilePic");
-        if (headerImg) {
-          headerImg.src =
-            user.avatarBase64 ||
-            user.photoURL ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(
-              user.username || "User"
-            )}`;
-        }
-      }
-    } catch (e) {
-      console.warn("⚠️ Could not load friend image:", e);
-    }
-
-    // 8. Clean old listeners
-    if (typeof unsubscribeThread === "function") unsubscribeThread();
-    if (typeof unsubscribeTyping === "function") unsubscribeTyping();
-
-    // 9. Typing indicator
+    // Listen to typing
     listenToTyping(threadIdStr, "thread");
 
-    // 10. Reset unread counter for self
-    await db.collection("threads").doc(threadIdStr)
-      .set({ unread: { [currentUser.uid]: 0 } }, { merge: true });
+    // Reset unread
+    await db.collection("threads").doc(threadIdStr).set({
+      unread: { [currentUser.uid]: 0 }
+    }, { merge: true });
 
-    // 11. Live status
+    // Status updates
     db.collection("users").doc(uid).onSnapshot((doc) => {
       const data = doc.data();
       const status = document.getElementById("chatStatus");
       if (!status || !data) return;
-      if (data.typingFor === currentUser.uid) status.textContent = "Typing...";
-      else if (data.status === "online") status.textContent = "Online";
-      else if (data.lastSeen?.toDate) status.textContent =
-        "Last seen " + timeSince(data.lastSeen.toDate());
-      else status.textContent = "Offline";
+      status.textContent = data.typingFor === currentUser.uid ? "Typing..."
+        : data.status === "online" ? "Online"
+        : data.lastSeen?.toDate ? "Last seen " + timeSince(data.lastSeen.toDate())
+        : "Offline";
     });
 
-    // 12. Subscribe to messages
+    // Unsubscribe old listeners
+    if (unsubscribeThread) unsubscribeThread();
+    if (unsubscribeTyping) unsubscribeTyping();
+
+    // Listen for messages
     unsubscribeThread = db.collection("threads").doc(threadIdStr)
       .collection("messages").orderBy("timestamp")
       .onSnapshot(async (snapshot) => {
         if (!area) return;
-
-        const msgs = snapshot.docs.map((d) => {
-          const m = d.data();
-          m.id = d.id;
-          return m;
-        });
-
-        const isInitial = area.childElementCount === 0 || renderedMessageIds.size === 0;
+        const msgs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
         await renderThreadMessagesToArea({
           area,
           msgs,
           otherUid: uid,
           threadIdStr,
-          isInitial,
+          isInitial: area.childElementCount === 0
         });
-
-        renderedMessageIds.clear();
-        msgs.forEach((m) => renderedMessageIds.add(m.id));
       });
 
   } catch (err) {
     console.error("❌ openThread error:", err);
-    alert("❌ Could not open chat: " + (err.message || JSON.stringify(err)));
+    alert("❌ Could not open chat: " + (err.message || err));
   }
 }
 
@@ -2271,40 +2212,33 @@ function renderMessage(msg, isOwn) {
   const { text, isDeleted, deletedHtml } = decryptMsgText(msg);
   const escaped = escapeHtml(text);
 
-  // Determine display name (fallback if missing)
   const authorName = escapeHtml(msg.fromName || "User");
-
-  // Add author row with verified tick if it's moneythepro
   const authorHtml = `<div class="msg-author">${usernameWithBadge(msg.from, authorName)}</div>`;
 
-  // Reply section (if exists)
   const replyHtml = msg.replyTo && !isDeleted
     ? `<div class="reply-to">${escapeHtml(msg.replyTo.text || "")}</div>`
     : "";
 
-  // Meta info (ticks/time)
   const meta = isOwn && !isDeleted
-    ? buildTickMeta(msg, currentThreadUser)  // correct other uid
+    ? buildTickMeta(msg, currentThreadUser)
     : buildOtherMeta(msg);
 
-  // Link preview (if exists)
   const linkPreviewHtml = msg.preview && !isDeleted
     ? buildLinkPreviewHTML(msg.preview, msg.preview.url)
     : "";
 
-  // Final message text
   const bodyHtml = isDeleted ? deletedHtml : linkifyText(escaped);
-  const emojiOnly = isEmojiOnlyText(text) ? "emoji-only" : "";
+  const emojiOnly = isEmojiOnlyText(escaped) ? "emoji-only" : "";
 
   return `
     <div class="message-bubble-wrapper ${isOwn ? 'right from-self' : 'left from-other'} grp-single">
       <div class="message-bubble ${isOwn ? 'right' : 'left'} ${emojiOnly}" data-msg-id="${msg.id}">
-        ${!isOwn ? authorHtml : ""}  <!-- Show author only for other users -->
-        ${replyHtml}
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
-          <div class="msg-text-wrapper">
+          ${!isOwn ? authorHtml : ""}
+          ${replyHtml}
+          <div class="msg-text-wrapper" style="position: relative; padding-bottom: 18px;">
             <span class="msg-text">${bodyHtml}</span>
-            ${!isDeleted ? meta : ""}
+            ${!isDeleted ? `<div class="bubble-meta-inline"><span class="meta-time-tick">${meta}</span></div>` : ""}
           </div>
           ${linkPreviewHtml}
         </div>
@@ -3355,21 +3289,48 @@ function showToast(msg) {
   const getEmojiBtn    = () => document.getElementById(EMOJI_BTN_ID);
 
   function adjustThreadLayout() {
-    const el = getThreadView();
-    if (!el) return;
-    const vh = window.visualViewport?.height || window.innerHeight;
-    el.style.height = vh + "px";
+  const area = document.querySelector(".chat-scroll-area");
+  const header = document.querySelector(".chat-header");
+  const inputBar = document.querySelector(".chat-input-bar");
+
+  if (!area || !header || !inputBar) return;
+
+  // Calculate heights
+  const headerHeight = header.offsetHeight || 56;
+  const inputHeight = inputBar.offsetHeight || 56;
+
+  // Set dynamic padding for scroll area
+  area.style.paddingTop = "0px";
+  area.style.top = `${headerHeight}px`;
+  area.style.bottom = `${inputHeight}px`;
+
+  // Debug log
+  console.log(
+    "🔧 Layout adjusted:",
+    { headerHeight, inputHeight, areaHeight: area.offsetHeight }
+  );
   }
 
-  function scrollToBottomThread(smooth = true) {
-    const msgs = getThreadMsgs();
-    if (!msgs) return;
-    const scrollTarget = msgs.closest(".chat-scroll-area") || msgs;
-    scrollTarget.scrollTo({
-      top: scrollTarget.scrollHeight,
-      behavior: smooth ? "smooth" : "auto"
-    });
+function scrollToBottomThread(smooth = true) {
+  const scrollContainer = document.querySelector(".chat-scroll-area");
+  if (!scrollContainer) {
+    console.warn("⚠️ No chat-scroll-area found to scroll.");
+    return;
   }
+
+  // Scroll to bottom
+  scrollContainer.scrollTo({
+    top: scrollContainer.scrollHeight,
+    behavior: smooth ? "smooth" : "auto"
+  });
+
+  // Debug
+  console.log(
+    "📜 Scrolled to bottom:",
+    scrollContainer.scrollHeight,
+    "px"
+  );
+}
 
   function focusThreadInput() {
     requestAnimationFrame(() => {
