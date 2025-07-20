@@ -1901,6 +1901,8 @@ body {
   z-index: 999;
   box-sizing: border-box;
   gap: 10px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
 }
 
 /* Left actions (reply, mic) */
@@ -1923,12 +1925,12 @@ body {
   border-radius: 50%;
   height: 40px;
   width: 40px;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.2s, color 0.2s, transform 0.1s ease-in-out;
 }
-
 .chat-input-bar .icon-btn:hover {
   background: #f0f0f0;
   color: #000;
+  transform: scale(1.05);
 }
 
 /* Input wrapper */
@@ -1941,9 +1943,13 @@ body {
   padding: 0 8px;
   gap: 6px;
   overflow: hidden;
+  transition: box-shadow 0.3s;
+}
+.chat-input-bar .input-wrapper:focus-within {
+  box-shadow: 0 0 0 2px #d0d0d0;
 }
 
-/* Input field */
+/* Input field with typing animation */
 #threadInput {
   flex: 1;
   height: 44px;
@@ -1959,6 +1965,19 @@ body {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
+  animation: typingFadeIn 0.3s ease-in-out;
+}
+
+/* Typing animation */
+@keyframes typingFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Emoji Button */
@@ -1969,12 +1988,17 @@ body {
   align-items: center;
   color: var(--fg-muted, #888);
   margin-left: 4px;
+  transition: color 0.2s ease;
+}
+.emoji-btn:hover {
+  color: #222;
 }
 
 /* Dark Mode */
 body.dark .chat-input-bar {
   background: #1a1a1a;
   border-top-color: #333;
+  box-shadow: 0 -2px 10px rgba(255, 255, 255, 0.04);
 }
 body.dark .input-wrapper {
   background: #2c2c2e;
@@ -2045,7 +2069,7 @@ main, .thread-main {
 }
 
 /* =========================================================
- * BADGE STYLES (Levels + Developer Style)
+ * BADGE STYLES (Levels + Developer Style) — Enhanced Visuals
  * ======================================================= */
 .dev-badge {
   display: inline-flex;
@@ -2055,33 +2079,50 @@ main, .thread-main {
   width: 16px;
   height: 16px;
   margin-left: 4px;
-  color: #1da1f2; /* Default blue (developer-like) */
   stroke-width: 2.2px;
-  transition: transform 0.2s ease, color 0.2s ease;
+  color: #1da1f2;
+  transition: transform 0.2s ease, color 0.2s ease, filter 0.3s ease;
+  animation: badgePulse 3s ease-in-out infinite;
 }
 
 /* Hover effect */
 .dev-badge:hover {
   transform: scale(1.2);
   color: #0d8ddb;
+  filter: brightness(1.2);
 }
 
-/* Badge levels */
+/* =================== Badge Levels =================== */
+
+/* Supreme Developer */
 .dev-badge.supreme {
-  color: #ff5722; /* Supreme = Orange */
-  filter: drop-shadow(0 0 3px rgba(255, 87, 34, 0.5));
-}
-.dev-badge.gold {
-  color: #ffb300; /* Gold */
-}
-.dev-badge.silver {
-  color: #c0c0c0; /* Silver */
-}
-.dev-badge.bronze {
-  color: #cd7f32; /* Bronze */
+  color: #ff5722;
+  filter: drop-shadow(0 0 4px rgba(255, 87, 34, 0.7));
+  animation: shine 2.5s linear infinite, badgePulse 4s ease-in-out infinite;
 }
 
-/* Placement in username containers */
+/* Gold */
+.dev-badge.gold {
+  color: #ffb300;
+  filter: drop-shadow(0 0 3px rgba(255, 179, 0, 0.5));
+  animation: subtleShimmer 5s infinite ease-in-out;
+}
+
+/* Silver */
+.dev-badge.silver {
+  color: #c0c0c0;
+  filter: drop-shadow(0 0 2px rgba(192, 192, 192, 0.5));
+  animation: subtleShimmer 5s infinite ease-in-out;
+}
+
+/* Bronze */
+.dev-badge.bronze {
+  color: #cd7f32;
+  filter: drop-shadow(0 0 2px rgba(205, 127, 50, 0.5));
+  animation: subtleShimmer 5s infinite ease-in-out;
+}
+
+/* =================== Placement =================== */
 .search-username .dev-badge,
 .username-display .dev-badge,
 .chat-username .dev-badge,
@@ -2091,7 +2132,7 @@ main, .thread-main {
   height: 16px;
 }
 
-/* Author text styling (next to badge) */
+/* =================== Author Styling =================== */
 .msg-author {
   font-size: var(--meta-font-size);
   line-height: 1.1;
@@ -2108,51 +2149,7 @@ main, .thread-main {
   justify-content: flex-end;
 }
 
-/* =================== BADGE STYLES =================== */
-.dev-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  vertical-align: middle;
-  width: 16px;
-  height: 16px;
-  margin-left: 4px;
-  stroke-width: 2.2px;
-  transition: transform 0.2s ease, color 0.2s ease;
-}
-
-/* Badge Levels */
-.dev-badge.supreme {
-  color: #ff5722; /* Orange crown for developer */
-  filter: drop-shadow(0 0 3px rgba(255, 87, 34, 0.5));
-}
-.dev-badge.gold {
-  color: #ffb300; /* Gold badge */
-}
-.dev-badge.silver {
-  color: #c0c0c0; /* Silver badge */
-}
-.dev-badge.bronze {
-  color: #cd7f32; /* Bronze badge */
-}
-
-/* Hover */
-.dev-badge:hover {
-  transform: scale(1.2);
-  opacity: 0.9;
-}
-
-/* Badge placements */
-.search-username .dev-badge,
-.username-display .dev-badge,
-.chat-username .dev-badge,
-.message-username .dev-badge {
-  margin-left: 6px;
-  width: 16px;
-  height: 16px;
-}
-
-/* ================= Badge Legend Modal ================= */
+/* =================== Badge Legend Modal =================== */
 .badge-legend-modal {
   position: fixed;
   top: 0;
@@ -2209,10 +2206,29 @@ main, .thread-main {
   background: #1ebe5d;
 }
 
+/* =================== Animations =================== */
 @keyframes scaleIn {
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
-  
+}
+
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.85; }
+}
+
+@keyframes shine {
+  0% { filter: drop-shadow(0 0 4px #ff5722); }
+  50% { filter: drop-shadow(0 0 8px #ffa270); }
+  100% { filter: drop-shadow(0 0 4px #ff5722); }
+}
+
+@keyframes subtleShimmer {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+/* =================== Toast (Unchanged) =================== */
 .toast {
   position: fixed;
   bottom: 80px;
@@ -2233,5 +2249,3 @@ main, .thread-main {
   opacity: 1;
   transform: translateX(-50%) translateY(-10px);
 }
-
-
