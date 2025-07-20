@@ -2335,3 +2335,10 @@ body.dark .date-divider {
 body.dark .meta-inline-wrap {
   opacity: 0.7;
 }
+
+.edited-tag {
+  font-size: 11px;
+  color: var(--meta-color);
+  opacity: 0.7;
+  margin-right: 4px;
+}
