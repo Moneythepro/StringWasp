@@ -1087,37 +1087,6 @@ function listenToTyping(targetId, context) {
   });
 }
 
-function escapeHtml(text) {
-  return text?.replace(/[&<>"']/g, m => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  })[m]) || "";
-}
-
-function timeSince(date) {
-  if (!(date instanceof Date)) return "";
-
-  const hours = date.getHours().toString().padStart(2, "0");
-  const minutes = date.getMinutes().toString().padStart(2, "0");
-  return `${hours}:${minutes}`;
-}
-
-function getDateLabel(date) {
-  const today = new Date();
-  const msgDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const nowDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
-  const diffTime = msgDate.getTime() - nowDate.getTime();
-  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return "Today";
-  if (diffDays === -1) return "Yesterday";
-
-  const day = date.getDate().toString().padStart(2, "0");
-  const month = date.toLocaleString("en-US", { month: "short" });
-  return `${day} ${month}`;
-}
-
-
 // ===== Load Inbox Items (Cards + Badge) =====
 function listenInbox() {
   const list = document.getElementById("inboxList");
@@ -1591,351 +1560,123 @@ async function loadGroupInfo(groupId) {
   }
 }
 
-function setupEmojiButton() {
-  const emojiBtn = document.getElementById("emojiToggleBtn");
-  const input = document.getElementById("threadInput");
-  if (!emojiBtn || !input) return;
-
-  let emojiPicker;
-  let pickerOpen = false;
-
-  emojiBtn.addEventListener("click", async () => {
-    if (!emojiPicker) {
-      const module = await import("https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2");
-      emojiPicker = new module.default({
-        position: 'top-end',
-        theme: document.body.classList.contains("dark") ? "dark" : "light",
-        autoHide: false,
-        showSearch: true,
-        showRecents: true,
-        emojiSize: '1.3em',
-        zIndex: 9999
-      });
-
-      emojiPicker.on("emoji", selection => {
-        const chosenEmoji = selection.emoji;
-        const start = input.selectionStart;
-        const end = input.selectionEnd;
-        const text = input.value;
-
-        input.value = text.slice(0, start) + chosenEmoji + text.slice(end);
-        input.selectionStart = input.selectionEnd = start + chosenEmoji.length;
-
-        autoResizeInput(input);
-        input.focus();
-      });
-    }
-
-    // Toggle emoji picker
-    if (pickerOpen) {
-      emojiPicker.hidePicker();
-      pickerOpen = false;
-    } else {
-      emojiPicker.setTheme(document.body.classList.contains("dark") ? "dark" : "light");
-      emojiPicker.showPicker(emojiBtn);
-      pickerOpen = true;
-    }
-  });
-}
-
 // ===== DM Utilities =====
 function threadId(a, b) {
   return [a, b].sort().join("_");
 }
 
-// ===== DM: Open Thread Chat =====
 /* =========================================================
- * Enhanced openThread
+ * PART 1: UNIFIED CORE HELPERS
+ * ---------------------------------------------------------
+ * Loaded once. Used by threads, groups, search, profile, etc.
  * ======================================================= */
-let handleSendClick = null;          // will assign below
-let replyingTo = null;
-let touchStartX = 0;
-let touchMoveX = 0;
-let isSendingThread = false;
 
-/* Track touches for swipe-to-reply */
-function handleTouchStart(e) {
-  if (!e.touches || !e.touches[0]) return;
-  touchStartX = e.touches[0].clientX;
-  touchMoveX = touchStartX;
-}
-function handleTouchMove(e) {
-  if (!e.touches || !e.touches[0]) return;
-  touchMoveX = e.touches[0].clientX;
+/* ---------- Config ---------- */
+const CHAT_AES_KEY = "yourSecretKey";   // TODO: replace w/ per-user/session key
+
+
+/* ---------- HTML Escaping ---------- */
+function escapeHtml(text = "") {
+  return text.replace(/[&<>"']/g, m => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[m]));
 }
 
-/* Swipe right -> reply */
-function handleSwipeToReply(ev, msg, decrypted) {
-  const deltaX = touchMoveX - touchStartX;
-  if (deltaX > 35 && deltaX < 150) {
-    const wrapper = ev.target.closest(".message-bubble-wrapper");
-    if (!wrapper) return;
 
-    wrapper.classList.add("swiped");
-    setTimeout(() => wrapper.classList.remove("swiped"), 500);
+/* ---------- Time Helpers ---------- */
+// HH:MM (24h, local)
+function formatTimeHM(dateLike) {
+  const d = dateLike instanceof Date ? dateLike : new Date(dateLike);
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+}
 
-    replyingTo = { msgId: msg.id, text: decrypted };
-
-    const replyBox = document.getElementById("replyPreview");
-    if (replyBox) {
-      replyBox.innerHTML = `
-        <div class="reply-box-inner" onclick="scrollToReplyMessage('${msg.id}')">
-          <div class="reply-info">
-            <div class="reply-text clamp-text">${escapeHtml(decrypted)}</div>
-          </div>
-          <button class="reply-close" onclick="cancelReply()" aria-label="Cancel reply">
-            <i data-lucide="x"></i>
-          </button>
-        </div>
-      `;
-      replyBox.style.display = "flex";
-      if (typeof lucide !== "undefined") lucide.createIcons();
-    }
-
-    const input = document.getElementById("threadInput");
-    if (input) requestAnimationFrame(() => input.focus({ preventScroll: true }));
+// Relative age (used in lists, last-seen, etc.)
+function timeSince(date) {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  const intervals = [
+    { label: "year",   seconds: 31536000 },
+    { label: "month",  seconds: 2592000 },
+    { label: "day",    seconds: 86400 },
+    { label: "hour",   seconds: 3600 },
+    { label: "minute", seconds: 60 },
+    { label: "second", seconds: 1 }
+  ];
+  for (const i of intervals) {
+    const count = Math.floor(seconds / i.seconds);
+    if (count >= 1) return `${count} ${i.label}${count > 1 ? "s" : ""} ago`;
   }
+  return "just now";
 }
 
-function cancelReply() {
-  replyingTo = null;
-  const box = document.getElementById("replyPreview");
-  if (box) {
-    box.style.display = "none";
-    box.innerHTML = "";
-  }
+// Same calendar day?
+function isSameDay(d1, d2) {
+  return (
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate()
+  );
 }
 
-/* =========================================================
- * Link helpers
- * ======================================================= */
-function linkifyText(text) {
+// Day separator label (Today / Yesterday / DD Mon YYYY)
+function formatDaySeparator(dateLike) {
+  const d = dateLike instanceof Date ? dateLike : new Date(dateLike);
+  const now = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(now.getDate() - 1);
+  if (isSameDay(d, now)) return "Today";
+  if (isSameDay(d, yesterday)) return "Yesterday";
+  return d.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
+}
+
+
+/* ---------- Emoji Helpers ---------- */
+// True if string contains only emoji glyph cluster(s) (no alphanumerics)
+function isEmojiOnlyText(str = "") {
+  if (typeof str !== "string") return false;
+  const stripped = str.trim();
+  if (!stripped) return false;
+  // reject obvious non-emoji
+  if (/[A-Za-z0-9]/.test(stripped)) return false;
+  // contains at least one emoji pictographic char
+  return /[\p{Extended_Pictographic}\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(stripped);
+}
+
+
+/* ---------- Link Helpers ---------- */
+function linkifyText(text = "") {
+  // NOTE: we intentionally *don't* escape first; callers should escapeHtml() before passing if needed.
+  // If you want automatic escaping, wrap: linkifyText(escapeHtml(str)).
   const urlRegex = /((https?:\/\/)[^\s]+)/gi;
-  return text.replace(urlRegex, (url) => {
+  return text.replace(urlRegex, url => {
     let displayUrl = url;
     if (displayUrl.length > 45) displayUrl = displayUrl.slice(0, 42) + "...";
     return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="chat-link">${displayUrl}</a>`;
   });
 }
-function extractFirstURL(text) {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const match = text.match(urlRegex);
-  return match ? match[0] : null;
+
+function extractFirstURL(text = "") {
+  const m = text.match(/https?:\/\/[^\s]+/i);
+  return m ? m[0] : null;
 }
+
+// External unfurler (best effort; safe-fail)
 async function fetchLinkPreview(url) {
   try {
-    const res = await fetch(`https://api.linkpreview.net/?key=89175199788eee7477f5ac45e693cb53&q=${encodeURIComponent(url)}`);
+    const res = await fetch(
+      `https://api.linkpreview.net/?key=89175199788eee7477f5ac45e693cb53&q=${encodeURIComponent(url)}`
+    );
     const data = await res.json();
     if (data && data.title && data.url) return data;
-  } catch (e) {
-    console.warn("🔗 Link preview fetch failed:", e);
+  } catch (err) {
+    console.warn("🔗 Link preview fetch failed:", err);
   }
   return null;
 }
 
-/* =========================================================
- * Send message in thread
- * ======================================================= */
-async function sendThreadMessage() {
-  if (isSendingThread) return;
-  isSendingThread = true;
-
-  const input = document.getElementById("threadInput");
-  if (!input || !currentThreadUser) {
-    isSendingThread = false;
-    return;
-  }
-
-  const rawText = input.value;
-  const text = rawText.trim();
-  if (!text) {
-    isSendingThread = false;
-    return;
-  }
-
-  input.value = ""; // clear to avoid dup send
-  cancelReply();
-  replyingTo = null;
-
-  const fromName = document.getElementById("usernameDisplay")?.textContent || "User";
-  const toNameElem = document.getElementById("threadWithName");
-  const toName = toNameElem ? toNameElem.textContent : "Friend";
-
-  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
-  const threadRef = db.collection("threads").doc(threadIdStr);
-
-  // Encrypt
-  const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
-
-  const message = {
-    text: encryptedText,
-    from: currentUser.uid,
-    fromName,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    seenBy: [currentUser.uid]
-  };
-
-  // Reply
-  if (replyingTo?.msgId && replyingTo?.text?.trim()) {
-    message.replyTo = {
-      msgId: replyingTo.msgId,
-      text: replyingTo.text
-    };
-  }
-
-// Link preview (best effort, one)
-  const urlMatch = rawText.match(/https?:\/\/[^\s]+/);
-  if (urlMatch && urlMatch[0]) {
-    try {
-      const preview = await fetchLinkPreview(urlMatch[0]);
-      if (preview?.title) {
-        message.preview = {
-          title: preview.title,
-          image: preview.image || "",
-          url: preview.url || urlMatch[0]
-        };
-      }
-    } catch (err) {
-      console.warn("⚠️ Link preview fetch failed:", err);
-    }
-  }
-
-  try {
-    await threadRef.collection("messages").add(message);
-
-    // Update thread metadata
-    await threadRef.set({
-      participants: [currentUser.uid, currentThreadUser],
-      names: {
-        [currentUser.uid]: fromName,
-        [currentThreadUser]: toName
-      },
-      lastMessage: text,
-      unread: {
-        [currentUser.uid]: 0,
-        [currentThreadUser]: firebase.firestore.FieldValue.increment(1)
-      },
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-
-    requestAnimationFrame(() => input.focus({ preventScroll: true }));
-    setTimeout(() => scrollToBottomThread(true), 100);
-  } catch (err) {
-    console.error("❌ Send failed:", err.message || err);
-    alert("❌ Failed to send message.");
-  } finally {
-    isSendingThread = false;
-  }
-}
-
-/* Bind globals used in openThread */
-if (!handleSendClick) {
-  handleSendClick = () => sendThreadMessage();
-}
-if (typeof handleThreadKey !== "function") {
-  window.handleThreadKey = function handleThreadKey(e) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendThreadMessage();
-    }
-  };
-}
-
-/* =========================================================
- * Helpers for Enhanced Bubble Rendering
- * ======================================================= */
-
-/* Emoji-only detector */
-function isEmojiOnlyText(str = "") {
-  if (typeof str !== "string") return false;
-  const stripped = str.replace(/\s+/g, "");
-  if (!stripped) return false;
-  if (/[A-Za-z0-9]/.test(stripped)) return false;
-  return /[\p{Extended_Pictographic}\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(stripped);
-}
-
-/* Compute grp-* flags */
-function computeGroupClasses(msgs, gapMs = 5 * 60 * 1000) {
-  for (let i = 0; i < msgs.length; i++) {
-    const m = msgs[i];
-    const ts = m.timestamp?.toMillis?.() ?? 0;
-    const prev = msgs[i - 1];
-    const next = msgs[i + 1];
-
-    const prevOk = prev && prev.from === m.from && ts - (prev.timestamp?.toMillis?.() ?? 0) <= gapMs;
-    const nextOk = next && next.from === m.from && (next.timestamp?.toMillis?.() ?? 0) - ts <= gapMs;
-
-    if (prevOk && nextOk) m._grp = "grp-mid";
-    else if (prevOk && !nextOk) m._grp = "grp-end";
-    else if (!prevOk && nextOk) m._grp = "grp-start";
-    else m._grp = "grp-single";
-  }
-  return msgs;
-}
-
-/* ---------------------------------------------------------
- * Global lightweight user cache (uid -> {avatar, username})
- * --------------------------------------------------------- */
-const USER_CACHE = {};
-
-/* ---------------------------------------------------------
- * Self/other meta (unchanged except minor formatting)
- * --------------------------------------------------------- */
-function buildTickMeta(msg, otherUid) {
-  let status = "sent";
-  let tickClass = "tick-sent";
-  let icon = "check";
-
-  if (msg.deliveredAt) {
-    status = "delivered";
-    icon = "check-check";
-  }
-  if (Array.isArray(msg.seenBy) && msg.seenBy.includes(otherUid)) {
-    status = "seen";
-    tickClass = "tick-seen";
-    icon = "check-check";
-  }
-
-  const timeHtml = msg.timestamp?.toDate
-    ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>`
-    : "";
-
-  return String(`
-    <span class="msg-meta-inline" data-status="${status}">
-      ${timeHtml}
-      <i data-lucide="${icon}" class="tick-icon ${tickClass}"></i>
-    </span>
-  `);
-}
-
-function buildOtherMeta(msg) {
-  const timeHtml = msg.timestamp?.toDate
-    ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>`
-    : "";
-
-  return String(`
-    <span class="msg-meta-inline" data-status="other">
-      ${timeHtml}
-    </span>
-  `);
-}
-
-/* ---------------------------------------------------------
- * Reply strip
- * --------------------------------------------------------- */
-function buildReplyStrip(msg) {
-  if (!msg.replyTo) return "";
-  const replyId = msg.replyTo.msgId || msg.replyTo.id || "";
-  const rText = escapeHtml(msg.replyTo.text || "");
-  return `<div class="reply-to clamp-text" onclick="scrollToMessage('${replyId}')">${rText}</div>`;
-}
-
-/* ---------------------------------------------------------
- * Link preview markup
- * --------------------------------------------------------- */
+// Build preview snippet HTML
 function buildLinkPreviewHTML(preview, url) {
   if (!preview && !url) return "";
-  const img = preview?.image ? `<img src="${preview.image}" class="preview-img">` : "";
+  const img   = preview?.image ? `<img src="${preview.image}" class="preview-img">` : "";
   const title = escapeHtml(preview?.title || "");
   const showUrl = escapeHtml(preview?.url || url || "");
   if (!img && !title && !showUrl) return "";
@@ -1950,40 +1691,193 @@ function buildLinkPreviewHTML(preview, url) {
   `;
 }
 
-/* ---------------------------------------------------------
- * Decrypt & interpret msg text
- * --------------------------------------------------------- */
-function decryptMsgText(msg) {
-  let decrypted = "";
-  const isDeleted = msg.text === "" || msg.deleted === true;
 
-  const deletedHtml = `<i data-lucide="trash-2"></i> <span class="deleted-msg-label">Message deleted</span>`;
+/* ---------- Swipe-to-Reply Globals ---------- */
+let touchStartX = 0;
+let touchMoveX  = 0;
+let replyingTo  = null;   // {msgId, text} or null
 
-  if (typeof msg.text === "string") {
-    if (isDeleted) {
-      return { text: "", isDeleted: true, deletedHtml };
-    }
-    try {
-      const bytes = CryptoJS.AES.decrypt(msg.text, "yourSecretKey");
-      decrypted = bytes.toString(CryptoJS.enc.Utf8);
-      if (!decrypted) decrypted = "[Encrypted]";
-    } catch (e) {
-      console.warn("Decryption failed:", e);
-      decrypted = "[Decryption error]";
-    }
-  } else {
-    decrypted = JSON.stringify(msg.text ?? "[Invalid text]");
+function handleTouchStart(e) {
+  if (e.touches?.[0]) {
+    touchStartX = e.touches[0].clientX;
+    touchMoveX  = touchStartX;
   }
+}
+function handleTouchMove(e) {
+  if (e.touches?.[0]) touchMoveX = e.touches[0].clientX;
+}
+function handleSwipeToReply(ev, msg, decryptedText) {
+  const deltaX = touchMoveX - touchStartX;
+  if (deltaX > 35 && deltaX < 150) {
+    showReplyPreview(msg, decryptedText);
+    // visual swipe feedback (optional)
+    const wrapper = ev.target.closest(".message-bubble-wrapper");
+    if (wrapper) {
+      wrapper.classList.add("swiped");
+      setTimeout(() => wrapper.classList.remove("swiped"), 500);
+    }
+  }
+}
 
-  return { text: decrypted, isDeleted, deletedHtml };
+function showReplyPreview(msg, text) {
+  replyingTo = { msgId: msg.id, text };
+  const replyBox = document.getElementById("replyPreview");
+  if (!replyBox) return;
+  replyBox.innerHTML = `
+    <div class="reply-box-inner" onclick="scrollToReplyMessage('${msg.id}')">
+      <div class="reply-info">
+        <div class="reply-text clamp-text">${escapeHtml(text)}</div>
+      </div>
+      <button class="reply-close" onclick="cancelReply()" aria-label="Cancel reply">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+  `;
+  replyBox.style.display = "flex";
+  if (typeof lucide !== "undefined") lucide.createIcons();
+}
+
+function cancelReply() {
+  replyingTo = null;
+  const box = document.getElementById("replyPreview");
+  if (box) {
+    box.style.display = "none";
+    box.innerHTML = "";
+  }
 }
 
 
-/* ---------------------------------------------------------
- * Lightweight profile cache (uid -> {username, avatar})
- * --------------------------------------------------------- */
-const _profileCache = new Map();
+/* ---------- Reply Strip Builder (used in bubbles) ---------- */
+function buildReplyStrip(msg) {
+  if (!msg.replyTo) return "";
+  const replyId = msg.replyTo.msgId || msg.replyTo.id || "";
+  const rText   = escapeHtml(msg.replyTo.text || "");
+  return `<div class="reply-to clamp-text" onclick="scrollToMessage('${replyId}')">${rText}</div>`;
+}
 
+
+/* ---------- Decrypt Text Helper ---------- */
+function decryptMsgText(msg) {
+  let decrypted = "";
+  let isDeleted = false;
+
+  if (typeof msg.text === "string") {
+    if (msg.text === "") {
+      isDeleted = true;
+    } else {
+      try {
+        const bytes = CryptoJS.AES.decrypt(msg.text, CHAT_AES_KEY);
+        decrypted = bytes.toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+      } catch {
+        decrypted = "[Decryption error]";
+      }
+    }
+  } else {
+    decrypted = "[Invalid text]";
+  }
+
+  const deletedHtml =
+    '<i data-lucide="trash-2"></i> <span class="deleted-msg-label">Message deleted</span>';
+
+  return isDeleted
+    ? { text: "", isDeleted: true, deletedHtml }
+    : { text: decrypted, isDeleted: false, deletedHtml };
+}
+
+
+/* ---------- Message Grouping (grp-start/mid/end/single) ---------- */
+/* Works for DM threads (msg.from) AND group chats if caller normalizes .from or .senderId prior */
+function computeGroupClasses(msgs, gapMs = 5 * 60 * 1000) {
+  for (let i = 0; i < msgs.length; i++) {
+    const m    = msgs[i];
+    const ts   = m.timestamp?.toMillis?.() ?? 0;
+    const prev = msgs[i - 1];
+    const next = msgs[i + 1];
+
+    // Determine sender field (allow senderId fallback)
+    const senderField = m.from ?? m.senderId;
+
+    const prevOk = prev && (prev.from ?? prev.senderId) === senderField &&
+      ts - (prev.timestamp?.toMillis?.() ?? 0) <= gapMs;
+    const nextOk = next && (next.from ?? next.senderId) === senderField &&
+      (next.timestamp?.toMillis?.() ?? 0) - ts <= gapMs;
+
+    if (prevOk && nextOk)        m._grp = "grp-mid";
+    else if (prevOk && !nextOk)  m._grp = "grp-end";
+    else if (!prevOk && nextOk)  m._grp = "grp-start";
+    else                         m._grp = "grp-single";
+  }
+  return msgs;
+}
+
+
+/* ---------- Meta Builders (ticks/time under bubble) ---------- */
+function buildTickMeta(msg, otherUid) {
+  let status = "sent";
+  let icon   = "check";
+  let cls    = "tick-sent";
+  if (msg.deliveredAt) { status = "delivered"; icon = "check-check"; }
+  if (Array.isArray(msg.seenBy) && msg.seenBy.includes(otherUid)) {
+    status = "seen"; icon = "check-check"; cls = "tick-seen";
+  }
+  const timeHtml = msg.timestamp?.toDate
+    ? `<span class="msg-time">${formatTimeHM(msg.timestamp.toDate())}</span>`
+    : `<span class="msg-time">…</span>`;
+  return `
+    <span class="msg-meta-inline" data-status="${status}">
+      ${timeHtml}
+      <i data-lucide="${icon}" class="tick-icon ${cls}"></i>
+    </span>
+  `;
+}
+
+function buildOtherMeta(msg) {
+  const timeHtml = msg.timestamp?.toDate
+    ? `<span class="msg-time">${formatTimeHM(msg.timestamp.toDate())}</span>`
+    : `<span class="msg-time">…</span>`;
+  return `
+    <span class="msg-meta-inline" data-status="other">
+      ${timeHtml}
+    </span>
+  `;
+}
+
+
+/* ---------- Scroll Helpers (used by reply) ---------- */
+function scrollToMessage(msgId) {
+  const bubble = document.querySelector(`.message-bubble[data-msg-id="${msgId}"]`);
+  if (!bubble) return;
+  bubble.classList.add("highlight");
+  bubble.scrollIntoView({ behavior: "smooth", block: "center" });
+  setTimeout(() => bubble.classList.remove("highlight"), 2000);
+}
+function scrollToReplyMessage(msgId) {
+  scrollToMessage(msgId);
+}
+
+
+/* ---------- Input Autosize ---------- */
+function autoResizeInput(inputEl) {
+  if (!inputEl) return;
+  inputEl.style.height = "auto";
+  inputEl.style.height = inputEl.scrollHeight + "px";
+}
+
+
+/* ---------- Username + Badge Helper ---------- */
+// Add a verified/dev badge for your UID (adjust to taste)
+function usernameWithBadge(uid, name) {
+  const safe = escapeHtml(name || "User");
+  // Example: mark your own UID "moneythepro" (case-insensitive) with badge-check
+  if ((uid || "").toLowerCase() === "moneythepro") {
+    return `${safe} <i data-lucide="badge-check" class="dev-badge" aria-label="Verified"></i>`;
+  }
+  return safe;
+}
+
+
+/* ---------- Lightweight Profile Cache ---------- */
+const _profileCache = new Map();  // uid -> {username, avatar}
 async function getUserProfileCached(uid) {
   if (!uid) {
     return {
@@ -2011,7 +1905,6 @@ async function getUserProfileCached(uid) {
     console.warn("getUserProfileCached error:", err);
   }
 
-  // fallback
   const fallback = {
     username: "User",
     avatar: `https://ui-avatars.com/api/?name=User`
@@ -2020,121 +1913,35 @@ async function getUserProfileCached(uid) {
   return fallback;
 }
 
-/* ---------------------------------------------------------
- * Render snapshot -> DOM (Direct Message Thread)
- * Adds slim circular PFP at grp-start/single; indents followups.
- * --------------------------------------------------------- */
-async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, isInitial }) {
-  if (!area) return;
+/* =========================================================
+ * PART 2: THREAD CHAT (DM)
+ * ======================================================= */
 
-  const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
-  computeGroupClasses(msgs);
 
-  const selfProfile = await getUserProfileCached(currentUser.uid);
-  const otherProfile = await getUserProfileCached(otherUid);
+let renderedMessageIds = new Set();
+let isSendingThread = false;
 
-  let distFromBottom;
-  area.innerHTML = "";
-  if (!isInitial) distFromBottom = area.scrollHeight - area.scrollTop;
-
-  const frag = document.createDocumentFragment();
-  let lastDateLabel = null;
-
-  for (const msg of msgs) {
-    const isSelf = msg.from === currentUser.uid;
-    const { text, isDeleted, deletedHtml } = decryptMsgText(msg);
-
-    const rawText = typeof text === "string" ? text : String(text ?? "");
-    const displayText = escapeHtml(rawText);
-    const emojiOnly = isEmojiOnlyText(displayText);
-
-    const showPfp = msg._grp === "grp-start" || msg._grp === "grp-single";
-    const prof = isSelf ? selfProfile : otherProfile;
-
-    const replyBox = !isDeleted ? buildReplyStrip(msg) : "";
-    const meta = isSelf && !isDeleted ? buildTickMeta(msg, otherUid) : buildOtherMeta(msg);
-    const shortText = displayText.slice(0, 500);
-    const hasLong = displayText.length > 500;
-
-    const content = isDeleted
-      ? deletedHtml
-      : hasLong
-        ? `${linkifyText(shortText)}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
-        : linkifyText(displayText);
-
-    // === Date Divider ===
-    const msgDate = msg.timestamp?.toDate?.();
-    if (msgDate) {
-      const label = getDateLabel(msgDate);
-      if (label !== lastDateLabel) {
-        lastDateLabel = label;
-        const divider = document.createElement("div");
-        divider.className = "date-divider-wrapper";
-        divider.innerHTML = `<div class="date-divider">${label}</div>`;
-        frag.appendChild(divider);
-      }
-    }
-
-    // === Bubble Wrapper ===
-    const wrapper = document.createElement("div");
-    wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}`;
-
-    const editedTag = msg.edited ? `<span class="edited-tag">edited</span>` : "";
-
-    wrapper.innerHTML = `
-      <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""} ${msg._grp || ""}"
-           data-msg-id="${msg.id}">
-        <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
-          ${replyBox}
-          <div class="msg-text-wrapper" style="position: relative; padding-bottom: 18px;">
-            <div class="msg-text clamp-text" data-full="${escapeHtml(displayText)}" data-short="${escapeHtml(shortText)}">
-              ${content}
-            </div>
-            <div class="bubble-meta-inline" style="position: absolute; bottom: 2px; right: 4px;">
-              <span class="meta-time-tick">${meta}</span> ${editedTag}
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    frag.appendChild(wrapper);
-
-    // Mark as seen
-    if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
-      db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
-        .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
-        .catch(() => {});
-    }
-  }
-
-  area.appendChild(frag);
-
-  if (typeof lucide !== "undefined") lucide.createIcons();
-
-  if (isNearBottom || isInitial) {
-    setTimeout(() => scrollToBottomThread(true), 40);
-  } else if (typeof distFromBottom === "number") {
-    setTimeout(() => { area.scrollTop = area.scrollHeight - distFromBottom; }, 0);
-  }
-}
-
+/* ---------- Open Thread ---------- */
 async function openThread(uid, name) {
   if (!currentUser || !uid) return;
 
   try {
-    // 1. Must be friends
-    const friendDoc = await db.collection("users").doc(currentUser.uid)
-      .collection("friends").doc(uid).get();
+    // 1. Ensure friend relationship
+    const friendDoc = await db.collection("users")
+      .doc(currentUser.uid)
+      .collection("friends")
+      .doc(uid)
+      .get();
+
     if (!friendDoc.exists) {
       alert("⚠️ You must be friends to start a chat.");
       return;
     }
 
-    // 2. Switch view
+    // 2. Switch UI to thread
     switchTab("threadView");
 
-    // 3. Bind input + send + emoji after paint
+    // 3. Setup input & send
     setTimeout(() => {
       const input = document.getElementById("threadInput");
       if (input && !input.dataset.bound) {
@@ -2146,36 +1953,41 @@ async function openThread(uid, name) {
         sendBtn.addEventListener("click", handleSendClick);
         sendBtn.dataset.bound = "true";
       }
-      if (typeof setupEmojiButton === "function") setupEmojiButton();
+      setupEmojiButton?.();
     }, 200);
 
-    // 4. Header name with badge
+    // 4. Header UI
     const headerNameEl = document.getElementById("threadWithName");
+    const displayName = typeof name === "string" ? name : (name?.username || "Chat");
     if (headerNameEl) {
-      const displayName = typeof name === "string"
-        ? name
-        : name?.username || "Chat";
       headerNameEl.innerHTML = usernameWithBadge(uid, displayName);
+      headerNameEl.onclick = () => openUserProfile(uid);
     }
+    const headerImg = document.getElementById("chatProfilePic");
+    if (headerImg) headerImg.onclick = () => openUserProfile(uid);
 
-    // Hide options menu
+    // 5. Menu
+    const menuBtn = document.getElementById("chatMenuBtn");
+    if (menuBtn && !menuBtn.dataset.bound) {
+      menuBtn.addEventListener("click", toggleChatOptions);
+      menuBtn.dataset.bound = "true";
+    }
     const opt = document.getElementById("chatOptionsMenu");
     if (opt) opt.style.display = "none";
 
-    // 5. Context
+    // 6. Thread state
     currentThreadUser = uid;
     currentRoom = null;
-
     const threadIdStr = threadId(currentUser.uid, uid);
     const area = document.getElementById("threadMessages");
-    renderedMessageIds = new Set();
+    renderedMessageIds.clear();
 
     if (area && lastThreadId !== threadIdStr) {
       area.innerHTML = "";
       lastThreadId = threadIdStr;
     }
 
-    // 6. Restore scroll
+    // 7. Scroll restore
     const savedScrollKey = "threadScroll_" + threadIdStr;
     const savedScroll = sessionStorage.getItem(savedScrollKey);
     if (area) {
@@ -2187,177 +1999,628 @@ async function openThread(uid, name) {
       area.onscroll = () => sessionStorage.setItem(savedScrollKey, area.scrollTop);
     }
 
-    // 7. Header avatar
+    // 8. Load header avatar
     try {
       const friendUserDoc = await db.collection("users").doc(uid).get();
       if (friendUserDoc.exists) {
         const user = friendUserDoc.data();
-        const headerImg = document.getElementById("chatProfilePic");
         if (headerImg) {
           headerImg.src =
             user.avatarBase64 ||
             user.photoURL ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(
-              user.username || "User"
-            )}`;
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
         }
       }
     } catch (e) {
       console.warn("⚠️ Could not load friend image:", e);
     }
 
-    // 8. Clean old listeners
+    // 9. Cleanup old listeners
     if (typeof unsubscribeThread === "function") unsubscribeThread();
     if (typeof unsubscribeTyping === "function") unsubscribeTyping();
 
-    // 9. Typing indicator
+    // 10. Typing indicator
     listenToTyping(threadIdStr, "thread");
 
-    // 10. Reset unread counter for self
+    // 11. Reset unread
     await db.collection("threads").doc(threadIdStr)
       .set({ unread: { [currentUser.uid]: 0 } }, { merge: true });
 
-    // 11. Live status
+    // 12. Live status
     db.collection("users").doc(uid).onSnapshot((doc) => {
       const data = doc.data();
-      const status = document.getElementById("chatStatus");
-      if (!status || !data) return;
-      if (data.typingFor === currentUser.uid) status.textContent = "Typing...";
-      else if (data.status === "online") status.textContent = "Online";
-      else if (data.lastSeen?.toDate) status.textContent =
-        "Last seen " + timeSince(data.lastSeen.toDate());
-      else status.textContent = "Offline";
+      const statusEl = document.getElementById("chatStatus");
+      if (!statusEl || !data) return;
+      if (data.typingFor === currentUser.uid) statusEl.textContent = "Typing...";
+      else if (data.status === "online") statusEl.textContent = "Online";
+      else if (data.lastSeen?.toDate) statusEl.textContent = "Last seen " + timeSince(data.lastSeen.toDate());
+      else statusEl.textContent = "Offline";
     });
 
-    // 12. Subscribe to messages
+    // 13. Message subscription
     unsubscribeThread = db.collection("threads").doc(threadIdStr)
       .collection("messages").orderBy("timestamp")
       .onSnapshot(async (snapshot) => {
         if (!area) return;
-
-        const msgs = snapshot.docs.map((d) => {
-          const m = d.data();
-          m.id = d.id;
-          return m;
-        });
-
+        const msgs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         const isInitial = area.childElementCount === 0 || renderedMessageIds.size === 0;
-        await renderThreadMessagesToArea({
-          area,
-          msgs,
-          otherUid: uid,
-          threadIdStr,
-          isInitial,
-        });
-
+        await renderThreadMessagesToArea({ area, msgs, otherUid: uid, threadIdStr, isInitial });
         renderedMessageIds.clear();
-        msgs.forEach((m) => renderedMessageIds.add(m.id));
+        msgs.forEach(m => renderedMessageIds.add(m.id));
       });
 
+    lucide?.createIcons();
   } catch (err) {
     console.error("❌ openThread error:", err);
     alert("❌ Could not open chat: " + (err.message || JSON.stringify(err)));
   }
 }
 
+/* ---------- Render Thread Messages ---------- */
+async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, isInitial }) {
+  if (!area) return;
+  const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
+  computeGroupClasses(msgs);
 
-/* =========================================================
- * Legacy renderMessage() (fallback if other code still calls it)
- * Returns markup string (NOT auto-binding events).
- * Use only where quick render needed; recommended to migrate
- * to renderThreadMessagesToArea().
- * ======================================================= */
-function renderMessage(msg, isOwn) {
-  const { text, isDeleted, deletedHtml } = decryptMsgText(msg);
-  const escaped = escapeHtml(text);
+  const selfProfile  = await getUserProfileCached(currentUser.uid);
+  const otherProfile = await getUserProfileCached(otherUid);
 
-  // Determine display name (fallback if missing)
-  const authorName = escapeHtml(msg.fromName || "User");
+  if (isInitial) area.innerHTML = "";
+  const distFromBottom = !isInitial ? (area.scrollHeight - area.scrollTop) : 0;
 
-  // Add author row with verified tick if it's moneythepro
-  const authorHtml = `<div class="msg-author">${usernameWithBadge(msg.from, authorName)}</div>`;
+  const frag = document.createDocumentFragment();
+  let lastMsgDate = null;
 
-  // Reply section (if exists)
-  const replyHtml = msg.replyTo && !isDeleted
-    ? `<div class="reply-to">${escapeHtml(msg.replyTo.text || "")}</div>`
-    : "";
+  for (const msg of msgs) {
+    const isSelf = msg.from === currentUser.uid;
+    const { text: displayText, isDeleted, deletedHtml } = decryptMsgText(msg);
+    const emojiOnly = isEmojiOnlyText(displayText);
 
-  // Meta info (ticks/time)
-  const meta = isOwn && !isDeleted
-    ? buildTickMeta(msg, currentThreadUser)  // correct other uid
-    : buildOtherMeta(msg);
+    const msgDate = msg.timestamp?.toDate ? msg.timestamp.toDate() : null;
+    if (msgDate && (!lastMsgDate || !isSameDay(lastMsgDate, msgDate))) {
+      const separator = document.createElement("div");
+      separator.className = "day-separator";
+      separator.textContent = formatDaySeparator(msgDate);
+      frag.appendChild(separator);
+    }
+    if (msgDate) lastMsgDate = msgDate;
 
-  // Link preview (if exists)
-  const linkPreviewHtml = msg.preview && !isDeleted
-    ? buildLinkPreviewHTML(msg.preview, msg.preview.url)
-    : "";
+    const showPfp = msg._grp === "grp-start" || msg._grp === "grp-single";
+    const prof    = isSelf ? selfProfile : otherProfile;
 
-  // Final message text
-  const bodyHtml = isDeleted ? deletedHtml : linkifyText(escaped);
-  const emojiOnly = isEmojiOnlyText(text) ? "emoji-only" : "";
+    const pfpHtml = showPfp
+      ? `<img class="bubble-pfp ${isSelf ? "pfp-self" : "pfp-other"}" 
+            src="${prof.avatar}" 
+            alt="${escapeHtml(prof.username)}" 
+            onclick="openUserProfile('${isSelf ? currentUser.uid : otherUid}')">`
+      : "";
 
-  return `
-    <div class="message-bubble-wrapper ${isOwn ? 'right from-self' : 'left from-other'} grp-single">
-      <div class="message-bubble ${isOwn ? 'right' : 'left'} ${emojiOnly}" data-msg-id="${msg.id}">
-        ${!isOwn ? authorHtml : ""}  <!-- Show author only for other users -->
-        ${replyHtml}
+    const authorHtml = (!isSelf && showPfp)
+      ? `<div class="msg-author">${usernameWithBadge(otherUid, prof.username)}</div>`
+      : "";
+
+    const replyBox = !isDeleted ? buildReplyStrip(msg) : "";
+    const metaHtml = isSelf ? buildTickMeta(msg, otherUid) : buildOtherMeta(msg);
+
+    const textHtml  = escapeHtml(displayText);
+    const shortText = textHtml.slice(0, 500);
+    const hasLong   = textHtml.length > 500;
+    const content   = isDeleted
+      ? deletedHtml
+      : hasLong
+        ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
+        : linkifyText(textHtml);
+
+    // Link preview
+    let linkPreviewHTML = "";
+    if (!isDeleted) {
+      const url = extractFirstURL(displayText);
+      if (msg.preview) {
+        linkPreviewHTML = buildLinkPreviewHTML(msg.preview, msg.preview.url);
+      } else if (url) {
+        try {
+          const preview = await fetchLinkPreview(url);
+          if (preview?.title || preview?.image) {
+            linkPreviewHTML = buildLinkPreviewHTML(preview, url);
+          }
+        } catch (_) {}
+      }
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"} ${showPfp ? "has-pfp" : ""}`;
+
+    if (!showPfp) {
+      const indent = "calc(var(--pfp-size) + var(--pfp-gap))";
+      if (isSelf) wrapper.style.marginRight = indent;
+      else wrapper.style.marginLeft = indent;
+    }
+
+    const dataTime = msg.timestamp?.toDate ? formatTimeHM(msg.timestamp.toDate()) : "00:00";
+    wrapper.innerHTML = `
+      ${pfpHtml}
+      <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""} ${msg._grp || ""}"
+           data-msg-id="${msg.id}" data-time="${dataTime}">
+        ${authorHtml}
+        ${replyBox}
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
           <div class="msg-text-wrapper">
-            <span class="msg-text">${bodyHtml}</span>
-            ${!isDeleted ? meta : ""}
+            <span class="msg-text" data-full="${textHtml}" data-short="${shortText}">
+              ${content}
+            </span>
+            ${metaHtml}
           </div>
-          ${linkPreviewHtml}
+          ${linkPreviewHTML}
+        </div>
+      </div>
+    `;
+
+    if (!isDeleted) {
+      const bubbleEl = wrapper.querySelector(".message-bubble");
+      if (bubbleEl) {
+        bubbleEl.addEventListener("touchstart", handleTouchStart, { passive: true });
+        bubbleEl.addEventListener("touchmove", handleTouchMove, { passive: true });
+        bubbleEl.addEventListener("touchend", ev => handleSwipeToReply(ev, msg, displayText), { passive: true });
+        bubbleEl.addEventListener("contextmenu", e => {
+          e.preventDefault();
+          handleLongPressMenu(msg, displayText, isSelf);
+        });
+      }
+    }
+
+    frag.appendChild(wrapper);
+
+    if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
+      db.collection("threads").doc(threadIdStr)
+        .collection("messages").doc(msg.id)
+        .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
+        .catch(() => {});
+    }
+  }
+
+  area.appendChild(frag);
+  lucide?.createIcons();
+
+  if (isInitial || isNearBottom) {
+    setTimeout(() => scrollToBottomThread(true), 50);
+  } else {
+    area.scrollTop = area.scrollHeight - distFromBottom;
+  }
+}
+
+/* ---------- Optimistic Bubble ---------- */
+function renderOptimisticBubble(text, localDate) {
+  const area = document.getElementById("threadMessages");
+  if (!area) return;
+
+  const localHM = formatTimeHM(localDate);
+  const tempId  = "temp-" + localDate.getTime();
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "message-bubble-wrapper right from-self grp-single pending";
+
+  wrapper.innerHTML = `
+    <div class="message-bubble right pending" data-msg-id="${tempId}" data-time="${localHM}">
+      <div class="msg-inner-wrapper">
+        <div class="msg-text-wrapper">
+          <span class="msg-text">${linkifyText(escapeHtml(text))}</span>
+          <span class="msg-meta-inline" data-status="pending">
+            <span class="msg-time">${localHM}</span>
+            <i data-lucide="clock" class="tick-icon tick-pending"></i>
+          </span>
         </div>
       </div>
     </div>
   `;
+
+  area.appendChild(wrapper);
+  requestAnimationFrame(() => scrollToBottomThread(true));
+  lucide?.createIcons();
 }
 
-function toggleChatOptions(event) {
-  event?.stopPropagation();
-  const menu = document.getElementById("chatOptionsMenu");
-  if (!menu) return;
+/* ---------- Send Thread Message ---------- */
+async function sendThreadMessage() {
+  if (isSendingThread) return;
+  isSendingThread = true;
 
-  const isOpen = menu.classList.contains("show");
-  if (isOpen) {
-    menu.classList.remove("show");
-  } else {
-    menu.classList.add("show");
-    document.addEventListener("click", (e) => {
-      if (!menu.contains(e.target)) {
-        menu.classList.remove("show");
-      }
-    }, { once: true });
-  }
-}
-
-document.getElementById("chatOptionsMenu")?.addEventListener("click", e => e.stopPropagation());
-
-// Open menu when clicking thread header username/avatar
-document.getElementById("threadHeaderInfo")?.addEventListener("click", toggleChatOptions);
-
-async function openThreadView(otherUid) {
-  const profile = await getUserProfileCached(otherUid);
-  document.getElementById("profilePicLarge").src = profile.avatar;
-  document.getElementById("profileFullName").textContent = profile.displayName || "No name";
-  document.getElementById("profileUsername").textContent = "@" + (profile.username || "unknown");
-  document.getElementById("profileGender").textContent = "Gender: " + (profile.gender || "Not set");
-}
-
-// Long press modal
-let selectedMessageForAction = null;
-
-function handleLongPressMenu(msg, text, isSelf) {
-  if (!isSelf) {
-    alert("⚠️ You can only edit or delete your own messages.");
+  const input = document.getElementById("threadInput");
+  if (!input || !currentThreadUser) {
+    isSendingThread = false;
     return;
   }
+
+  const rawText = input.value;
+  const text = rawText.trim();
+  if (!text) {
+    isSendingThread = false;
+    return;
+  }
+
+  input.value = "";
+  const localTimestamp = new Date();
+  renderOptimisticBubble(text, localTimestamp);
+
+  const pendingReply = replyingTo;
+  cancelReply();
+
+  const fromName = document.getElementById("usernameDisplay")?.textContent || "User";
+  const toNameElem = document.getElementById("threadWithName");
+  const toName = toNameElem ? toNameElem.textContent : "Friend";
+
+  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+  const threadRef = db.collection("threads").doc(threadIdStr);
+
+  const encryptedText = CryptoJS.AES.encrypt(text, CHAT_AES_KEY).toString();
+
+  const message = {
+    text: encryptedText,
+    from: currentUser.uid,
+    fromName,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    localTime: localTimestamp.getTime(),
+    seenBy: [currentUser.uid]
+  };
+
+  if (pendingReply?.msgId && pendingReply?.text?.trim()) {
+    message.replyTo = { msgId: pendingReply.msgId, text: pendingReply.text };
+  }
+
+  const urlMatch = rawText.match(/https?:\/\/[^\s]+/);
+  if (urlMatch && urlMatch[0]) {
+    try {
+      const preview = await fetchLinkPreview(urlMatch[0]);
+      if (preview?.title) {
+        message.preview = {
+          title: preview.title,
+          image: preview.image || "",
+          url: preview.url || urlMatch[0]
+        };
+      }
+    } catch (err) {
+      console.warn("⚠️ Link preview fetch failed:", err);
+    }
+  }
+
+  try {
+    await threadRef.collection("messages").add(message);
+    await threadRef.set({
+      participants: [currentUser.uid, currentThreadUser],
+      names: { [currentUser.uid]: fromName, [currentThreadUser]: toName },
+      lastMessage: text,
+      unread: {
+        [currentUser.uid]: 0,
+        [currentThreadUser]: firebase.firestore.FieldValue.increment(1)
+      },
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    requestAnimationFrame(() => input.focus({ preventScroll: true }));
+  } catch (err) {
+    console.error("❌ Send failed:", err);
+    showToast("Message failed to send.");
+  } finally {
+    isSendingThread = false;
+  }
+}
+
+/* =========================================================
+ * PART 3: GROUP CHAT
+ * ======================================================= */
+
+/* ---------- Listen to Group Messages ---------- */
+function listenMessages() {
+  const messagesDiv = document.getElementById("groupMessages");
+  if (!messagesDiv || !currentRoom) return;
+
+  if (unsubscribeMessages) unsubscribeMessages();
+
+  const groupMsgRef = db.collection("groups").doc(currentRoom).collection("messages");
+
+  unsubscribeMessages = groupMsgRef
+    .orderBy("timestamp")
+    .onSnapshot(snapshot => {
+      const prevScrollTop = messagesDiv.scrollTop;
+      const isNearBottom =
+        messagesDiv.scrollHeight - prevScrollTop - messagesDiv.clientHeight < 100;
+
+      messagesDiv.innerHTML = "";
+      const frag = document.createDocumentFragment();
+      const renderedIds = new Set();
+      let lastMsgDate = null;
+
+      snapshot.forEach(doc => {
+        const msg = doc.data();
+        const msgId = doc.id;
+        if (!msg || renderedIds.has(msgId)) return;
+        renderedIds.add(msgId);
+
+        if (msg.deletedFor?.[currentUser.uid]) return;
+        const isSelf = msg.senderId === currentUser.uid;
+
+        // --- Decrypt ---
+        let decrypted = "";
+        try {
+          decrypted = CryptoJS.AES.decrypt(msg.text, CHAT_AES_KEY)
+            .toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+        } catch (e) {
+          console.error("Decryption failed:", e);
+          decrypted = "[Decryption error]";
+        }
+
+        // --- Date Separator ---
+        const msgDate = msg.timestamp?.toDate ? msg.timestamp.toDate() : null;
+        if (msgDate && (!lastMsgDate || !isSameDay(lastMsgDate, msgDate))) {
+          const separator = document.createElement("div");
+          separator.className = "day-separator";
+          separator.textContent = formatDaySeparator(msgDate);
+          frag.appendChild(separator);
+        }
+        if (msgDate) lastMsgDate = msgDate;
+
+        const emojiOnly = isEmojiOnlyText(decrypted) ? "emoji-only" : "";
+
+        const cleanSenderName = (msg.senderName || "User").replace(/<[^>]*>/g, "");
+        const senderLabel = `<div class="msg-author">${usernameWithBadge(
+          msg.senderId, cleanSenderName
+        )}</div>`;
+
+        const replyHtml = msg.replyTo?.text
+          ? `<div class="reply-to clamp-text" onclick="scrollToMessage('${msg.replyTo.msgId}')">
+              ↪ ${escapeHtml(msg.replyTo.text).slice(0, 120)}
+            </div>`
+          : "";
+
+        const metaHtml = `
+          <span class="msg-meta-inline" data-status="${isSelf ? 'self' : 'other'}">
+            ${msg.timestamp?.toDate
+              ? `<span class="msg-time">${formatTimeHM(msg.timestamp.toDate())}</span>`
+              : ""}
+          </span>
+        `;
+
+        const bodyHtml = linkifyText(escapeHtml(decrypted));
+
+        const wrapper = document.createElement("div");
+        wrapper.className = `message-bubble-wrapper ${isSelf ? "right from-self" : "left from-other"} grp-single`;
+
+        wrapper.innerHTML = `
+          <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly}" data-msg-id="${msgId}"
+               data-time="${msg.timestamp?.toDate ? formatTimeHM(msg.timestamp.toDate()) : ""}">
+            ${senderLabel}
+            ${replyHtml}
+            <div class="msg-inner-wrapper">
+              <div class="msg-text-wrapper">
+                <span class="msg-text">${bodyHtml}</span>
+                ${metaHtml}
+              </div>
+            </div>
+          </div>
+        `;
+
+        const bubbleEl = wrapper.querySelector(".message-bubble");
+        if (bubbleEl) {
+          bubbleEl.addEventListener("touchstart", handleTouchStart, { passive: true });
+          bubbleEl.addEventListener("touchmove", handleTouchMove, { passive: true });
+          bubbleEl.addEventListener("touchend", ev => handleSwipeToReply(ev, msg, decrypted), { passive: true });
+          bubbleEl.addEventListener("contextmenu", e => {
+            e.preventDefault();
+            handleLongPressMenu(msg, decrypted, isSelf);
+          });
+        }
+
+        frag.appendChild(wrapper);
+
+        // Seen receipt
+        if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
+          groupMsgRef.doc(msgId)
+            .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
+            .catch(() => {});
+        }
+      });
+
+      messagesDiv.appendChild(frag);
+
+      if (isNearBottom) {
+        requestAnimationFrame(() => {
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+      } else {
+        messagesDiv.scrollTop = prevScrollTop;
+      }
+
+      lucide?.createIcons();
+      renderWithMagnetSupport?.("groupMessages");
+    });
+}
+
+/* ---------- Group Date & Time Helpers ---------- */
+function isSameDay(date1, date2) {
+  return date1.getFullYear() === date2.getFullYear() &&
+         date1.getMonth() === date2.getMonth() &&
+         date1.getDate() === date2.getDate();
+}
+
+function formatDaySeparator(date) {
+  const now = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(now.getDate() - 1);
+
+  if (isSameDay(date, now)) return "Today";
+  if (isSameDay(date, yesterday)) return "Yesterday";
+
+  return date.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+/* ---------- Scroll to specific group message ---------- */
+function scrollToMessage(msgId) {
+  const bubble = document.querySelector(`.message-bubble[data-msg-id="${msgId}"]`);
+  if (bubble) {
+    bubble.classList.add("highlight");
+    bubble.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => bubble.classList.remove("highlight"), 2000);
+  }
+}
+
+/* =========================================================
+ * PART 4: USER PROFILES & SEARCH
+ * ======================================================= */
+
+/* ---------- Open Profile Preview (Header Tap) ---------- */
+async function openProfilePreview(uid) {
+  try {
+    const modal = document.getElementById("profilePreviewModal");
+    if (!modal) return;
+
+    const profile = await getUserProfileCached(uid);
+    document.getElementById("profilePreviewPic").src = profile.avatar;
+    document.getElementById("profilePreviewName").textContent = profile.username || "User";
+    document.getElementById("profilePreviewStatus").textContent = "Loading status...";
+
+    // Fetch live status
+    const userDoc = await db.collection("users").doc(uid).get();
+    if (userDoc.exists) {
+      const data = userDoc.data();
+      const status = data.status === "online"
+        ? "Online"
+        : data.lastSeen?.toDate
+          ? `Last seen ${timeSince(data.lastSeen.toDate())}`
+          : "Offline";
+      document.getElementById("profilePreviewStatus").textContent = status;
+    }
+
+    modal.classList.remove("hidden");
+  } catch (e) {
+    console.error("Profile preview error:", e);
+  }
+}
+
+function closeProfilePreview(event) {
+  const modal = document.getElementById("profilePreviewModal");
+  if (!modal) return;
+  if (!event || event.target === modal) {
+    modal.classList.add("hidden");
+  }
+}
+
+function viewUserFullProfile() {
+  closeProfilePreview();
+  viewUserProfile(currentThreadUser);
+}
+
+/* ---------- Full User Profile Modal (unified) ---------- */
+async function openUserProfile(uid, opts = {}) {
+  if (!uid) return;
+  const modal = document.getElementById("userProfileModal");
+  if (!modal) {
+    console.warn("userProfileModal missing");
+    return;
+  }
+
+  let userData = null;
+  try {
+    const snap = await db.collection("users").doc(uid).get();
+    if (snap.exists) userData = snap.data();
+  } catch (err) {
+    console.error("openUserProfile fetch failed:", err);
+  }
+
+  const username = userData?.username || userData?.name || "User";
+  const avatar = userData?.avatarBase64 || userData?.photoURL ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}`;
+  const bio = userData?.bio || "No bio yet.";
+  const status = userData?.status || "offline";
+
+  const picEl  = document.getElementById("userProfileModalPic");
+  const nameEl = document.getElementById("userProfileModalName");
+  const userEl = document.getElementById("userProfileModalUsername");
+  const statEl = document.getElementById("userProfileModalStatus");
+  const bioEl  = document.getElementById("userProfileModalBio");
+  const actEl  = document.getElementById("userProfileModalActions");
+
+  if (picEl)  picEl.src = avatar;
+  if (nameEl) nameEl.innerHTML = usernameWithBadge(uid, username);
+  if (userEl) userEl.textContent = "@" + username;
+  if (statEl) statEl.textContent = status;
+  if (bioEl)  bioEl.textContent = bio;
+
+  if (actEl) {
+    actEl.innerHTML = "";
+    const isFriend = await isFriendOfCurrentUser(uid);
+
+    if (uid !== currentUser?.uid) {
+      const chatBtn = document.createElement("button");
+      chatBtn.textContent = "Open Chat";
+      chatBtn.onclick = () => { closeUserProfileModal(); openThread(uid, username); };
+      actEl.appendChild(chatBtn);
+
+      const friendBtn = document.createElement("button");
+      friendBtn.textContent = isFriend ? "Unfriend" : "Add Friend";
+      friendBtn.onclick = () => { isFriend ? removeFriend(uid) : addFriend(uid); };
+      actEl.appendChild(friendBtn);
+
+      const blockBtn = document.createElement("button");
+      blockBtn.textContent = "Block";
+      blockBtn.onclick = () => { closeUserProfileModal(); blockUser(uid); };
+      actEl.appendChild(blockBtn);
+    } else {
+      const meBtn = document.createElement("button");
+      meBtn.textContent = "Edit My Profile";
+      meBtn.onclick = () => { closeUserProfileModal(); switchTab("profileTab"); };
+      actEl.appendChild(meBtn);
+    }
+  }
+
+  modal.classList.remove("hidden");
+  lucide?.createIcons();
+}
+
+function closeUserProfileModal() {
+  const modal = document.getElementById("userProfileModal");
+  if (!modal) return;
+  modal.classList.add("hidden");
+}
+
+async function isFriendOfCurrentUser(uid) {
+  if (!currentUser || !uid) return false;
+  try {
+    const snap = await db.collection("users").doc(currentUser.uid)
+      .collection("friends").doc(uid).get();
+    return snap.exists;
+  } catch {
+    return false;
+  }
+}
+
+/* ---------- Header Bindings ---------- */
+document.addEventListener("DOMContentLoaded", () => {
+  const pfp = document.getElementById("chatProfilePic");
+  if (pfp && !pfp.dataset.bound) {
+    pfp.addEventListener("click", () => { if (currentThreadUser) openUserProfile(currentThreadUser, { fromHeader: true }); });
+    pfp.dataset.bound = "true";
+  }
+  const menuBtn = document.getElementById("chatHeaderMenuBtn");
+  if (menuBtn && !menuBtn.dataset.bound) {
+    menuBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (currentThreadUser) openUserProfile(currentThreadUser, { fromMenu: true });
+    });
+    menuBtn.dataset.bound = "true";
+  }
+});
+
+let selectedMessageForAction = null;
+let editingMessageData = null;
+
+function handleLongPressMenu(msg, text, isSelf) {
   selectedMessageForAction = { msg, text };
 
   const modal = document.getElementById("messageOptionsModal");
-  modal.querySelector('[onclick="editMessage()"]').style.display = "flex";
+  if (!modal) return;
+
+  // Show Edit only if it's your own message
+  modal.querySelector('[onclick="editMessage()"]').style.display = isSelf ? "flex" : "none";
   modal.querySelector('[onclick="deleteForMe()"]').style.display = "flex";
-  modal.querySelector('[onclick="deleteForEveryone()"]').style.display = "flex";
+  modal.querySelector('[onclick="deleteForEveryone()"]').style.display = isSelf ? "flex" : "none";
 
   openOptionsModal();
 }
@@ -2379,78 +2642,15 @@ function closeOptionsModal(event) {
   }
 }
 
-// Edit message modal
-let editingMessageData = null;
-
+/* ===== Edit Message ===== */
 function editMessage() {
   closeOptionsModal();
-  if (!selectedMessageForAction) return;
-
-  const { msg } = selectedMessageForAction;
-  if (msg.from !== currentUser.uid) {
-    alert("⚠️ You can only edit your own messages.");
-    return;
-  }
+  if (!selectedMessageForAction || selectedMessageForAction.msg.from !== currentUser.uid)
+    return alert("⚠️ You can only edit your own messages.");
 
   editingMessageData = selectedMessageForAction;
   document.getElementById("editMessageInput").value = editingMessageData.text;
   document.getElementById("editMessageModal").style.display = "flex";
-}
-
-function deleteForMe() {
-  closeOptionsModal();
-  if (!selectedMessageForAction) return;
-
-  const { msg } = selectedMessageForAction;
-  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
-
-  db.collection("threads").doc(threadIdStr)
-    .collection("messages").doc(msg.id)
-    .update({
-      [`deletedFor.${currentUser.uid}`]: true
-    })
-    .then(() => {
-      showToast("🗑️ Message deleted for you");
-
-      // Immediately hide message in DOM
-      const bubble = document.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`);
-      if (bubble?.parentElement) {
-        bubble.parentElement.remove();
-      }
-    })
-    .catch(console.error);
-}
-
-function deleteForEveryone() {
-  closeOptionsModal();
-  if (!selectedMessageForAction) return;
-
-  const { msg } = selectedMessageForAction;
-  if (msg.from !== currentUser.uid) {
-    alert("⚠️ You can only delete your own messages for everyone.");
-    return;
-  }
-
-  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
-
-  db.collection("threads").doc(threadIdStr)
-    .collection("messages").doc(msg.id)
-    .update({
-      text: "",  // Optionally wipe out text
-      deletedFor: {
-        [currentUser.uid]: true,
-        [currentThreadUser]: true
-      }
-    })
-    .then(() => {
-      showToast("✅ Message deleted for everyone");
-
-      const bubble = document.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`);
-      if (bubble?.parentElement) {
-        bubble.parentElement.remove();
-      }
-    })
-    .catch(console.error);
 }
 
 function saveEditedMessage() {
@@ -2462,18 +2662,13 @@ function saveEditedMessage() {
 
   db.collection("threads").doc(threadIdStr)
     .collection("messages").doc(editingMessageData.msg.id)
-    .update({
-      text: encrypted,
-      edited: true
-    })
+    .update({ text: encrypted, edited: true })
     .then(() => {
       showToast(" Message edited");
       closeEditModal();
       editingMessageData = null;
     })
-    .catch(err => {
-      console.error("❌ Failed to edit:", err);
-    });
+    .catch(err => console.error("❌ Failed to edit:", err));
 }
 
 function closeEditModal() {
@@ -2481,7 +2676,41 @@ function closeEditModal() {
   document.getElementById("editMessageModal").style.display = "none";
 }
 
-// Toast display
+/* ===== Delete Options ===== */
+function deleteForMe() {
+  closeOptionsModal();
+  if (!selectedMessageForAction) return;
+  const { msg } = selectedMessageForAction;
+  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+  db.collection("threads").doc(threadIdStr)
+    .collection("messages").doc(msg.id)
+    .update({ [`deletedFor.${currentUser.uid}`]: true })
+    .then(() => {
+      showToast("🗑️ Message deleted for you");
+      document.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`)?.parentElement?.remove();
+    })
+    .catch(console.error);
+}
+
+function deleteForEveryone() {
+  closeOptionsModal();
+  if (!selectedMessageForAction || selectedMessageForAction.msg.from !== currentUser.uid)
+    return alert("⚠️ You can only delete your own messages.");
+  const { msg } = selectedMessageForAction;
+  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+  db.collection("threads").doc(threadIdStr)
+    .collection("messages").doc(msg.id)
+    .update({
+      text: "",
+      deletedFor: { [currentUser.uid]: true, [currentThreadUser]: true }
+    })
+    .then(() => {
+      showToast("✅ Message deleted for everyone");
+      document.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`)?.parentElement?.remove();
+    })
+    .catch(console.error);
+}
+
 function showToast(message) {
   const toast = document.getElementById("chatToast");
   if (!toast) return;
@@ -2490,156 +2719,199 @@ function showToast(message) {
   setTimeout(() => toast.classList.remove("show"), 1800);
 }
 
-// Chat card template
-function renderChatCard(chat) {
-  return `
-    <div class="chat-card" onclick="openThread('${chat.uid}', '${chat.name.replace(/'/g, "\\'")}')">
-      <img src="${chat.photo || 'default-avatar.png'}" class="friend-avatar" />
-      <div class="details">
-        <div class="name">${escapeHtml(chat.name)}</div>
-        <div class="last-message">${escapeHtml(chat.lastMessage || "No messages yet")}</div>
-      </div>
-      <div class="meta">${chat.timestamp || ""}</div>
-    </div>
-  `;
+/* =========================================================
+ * SEARCH (Users + Groups)
+ * ======================================================= */
+function switchSearchView(view) {
+  document.getElementById("searchResultsUser").style.display = view === "user" ? "block" : "none";
+  document.getElementById("searchResultsGroup").style.display = view === "group" ? "block" : "none";
 }
 
+function runSearch() {
+  const inputEl = document.getElementById("searchInput");
+  if (!inputEl || !currentUser) return;
 
-// ===== DM: Send Thread Message with AES Encryption ====
-function listenMessages() {
-  const messagesDiv = document.getElementById("groupMessages");
-  if (!messagesDiv || !currentRoom) return;
+  const rawTerm = inputEl.value.trim();
+  if (!rawTerm) return;
 
-  // Tear down prior listener
-  if (unsubscribeMessages) unsubscribeMessages();
+  const userResults  = document.getElementById("searchResultsUser");
+  const groupResults = document.getElementById("searchResultsGroup");
+  if (userResults)  userResults.innerHTML  = "";
+  if (groupResults) groupResults.innerHTML = "";
 
-  const groupMsgRef = db.collection("groups").doc(currentRoom).collection("messages");
+  // --- User Search ---
+  db.collection("users")
+    .where("username", ">=", rawTerm)
+    .where("username", "<=", rawTerm + "\uf8ff")
+    .get()
+    .then(async snapshot => {
+      if (!userResults) return;
+      if (snapshot.empty) {
+        userResults.innerHTML = `<div class="no-results">No users found.</div>`;
+        return;
+      }
 
-  unsubscribeMessages = groupMsgRef
-    .orderBy("timestamp")
-    .onSnapshot(snapshot => {
-      // Scroll state before rebuild
-      const prevScrollTop = messagesDiv.scrollTop;
-      const isNearBottom =
-        messagesDiv.scrollHeight - prevScrollTop - messagesDiv.clientHeight < 100;
-
-      messagesDiv.innerHTML = "";
-      const frag = document.createDocumentFragment();
-      const renderedIds = new Set();
-
+      const friendChecks = [];
       snapshot.forEach(doc => {
-        const msg = doc.data();
-        const msgId = doc.id;
-        if (!msg || renderedIds.has(msgId)) return;
-        renderedIds.add(msgId);
+        if (doc.id === currentUser.uid) return;
 
-        // Skip if deleted for this user
-        if (msg.deletedFor?.[currentUser.uid]) return;
+        const user = doc.data();
+        const avatar = user.avatarBase64 || user.photoURL ||
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
 
-        const isSelf = msg.senderId === currentUser.uid;
+        const rawName = user.username || "unknown";
+        const unameHtml = usernameWithBadge(doc.id, rawName);
 
-        /* --- Decrypt --- */
-        let decrypted = "";
-        try {
-          decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey")
-            .toString(CryptoJS.enc.Utf8) || "[Encrypted]";
-        } catch (e) {
-          console.error("Decryption failed:", e);
-          decrypted = "[Decryption error]";
-        }
-
-        /* --- Clean sender name (strip stored markup) --- */
-        const cleanSenderName = (msg.senderName || "User").replace(/<[^>]*>/g, "");
-
-        /* --- Sender label (show for everyone incl. self? change here) --- */
-        const senderLabel = `<div class="msg-author">${usernameWithBadge(
-          msg.senderId,
-          cleanSenderName
-        )}</div>`;
-
-        /* --- Reply preview --- */
-        const replyHtml = msg.replyTo?.text
-          ? `<div class="reply-to clamp-text">↪ ${escapeHtml(msg.replyTo.text).slice(0, 120)}</div>`
-          : "";
-
-        /* --- Meta (time only in group) --- */
-        const metaHtml = `
-          <span class="msg-meta-inline" data-status="other">
-            ${
-              msg.timestamp?.toDate
-                ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>`
-                : ""
-            }
-          </span>
-        `;
-
-        /* --- Body --- */
-        const bodyHtml = linkifyText(escapeHtml(decrypted));
-
-        /* --- Build DOM wrapper --- */
-        const wrapper = document.createElement("div");
-        wrapper.className = `message-bubble-wrapper ${
-          isSelf ? "right from-self" : "left from-other"
-        } grp-single`;
-
-        wrapper.innerHTML = `
-          <div class="message-bubble ${isSelf ? "right" : "left"}" data-msg-id="${msgId}">
-            ${senderLabel}
-            ${replyHtml}
-            <div class="msg-inner-wrapper">
-              <div class="msg-text-wrapper">
-                <span class="msg-text">${bodyHtml}</span>
-                ${metaHtml}
-              </div>
-            </div>
+        const card = document.createElement("div");
+        card.className = "search-result";
+        card.innerHTML = `
+          <img src="${avatar}" class="search-avatar" />
+          <div class="search-info">
+            <div class="username">@${unameHtml}</div>
+            <div class="bio">${escapeHtml(user.bio || "No bio")}</div>
           </div>
+          <button id="friendBtn_${doc.id}">Add Friend</button>
         `;
+        userResults.appendChild(card);
 
-        /* --- Gestures / context menu --- */
-        const bubbleEl = wrapper.querySelector(".message-bubble");
-        if (bubbleEl) {
-          bubbleEl.addEventListener("touchstart", handleTouchStart, { passive: true });
-          bubbleEl.addEventListener("touchmove", handleTouchMove, { passive: true });
-          bubbleEl.addEventListener("touchend", ev => handleSwipeToReply(ev, msg, decrypted), {
-            passive: true
-          });
-          bubbleEl.addEventListener("contextmenu", e => {
-            e.preventDefault();
-            handleLongPressMenu(msg, decrypted, isSelf);
-          });
-        }
-
-        frag.appendChild(wrapper);
-
-        /* --- Seen receipt --- */
-        if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
-          groupMsgRef
-            .doc(msgId)
-            .update({
-              seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
-            })
-            .catch(() => {});
+        const btn = card.querySelector("button");
+        if (btn) {
+          const p = db.collection("users").doc(currentUser.uid)
+            .collection("friends").doc(doc.id).get()
+            .then(friendDoc => {
+              if (friendDoc.exists) {
+                btn.textContent = "Friend";
+                btn.disabled = true;
+                btn.classList.add("disabled-btn");
+              } else {
+                btn.onclick = () => addFriend(doc.id);
+              }
+            });
+          friendChecks.push(p);
         }
       });
 
-      messagesDiv.appendChild(frag);
+      await Promise.all(friendChecks);
+      lucide?.createIcons();
+    });
 
-      // Scroll restore
-      if (isNearBottom) {
-        requestAnimationFrame(() => {
-          messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        });
-      } else {
-        // preserve previous relative position (optional; else do nothing)
-        // messagesDiv.scrollTop = prevScrollTop;
+  // --- Group Search ---
+  db.collection("groups")
+    .where("name", ">=", rawTerm)
+    .where("name", "<=", rawTerm + "\uf8ff")
+    .get()
+    .then(snapshot => {
+      if (!groupResults) return;
+      if (snapshot.empty) {
+        groupResults.innerHTML = `<div class="no-results">No groups found.</div>`;
+        return;
       }
 
-      // Re-run Lucide for badge-check icons
-      if (typeof lucide !== "undefined") lucide.createIcons();
+      snapshot.forEach(doc => {
+        const group = doc.data();
+        const icon = group.icon || "group-icon.png";
+        const members = group.members || [];
+        const joined = members.includes(currentUser.uid);
 
-      // If you still use magnet layout plugin:
-      renderWithMagnetSupport?.("groupMessages");
+        const card = document.createElement("div");
+        card.className = "search-result";
+        card.innerHTML = `
+          <img src="${icon}" class="search-avatar" />
+          <div class="search-info">
+            <div class="username">#${escapeHtml(group.name || "unknown")}</div>
+            <div class="bio">${escapeHtml(group.description || "No description.")}</div>
+          </div>
+          <button ${joined ? "disabled" : `onclick="joinGroupById('${doc.id}')"`}>
+            ${joined ? "Joined" : "Join"}
+          </button>
+        `;
+        groupResults.appendChild(card);
+      });
+
+      lucide?.createIcons();
     });
+}
+
+/* =========================================================
+ * PART 5: FINAL UTILITIES & HELPERS
+ * ======================================================= */
+
+/* ---------- Scroll Helpers ---------- */
+function scrollToMessage(msgId) {
+  const bubble = document.querySelector(`.message-bubble[data-msg-id="${msgId}"]`);
+  if (bubble) {
+    bubble.classList.add("highlight");
+    bubble.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => bubble.classList.remove("highlight"), 2000);
+  }
+}
+
+function scrollToReplyMessage(msgId) {
+  scrollToMessage(msgId);
+}
+
+function scrollToBottomThread(smooth = false) {
+  const area = document.getElementById("threadMessages");
+  if (area) {
+    area.scrollTo({
+      top: area.scrollHeight,
+      behavior: smooth ? "smooth" : "auto"
+    });
+  }
+}
+
+/* ---------- Input Auto-Resize ---------- */
+function autoResizeInput(inputEl) {
+  if (!inputEl) return;
+  inputEl.style.height = "auto";
+  inputEl.style.height = inputEl.scrollHeight + "px";
+}
+
+/* ---------- Toast Notification ---------- */
+function showToast(message) {
+  const toast = document.getElementById("chatToast");
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 1800);
+}
+
+/* ---------- Day Separator Helpers ---------- */
+function isSameDay(date1, date2) {
+  return date1.getFullYear() === date2.getFullYear() &&
+         date1.getMonth() === date2.getMonth() &&
+         date1.getDate() === date2.getDate();
+}
+
+function formatDaySeparator(date) {
+  const now = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(now.getDate() - 1);
+
+  if (isSameDay(date, now)) return "Today";
+  if (isSameDay(date, yesterday)) return "Yesterday";
+
+  return date.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+/* ---------- Escape HTML (for security) ---------- */
+function escapeHtml(text) {
+  if (typeof text !== "string") return "";
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/* ---------- Username with Badge ---------- */
+function usernameWithBadge(uid, name) {
+  const isDeveloper = uid === "moneythepro";
+  const badge = isDeveloper
+    ? ` <i data-lucide="check-circle" class="verified-badge"></i>`
+    : "";
+  return `${escapeHtml(name || "User")}${badge}`;
 }
 
 // ===== Search (Users + Groups) =====
@@ -2758,6 +3030,69 @@ function runSearch() {
       if (typeof lucide !== "undefined") lucide.createIcons();
     });
 }
+
+// Check if two dates are on the same calendar day
+function isSameDay(d1, d2) {
+  return (
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate()
+  );
+}
+
+// Format day separator text
+function formatDaySeparator(date) {
+  const now = new Date();
+  const d = new Date(date);
+
+  const oneDay = 24 * 60 * 60 * 1000;
+  const diff = now.setHours(0, 0, 0, 0) - d.setHours(0, 0, 0, 0);
+
+  if (diff === 0) return "Today";
+  if (diff === oneDay) return "Yesterday";
+
+  return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function scrollToMessage(msgId) {
+  const bubble = document.querySelector(`.message-bubble[data-msg-id="${msgId}"]`);
+  if (bubble) {
+    bubble.classList.add("highlight");
+    bubble.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => bubble.classList.remove("highlight"), 2000);
+  }
+}
+
+function scrollToReplyMessage(msgId) {
+  scrollToMessage(msgId);
+}
+
+function autoResizeInput(inputEl) {
+  if (!inputEl) return;
+  inputEl.style.height = "auto";
+  inputEl.style.height = (inputEl.scrollHeight) + "px";
+}
+
+function openUserProfile(uid) {
+  if (!uid) return;
+  // Show a modal or dedicated section with user info
+  db.collection("users").doc(uid).get().then(doc => {
+    if (!doc.exists) return alert("⚠️ User profile not found");
+    const user = doc.data();
+
+    const modal = document.getElementById("userProfileModal");
+    if (modal) {
+      modal.querySelector(".profile-avatar").src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+      modal.querySelector(".profile-username").textContent = user.username || "User";
+      modal.querySelector(".profile-email").textContent = user.email || "N/A";
+      modal.classList.add("show");
+    }
+  }).catch(err => {
+    console.error("❌ Profile load error:", err);
+  });
+}
+
+
 // ==== GROUP SETTINGS ====
 
 function viewGroupMembers() {
@@ -3008,6 +3343,49 @@ function toggleTheme() {
   localStorage.setItem("theme", isDark ? "dark" : "light");
 }
 
+// ✅ WebTorrent init
+function startTorrentClient() {
+  if (!client) client = new WebTorrent();
+}
+
+// ✅ Send Torrent File
+function sendTorrentFile(file) {
+  startTorrentClient();
+  client.seed(file, torrent => {
+    const magnet = torrent.magnetURI;
+    document.getElementById("threadInput").value = `📎 Torrent: <a href="${magnet}" target="_blank">Download</a>`;
+    sendThreadMessage();
+  });
+}
+
+// ✅ Handle magnet link
+function detectMagnetAndRender(text) {
+  if (text.includes("magnet:?")) {
+    const match = text.match(/magnet:\?[^"]+/);
+    if (match) handleMagnetDownload(match[0]);
+  }
+}
+
+function autoDownloadMagnet(magnetURI) {
+  if (!client) client = new WebTorrent();
+  const torrent = client.add(magnetURI);
+
+  torrent.on('ready', () => {
+    torrent.files.forEach(file => {
+      file.getBlobURL((err, url) => {
+        if (err) return console.error("Download error:", err);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => a.remove(), 100);
+      });
+    });
+  });
+
+  torrent.on('error', err => console.error("Torrent error:", err));
+}
 
 // ✅ Modal: close profile
 function closeProfileModal() {
@@ -3043,87 +3421,19 @@ function copyRoomId() {
   copyToClipboard(currentRoom);
   alert("Group ID copied!");
 }
-function startVoiceInput() {
-  showToast("Voice message coming soon...");
-}
-
-function openReplyModal() {
-  showToast("Reply feature coming soon...");
-}
-
-function showToast(message) {
-  const toast = document.getElementById("toast");
-  toast.textContent = message;
-  toast.classList.add("show");
-
-  setTimeout(() => {
-    toast.classList.remove("show");
-  }, 2000); // visible for 2 seconds
-}
-
 /* ---------------------------------------------------------
- * Dynamic Multi-Level Badge System with Cache + Legend
+ * Developer / verified badge tagging
+ * Call as usernameWithBadge(uid, name) OR usernameWithBadge(nameOnly)
  * --------------------------------------------------------- */
+const DEV_UIDS = [
+  // "yourFirebaseUIDHere" // Add your actual Firebase UID if needed
+];
 
-// Cache expiration (1 hour)
-const BADGE_CACHE_KEY = "verified_badges_cache";
-const BADGE_CACHE_TIME = 3600000; // 1 hour in ms
-let VERIFIED_BADGES = {
-  developer: ["moneythepro"],
-  gold: [],
-  silver: [],
-  bronze: []
-};
-
-// Load verified badge data (cached or from JSON)
-async function loadVerifiedBadges() {
-  const now = Date.now();
-  try {
-    // 1. Check cache
-    const cached = localStorage.getItem(BADGE_CACHE_KEY);
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      if (now - parsed.timestamp < BADGE_CACHE_TIME) {
-        VERIFIED_BADGES = parsed.data;
-        
-        decorateUsernamesWithBadges();
-        return;
-      }
-    }
-
-    // 2. Fetch from verified.json (cache-busting)
-    const res = await fetch("./verified.json?cb=" + Date.now(), { cache: "no-store" });
-    if (!res.ok) throw new Error("Failed to fetch verified.json");
-    const data = await res.json();
-
-    // 3. Normalize data
-    VERIFIED_BADGES = {
-      developer: (data.developer || []).map(u => u.toLowerCase()),
-      gold: (data.gold || []).map(u => u.toLowerCase()),
-      silver: (data.silver || []).map(u => u.toLowerCase()),
-      bronze: (data.bronze || []).map(u => u.toLowerCase())
-    };
-
-    // 4. Save to cache
-    localStorage.setItem(BADGE_CACHE_KEY, JSON.stringify({
-      timestamp: now,
-      data: VERIFIED_BADGES
-    }));
-
-    decorateUsernamesWithBadges();
-  } catch (err) {
-    console.warn("⚠️ Could not load verified.json:", err);
-  }
-}
-document.addEventListener("DOMContentLoaded", loadVerifiedBadges);
-
-/**
- * Get username with badge HTML
- */
 function usernameWithBadge(uidOrName, maybeName) {
   let uid = uidOrName;
   let name = maybeName;
 
+  // One-argument form: usernameWithBadge(nameOnly)
   if (typeof maybeName === "undefined") {
     name = uidOrName;
     uid = "";
@@ -3131,137 +3441,56 @@ function usernameWithBadge(uidOrName, maybeName) {
 
   const rawName = name || "User";
   const safe = escapeHtml(rawName);
-  const lowerName = rawName.toLowerCase();
+
   const lowerUid = (uid || "").toLowerCase();
+  const lowerName = (rawName || "").toLowerCase();
 
-  const badgeType = getBadgeLevel(lowerName, lowerUid);
-  if (!badgeType) return safe;
+  const isDev =
+    lowerName === "moneythepro" ||
+    lowerUid === "moneythepro" ||
+    DEV_UIDS.includes(uid);
 
-  return `${safe} ${getBadgeIcon(badgeType)}`;
+  if (isDev) {
+    return `${safe} <i data-lucide="badge-check" class="dev-badge" aria-label="Verified"></i>`;
+  }
+  return safe;
 }
 
-/**
- * Determine badge level
- */
-function getBadgeLevel(name, uid) {
-  if (VERIFIED_BADGES.developer.includes(name) || VERIFIED_BADGES.developer.includes(uid))
-    return "developer";
-  if (VERIFIED_BADGES.gold.includes(name) || VERIFIED_BADGES.gold.includes(uid))
-    return "gold";
-  if (VERIFIED_BADGES.silver.includes(name) || VERIFIED_BADGES.silver.includes(uid))
-    return "silver";
-  if (VERIFIED_BADGES.bronze.includes(name) || VERIFIED_BADGES.bronze.includes(uid))
-    return "bronze";
-  return null;
-}
-
-/**
- * Return badge icon HTML based on level
- */
-function getBadgeIcon(level) {
-  switch (level) {
-    case "developer":
-      return `<i data-lucide="crown" class="dev-badge supreme" aria-label="Developer"></i>`;
-    case "gold":
-      return `<i data-lucide="badge-check" class="dev-badge gold" aria-label="Gold Verified"></i>`;
-    case "silver":
-      return `<i data-lucide="badge-check" class="dev-badge silver" aria-label="Silver Verified"></i>`;
-    case "bronze":
-      return `<i data-lucide="badge-check" class="dev-badge bronze" aria-label="Bronze Verified"></i>`;
-    default:
-      return "";
+// ✅ Add Developer Badge Everywhere
+function applyDeveloperBadge(usernameElement, username) {
+  if (!usernameElement || !username) return;
+  if (username.trim().toLowerCase() === "moneythepro") {
+    if (!usernameElement.querySelector(".dev-badge")) {
+      const badge = document.createElement("i");
+      badge.setAttribute("data-lucide", "badge-check");
+      badge.className = "dev-badge";
+      badge.style.marginLeft = "4px";
+      usernameElement.appendChild(badge);
+      if (typeof lucide !== "undefined") lucide.createIcons();
+    }
   }
 }
 
-/**
- * Automatically decorate usernames
- */
+// ✅ Decorate usernames globally
 function decorateUsernamesWithBadges() {
   document.querySelectorAll(
     ".search-username, .username-display, .chat-username, .message-username"
   ).forEach(el => {
-    const raw = el.textContent.replace("@", "").trim().toLowerCase();
-    const badgeLevel = getBadgeLevel(raw, raw);
-    if (badgeLevel && !el.querySelector(".dev-badge")) {
-      el.insertAdjacentHTML("beforeend", getBadgeIcon(badgeLevel));
-      if (typeof lucide !== "undefined") lucide.createIcons();
+    const raw = el.textContent.replace("@", "").trim();
+    if (raw.toLowerCase() === "moneythepro") {
+      applyDeveloperBadge(el, raw);
     }
   });
 }
 
-// Observe DOM for dynamic updates
+// Auto-run badge decoration after DOM updates
+document.addEventListener("DOMContentLoaded", decorateUsernamesWithBadges);
+
+// Observe DOM changes to auto-add badges
 const badgeObserver = new MutationObserver(() => {
   requestAnimationFrame(decorateUsernamesWithBadges);
 });
 badgeObserver.observe(document.body, { childList: true, subtree: true });
-
-/* ---------------------------------------------------------
- * Badge Legend Modal
- * --------------------------------------------------------- */
-document.addEventListener("DOMContentLoaded", () => {
-  const modal = document.getElementById("badgeLegendModal");
-  const closeBtn = document.getElementById("closeBadgeLegend");
-
-  document.body.addEventListener("click", (e) => {
-    if (e.target.classList.contains("dev-badge")) {
-      modal?.classList.remove("hidden");
-    }
-  });
-
-  closeBtn?.addEventListener("click", () => modal?.classList.add("hidden"));
-  modal?.addEventListener("click", (e) => {
-    if (e.target === modal) modal?.classList.add("hidden");
-  });
-});
-
-/* ---------------------------------------------------------
- * Service Worker Update Detection
- * --------------------------------------------------------- */
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./service-worker.js')
-    .then((reg) => {
-      console.log("Service Worker registered:", reg);
-
-      // Listen for updates
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        if (newWorker) {
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              console.log("New version available!");
-              showUpdateToast();
-            }
-          });
-        }
-      });
-    })
-    .catch((err) => console.error("SW registration failed:", err));
-}
-
-// Simple toast notification for updates
-function showUpdateToast() {
-  const toast = document.createElement("div");
-  toast.textContent = "New update available – click to refresh";
-  toast.style.cssText = `
-    position: fixed;
-    bottom: 16px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #25d366;
-    color: white;
-    padding: 8px 16px;
-    border-radius: 20px;
-    cursor: pointer;
-    z-index: 9999;
-    font-family: sans-serif;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-  `;
-  toast.onclick = () => {
-    caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
-    window.location.reload(true);
-  };
-  document.body.appendChild(toast);
-}
 
 // ✅ Group controls
 function transferGroupOwnership(newOwnerId) {
@@ -3333,6 +3562,101 @@ function showToast(msg) {
   toast.textContent = msg;
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
+}
+
+// ✅ Upload File (refactored)
+function uploadFileToThreadOrGroup(context) {
+  const fileInput = context === "thread"
+    ? document.getElementById("threadFile")
+    : document.getElementById("roomFile");
+  const file = fileInput?.files?.[0];
+  if (!file) return;
+  sendFileMessage(file, context);
+}
+
+// ====== WebTorrent (P2P File Share) ======
+
+// ✅ Check if user is a friend (used in DMs)
+function isFriend(uid) {
+  return db.collection("users").doc(currentUser.uid)
+    .collection("friends").doc(uid).get()
+    .then(doc => doc.exists);
+}
+
+// ✅ Share a file via torrent (DM or group context)
+function shareFileViaTorrent(type) {
+  if (!client) client = new WebTorrent(); // 🔄 Lazy initialize if needed
+
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "*/*";
+  input.style.display = "none";
+
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+
+    client.seed(file, torrent => {
+      const magnet = torrent.magnetURI;
+      const htmlMsg = `📎 File: <a href="${magnet}" target="_blank">${file.name}</a>`;
+
+      if (type === "dm" && currentThreadUser) {
+        isFriend(currentThreadUser).then(ok => {
+          if (!ok) return alert("❌ Only friends can share P2P files.");
+          document.getElementById("threadInput").value = htmlMsg;
+          sendThreadMessage();
+        });
+      } else if (type === "group" && currentRoom) {
+        document.getElementById("groupMessageInput").value = htmlMsg;
+        sendGroupMessage();
+      } else {
+        alert("⚠️ Sharing not allowed in this context.");
+      }
+    });
+  };
+
+  document.body.appendChild(input); // Needed for iOS
+  input.click();
+  setTimeout(() => input.remove(), 5000);
+}
+
+// ✅ Auto download file from magnet link with confirmation
+function autoDownloadMagnet(magnetURI) {
+  if (!client) client = new WebTorrent();
+
+  const torrent = client.add(magnetURI);
+
+  torrent.on("ready", () => {
+    torrent.files.forEach(file => {
+      file.getBlobURL((err, url) => {
+        if (err) return console.error("Download error:", err);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => a.remove(), 100);
+      });
+    });
+  });
+
+  torrent.on("error", err => console.error("Torrent error:", err));
+}
+
+// ✅ Find all magnet links in container and bind download click
+function renderWithMagnetSupport(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const links = container.querySelectorAll("a[href^='magnet:']");
+  links.forEach(link => {
+    link.onclick = e => {
+      e.preventDefault();
+      const confirmed = confirm(`📦 Download file: ${link.textContent}?`);
+      if (confirmed) autoDownloadMagnet(link.href);
+    };
+  });
 }
 
 /* =========================================================
@@ -3449,35 +3773,44 @@ function showToast(msg) {
 
     window.addEventListener("resize", viewportChanged);
     if (window.visualViewport) {
-      window. visualViewport.addEventListener("resize", viewportChanged);
+      window.visualViewport.addEventListener("resize", viewportChanged);
       window.visualViewport.addEventListener("scroll", viewportChanged);
     }
   });
 })();
 
-function isEmojiOnly(text) {
-  const stripped = text.replace(/\s/g, '');
-  return /^(\p{Emoji_Presentation}|\p{Extended_Pictographic})+$/u.test(stripped);
-}
+function setupEmojiButton() {
+  const emojiBtn = document.getElementById("emojiToggleBtn");
+  const input = document.getElementById("threadInput");
+  if (!emojiBtn || !input) return;
 
-// Usage:
-document.querySelectorAll('.msg-text').forEach(el => {
-  const text = el.textContent.trim();
-  if (isEmojiOnly(text)) {
-    el.parentElement.classList.add('emoji-only');
-  }
-});
+  let emojiPicker;
+  let pickerOpen = false;
 
-function applyGrouping(messages) {
-  for (let i = 0; i < messages.length; i++) {
-    const curr = messages[i];
-    const prev = messages[i - 1];
-    const next = messages[i + 1];
+  emojiBtn.addEventListener("click", async () => {
+    if (!emojiPicker) {
+      const module = await import("https://cdn.jsdelivr.net/npm/@joeattardi/emoji-button@4.6.2");
+      emojiPicker = new module.default({
+        position: 'top-end',
+        theme: document.body.classList.contains("dark") ? "dark" : "light",
+        autoHide: false,
+        showSearch: true,
+        showRecents: true,
+        emojiSize: '1.3em',
+        zIndex: 9999
+      });
 
-    const sameAsPrev = prev && prev.senderId === curr.senderId;
-    const sameAsNext = next && next.senderId === curr.senderId;
+      emojiPicker.on("emoji", selection => {
+        const chosenEmoji = selection.emoji;
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        input.value = input.value.slice(0, start) + chosenEmoji + input.value.slice(end);
+        input.selectionStart = input.selectionEnd = start + chosenEmoji.length;
+        input.focus();
+      });
+    }
 
-    if (!sameAsPrev) curr.classList.add("first");
-    if (!sameAsNext) curr.classList.add("last");
-  }
+    pickerOpen = !pickerOpen;
+    pickerOpen ? emojiPicker.showPicker(emojiBtn) : emojiPicker.hidePicker();
+  });
 }
