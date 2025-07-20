@@ -171,35 +171,31 @@
   </div>
 
   <!-- ✅ Chat Input Bar (Fixed or Absolute) -->
-  <footer class="chat-input-bar">
-    <!-- Left: Reply + Mic -->
-    <div class="left-actions">
-      <button class="icon-btn" onclick="openReplyModal()" aria-label="Reply">
-        <i data-lucide="message-square"></i>
-      </button>
-      <button class="icon-btn" onclick="startVoiceInput()" aria-label="Voice Message">
-        <i data-lucide="mic"></i>
-      </button>
-    </div>
+<footer class="chat-input-bar">
+  <div class="left-actions">
+    <button class="icon-btn" onclick="openReplyModal()" aria-label="Reply">
+      <i data-lucide="message-square"></i>
+    </button>
+    <button class="icon-btn" onclick="startVoiceInput()" aria-label="Voice Message">
+      <i data-lucide="mic"></i>
+    </button>
+  </div>
 
-    <!-- Middle: Input field only -->
-    <div class="input-wrapper">
-      <input
-        id="threadInput"
-        type="text"
-        placeholder="Type a message…"
-        autocomplete="off"
-        autocapitalize="sentences"
-        enterkeyhint="send"
-        aria-label="Message input"
-      />
-    </div>
-
-    <!-- Right: Emoji -->
+  <div class="input-wrapper">
+    <input
+      id="threadInput"
+      type="text"
+      placeholder="Type a message…"
+      autocomplete="off"
+      autocapitalize="sentences"
+      enterkeyhint="send"
+      aria-label="Message input"
+    />
     <button class="icon-btn emoji-btn" id="emojiToggleBtn" aria-label="Emoji">
       <i data-lucide="smile"></i>
     </button>
-  </footer>
+  </div>
+</footer>
 </div>
 
 <!-- ✅ Message Options Modal -->
