@@ -2427,3 +2427,23 @@ body.dark .modal-content {
   opacity: 1;
   transform: translateX(-50%) translateY(-10px);
 }
+
+.msg-content {
+  display: block !important;
+  text-align: left !important;
+}
+
+.msg-text {
+  display: block !important;
+  text-align: left !important;
+  font-size: var(--msg-font-size) !important;
+  line-height: var(--msg-line-height) !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.message-bubble.left {
+  padding-left: 8px !important;
+  padding-right: 10px !important;
+}
