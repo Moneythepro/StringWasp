@@ -1926,45 +1926,147 @@ body {
  * INPUT BAR
  * ======================================================= */
 .chat-input-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 72px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 10px 12px;
-  gap: 8px;
+  background: var(--inputbar-bg, #fff);
   border-top: 1px solid #ccc;
-  background: var(--inputbar-bg);
+  z-index: 999;
+  box-sizing: border-box;
+  gap: 10px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
 }
+
+/* Left actions (reply, mic) */
+.chat-input-bar .left-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Buttons */
+/* Buttons with shadows and animations */
 .chat-input-bar .icon-btn {
-  font-size: 18px;
+  background: none;
+  border: none;
+  padding: 8px;
+  font-size: 1.5rem;
   color: #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  height: 40px;
+  width: 40px;
+  transition: 
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.1s ease-in-out,
+    box-shadow 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
+
+.chat-input-bar .icon-btn:hover {
+  background: #f0f0f0;
+  color: #000;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.chat-input-bar .icon-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Input wrapper */
+.chat-input-bar .input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: #f0f0f0;
+  border-radius: 22px;
+  padding: 0 8px;
+  gap: 6px;
+  overflow: hidden;
+  transition: box-shadow 0.3s;
+}
+.chat-input-bar .input-wrapper:focus-within {
+  box-shadow: 0 0 0 2px #d0d0d0;
+}
+
+/* Input field with typing animation */
 #threadInput {
   flex: 1;
-  padding: 10px 14px;
-  font-size: 16px;
-  border-radius: 20px;
-  border: 1px solid #ccc;
+  height: 44px;
+  padding: 0 12px;
+  font-size: 15px;
+  border: none;
+  background: transparent;
+  color: #333;
   outline: none;
-  background: #fff;
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
-  font-family: var(--sw-font-stack);
+  font-family: 'Segoe UI', sans-serif;
+  min-width: 0;
+  box-sizing: border-box;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  animation: typingFadeIn 0.3s ease-in-out;
 }
-#threadInput:focus {
-  border-color: var(--tick-seen-color);
-  background: #fff;
-  box-shadow: 0 0 0 2px rgba(79,195,247,.25);
+
+/* Typing animation */
+@keyframes typingFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-#emojiToggleBtn { order: -1; }
+
+/* Emoji Button */
 .emoji-btn {
-  margin-right: 4px;
   cursor: pointer;
-  color: var(--fg-muted);
-  font-size: 1.4em;
+  font-size: 1.4rem;
   display: flex;
   align-items: center;
+  color: var(--fg-muted, #888);
+  margin-left: 4px;
+  transition: color 0.2s ease;
 }
-body.dark .chat-input-bar { background: var(--inputbar-bg); border-top-color: #333; }
-body.dark #threadInput { background: #222; color: #eee; border-color: #444; }
-body.dark .chat-input-bar .icon-btn { color: #bbb; }
+.emoji-btn:hover {
+  color: #222;
+}
+
+/* Dark Mode */
+body.dark .chat-input-bar {
+  background: #1a1a1a;
+  border-top-color: #333;
+  box-shadow: 0 -2px 10px rgba(255, 255, 255, 0.04);
+}
+body.dark .input-wrapper {
+  background: #2c2c2e;
+}
+body.dark .icon-btn {
+  color: #ccc;
+}
+body.dark .icon-btn:hover {
+  background: #3a3a3a;
+  color: #fff;
+}
+body.dark #threadInput {
+  color: #fff;
+}
+
+
 
 /* =========================================================
  * RESPONSIVE
