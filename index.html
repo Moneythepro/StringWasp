@@ -132,7 +132,7 @@
       <p id="chatStatus">last seen recently</p>
     </div>
 
-    <!-- 🔽 Hidden dropdown that appears on profile/name tap -->
+    <!-- 🔽 Hidden dropdown -->
     <div id="chatOptionsMenu" class="chat-options-horizontal" role="menu">
       <div class="profile-section">
         <img id="profilePicLarge" class="profile-pic-large" src="default-avatar.png" alt="Profile Picture" />
@@ -164,19 +164,17 @@
 
   <!-- 🧾 Scrollable Message Area -->
   <div class="thread-main">
-    <div class="chat-scroll-area">
-      <div id="threadMessages" role="log" aria-live="polite"></div>
-      <div id="threadTypingStatus" class="typing-indicator" aria-hidden="true">
-        <span></span><span></span><span></span>
-      </div>
+    <div class="chat-scroll-area" id="threadMessages" role="log" aria-live="polite"></div>
+    <div id="threadTypingStatus" class="typing-indicator" aria-hidden="true">
+      <span></span><span></span><span></span>
     </div>
   </div>
 
-  <!-- ✅ Chat Input Bar (Fixed at Bottom) -->
+  <!-- ✅ Chat Input Bar (Fixed or Absolute) -->
   <footer class="chat-input-bar">
-    <!-- Left side: Reply + Mic -->
+    <!-- Left: Reply + Mic -->
     <div class="left-actions">
-      <button class="icon-btn" onclick="openReplyModal()" aria-label="Reply Modal">
+      <button class="icon-btn" onclick="openReplyModal()" aria-label="Reply">
         <i data-lucide="message-square"></i>
       </button>
       <button class="icon-btn" onclick="startVoiceInput()" aria-label="Voice Message">
@@ -184,7 +182,7 @@
       </button>
     </div>
 
-    <!-- Right side: Input + Emoji -->
+    <!-- Middle: Input field only -->
     <div class="input-wrapper">
       <input
         id="threadInput"
@@ -195,10 +193,12 @@
         enterkeyhint="send"
         aria-label="Message input"
       />
-      <button class="icon-btn emoji-btn" id="emojiToggleBtn" aria-label="Emoji">
-        <i data-lucide="smile"></i>
-      </button>
     </div>
+
+    <!-- Right: Emoji -->
+    <button class="icon-btn emoji-btn" id="emojiToggleBtn" aria-label="Emoji">
+      <i data-lucide="smile"></i>
+    </button>
   </footer>
 </div>
 
