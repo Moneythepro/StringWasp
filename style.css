@@ -415,49 +415,6 @@ border-bottom: 1px solid #ccc;
   }
 }
 
-/* === INPUT BAR === */
-.chat-input-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 56px;
-  padding: 6px 8px;
-  background: #fff;
-  border-top: 1px solid #ddd;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  z-index: 100;
-}
-.chat-input-bar input {
-  flex: 1;
-  padding: 8px 12px;
-  border-radius: 18px;
-  border: 1px solid #ccc;
-  font-size: 13px;
-}
-.chat-input-bar button {
-  width: 36px;
-  height: 36px;
-  background: #128C7E;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* === HIDDEN FILE INPUT === */
-input[type="file"]#threadFile {
-  position: absolute !important;
-  left: -9999px !important;
-  top: -9999px !important;
-  opacity: 0 !important;
-  pointer-events: none;
-}
 
 /* === MESSAGES === */
 .message-bubble-wrapper {
@@ -2323,4 +2280,119 @@ body.dark .chat-input-bar .icon-btn { color: #bbb; }
 .bubble-meta-top .edited-tag {
   font-style: italic;
   color: #999;
+}
+
+
+/* === Compact Message Bubble Layout === */
+.message-bubble-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  margin: 2px 0;
+  padding: 0;
+}
+.message-bubble-wrapper.right {
+  align-items: flex-end;
+}
+
+/* === Bubble (Thin, Clean) === */
+.message-bubble {
+  max-width: 75%;
+  background: var(--other-bubble-bg-grad, #f1f1f1);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 14px;
+  line-height: 1.4;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  position: relative;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+.message-bubble.right {
+  background: var(--self-bubble-bg-grad, #dcf8c6);
+  margin-left: auto;
+}
+.message-bubble.left {
+  margin-right: auto;
+}
+
+/* === Edited & Timestamp Top-Right === */
+.bubble-meta-top {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  font-size: 10px;
+  color: #888;
+  display: flex;
+  gap: 6px;
+  font-style: italic;
+  opacity: 0.8;
+}
+body.dark .bubble-meta-top {
+  color: #aaa;
+}
+
+/* === Message Text === */
+.msg-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  padding: 0;
+  color: #111;
+}
+body.dark .msg-text {
+  color: #eee;
+}
+
+/* === Optional Meta Below (ticks/timestamp) — inline if needed === */
+.meta-inline-wrap {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  opacity: 0.6;
+  margin-top: 2px;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+/* === Emoji Inside Text === */
+.msg-text img.emoji {
+  height: 1.2em;
+  vertical-align: middle;
+}
+
+/* === INPUT BAR === */
+.chat-input-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  padding: 6px 8px;
+  background: #fff;
+  border-top: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 100;
+}
+.chat-input-bar input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 18px;
+  border: 1px solid #ccc;
+  font-size: 13px;
+}
+.chat-input-bar button {
+  width: 36px;
+  height: 36px;
+  background: #128C7E;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
