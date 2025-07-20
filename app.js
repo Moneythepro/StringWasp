@@ -2031,7 +2031,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
   const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
   computeGroupClasses(msgs);
 
-  const selfProfile  = await getUserProfileCached(currentUser.uid);
+  const selfProfile = await getUserProfileCached(currentUser.uid);
   const otherProfile = await getUserProfileCached(otherUid);
 
   let distFromBottom;
@@ -2051,7 +2051,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     const emojiOnly = isEmojiOnlyText(displayText);
 
     const showPfp = msg._grp === "grp-start" || msg._grp === "grp-single";
-    const prof    = isSelf ? selfProfile : otherProfile;
+    const prof = isSelf ? selfProfile : otherProfile;
     const pfpHtml = showPfp
       ? `<img class="bubble-pfp ${isSelf ? "pfp-self" : "pfp-other"}" src="${prof.avatar}" alt="${escapeHtml(prof.username)}" onclick="viewUserProfile('${isSelf ? currentUser.uid : otherUid}')">`
       : "";
@@ -2067,10 +2067,10 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       ? buildTickMeta(msg, otherUid)
       : buildOtherMeta(msg);
 
-    const textHtml  = escapeHtml(displayText);
+    const textHtml = escapeHtml(displayText);
     const shortText = textHtml.slice(0, 500);
-    const hasLong   = textHtml.length > 500;
-    const content   = hasLong
+    const hasLong = textHtml.length > 500;
+    const content = hasLong
       ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
       : linkifyText(textHtml);
 
@@ -2125,10 +2125,10 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
         ${replyBox}
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
           <div class="msg-text-wrapper">
-            <span class="msg-text clamp-text" data-full="${textHtml}" data-short="${shortText}">
+            <div class="msg-text clamp-text" data-full="${textHtml}" data-short="${shortText}">
               ${isDeleted ? deletedHtml : content}
-            </span>
-            ${!isDeleted ? meta : ""}
+              ${!isDeleted ? `<span class="meta-inline-wrap">${meta}</span>` : ""}
+            </div>
           </div>
           ${linkPreviewHTML}
         </div>
