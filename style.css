@@ -1755,22 +1755,6 @@ body {
  * INPUT BAR
  * ======================================================= */
 /* 🧼 Main Input Bar Container */
-/* 🧼 Full Page Setup */
-body, html {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  height: 100%;
-  overflow: hidden;
-}
-
-/* 📜 Chat Scrollable Area */
-.chat-scroll-area {
-  overflow-y: auto;
-  height: calc(100vh - 64px); /* Adjusted for reduced input bar */
-  padding: 16px 8px 8px; /* Minimal bottom padding */
-}
-
 /* 💬 Input Bar Container */
 .chat-input-bar {
   display: flex;
@@ -1788,26 +1772,28 @@ body, html {
   box-sizing: border-box;
 }
 
-/* ✏️ Input Field: Rectangular w/ iOS-smooth edges */
+/* 📝 Thread Input: Tall, clean, edge-to-edge */
 #threadInput {
   flex: 1;
-  height: 52px;             /* 🟢 Fix resting height */
-  padding: 0 16px;          /* 🧼 Consistent padding */
+  height: 56px;             /* ⬆️ Expanded vertical size */
+  padding: 0 0;             /* ❌ No horizontal padding */
   font-size: 16px;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1.5px solid #ccc;
   outline: none;
   background: #fff;
   color: #000;
   font-family: 'Segoe UI', sans-serif;
   box-sizing: border-box;
+  line-height: 1.5;
+  padding-left: 14px;       /* Optional: Add if needed inside typing space */
 }
 
-/* Focus should only change border-color (not size/padding!) */
+/* 🔍 Focused state stays consistent */
 #threadInput:focus {
   border-color: #888;
   background: #fff;
-  box-shadow: none;        /* ✅ No glowing effect */
+  box-shadow: none;
 }
 
 /* 😊 Emoji Button - Fixed Size & Alignment */
@@ -1871,6 +1857,9 @@ body.dark .icon-btn:hover {
   background: #3a3a3a;
   color: #a5f5a5;
 }
+
+
+
 /* =========================================================
  * RESPONSIVE
  * ======================================================= */
