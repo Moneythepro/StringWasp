@@ -2126,3 +2126,24 @@ body.dark .icon-btn:hover {
   background: #3a3a3a;
   color: #fff;
 }
+
+body, html {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+main, .thread-main {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.chat-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.chat-input-bar {
+  background: red !important; /* test visibility */
+}
