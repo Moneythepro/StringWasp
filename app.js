@@ -2129,11 +2129,11 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
            data-time="${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}">
         <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
           ${replyBox}
-          <div class="msg-text-wrapper" style="display: flex; flex-direction: column;">
+          <div class="msg-text-wrapper">
             <div class="msg-text clamp-text" data-full="${escapeHtml(displayText)}" data-short="${escapeHtml(shortText)}">
               ${content}
             </div>
-            <div class="bubble-meta-inline" style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-top: 4px;">
+            <div class="bubble-meta-inline">
               <span class="meta-time-tick">${meta}</span>
               ${editedTag}
             </div>
