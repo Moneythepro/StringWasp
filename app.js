@@ -3235,7 +3235,6 @@ function showToast(msg) {
   area.style.bottom = `${inputHeight}px`;
 
   // Debug log
-    console.log("Layout adjusted:", JSON.stringify(someObject, null, 2));
   console.log(
     "🔧 Layout adjusted:",
     { headerHeight, inputHeight, areaHeight: area.offsetHeight }
