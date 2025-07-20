@@ -1113,7 +1113,7 @@ function getDateLabel(date) {
   if (diffDays === -1) return "Yesterday";
 
   const day = date.getDate().toString().padStart(2, "0");
-  const month = date.toLocaleString("default", { month: "short" });
+  const month = date.toLocaleString("en-US", { month: "short" });
   return `${day} ${month}`;
 }
 
@@ -1884,7 +1884,7 @@ const USER_CACHE = {};
 function buildTickMeta(msg, otherUid) {
   let status = "sent";
   let tickClass = "tick-sent";
-  let icon = "check"; // single tick
+  let icon = "check";
 
   if (msg.deliveredAt) {
     status = "delivered";
@@ -1898,7 +1898,7 @@ function buildTickMeta(msg, otherUid) {
   }
 
   const timeHtml = msg.timestamp?.toDate
-    ? `<span class="msg-time">${formatTimestamp(msg.timestamp.toDate())}</span>`
+    ? `<span class="msg-time">${String(formatTimestamp(msg.timestamp.toDate()))}</span>`
     : "";
 
   const editedHtml = msg.edited ? `<span class="edited-tag">(edited)</span>` : "";
@@ -1914,7 +1914,7 @@ function buildTickMeta(msg, otherUid) {
 function buildOtherMeta(msg) {
   const editedHtml = msg.edited ? `<span class="edited-tag">(edited)</span>` : "";
   const timeHtml = msg.timestamp?.toDate
-    ? `<span class="msg-time">${formatTimestamp(msg.timestamp.toDate())}</span>`
+    ? `<span class="msg-time">${String(formatTimestamp(msg.timestamp.toDate()))}</span>`
     : "";
 
   return `
@@ -1962,14 +1962,15 @@ function decryptMsgText(msg) {
   let isDeleted = false;
 
   if (typeof msg.text === "string") {
-    if (msg.text === "") {
+    if (msg.text.trim() === "") {
       isDeleted = true;
       decrypted = "";
     } else {
       try {
         const bytes = CryptoJS.AES.decrypt(msg.text, "yourSecretKey");
-        decrypted = bytes.toString(CryptoJS.enc.Utf8) || "[Encrypted]";
-      } catch {
+        decrypted = bytes.toString(CryptoJS.enc.Utf8);
+        if (!decrypted) decrypted = "[Encrypted]";
+      } catch (err) {
         decrypted = "[Decryption error]";
       }
     }
@@ -1980,10 +1981,11 @@ function decryptMsgText(msg) {
   const deletedHtml =
     '<i data-lucide="trash-2"></i> <span class="deleted-msg-label">Message deleted</span>';
 
-  if (isDeleted) {
-    return { text: "", isDeleted: true, deletedHtml };
-  }
-  return { text: decrypted, isDeleted: false, deletedHtml };
+  return {
+    text: String(decrypted), // guarantee string
+    isDeleted,
+    deletedHtml,
+  };
 }
 
 
@@ -2056,7 +2058,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     const isSelf = msg.from === currentUser.uid;
     const { text, isDeleted, deletedHtml } = decryptMsgText(msg);
 
-    const displayText = typeof text === "string" ? text : JSON.stringify(text || "");
+    const displayText = typeof text === "string" ? text : String(text || "");
     const emojiOnly = isEmojiOnlyText(displayText);
 
     const showPfp = msg._grp === "grp-start" || msg._grp === "grp-single";
@@ -2083,7 +2085,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     const content = isDeleted
       ? deletedHtml
       : hasLong
-        ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
+        ? `${linkifyText(shortText)}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
         : linkifyText(textHtml);
 
     let linkPreviewHTML = "";
@@ -2101,7 +2103,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       }
     }
 
-    // 👉 Add date divider
+    // 👉 Date divider
     let dateDivider = "";
     const msgDate = msg.timestamp?.toDate?.();
     if (msgDate) {
@@ -2139,8 +2141,8 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
           <div class="msg-text-wrapper">
             <div class="msg-text clamp-text" data-full="${textHtml}" data-short="${shortText}">
               ${content}
-              ${!isDeleted ? `<span class="meta-inline-wrap">${meta}</span>` : ""}
             </div>
+            ${!isDeleted ? `<div class="msg-meta-inline-wrap">${meta}</div>` : ""}
           </div>
           ${linkPreviewHTML}
         </div>
@@ -2162,7 +2164,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
     frag.appendChild(wrapper);
 
-    // ✅ Mark as seen
+    // Mark as seen
     if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
       db.collection("threads").doc(threadIdStr).collection("messages").doc(msg.id)
         .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
@@ -2175,11 +2177,13 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
   if (typeof lucide !== "undefined") lucide.createIcons();
 
   if (isInitial) {
-    // Skip scroll
+    // skip scroll
   } else if (isNearBottom) {
     setTimeout(() => scrollToBottomThread(true), 40);
   } else if (typeof distFromBottom === "number") {
-    setTimeout(() => { area.scrollTop = area.scrollHeight - distFromBottom; }, 0);
+    setTimeout(() => {
+      area.scrollTop = area.scrollHeight - distFromBottom;
+    }, 0);
   }
 }
 
