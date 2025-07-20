@@ -2452,3 +2452,99 @@ body.dark .modal-content {
   padding-left: 8px !important;
   padding-right: 10px !important;
 }
+
+/* === MESSAGE BUBBLE === */
+.message-bubble {
+  position: relative !important;
+  max-width: 85% !important;
+  padding: 6px 10px 18px 10px !important; /* extra bottom padding for meta */
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  flex-direction: column !important;
+  font-size: 13.5px !important;
+  line-height: 1.4 !important;
+  word-break: break-word !important;
+  transition: all 0.25s ease !important;
+}
+
+.message-bubble.left {
+  background: #fff !important;
+  border-radius: 0 8px 8px 8px !important;
+}
+
+.message-bubble.right {
+  background: #dcf8c6 !important;
+  border-radius: 8px 0 8px 8px !important;
+  margin-left: auto !important;
+}
+
+/* === META (time + ticks) === */
+.bubble-meta-inline {
+  position: absolute !important;
+  bottom: 4px !important;
+  right: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 11px !important;
+  color: #667781 !important;
+  opacity: 0.85 !important;
+  white-space: nowrap !important;
+}
+
+.message-bubble.right .bubble-meta-inline {
+  color: #4fc3f7 !important; /* ticks color for sent messages */
+}
+
+/* === TICKS === */
+.msg-ticks {
+  display: inline-flex !important;
+  gap: 2px !important;
+  font-size: 11px !important;
+  align-items: center !important;
+}
+
+.msg-ticks svg {
+  width: 16px !important;
+  height: 16px !important;
+  stroke-width: 2.2 !important;
+}
+
+.msg-ticks.delivered svg {
+  stroke: #aaa !important;
+}
+
+.msg-ticks.double svg {
+  stroke: #4fc3f7 !important;
+}
+
+/* === TEXT === */
+.msg-text {
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+}
+
+.msg-inner-wrapper {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+.msg-text-wrapper {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+}
+
+.meta-time-tick {
+  white-space: nowrap !important;
+}
+
+.edited-tag {
+  font-size: 10px !important;
+  color: #999 !important;
+}
