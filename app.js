@@ -1496,3 +1496,6 @@ window.addEventListener("unhandledrejection", (e) => {
 window.addEventListener("error", (e) => {
   console.error("[GLOBAL ERROR]", e.message, e.error);
 });
+window.addEventListener("unhandledrejection", event => {
+  console.error("[GLOBAL PROMISE REJECTION]", event.reason);
+});
