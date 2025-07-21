@@ -10,7 +10,6 @@ let userProfile = null;   // { uid, username, avatar, bio }
 // ===== Auth State Listener =====
 auth.onAuthStateChanged(async (user) => {
   try {
-    // Always hide loading overlay first
     document.getElementById("loadingOverlay").style.display = "none";
 
     if (user) {
@@ -20,7 +19,7 @@ auth.onAuthStateChanged(async (user) => {
       try {
         await loadUserProfile(user.uid);
       } catch (err) {
-        console.error("⚠ Failed to load user profile:", err);
+        console.error("⚠ Failed to load user profile:", err.message || err);
       }
 
       showMainUI(true);
@@ -30,8 +29,7 @@ auth.onAuthStateChanged(async (user) => {
       showMainUI(false);
     }
   } catch (error) {
-    console.error("auth.onAuthStateChanged error:", JSON.stringify(error));
-    // Fallback: Hide loading and show login
+    console.error("auth.onAuthStateChanged error:", error.message || error);
     document.getElementById("loadingOverlay").style.display = "none";
     showMainUI(false);
   }
