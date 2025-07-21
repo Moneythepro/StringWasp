@@ -55,6 +55,9 @@ async function loadUserProfile(uid) {
     updateProfileUI();
   } catch (err) {
     console.error("❌ Failed to load profile:", err);
+    console.log("Loading profile...");
+await loadUserProfile(user.uid);
+console.log("Profile loaded!");
   }
 }
 
