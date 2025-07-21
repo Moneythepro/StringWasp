@@ -78,7 +78,6 @@ async function loadUserProfile(uid) {
   try {
     const doc = await db.collection("users").doc(uid).get();
     console.log("[DEBUG] Profile doc exists:", doc.exists);
-    ...
   } catch (err) {
     console.error("[DEBUG] loadUserProfile error:", err?.message || err);
     throw err; // so we can see it in global error listener
