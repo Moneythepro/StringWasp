@@ -30,12 +30,32 @@ auth.onAuthStateChanged(async (user) => {
       showMainUI(false);
     }
   } catch (error) {
-    console.error("auth.onAuthStateChanged error:", error);
+    console.error("auth.onAuthStateChanged error:", JSON.stringify(error));
     // Fallback: Hide loading and show login
     document.getElementById("loadingOverlay").style.display = "none";
     showMainUI(false);
   }
 });
+
+function switchTab(tabId) {
+  // Hide all tabs
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(tab => tab.style.display = "none");
+
+  // Show the selected tab
+  const target = document.getElementById(tabId);
+  if (target) {
+    target.style.display = "block";
+  } else {
+    console.warn(`⚠ switchTab: No tab with ID '${tabId}'`);
+  }
+
+  // Update active tab button styling
+  const tabButtons = document.querySelectorAll(".tabs button");
+  tabButtons.forEach(btn => btn.classList.remove("active"));
+  const activeBtn = document.querySelector(`#tab-${tabId.replace("Tab", "").toLowerCase()}`);
+  if (activeBtn) activeBtn.classList.add("active");
+}
 // ===== Load User Profile =====
 async function loadUserProfile(uid) {
   try {
