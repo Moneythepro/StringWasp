@@ -62,7 +62,6 @@
     <div id="chatTab" class="tab">
       <div class="chat-header">
         <input id="chatSearchInput" placeholder="Search chats..." oninput="searchChats(this.value)" />
-        <button onclick="searchChats()"><i data-lucide="search"></i></button>
         <button onclick="loadChatList()"><i data-lucide="refresh-ccw"></i></button>
       </div>
       <div id="chatList" style="overflow-y: auto; max-height: calc(100vh - 150px);"></div>
@@ -73,7 +72,6 @@
     <div id="friendsTab" class="tab">
       <h3>Your Friends</h3>
       <div id="friendsList"></div>
-      <button onclick="removeFriend(currentProfileUID)">Unfriend</button>
     </div>
 
     <!-- 🔔 Inbox Tab -->
@@ -115,7 +113,6 @@
       <input id="profileUsername" placeholder="Edit Username" />
       <button onclick="saveProfile()">Save</button>
       <button onclick="logout()">Logout</button>
-      <button onclick="contactSupport()">Contact Us</button>
     </div>
     
     <!-- 💬 Thread View -->
