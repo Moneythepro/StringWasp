@@ -840,8 +840,7 @@ function joinRoom(groupId) {
 
 /* =========================================================
  * User Cache (for rendering names)
- * ======================================================= */
-const userCache = {};  // { uid: { username, isDeveloper } }
+ * ======================================================= */  // { uid: { username, isDeveloper } }
 
 async function fetchUserProfile(uid) {
   if (!uid) return { username: "Unknown", isDeveloper: false };
