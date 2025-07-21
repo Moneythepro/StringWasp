@@ -313,10 +313,7 @@ let peerConnections      = {}; // { uid: RTCPeerConnection } DM
 let groupPeerConnections = {}; // { uid: RTCPeerConnection } Groups (used in Part 3B)
 let groupDataChannels    = {}; // { uid: RTCDataChannel }   Groups (used in Part 3B)
 
-const ICE_SERVERS = [
-  { urls: "stun:stun.l.google.com:19302" },
-  { urls: "stun:stun1.l.google.com:19302" },
-];
+
 
 /* Local IndexedDB handle */
 let dbLocal = null;
