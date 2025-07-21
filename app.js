@@ -8,32 +8,33 @@ let currentUser = null;   // Firebase auth user
 let userProfile = null;   // { uid, username, avatar, bio }
 
 // ===== Auth State Listener =====
-auth.onAuthStateChanged(async (user) => {
-  try {
-    document.getElementById("loadingOverlay").style.display = "none";
+// Prevent duplicate registration if scripts load twice
+if (!window.__SW_AUTH_LISTENER__) {
+  window.__SW_AUTH_LISTENER__ = true;
+  auth.onAuthStateChanged(handleAuthState);
+}
 
-    if (user) {
-      currentUser = user;
-      console.log("✅ Logged in:", user.email);
+async function handleAuthState(user) {
+  const overlay = document.getElementById("loadingOverlay");
+  if (overlay) overlay.style.display = "none";
 
-      try {
-        await loadUserProfile(user.uid);
-      } catch (err) {
-        console.error("⚠ Failed to load user profile:", err.message || err);
-      }
+  // Simple debug marker so we know how many times this fires
+  console.log("[AUTH] state change:", user ? user.uid : "no user");
 
-      showMainUI(true);
-    } else {
-      currentUser = null;
-      userProfile = null;
-      showMainUI(false);
+  if (user) {
+    currentUser = user;
+    try {
+      await loadUserProfile(user.uid);
+    } catch (err) {
+      console.error("[AUTH] profile load error:", err?.message || err);
     }
-  } catch (error) {
-    console.error("auth.onAuthStateChanged error:", error.message || error);
-    document.getElementById("loadingOverlay").style.display = "none";
+    showMainUI(true);
+  } else {
+    currentUser = null;
+    userProfile = null;
     showMainUI(false);
   }
-});
+}
 
 function switchTab(tabId) {
   // Hide all tabs
@@ -1483,3 +1484,10 @@ function runSearch() {
 function loadInbox() {
   console.log("loadInbox() called");
 }
+
+window.addEventListener("error", (e) => {
+  console.error("[GLOBAL ERROR]", e.message, e.filename, e.lineno, e.error);
+});
+window.addEventListener("unhandledrejection", (e) => {
+  console.error("[PROMISE REJECTION]", e.reason);
+});
