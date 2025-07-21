@@ -56,34 +56,31 @@ function switchTab(tabId) {
 }
 // ===== Load User Profile =====
 async function loadUserProfile(uid) {
-  try {
-    const doc = await db.collection("users").doc(uid).get();
-    if (doc.exists) {
-      userProfile = doc.data();
-    } else {
-      // New user → create default profile
-      userProfile = {
-        uid,
-        username: currentUser.email.split("@")[0],
-        avatar: "",
-        bio: "Hey there! I'm using StringWasp."
-      };
-      await db.collection("users").doc(uid).set(userProfile);
-    }
-    updateProfileUI();
-    console.log("Profile loaded!");
-  } catch (err) {
-    console.error("❌ Failed to load profile:", err);
   console.log("[DEBUG] Loading profile for UID:", uid);
   try {
     const doc = await db.collection("users").doc(uid).get();
     console.log("[DEBUG] Profile doc exists:", doc.exists);
+
+    if (doc.exists) {
+      userProfile = doc.data();
+      console.log("[DEBUG] Profile data:", userProfile);
+    } else {
+      // New user → create default profile
+      userProfile = {
+        uid,
+        username: currentUser?.email?.split("@")[0] || "User",
+        avatar: "",
+        bio: "Hey there! I'm using StringWasp."
+      };
+      await db.collection("users").doc(uid).set(userProfile);
+      console.log("[DEBUG] Default profile created:", userProfile);
+    }
+
+    updateProfileUI();
+    console.log("Profile loaded!");
   } catch (err) {
-    console.error("[DEBUG] loadUserProfile error:", err?.message || err);
-    throw err; // so we can see it in global error listener
-  }
-    
-    // Do NOT call loadUserProfile() again here (avoid infinite loop)
+    console.error("❌ Failed to load profile:", err?.message || err);
+    throw err; // Let global error listener catch it
   }
 }
 
@@ -1493,9 +1490,9 @@ function loadInbox() {
   console.log("loadInbox() called");
 }
 
-window.addEventListener("error", (e) => {
-  console.error("[GLOBAL ERROR]", e.message, e.filename, e.lineno, e.error);
-});
 window.addEventListener("unhandledrejection", (e) => {
-  console.error("[PROMISE REJECTION]", e.reason);
+  console.error("[GLOBAL PROMISE REJECTION]", e.reason?.message || e.reason);
+});
+window.addEventListener("error", (e) => {
+  console.error("[GLOBAL ERROR]", e.message, e.error);
 });
