@@ -1,5 +1,5 @@
 /* =========================================================
- * StringWasp v2 – Hybrid App.js (Fixed & DOM-Safe)
+ * StringWasp v2 – Hybrid App.js (Cleaned & DOM-Safe)
  * ========================================================= */
 
 // ===== Global State =====
@@ -83,7 +83,7 @@ async function loadUserProfile(uid) {
 
     if (doc.exists) {
       userProfile = doc.data();
-      console.log("[DEBUG] Profile data:", userProfile);
+      console.log("[DEBUG] Profile data:", JSON.stringify(userProfile, null, 2));
     } else {
       userProfile = {
         uid,
@@ -92,7 +92,7 @@ async function loadUserProfile(uid) {
         bio: "Hey there! I'm using StringWasp."
       };
       await db.collection("users").doc(uid).set(userProfile);
-      console.log("[DEBUG] Default profile created:", userProfile);
+      console.log("[DEBUG] Default profile created:", JSON.stringify(userProfile, null, 2));
     }
 
     updateProfileUI();
@@ -153,6 +153,8 @@ function showToast(msg) {
   toast.style.display = "block";
   setTimeout(() => (toast.style.display = "none"), 2500);
 }
+
+
 
 /* =========================================================
  * StringWasp v2 – Hybrid App.js
