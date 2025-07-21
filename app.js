@@ -18,14 +18,14 @@ async function handleAuthState(user) {
   const overlay = document.getElementById("loadingOverlay");
   if (overlay) overlay.style.display = "none";
 
-  // Simple debug marker so we know how many times this fires
-  console.error("Error:", error?.message || JSON.stringify(error) || error);
+  console.log("[DEBUG] Auth state changed. User:", user ? user.email : "No user");
+
   if (user) {
     currentUser = user;
     try {
       await loadUserProfile(user.uid);
     } catch (err) {
-      console.error("Error:", error?.message || JSON.stringify(error) || error);
+      console.error("⚠ Failed to load user profile:", err?.message || err);
     }
     showMainUI(true);
   } else {
@@ -1492,8 +1492,14 @@ function loadInbox() {
 
 
 window.addEventListener("error", (e) => {
-  console.error("[GLOBAL ERROR]", e.message, e.error);
+  console.error("[GLOBAL ERROR]", e.message, e.error ? e.error.stack || e.error : e.error);
 });
+
 window.addEventListener("unhandledrejection", event => {
-  console.error("[GLOBAL PROMISE REJECTION]", event.reason);
+  const reason = event.reason;
+  if (reason instanceof Error) {
+    console.error("[GLOBAL PROMISE REJECTION]", reason.message, reason.stack);
+  } else {
+    console.error("[GLOBAL PROMISE REJECTION]", JSON.stringify(reason, null, 2));
+  }
 });
