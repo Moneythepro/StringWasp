@@ -1490,9 +1490,7 @@ function loadInbox() {
   console.log("loadInbox() called");
 }
 
-window.addEventListener("unhandledrejection", (e) => {
-  console.error("[GLOBAL PROMISE REJECTION]", e.reason?.message || e.reason);
-});
+
 window.addEventListener("error", (e) => {
   console.error("[GLOBAL ERROR]", e.message, e.error);
 });
