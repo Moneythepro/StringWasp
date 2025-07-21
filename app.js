@@ -270,7 +270,7 @@ document.addEventListener("DOMContentLoaded", () => {
  * ========================================================= */
 
 let peerConnections = {};  // { uid: RTCPeerConnection }
-let dataChannels = {};     // { uid: RTCDataChannel }
+     // { uid: RTCDataChannel }
 let ICE_SERVERS = [{ urls: "stun:stun.l.google.com:19302" }];
 
 /* ===== IndexedDB (Local History) ===== */
