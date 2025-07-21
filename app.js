@@ -3,18 +3,6 @@
  * Part 1: Firebase Auth + User Profiles
  * ========================================================= */
 
-// ===== Firebase Initialization =====
-const firebaseConfig = {
-  apiKey: "AIzaSyAcUxoMaCV7H6CdT53KlxmQlY3nqBiLHb8",
-  authDomain: "stringwaspv2.firebaseapp.com",
-  projectId: "stringwaspv2",
-  storageBucket: "stringwaspv2.firebasestorage.app",
-  messagingSenderId: "691978301483",
-  appId: "1:691978301483:web:a706a20155d7b2b506ba6e",
-  measurementId: "G-FM5KK7D695"
-};
-
-
 // ===== Global State =====
 let currentUser = null;   // Firebase auth user
 let userProfile = null;   // { uid, username, avatar, bio }
