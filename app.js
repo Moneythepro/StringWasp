@@ -14,10 +14,6 @@ const firebaseConfig = {
   measurementId: "G-FM5KK7D695"
 };
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-const storage = firebase.storage();
 
 // ===== Global State =====
 let currentUser = null;   // Firebase auth user
