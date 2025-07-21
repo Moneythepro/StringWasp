@@ -8,9 +8,6 @@ function uuidv4() {
 }
 
 // ===== Firebase & Storage Init =====
-const auth = firebase.auth();
-const db = firebase.firestore();
-const storage = firebase.storage();
 
 // ===== Invite Link via URL =====
 const urlParams = new URLSearchParams(window.location.search);
