@@ -73,11 +73,10 @@ async function loadUserProfile(uid) {
       await db.collection("users").doc(uid).set(userProfile);
     }
     updateProfileUI();
+    console.log("Profile loaded!");
   } catch (err) {
     console.error("❌ Failed to load profile:", err);
-    console.log("Loading profile...");
-await loadUserProfile(user.uid);
-console.log("Profile loaded!");
+    // Do NOT call loadUserProfile() again here (avoid infinite loop)
   }
 }
 
