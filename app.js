@@ -153,11 +153,13 @@ async function loadInbox() {
 
 // Render inbox card
 function renderInboxCard(item, id) {
+  const displayName = typeof item.fromName === "string" ? item.fromName : "Unknown";
+
   const div = document.createElement("div");
   div.className = "inbox-card";
   div.innerHTML = `
     <div class="inbox-info">
-      <strong>${escapeHtml(item.fromName || "Unknown")}</strong>
+      <strong>${escapeHtml(displayName)}</strong>
       <span>${item.type === "friend" ? "sent you a friend request" : "invited you to a group"}</span>
     </div>
     <div class="inbox-actions">
@@ -205,10 +207,12 @@ async function deleteInboxItem(id) {
 // Send friend request
 async function sendFriendRequest(toUid, fromName) {
   try {
+    const name = fromName || userProfile?.username || currentUser?.email || "Unknown";
+
     await db.collection("inbox").doc(toUid).collection("items").add({
       type: "friend",
-      from: currentUser.uid,
-      fromName: fromName || userProfile.username,
+      from: currentUser.uid,      // UID only
+      fromName: String(name),     // Always a string
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       read: false
     });
