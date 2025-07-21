@@ -130,7 +130,7 @@ function logout() {
 }
 
 // ===== Save Profile Data =====
-function saveProfile() {
+async function saveProfile() {
   if (!currentUser) return alert("❌ Not logged in.");
 
   const file = document.getElementById("profilePic")?.files?.[0];
@@ -143,105 +143,77 @@ function saveProfile() {
     username: document.getElementById("profileUsername").value.trim()
   };
 
-  const userRef = db.collection("users").doc(currentUser.uid);
+  try {
+    // If file provided, upload file to PocketBase
+    if (file) {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      for (const key in updates) {
+        formData.append(key, updates[key]);
+      }
 
-  const updateFirestore = (extra = {}) => {
-    userRef.update({ ...updates, ...extra })
-      .then(() => {
-        if (extra.avatarBase64) {
-          document.getElementById("profilePicPreview").src = extra.avatarBase64;
-        }
+      const updated = await pb.collection("users").update(currentUser.id, formData);
+      document.getElementById("profilePicPreview").src = pb.files.getUrl(updated, updated.avatar);
+    } else {
+      await pb.collection("users").update(currentUser.id, updates);
+    }
 
-        // ✅ Update global username with badge
-        const header = document.getElementById("usernameDisplay");
-        if (header) {
-          header.innerHTML = usernameWithBadge(currentUser.uid, updates.username || "User");
-          if (typeof lucide !== "undefined") lucide.createIcons();
-        }
+    document.getElementById("usernameDisplay").innerHTML = usernameWithBadge(
+      currentUser.id,
+      updates.username || "User"
+    );
 
-        alert("✅ Profile updated.");
-      })
-      .catch(err => {
-        console.error("❌ Profile save error:", err.message || err);
-        alert("❌ Failed to save profile.");
-      });
-  };
-
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      updateFirestore({ avatarBase64: e.target.result });
-    };
-    reader.readAsDataURL(file);
-  } else {
-    updateFirestore();
+    alert("✅ Profile updated.");
+  } catch (err) {
+    console.error("❌ Profile save error:", err.message || err);
+    alert("❌ Failed to save profile.");
   }
 }
 
-function loadProfile(callback) {
-  if (!currentUser?.uid) {
+async function loadProfile(callback) {
+  if (!currentUser?.id) {
     console.warn("🔒 No authenticated user to load profile.");
     callback?.();
     return;
   }
 
-  const userRef = db.collection("users").doc(currentUser.uid);
-
-  userRef.onSnapshot(doc => {
-    if (!doc.exists) {
-      console.warn("⚠️ Profile not found.");
-      callback?.();
-      return;
-    }
-
-    const data = doc.data() || {};
+  try {
+    const userData = await pb.collection("users").getOne(currentUser.id);
+    const data = userData || {};
 
     // ---- Form fields (raw values, no badge markup!) ----
-    const nameEl     = document.getElementById("profileName");
-    const bioEl      = document.getElementById("profileBio");
-    const genderEl   = document.getElementById("profileGender");
-    const phoneEl    = document.getElementById("profilePhone");
-    const emailEl    = document.getElementById("profileEmail");
-    const userEl     = document.getElementById("profileUsername");
+    document.getElementById("profileName").value   = data.name || "";
+    document.getElementById("profileBio").value    = data.bio || "";
+    document.getElementById("profileGender").value = data.gender || "";
+    document.getElementById("profilePhone").value  = data.phone || "";
+    document.getElementById("profileEmail").value  = data.publicEmail || data.email || "";
+    document.getElementById("profileUsername").value = data.username || "";
+
     const previewImg = document.getElementById("profilePicPreview");
-
-    if (nameEl)   nameEl.value   = data.name || "";
-    if (bioEl)    bioEl.value    = data.bio || "";
-    if (genderEl) genderEl.value = data.gender || "";
-    if (phoneEl)  phoneEl.value  = data.phone || "";
-    if (emailEl)  emailEl.value  = data.publicEmail || data.email || "";
-    if (userEl)   userEl.value   = data.username || "";
-
     if (previewImg) {
       previewImg.src =
-        data.avatarBase64 ||
-        data.photoURL ||
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(
-          data.username || "User"
-        )}&background=random`;
+        pb.files.getUrl(data, data.avatar) ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username || "User")}`;
     }
 
     // ---- Global header username (with badge) ----
     const headerUser = document.getElementById("usernameDisplay");
     if (headerUser) {
-      // Use innerHTML so badge icon renders.
-      headerUser.innerHTML = usernameWithBadge(currentUser.uid, data.username || "User");
-      // Lucide redraw (badge-check)
+      headerUser.innerHTML = usernameWithBadge(currentUser.id, data.username || "User");
       if (typeof lucide !== "undefined") lucide.createIcons();
     }
 
     callback?.();
-  }, err => {
+  } catch (err) {
     console.error("❌ Profile load error:", err.message || err);
     callback?.();
-  });
+  }
 }
 
 
 function triggerProfileUpload() {
   document.getElementById("profilePic").addEventListener("change", uploadProfilePic);
 }
-
 
 let cropper = null;
 
@@ -290,7 +262,7 @@ async function confirmCrop() {
 
     const base64 = canvas.toDataURL("image/jpeg", 0.7); // Compress to base64
 
-    await db.collection("users").doc(currentUser.uid).update({
+    await pb.collection("users").update(currentUser.id, {
       avatarBase64: base64
     });
 
@@ -299,8 +271,8 @@ async function confirmCrop() {
     closeCropModal();
     alert("✅ Profile picture updated!");
 
-    loadProfile();
-    loadChatList();
+    loadProfile?.();
+    loadChatList?.();
   } catch (err) {
     console.error("❌ Crop error:", err.message || err);
     alert("❌ Failed to upload avatar.");
@@ -323,51 +295,51 @@ function closeCropModal() {
 let currentProfileUID = null;
 
 // ===== View User Profile Modal =====
-function viewUserProfile(uid) {
+async function viewUserProfile(uid) {
   currentProfileUID = uid;
-  db.collection("users").doc(uid).get().then(doc => {
-    if (!doc.exists) return alert("User not found");
 
-    const user = doc.data();
-    const avatar = user.avatarBase64 || user.photoURL || 
-      `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+  try {
+    const user = await pb.collection("users").getOne(uid);
+
+    const avatar = user.avatar
+      ? pb.files.getUrl(user, user.avatar)
+      : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
 
     document.getElementById("viewProfilePic").src = avatar;
     document.getElementById("viewProfileName").textContent = user.name || "Unnamed";
-
-    // ✅ Apply badge to username
     document.getElementById("viewProfileUsername").innerHTML =
       `@${usernameWithBadge(uid, user.username || "unknown")}`;
-
     document.getElementById("viewProfileBio").textContent = user.bio || "No bio";
     document.getElementById("viewProfileEmail").textContent = user.email || "";
     document.getElementById("viewProfileStatus").textContent = user.status || "";
 
     document.getElementById("viewProfileModal").style.display = "flex";
 
-    // Refresh Lucide icons for the badge
+    // Lucide icons (for badge-check)
     if (typeof lucide !== "undefined") lucide.createIcons();
 
-    // Handle friend/unfriend buttons
+    // Check friendship (assumes "friends" collection with from & to user IDs)
     const btnGroup = document.querySelector("#viewProfileModal .btn-group");
     if (!btnGroup) return;
     btnGroup.innerHTML = "";
 
-    db.collection("users").doc(currentUser.uid)
-      .collection("friends").doc(uid)
-      .get()
-      .then(friendDoc => {
-        const btn = document.createElement("button");
-        if (friendDoc.exists) {
-          btn.textContent = "Unfriend";
-          btn.onclick = () => removeFriend(uid);
-        } else {
-          btn.textContent = "Add Friend";
-          btn.onclick = () => addFriend(uid);
-        }
-        btnGroup.appendChild(btn);
-      });
-  });
+    const existing = await pb.collection("friends").getFirstListItem(
+      `from="${currentUser.id}" && to="${uid}"`, { requestKey: null }
+    ).catch(() => null);
+
+    const btn = document.createElement("button");
+    if (existing) {
+      btn.textContent = "Unfriend";
+      btn.onclick = () => removeFriend(uid);
+    } else {
+      btn.textContent = "Add Friend";
+      btn.onclick = () => addFriend(uid);
+    }
+    btnGroup.appendChild(btn);
+  } catch (err) {
+    console.error("❌ Failed to load user profile:", err.message || err);
+    alert("User not found.");
+  }
 }
 
 // ===== Contact Support Shortcut =====
@@ -376,101 +348,110 @@ function contactSupport() {
 }
 
 // ===== Logout & Reset App =====
-function logout() {
+async function logout() {
   if (currentUser) {
-    const userRef = db.collection("users").doc(currentUser.uid);
-    userRef.update({
-      status: "offline",
-      lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-    }).catch(() => {});
+    try {
+      await pb.collection("users").update(currentUser.id, {
+        status: "offline",
+        lastSeen: new Date().toISOString()
+      });
+    } catch (e) {
+      console.warn("⚠️ Failed to update status:", e.message || e);
+    }
   }
 
-  firebase.auth().signOut().then(() => {
-  currentUser = null;
-  window.location.reload();
-});
+  try {
+    await pb.authStore.clear(); // clears the auth token/session
+    currentUser = null;
+    window.location.reload();
+  } catch (err) {
+    console.error("❌ Logout failed:", err.message || err);
+    alert("Failed to log out.");
+  }
 }
+
 // ===== Group List for Dropdowns =====
 function loadGroups() {
   const dropdown = document.getElementById("roomDropdown");
   if (!dropdown || !currentUser) return;
 
-  // Remember current selection so we can restore it after refresh
   const prevSelected = dropdown.value;
+  const SHOW_HASH_PREFIX = true;
 
-  if (unsubscribeGroups) unsubscribeGroups(); // clear old listener
+  if (unsubscribeGroups && typeof unsubscribeGroups === "function") {
+    unsubscribeGroups();
+  }
 
-  const SHOW_HASH_PREFIX = true; // flip to false if you don't want '#'
+  // Subscribe to real-time group changes for the current user
+  unsubscribeGroups = pb.collection("groups").subscribe("*", async ({ action, record }) => {
+    try {
+      const groups = await pb.collection("groups").getFullList({
+        filter: `members ~ "${currentUser.id}"`,
+        sort: "+name"
+      });
 
-  unsubscribeGroups = db.collection("groups")
-    .where("members", "array-contains", currentUser.uid)
-    .onSnapshot(
-      snapshot => {
-        dropdown.innerHTML = "";
+      dropdown.innerHTML = "";
 
-        if (snapshot.empty) {
-          const opt = document.createElement("option");
-          opt.value = "";
-          opt.disabled = true;
-          opt.selected = true;
-          opt.textContent = "No groups yet";
-          dropdown.appendChild(opt);
-          return;
-        }
-
-        let restored = false;
-
-        snapshot.forEach(doc => {
-          const group = doc.data();
-          const opt = document.createElement("option");
-          opt.value = doc.id;
-          const label = group.name || doc.id;
-          opt.textContent = SHOW_HASH_PREFIX ? `#${label}` : label;
-          if (doc.id === prevSelected) {
-            opt.selected = true;
-            restored = true;
-          }
-          dropdown.appendChild(opt);
-        });
-
-        // If we couldn't restore (maybe group deleted), select first
-        if (!restored && dropdown.options.length > 0) {
-          dropdown.selectedIndex = 0;
-        }
-      },
-      err => {
-        console.error("❌ Real-time group loading error:", err.message || err);
+      if (!groups.length) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.disabled = true;
+        opt.selected = true;
+        opt.textContent = "No groups yet";
+        dropdown.appendChild(opt);
+        return;
       }
-    );
+
+      let restored = false;
+
+      for (const group of groups) {
+        const opt = document.createElement("option");
+        opt.value = group.id;
+        const label = group.name || group.id;
+        opt.textContent = SHOW_HASH_PREFIX ? `#${label}` : label;
+        if (group.id === prevSelected) {
+          opt.selected = true;
+          restored = true;
+        }
+        dropdown.appendChild(opt);
+      }
+
+      if (!restored && dropdown.options.length > 0) {
+        dropdown.selectedIndex = 0;
+      }
+    } catch (err) {
+      console.error("❌ Failed to load groups:", err.message || err);
+    }
+  });
 }
 
-function createGroup() {
+async function createGroup() {
   const name = prompt("Enter group name:");
   if (!name || !currentUser) return;
 
-  const groupId = uuidv4();
-  const group = {
-    name,
-    owner: currentUser.uid,
-    admins: [currentUser.uid],
-    members: [currentUser.uid],
-    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp(), // ✅ Ensure it's added
-    lastMessage: "Group created"
-  };
-
-  db.collection("groups").doc(groupId).set(group).then(() => {
-    // Create associated thread
-    db.collection("threads").doc(groupId).set({
-      messages: [],
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  showLoading("Creating group...");
+  try {
+    // Step 1: Create group record
+    const group = await pb.collection("groups").create({
+      name,
+      createdBy: currentUser.id,
+      admins: [currentUser.id],
+      members: [currentUser.id],
     });
 
-    joinRoom(groupId);
-  }).catch(err => {
+    // Step 2: Optionally create associated thread (if using a "threads" collection per group)
+    await pb.collection("group_threads").create({
+      group: group.id,  // make sure this is a relation to the group
+    });
+
+    alert("✅ Group created!");
+    joinRoom(group.id); // Open the group chat
+  } catch (err) {
     console.error("❌ Group creation failed:", err.message || err);
     alert("❌ Failed to create group.");
-  });
+  } finally {
+    hideLoading();
+  }
 }
 
 // ===== Chat List Loader =====
@@ -478,379 +459,125 @@ function loadChatList() {
   const list = document.getElementById("chatList");
   if (!list) return;
 
-  list.innerHTML = ""; // ✅ Clear only once before loading both chats
-
+  list.innerHTML = "";
   setTimeout(() => {
-    try {
-      loadRealtimeGroups();
-    } catch (e) {
-      console.error("❌ Group load failed:", e);
-    }
-
-    try {
-      loadFriendThreads();
-    } catch (e) {
-      console.error("❌ Thread load failed:", e);
-    }
+    loadRealtimeGroups();
+    loadFriendThreads();
   }, 200);
 }
 
 // ===== Realtime Group Chats =====
-function loadRealtimeGroups() {
-  const list = document.getElementById("chatList");
-  if (!list || !currentUser) return;
-
-  if (unsubscribeGroups) unsubscribeGroups();
-
-  unsubscribeGroups = db.collection("groups")
-    .where("members", "array-contains", currentUser.uid)
-    .orderBy("updatedAt", "desc")
-    .onSnapshot(snapshot => {
-      list.innerHTML = ""; // ✅ Clear previous content
-
-      if (snapshot.empty) {
-        list.innerHTML = `<div class="no-results">No group chats found.</div>`;
-        return;
-      }
-
-      snapshot.forEach(doc => {
-        const group = doc.data();
-        const icon = group.icon || "group-icon.png";
-        const name = escapeHtml(group.name || "Group");
-        const unread = group.unread?.[currentUser.uid] || 0;
-
-        // Last message preview
-        let lastMsg = "[No messages]";
-        if (typeof group.lastMessage === "string") {
-          lastMsg = group.lastMessage;
-        } else if (typeof group.lastMessage === "object") {
-          lastMsg = group.lastMessage?.text || "[No messages]";
-        }
-
-        const updatedTime = group.updatedAt?.toDate?.()
-          ? timeSince(group.updatedAt.toDate())
-          : "";
-
-        const card = document.createElement("div");
-        card.className = "chat-card group-chat";
-        card.onclick = () => openGroupChat(doc.id); // ✅ Use actual handler
-
-        card.innerHTML = `
-          <img class="group-avatar" src="${icon}" />
-          <div class="details">
-            <div class="name-row">
-              <span class="name">#${name}</span>
-              <span class="time">${updatedTime}</span>
-            </div>
-            <div class="last-message">${escapeHtml(lastMsg)}</div>
-          </div>
-          ${unread > 0 ? `<span class="badge">${unread}</span>` : ""}
-        `;
-
-        list.appendChild(card);
-      });
-
-      // Refresh icons (if lucide icons are used in last message or elsewhere)
-      if (typeof lucide !== "undefined") lucide.createIcons();
-    }, err => {
-      console.error("❌ Group snapshot error:", err.message || err);
-      list.innerHTML = `<div class="no-results">Failed to load group chats.</div>`;
-    });
-}
-
-// ===== Direct Message Threads =====
-function loadFriendThreads() {
-  const list = document.getElementById("chatList");
-  if (!list || !currentUser) return;
-
-  if (unsubscribeThreads) unsubscribeThreads();
-
-  unsubscribeThreads = db.collection("threads")
-    .where("participants", "array-contains", currentUser.uid)
-    .orderBy("updatedAt", "desc")
-    .onSnapshot(async snapshot => {
-      list.innerHTML = ""; // Clear previous content
-
-      if (snapshot.empty) {
-        list.innerHTML = `<div class="no-results">No personal chats found.</div>`;
-        return;
-      }
-
-      const userCache = {};
-
-      const promises = snapshot.docs.map(async threadDoc => {
-        const thread = threadDoc.data();
-        const otherUid = thread.participants.find(uid => uid !== currentUser.uid);
-        if (!otherUid) return null;
-
-        // Pull user (cached)
-        let user = userCache[otherUid];
-        if (!user) {
-          try {
-            const userDoc = await db.collection("users").doc(otherUid).get();
-            if (!userDoc.exists) return null;
-            user = userDoc.data();
-            userCache[otherUid] = user;
-          } catch {
-            return null;
-          }
-        }
-
-        const avatar =
-          user.avatarBase64 ||
-          user.photoURL ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-
-        // Raw name (no escaping yet; needed for badge + header)
-        const rawName = user.username || user.name || "Friend";
-        const nameHtml = usernameWithBadge(otherUid, rawName); // helper escapes internally
-
-        // Last message preview
-        let lastMsg = "[No messages]";
-        if (typeof thread.lastMessage === "string") {
-          lastMsg = thread.lastMessage;
-        } else if (thread.lastMessage && typeof thread.lastMessage === "object") {
-          lastMsg = thread.lastMessage.text || "[No messages]";
-        }
-
-        const updatedTime = thread.updatedAt?.toDate?.()
-          ? timeSince(thread.updatedAt.toDate())
-          : "";
-
-        const unread = thread.unread?.[currentUser.uid] || 0;
-
-        const card = document.createElement("div");
-        card.className = "chat-card personal-chat";
-        // Pass rawName so openThread can re-render w/ badge
-        card.onclick = () => openThread(otherUid, rawName);
-
-        card.innerHTML = `
-          <img class="friend-avatar" src="${avatar}" />
-          <div class="details">
-            <div class="name-row">
-              <span class="name">${nameHtml}</span>
-              <span class="time">${updatedTime}</span>
-            </div>
-            <div class="last-message">${escapeHtml(lastMsg)}</div>
-          </div>
-          ${unread > 0 ? `<span class="badge">${unread}</span>` : ""}
-        `;
-        return card;
-      });
-
-      const cards = await Promise.all(promises);
-      cards.filter(Boolean).forEach(card => list.appendChild(card));
-
-      // Render Lucide icons (verified badge)
-      if (typeof lucide !== "undefined") lucide.createIcons();
-    }, err => {
-      console.error("❌ Thread snapshot error:", err.message || err);
-      list.innerHTML = `<div class="no-results">Failed to load personal chats.</div>`;
-    });
-}
-
-// ===== Chat Filter (Local search) =====
-function searchChats(term) {
-  const normalized = term.trim().toLowerCase();
-  const chats = document.querySelectorAll(".chat-card");
-
-  let anyVisible = false;
-
-  chats.forEach(chat => {
-    const nameEl = chat.querySelector(".name");
-    const lastMsgEl = chat.querySelector(".last-message");
-
-    // Extract plain text (ignore badge icons)
-    const name = nameEl ? nameEl.textContent.toLowerCase() : "";
-    const lastMsg = lastMsgEl ? lastMsgEl.textContent.toLowerCase() : "";
-
-    const match = name.includes(normalized) || lastMsg.includes(normalized);
-    chat.style.display = match ? "flex" : "none";
-
-    if (match) anyVisible = true;
-  });
-
-  const list = document.getElementById("chatList");
-  const noResult = document.getElementById("noResultsMsg");
-
-  if (!anyVisible) {
-    if (!noResult) {
-      const msg = document.createElement("div");
-      msg.id = "noResultsMsg";
-      msg.className = "no-results";
-      msg.textContent = "No chats match your search.";
-      list.appendChild(msg);
-    }
-  } else if (noResult) {
-    noResult.remove();
-  }
-}
-
-// ===== Load Messages in Group =====
-function loadGroupMessages(groupId) {
+async function loadGroupMessages(groupId) {
   const box = document.getElementById("groupMessages");
   if (!groupId || !currentUser || !box) return;
 
+  showLoading("Loading group messages...");
   box.innerHTML = "";
 
-  // Live listener
-  db.collection("groups").doc(groupId).collection("messages")
-    .orderBy("timestamp", "asc")
-    .onSnapshot(async snapshot => {
-      box.innerHTML = "";
-      const frag = document.createDocumentFragment();
+  try {
+    const result = await pb.collection("messages").getFullList({
+      filter: `group="${groupId}"`,
+      sort: "+timestamp"
+    });
 
-      if (snapshot.empty) {
-        box.innerHTML = `<div class="no-results">No messages yet.</div>`;
-        return;
+    const visible = result.filter(msg => !(msg.deletedFor?.includes?.(currentUser.id)));
+    computeGroupClassesGroup(visible);
+
+    const senderCache = {};
+
+    for (const msg of visible) {
+      const isSelf = msg.senderId === currentUser.id;
+      const decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+      const isDeleted = msg.text === "";
+
+      if (!senderCache[msg.senderId]) {
+        senderCache[msg.senderId] = await pb.collection("users").getOne(msg.senderId);
       }
 
-      /* -------- Normalize + collect sender ids -------- */
-      const msgs = snapshot.docs.map(d => {
-        const m = d.data();
-        m.id = d.id;
-        m.from = m.senderId; // unify for grouping
-        return m;
-      });
+      const senderData = senderCache[msg.senderId];
+      const senderName = usernameWithBadge(msg.senderId, senderData.username || senderData.name || "User");
+      const avatar = senderData.avatar
+        ? pb.files.getUrl(senderData, senderData.avatar)
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(senderData.username || "User")}`;
 
-      // Remove messages deleted for current user
-      const visible = msgs.filter(m => !(m.deletedFor?.[currentUser.uid]));
+      const showAuthorRow = msg._grp === "grp-start" || msg._grp === "grp-single";
 
-      // Grouping (5 min window)
-      computeGroupClassesGroup(visible);
+      const wrapper = document.createElement("div");
+      wrapper.className = `message-bubble-wrapper ${isSelf ? "right from-self" : "left from-other"} ${msg._grp}`;
+      if (showAuthorRow) wrapper.classList.add("has-pfp");
 
-      // Unique sender cache
-      const uidSet = new Set();
-      visible.forEach(m => uidSet.add(m.senderId));
-      const senderCache = {};
-
-      // Fetch sender docs in parallel
-      await Promise.all(
-        [...uidSet].map(async uid => {
-          try {
-            const uDoc = await db.collection("users").doc(uid).get();
-            if (uDoc.exists) senderCache[uid] = uDoc.data();
-          } catch (_) {}
-        })
-      );
-
-      /* -------- Build DOM -------- */
-      for (const msg of visible) {
-        const isSelf = msg.senderId === currentUser.uid;
-
-        /* --- Decrypt --- */
-        let decrypted;
-        let isDeleted = false;
-        try {
-          if (msg.text === "") {
-            isDeleted = true;
-            decrypted = "";
-          } else if (typeof msg.text === "string") {
-            decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey")
-              .toString(CryptoJS.enc.Utf8) || "[Encrypted]";
-          } else {
-            decrypted = "[Invalid]";
-          }
-        } catch {
-          decrypted = "[Decryption error]";
-        }
-
-        /* --- Reply strip --- */
-        const replyHtml = (!isDeleted && msg.replyTo?.text)
-          ? `<div class="reply-to clamp-text" onclick="scrollToMessage('${msg.replyTo.msgId || msg.replyTo.id || ""}')">↪ ${escapeHtml(msg.replyTo.text || "").slice(0,120)}</div>`
-          : "";
-
-        /* --- Sender data --- */
-        const senderData = senderCache[msg.senderId] || {};
-        const senderNameRaw = (msg.senderName || senderData.username || senderData.name || "User").replace(/<[^>]*>/g,"");
-        const senderNameHtml = usernameWithBadge(msg.senderId, senderNameRaw);
-
-        /* --- Show author row --- */
-        const showAuthorRow = msg._grp === "grp-start" || msg._grp === "grp-single";
-        const authorLabel = showAuthorRow
-          ? `<div class="msg-author">${senderNameHtml}</div>`
-          : "";
-
-        /* --- Meta (time only) --- */
-        const metaHtml = `
-          <span class="msg-meta-inline" data-status="other">
-            ${msg.timestamp?.toDate ? `<span class="msg-time">${timeSince(msg.timestamp.toDate())}</span>` : ""}
-          </span>
-        `;
-
-        /* --- Body --- */
-        const bodyHtml = isDeleted
-          ? `<i data-lucide="trash-2"></i> <span class="deleted-msg-label">Message deleted</span>`
-          : linkifyText(escapeHtml(decrypted));
-
-        /* --- Avatar (only grp-start / grp-single) --- */
-        const showPfp = showAuthorRow;
-        let avatarSrc = "default-avatar.png";
-        if (senderData.avatarBase64) avatarSrc = senderData.avatarBase64;
-        else if (senderData.photoURL) avatarSrc = senderData.photoURL;
-        else avatarSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderData.username || senderNameRaw || "User")}`;
-
-        /* --- Wrapper --- */
-        const wrapper = document.createElement("div");
-        wrapper.className = `message-bubble-wrapper ${isSelf ? "right from-self" : "left from-other"} ${msg._grp}`;
-        if (showPfp) wrapper.classList.add("has-pfp");
-
-        // Corrected camelCase margin properties
-        if (!showPfp && !isSelf) {
-          wrapper.style.marginLeft = `calc(var(--pfp-size) + var(--pfp-gap))`;
-        }
-        if (!showPfp && isSelf) {
-          wrapper.style.marginRight = `calc(var(--pfp-size) + var(--pfp-gap))`;
-        }
-
-        wrapper.innerHTML = `
-          ${showPfp ? `<img class="bubble-pfp" src="${avatarSrc}" alt="${escapeHtml(senderNameRaw)}" onclick="viewUserProfile('${msg.senderId}')">` : ""}
-          <div class="message-bubble ${isSelf ? "right" : "left"} ${msg._grp}" data-msg-id="${msg.id}" data-time="${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}">
-            ${authorLabel}
-            ${replyHtml}
-            <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
-              <div class="msg-text-wrapper">
-                <span class="msg-text">${bodyHtml}</span>
-                ${!isDeleted ? metaHtml : ""}
-              </div>
+      wrapper.innerHTML = `
+        ${showAuthorRow ? `<img class="bubble-pfp" src="${avatar}" onclick="viewUserProfile('${msg.senderId}')">` : ""}
+        <div class="message-bubble ${isSelf ? "right" : "left"}">
+          ${showAuthorRow ? `<div class="msg-author">${senderName}</div>` : ""}
+          <div class="msg-inner-wrapper ${isDeleted ? "msg-deleted" : ""}">
+            <div class="msg-text-wrapper">
+              <span class="msg-text">${isDeleted ? '<i data-lucide="trash-2"></i> Message deleted' : linkifyText(escapeHtml(decrypted))}</span>
+              <span class="msg-meta-inline">${timeSince(new Date(msg.timestamp))}</span>
             </div>
           </div>
-        `;
+        </div>
+      `;
 
-        /* --- Gestures / context menu --- */
-        const bubbleEl = wrapper.querySelector(".message-bubble");
-        if (bubbleEl) {
-          bubbleEl.addEventListener("touchstart", handleTouchStart, { passive: true });
-          bubbleEl.addEventListener("touchmove", handleTouchMove, { passive: true });
-          bubbleEl.addEventListener("touchend", ev => handleSwipeToReply(ev, msg, decrypted), { passive: true });
-          bubbleEl.addEventListener("contextmenu", e => {
-            e.preventDefault();
-            handleLongPressMenu(msg, decrypted, isSelf);
-          });
-        }
+      box.appendChild(wrapper);
+    }
 
-        frag.appendChild(wrapper);
+    box.scrollTop = box.scrollHeight;
+    if (typeof lucide !== "undefined") lucide.createIcons();
+  } catch (err) {
+    console.error("❌ Failed to load group messages:", err.message || err);
+    box.innerHTML = `<div class="no-results">Failed to load messages.</div>`;
+  } finally {
+    hideLoading();
+  }
+}
 
-        /* --- Mark as seen --- */
-        if (!msg.seenBy?.includes(currentUser.uid)) {
-          db.collection("groups").doc(groupId).collection("messages")
-            .doc(msg.id)
-            .update({
-              seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
-            }).catch(() => {});
-        }
-      }
+async function loadRealtimeGroups() {
+  const list = document.getElementById("chatList");
+  if (!list || !currentUser) return;
 
-      box.appendChild(frag);
-
-      // Scroll to bottom after render
-      box.scrollTop = box.scrollHeight;
-
-      // Refresh Lucide icons
-      if (typeof lucide !== "undefined") lucide.createIcons();
-    }, err => {
-      console.error("❌ Group message load failed:", err.message || err);
+  try {
+    const groups = await pb.collection("groups").getFullList({
+      filter: `members~"${currentUser.id}"`,
+      sort: "-updatedAt"
     });
+
+    if (!groups.length) {
+      list.innerHTML = `<div class="no-results">No group chats found.</div>`;
+      return;
+    }
+
+    list.innerHTML = "";
+
+    for (const group of groups) {
+      const name = escapeHtml(group.name || "Group");
+      const unread = group.unread?.[currentUser.id] || 0;
+      const icon = group.icon || "group-icon.png";
+
+      const card = document.createElement("div");
+      card.className = "chat-card group-chat";
+      card.onclick = () => openGroupChat(group.id);
+
+      card.innerHTML = `
+        <img class="group-avatar" src="${icon}" />
+        <div class="details">
+          <div class="name-row">
+            <span class="name">#${name}</span>
+            <span class="time">${timeSince(new Date(group.updatedAt))}</span>
+          </div>
+          <div class="last-message">${escapeHtml(group.lastMessage || "[No messages]")}</div>
+        </div>
+        ${unread > 0 ? `<span class="badge">${unread}</span>` : ""}
+      `;
+
+      list.appendChild(card);
+    }
+
+    if (typeof lucide !== "undefined") lucide.createIcons();
+  } catch (err) {
+    console.error("❌ Group list load failed:", err.message || err);
+    list.innerHTML = `<div class="no-results">Failed to load group chats.</div>`;
+  }
 }
 
 /* ---------------------------------------------------------
@@ -877,62 +604,94 @@ function computeGroupClassesGroup(msgs, gapMs = 5 * 60 * 1000) {
 }
 
 // === Send Room Message (Group Chat) ===
-function sendRoomMessage() {
+async function sendRoomMessage() {
   const input = document.getElementById("roomInput");
   const text = input?.value.trim();
   if (!text || !currentRoom || !currentUser) return;
 
-  // Use proper username from user data (with badge if moneythepro)
-  const fromName = usernameWithBadge(currentUser.uid, document.getElementById("usernameDisplay")?.textContent || "User");
-
-  // Encrypt text
   const encryptedText = CryptoJS.AES.encrypt(text, "yourSecretKey").toString();
 
-  // Message object
   const message = {
     text: encryptedText,
-    senderId: currentUser.uid,
-    senderName: fromName,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    seenBy: [currentUser.uid]
+    senderId: currentUser.id,
+    senderName: currentUser.username,
+    group: currentRoom,
+    seenBy: [currentUser.id],
+    timestamp: new Date().toISOString()
   };
 
-  // Reply feature
-  if (replyingTo?.msgId && replyingTo?.text) {
-    message.replyTo = {
-      msgId: replyingTo.msgId,
-      text: replyingTo.text
-    };
-  }
+  try {
+    await pb.collection("messages").create(message);
 
-  const groupRef = db.collection("groups").doc(currentRoom);
+    await pb.collection("groups").update(currentRoom, {
+      lastMessage: text,
+      updatedAt: new Date().toISOString()
+    });
 
-  groupRef.collection("messages").add(message).then(() => {
     input.value = "";
     cancelReply();
-
-    // Update group metadata
-    groupRef.set({
-      lastMessage: text,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
-
-    // ✅ Keep input focused
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        input.focus({ preventScroll: true });
-      });
-    });
 
     // Scroll to bottom
     setTimeout(() => {
       const msgArea = document.getElementById("groupMessages");
       if (msgArea) msgArea.scrollTop = msgArea.scrollHeight;
     }, 100);
-  }).catch(err => {
-    console.error("❌ Failed to send group message:", err.message || err);
+  } catch (err) {
+    console.error("❌ Failed to send message:", err.message || err);
     alert("❌ Failed to send message.");
-  });
+  }
+}
+
+async function loadFriendThreads() {
+  const list = document.getElementById("chatList");
+  if (!list || !currentUser) return;
+
+  try {
+    const threads = await pb.collection("threads").getFullList({
+      filter: `participants~"${currentUser.id}"`,
+      sort: "-updatedAt"
+    });
+
+    const userCache = {};
+    list.innerHTML = "";
+
+    for (const thread of threads) {
+      const otherUid = thread.participants.find(uid => uid !== currentUser.id);
+      if (!otherUid) continue;
+
+      if (!userCache[otherUid]) {
+        userCache[otherUid] = await pb.collection("users").getOne(otherUid);
+      }
+
+      const user = userCache[otherUid];
+      const avatar = user.avatar
+        ? pb.files.getUrl(user, user.avatar)
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+      const name = usernameWithBadge(otherUid, user.username || user.name || "Friend");
+
+      const card = document.createElement("div");
+      card.className = "chat-card personal-chat";
+      card.onclick = () => openThread(otherUid, user.username || user.name || "Friend");
+
+      card.innerHTML = `
+        <img class="friend-avatar" src="${avatar}" />
+        <div class="details">
+          <div class="name-row">
+            <span class="name">${name}</span>
+            <span class="time">${timeSince(new Date(thread.updatedAt))}</span>
+          </div>
+          <div class="last-message">${escapeHtml(thread.lastMessage || "[No messages]")}</div>
+        </div>
+      `;
+
+      list.appendChild(card);
+    }
+
+    if (typeof lucide !== "undefined") lucide.createIcons();
+  } catch (err) {
+    console.error("❌ Friend threads load failed:", err.message || err);
+    list.innerHTML = `<div class="no-results">Failed to load personal chats.</div>`;
+  }
 }
 
 // ===== Typing Indicator Listener (dot dot dot dot) =====
@@ -946,33 +705,37 @@ function listenToTyping(targetId, context) {
 
   if (unsubscribeTyping) unsubscribeTyping();
 
-  const path = db.collection(context === "group" ? "groups" : "threads")
-    .doc(targetId)
-    .collection("typing");
+  const typingCollection = "typing_status"; // ← PocketBase collection storing typing states
+  const filter = context === "group"
+    ? `context = "group" && target = "${targetId}"`
+    : `context = "thread" && target = "${targetId}"`;
 
-  unsubscribeTyping = path.onSnapshot(snapshot => {
-    let someoneTyping = false;
+  unsubscribeTyping = pb.collection(typingCollection).subscribe("*", async ({ action, record }) => {
+    try {
+      // Refetch all typing states for this context + target
+      const activeTypers = await pb.collection(typingCollection).getFullList({
+        filter,
+      });
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      if (doc.id !== currentUser.uid && data?.typing) {
-        someoneTyping = true;
+      const someoneTyping = activeTypers.some(
+        item => item.user !== currentUser.id && item.typing === true
+      );
+
+      typingBox.style.display = someoneTyping ? "flex" : "none";
+
+      if (context === "thread" && statusBox) {
+        statusBox.textContent = someoneTyping ? "Typing..." : "Online";
       }
-    });
-
-    // ✅ Update typing display
-    typingBox.style.display = someoneTyping ? "flex" : "none";
-
-    // ✅ Thread-specific "Typing..." indicator
-    if (context === "thread" && statusBox) {
-      statusBox.textContent = someoneTyping ? "Typing..." : "Online";
+    } catch (err) {
+      console.warn("❌ Typing fetch failed:", err.message || err);
     }
-  }, err => {
-    console.warn("❌ Typing listener error:", err.message || err);
+  }, {
+    expand: "user",
   });
 }
 
 // ===== Load Inbox Items (Cards + Badge) =====
+// ✅ Listen to Inbox items (PocketBase)
 function listenInbox() {
   const list = document.getElementById("inboxList");
   const badge = document.getElementById("inboxBadge");
@@ -980,137 +743,111 @@ function listenInbox() {
 
   if (unsubscribeInbox) unsubscribeInbox(); // Remove old listener
 
-  unsubscribeInbox = db.collection("inbox")
-    .doc(currentUser.uid)
-    .collection("items")
-    .orderBy("timestamp", "desc")
-    .onSnapshot(async (snapshot) => {
-      try {
-        list.innerHTML = "";
-        let unreadCount = 0;
+  unsubscribeInbox = pb.collection("inbox_items").subscribe("*", async ({ action, record }) => {
+    if (record.user !== currentUser.id) return;
 
-        const senderCache = {};
+    try {
+      const items = await pb.collection("inbox_items").getFullList({
+        filter: `user = "${currentUser.id}"`,
+        sort: "-created",
+      });
 
-        for (const doc of snapshot.docs) {
-          const data = doc.data();
-          if (!data) continue;
+      list.innerHTML = "";
+      let unreadCount = 0;
+      const senderCache = {};
 
-          // 🔴 Unread count
-          if (!data.read) unreadCount++;
+      for (const item of items) {
+        if (!item.read) unreadCount++;
 
-          // 📤 Sender info
-          let senderName = "Unknown";
-          let fromUID = "";
-          let avatarURL = "default-avatar.png";
+        let senderName = "Unknown";
+        let fromUID = "";
+        let avatarURL = "default-avatar.png";
 
-          if (typeof data.from === "string") {
-            fromUID = data.from;
-            if (!senderCache[fromUID]) {
-              try {
-                const senderDoc = await db.collection("users").doc(fromUID).get();
-                if (senderDoc.exists) {
-                  const senderData = senderDoc.data();
-                  senderCache[fromUID] = {
-                    name: senderData.username || senderData.name || "Unknown",
-                    avatar: senderData.avatarBase64 || senderData.photoURL || 
-                            `https://ui-avatars.com/api/?name=${encodeURIComponent(senderData.username || "User")}`
-                  };
-                }
-              } catch (e) {
-                console.warn("⚠️ Failed to fetch sender:", e.message);
-              }
+        if (typeof item.from === "string") {
+          fromUID = item.from;
+
+          if (!senderCache[fromUID]) {
+            try {
+              const sender = await pb.collection("users").getOne(fromUID);
+              senderCache[fromUID] = {
+                name: sender.username || sender.name || "Unknown",
+                avatar: sender.avatar || sender.photoURL ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(sender.username || "User")}`
+              };
+            } catch (e) {
+              console.warn("⚠️ Failed to fetch sender:", e.message);
             }
-
-            if (senderCache[fromUID]) {
-              senderName = senderCache[fromUID].name;
-              avatarURL = senderCache[fromUID].avatar;
-            }
-
-          } else if (data.from?.uid) {
-            fromUID = data.from.uid;
-            senderName = data.from.name || "Unknown";
           }
 
-          // 🏷️ Message type with badge
-          const typeText =
-            data.type === "friend"
-              ? `👤 Friend request from @${usernameWithBadge(fromUID, senderName)}`
-              : data.type === "group"
-              ? `📣 Group invite: ${escapeHtml(data.groupName || "Unnamed Group")}`
+          if (senderCache[fromUID]) {
+            senderName = senderCache[fromUID].name;
+            avatarURL = senderCache[fromUID].avatar;
+          }
+        }
+
+        const typeText =
+          item.type === "friend"
+            ? `👤 Friend request from @${usernameWithBadge(fromUID, senderName)}`
+            : item.type === "group"
+              ? `📣 Group invite: ${escapeHtml(item.groupName || "Unnamed Group")}`
               : "📩 Notification";
 
-          // 💌 Create card
-          const card = document.createElement("div");
-          card.className = "inbox-card";
-          card.innerHTML = `
-            <img src="${avatarURL}" alt="Avatar" />
-            <div class="inbox-meta">
-              <div class="inbox-title">${typeText}</div>
-              <div class="inbox-time">${timeSince(data.timestamp?.toDate?.() || new Date())}</div>
-            </div>
-            <div class="btn-group">
-              <button onclick="acceptInbox('${doc.id}', '${data.type}', '${fromUID}')">Accept</button>
-              <button onclick="declineInbox('${doc.id}')">Decline</button>
-            </div>
-          `;
-          list.appendChild(card);
-        }
-
-        // 🔔 Badge
-        if (badge) {
-          badge.textContent = unreadCount ? unreadCount : "";
-          badge.style.display = unreadCount > 0 ? "inline-block" : "none";
-        }
-
-        // Render Lucide icons (for badge-check)
-        if (typeof lucide !== "undefined") lucide.createIcons();
-
-      } catch (err) {
-        console.error("❌ Inbox render error:", err.message || err);
-        alert("❌ Failed to load inbox");
+        const card = document.createElement("div");
+        card.className = "inbox-card";
+        card.innerHTML = `
+          <img src="${avatarURL}" alt="Avatar" />
+          <div class="inbox-meta">
+            <div class="inbox-title">${typeText}</div>
+            <div class="inbox-time">${timeSince(new Date(item.created))}</div>
+          </div>
+          <div class="btn-group">
+            <button onclick="acceptInbox('${item.id}', '${item.type}', '${fromUID}')">Accept</button>
+            <button onclick="declineInbox('${item.id}')">Decline</button>
+          </div>
+        `;
+        list.appendChild(card);
       }
-    }, (err) => {
-      console.error("❌ Inbox listener error:", err.message || err);
-      alert("❌ Inbox loading failed");
-    });
+
+      if (badge) {
+        badge.textContent = unreadCount ? unreadCount : "";
+        badge.style.display = unreadCount > 0 ? "inline-block" : "none";
+      }
+
+      lucide?.createIcons();
+    } catch (err) {
+      console.error("❌ Inbox render error:", err.message || err);
+      alert("❌ Failed to load inbox");
+    }
+  });
 }
 
+// ✅ Update inbox badge
 function updateInboxBadge() {
   if (!currentUser) return;
-
   const badge = document.getElementById("inboxBadge");
   if (!badge) return;
 
-  db.collection("inbox").doc(currentUser.uid).collection("items")
-    .where("read", "==", false)
-    .get().then(snapshot => {
-      const count = snapshot.size;
-      badge.textContent = count ? count : "";
-      badge.style.display = count > 0 ? "inline-block" : "none";
-    }).catch(err => {
-      console.warn("⚠️ Inbox badge fetch failed:", err.message || err);
-    });
+  pb.collection("inbox_items").getList(1, 1, {
+    filter: `user = "${currentUser.id}" && read = false`
+  }).then(res => {
+    const count = res.totalItems;
+    badge.textContent = count ? count : "";
+    badge.style.display = count > 0 ? "inline-block" : "none";
+  }).catch(err => {
+    console.warn("⚠️ Inbox badge fetch failed:", err.message || err);
+  });
 }
 
+// ✅ Accept inbox item
 function acceptInbox(id, type, fromUID) {
   if (!currentUser || !id || !type || !fromUID) return;
 
-  const inboxRef = db.collection("inbox").doc(currentUser.uid).collection("items").doc(id);
-
   if (type === "friend") {
-    const batch = db.batch();
-
-    const userRef = db.collection("users").doc(currentUser.uid)
-      .collection("friends").doc(fromUID);
-
-    const otherRef = db.collection("users").doc(fromUID)
-      .collection("friends").doc(currentUser.uid);
-
-    batch.set(userRef, { since: Date.now() });
-    batch.set(otherRef, { since: Date.now() });
-    batch.delete(inboxRef);
-
-    batch.commit().then(() => {
+    Promise.all([
+      pb.collection("friends").create({ user: currentUser.id, friend: fromUID }),
+      pb.collection("friends").create({ user: fromUID, friend: currentUser.id }),
+      pb.collection("inbox_items").delete(id)
+    ]).then(() => {
       alert("✅ Friend added!");
       openThread(fromUID, "Friend");
       loadFriends?.();
@@ -1119,12 +856,11 @@ function acceptInbox(id, type, fromUID) {
       console.error("❌ Friend accept failed:", err.message || err);
       alert("❌ Failed to accept friend.");
     });
-
   } else if (type === "group") {
-    db.collection("groups").doc(fromUID).update({
-      members: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+    pb.collection("groups").update(fromUID, {
+      members: [...new Set([...(currentUser.groupIds || []), currentUser.id])]
     }).then(() => {
-      inboxRef.delete();
+      pb.collection("inbox_items").delete(id);
       alert("✅ Joined the group!");
       joinRoom(fromUID);
       loadChatList?.();
@@ -1135,28 +871,11 @@ function acceptInbox(id, type, fromUID) {
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const sendBtn = document.getElementById("sendButton");
-  if (sendBtn) {
-    sendBtn.addEventListener("click", sendThreadMessage);
-  }
-
-  const threadInput = document.getElementById("threadInput");
-  if (threadInput) {
-    threadInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        sendThreadMessage();
-      }
-    });
-  }
-});
-
+// ✅ Decline inbox item
 function declineInbox(id) {
   if (!currentUser || !id) return;
 
-  const ref = db.collection("inbox").doc(currentUser.uid).collection("items").doc(id);
-  ref.delete().then(() => {
+  pb.collection("inbox_items").delete(id).then(() => {
     alert("❌ Request declined.");
   }).catch(err => {
     console.error("❌ Decline failed:", err.message || err);
@@ -1164,17 +883,17 @@ function declineInbox(id) {
   });
 }
 
+// ✅ Mark all inbox items as read
 function markAllRead() {
   if (!currentUser) return;
 
-  const inboxRef = db.collection("inbox").doc(currentUser.uid).collection("items");
-
-  inboxRef.get().then(snapshot => {
-    const batch = db.batch();
-    snapshot.forEach(doc => {
-      batch.update(inboxRef.doc(doc.id), { read: true });
-    });
-    return batch.commit();
+  pb.collection("inbox_items").getFullList({
+    filter: `user = "${currentUser.id}" && read = false`
+  }).then(items => {
+    const updates = items.map(item =>
+      pb.collection("inbox_items").update(item.id, { read: true })
+    );
+    return Promise.all(updates);
   }).then(() => {
     alert("📬 All inbox items marked as read.");
     updateInboxBadge();
@@ -1184,164 +903,126 @@ function markAllRead() {
   });
 }
 
-function renderInboxCard(data) {
-  const uid = data.fromUID || "";  
-  const name = usernameWithBadge(uid, data.name || "Unknown");
-  const msg = escapeHtml(data.message || "Notification");
-  const photo = data.photo || "default-avatar.png";
-
-  return `
-    <div class="inbox-card">
-      <img src="${photo}" />
-      <div style="flex:1;">
-        <strong>${name}</strong><br/>
-        <small>${msg}</small>
-      </div>
-      <div class="btn-group">
-        <button onclick="acceptInbox('${data.id}', '${data.type}', '${uid}')">✔</button>
-        <button onclick="declineInbox('${data.id}')">✖</button>
-      </div>
-    </div>
-  `;
-}
-
 // ===== Friend List =====
-function loadFriends() {
+async function loadFriends() {
   const container = document.getElementById("friendsList");
   if (!container || !currentUser) return;
 
   container.innerHTML = "Loading...";
 
-  db.collection("users")
-    .doc(currentUser.uid)
-    .collection("friends")
-    .onSnapshot(async (snapshot) => {
-      if (snapshot.empty) {
-        container.innerHTML = `<div class="no-results">You have no friends yet.</div>`;
-        return;
-      }
-
-      container.innerHTML = "";
-
-      for (const doc of snapshot.docs) {
-        const friendId = doc.id;
-
-        try {
-          const friendDoc = await db.collection("users").doc(friendId).get();
-          if (!friendDoc.exists) continue;
-
-          const user = friendDoc.data();
-          const avatar =
-            user.avatarBase64 ||
-            user.photoURL ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(
-              user.username || "User"
-            )}`;
-          const isOnline = user.status === "online";
-
-          const displayName = usernameWithBadge(friendId, user.username || "User");
-
-          const card = document.createElement("div");
-          card.className = "friend-card";
-          card.onclick = () => viewUserProfile(friendId);
-
-          card.innerHTML = `
-            <img src="${avatar}" alt="Avatar" />
-            <div class="friend-info">
-              <div class="name">${displayName}</div>
-              <div class="bio">${escapeHtml(user.bio || "")}</div>
-            </div>
-            <div class="status-dot ${isOnline ? "online" : "offline"}" title="${isOnline ? "Online" : "Offline"}"></div>
-            <button class="chat-start-btn" onclick="event.stopPropagation(); openThread('${friendId}', '${escapeHtml(user.username || "User")}')">💬 Chat</button>
-          `;
-
-          container.appendChild(card);
-        } catch (err) {
-          console.warn("❌ Failed to load friend data:", err.message || err);
-        }
-      }
-
-      // Refresh Lucide icons (for badge-check, etc.)
-      if (typeof lucide !== "undefined") lucide.createIcons();
-    }, (err) => {
-      console.error("❌ Friend snapshot failed:", err.message || err);
-      container.innerHTML = `<div class="error">Error loading friends.</div>`;
+  try {
+    const list = await pb.collection("friends").getFullList({
+      filter: `from="${currentUser.id}"`
     });
-}
 
-function removeFriend(uid) {
-  if (!currentUser || !uid) return;
+    if (!list.length) {
+      container.innerHTML = `<div class="no-results">You have no friends yet.</div>`;
+      return;
+    }
 
-  if (confirm("❌ Are you sure you want to remove this friend?")) {
-    const ownRef = db.collection("users").doc(currentUser.uid).collection("friends").doc(uid);
-    const otherRef = db.collection("users").doc(uid).collection("friends").doc(currentUser.uid);
+    container.innerHTML = "";
 
-    const batch = db.batch();
-    batch.delete(ownRef);
-    batch.delete(otherRef);
+    for (const rel of list) {
+      const uid = rel.to;
+      try {
+        const user = await pb.collection("users").getOne(uid);
+        const avatar = user.avatar
+          ? pb.files.getUrl(user, user.avatar)
+          : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+        const isOnline = user.status === "online";
 
-    batch.commit()
-      .then(() => alert("✅ Friend removed"))
-      .catch(err => {
-        console.error("❌ Remove friend failed:", err.message);
-        alert("❌ Failed to remove friend");
-      });
+        const card = document.createElement("div");
+        card.className = "friend-card";
+        card.onclick = () => viewUserProfile(uid);
+
+        card.innerHTML = `
+          <img src="${avatar}" alt="Avatar" />
+          <div class="friend-info">
+            <div class="name">${usernameWithBadge(uid, user.username || "User")}</div>
+            <div class="bio">${escapeHtml(user.bio || "")}</div>
+          </div>
+          <div class="status-dot ${isOnline ? "online" : "offline"}" title="${isOnline ? "Online" : "Offline"}"></div>
+          <button class="chat-start-btn" onclick="event.stopPropagation(); openThread('${uid}', '${escapeHtml(user.username || "User")}')">💬 Chat</button>
+        `;
+
+        container.appendChild(card);
+      } catch (err) {
+        console.warn("❌ Failed to load friend:", err.message || err);
+      }
+    }
+
+    if (typeof lucide !== "undefined") lucide.createIcons();
+  } catch (err) {
+    console.error("❌ Friend list load failed:", err.message || err);
+    container.innerHTML = `<div class="error">Error loading friends.</div>`;
   }
 }
 
-function addFriend(uid) {
+async function removeFriend(uid) {
+  if (!currentUser || !uid) return;
+
+  if (!confirm("❌ Are you sure you want to remove this friend?")) return;
+
+  try {
+    // Find and delete both friend records
+    const rel1 = await pb.collection("friends").getFirstListItem(
+      `from="${currentUser.id}" && to="${uid}"`, { requestKey: null }
+    ).catch(() => null);
+
+    const rel2 = await pb.collection("friends").getFirstListItem(
+      `from="${uid}" && to="${currentUser.id}"`, { requestKey: null }
+    ).catch(() => null);
+
+    if (rel1) await pb.collection("friends").delete(rel1.id);
+    if (rel2) await pb.collection("friends").delete(rel2.id);
+
+    alert("✅ Friend removed.");
+    loadFriends?.();
+  } catch (err) {
+    console.error("❌ Remove friend failed:", err.message || err);
+    alert("❌ Could not remove friend.");
+  }
+}
+
+async function addFriend(uid) {
   if (!uid || !currentUser) return;
 
-  if (uid === currentUser.uid) {
+  if (uid === currentUser.id) {
     alert("❌ You can't add yourself.");
     return;
   }
 
-  const friendRef = db.collection("users").doc(currentUser.uid).collection("friends").doc(uid);
+  try {
+    // Check if already friends
+    const exists = await pb.collection("friends").getFirstListItem(
+      `from="${currentUser.id}" && to="${uid}"`, { requestKey: null }
+    ).catch(() => null);
 
-  friendRef.get().then(doc => {
-    if (doc.exists) {
+    if (exists) {
       alert("✅ Already friends!");
       return;
     }
 
-    // 🔍 Check if friend request already sent
-    db.collection("inbox").doc(uid).collection("items")
-      .where("type", "==", "friend")
-      .where("from.uid", "==", currentUser.uid)
-      .limit(1)
-      .get()
-      .then(snapshot => {
-        if (!snapshot.empty) {
-          alert("📨 Friend request already sent!");
-          return;
-        }
+    // Create bi-directional friendship
+    await pb.collection("friends").create({
+      from: currentUser.id,
+      to: uid,
+      since: new Date().toISOString()
+    });
 
-        // 📤 Send friend request
-        db.collection("inbox").doc(uid).collection("items").add({
-          type: "friend",
-          from: {
-            uid: currentUser.uid,
-            name: currentUser.displayName || currentUser.email || "User"
-          },
-          read: false,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
-          alert("✅ Friend request sent!");
-        }).catch(err => {
-          console.error("❌ Inbox write error:", err.message || err);
-          alert("❌ Failed to send request");
-        });
+    await pb.collection("friends").create({
+      from: uid,
+      to: currentUser.id,
+      since: new Date().toISOString()
+    });
 
-      }).catch(err => {
-        console.error("❌ Friend request check failed:", err.message || err);
-        alert("❌ Could not verify request status");
-      });
-
-  }).catch(err => {
-    console.error("❌ Friend existence check failed:", err.message || err);
-    alert("❌ Could not check friendship");
-  });
+    alert("✅ Friend added!");
+    loadFriends?.();
+    loadChatList?.();
+  } catch (err) {
+    console.error("❌ Add friend failed:", err.message || err);
+    alert("❌ Failed to add friend.");
+  }
 }
 
 // ===== Group Info Loader =====
@@ -1351,6 +1032,7 @@ async function loadGroupInfo(groupId) {
   const ownerLabel  = document.getElementById("groupOwner");
   const adminsLabel = document.getElementById("groupAdmins");
   const memberList  = document.getElementById("groupMembers");
+
   if (!ownerLabel || !adminsLabel || !memberList) return;
 
   // Reset UI
@@ -1359,67 +1041,58 @@ async function loadGroupInfo(groupId) {
   memberList.innerHTML    = `<div class="loading">Loading members...</div>`;
 
   try {
-    const groupDoc = await db.collection("groups").doc(groupId).get();
-    if (!groupDoc.exists) {
+    // Get group record
+    const group = await pb.collection("groups").getOne(groupId);
+    if (!group) {
       ownerLabel.textContent  = "Owner: Unknown";
       adminsLabel.textContent = "Admins: Unknown";
       memberList.innerHTML    = `<div class="error">Group not found.</div>`;
       return;
     }
 
-    const data      = groupDoc.data();
-    const admins    = Array.isArray(data.admins) ? data.admins : [];
-    const members   = Array.isArray(data.members) ? data.members : [];
-    const ownerUid  = data.owner || data.createdBy || null;
+    const admins = Array.isArray(group.admins) ? group.admins : [];
+    const members = Array.isArray(group.members) ? group.members : [];
+    const ownerUid = group.owner || null;
 
-    /* ---------- Fetch all needed users in one go ---------- */
-    const needUids = new Set([...members, ...admins, ownerUid].filter(Boolean));
-    const userMap  = {}; // uid -> { username, name, avatar }
+    // Fetch all unique user profiles
+    const allUids = [...new Set([...admins, ...members, ownerUid].filter(Boolean))];
+    const userMap = {};
 
-    if (needUids.size) {
-      const promises = [];
-      needUids.forEach(uid => {
-        promises.push(
-          db.collection("users").doc(uid).get().then(uDoc => {
-            if (uDoc.exists) {
-              const udata = uDoc.data();
-              userMap[uid] = udata;
-            } else {
-              userMap[uid] = null; // preserve key
-            }
-          }).catch(() => { userMap[uid] = null; })
-        );
-      });
-      await Promise.all(promises);
-    }
+    await Promise.all(allUids.map(async uid => {
+      try {
+        userMap[uid] = await pb.collection("users").getOne(uid);
+      } catch {
+        userMap[uid] = null;
+      }
+    }));
 
     const getDisplayName = uid => {
       const u = userMap[uid];
       return u?.username || u?.name || uid || "User";
     };
 
-    /* ---------- Owner label ---------- */
+    // Owner label
     if (ownerUid) {
       ownerLabel.innerHTML = "Owner: " + usernameWithBadge(ownerUid, getDisplayName(ownerUid));
     } else {
       ownerLabel.textContent = "Owner: Unknown";
     }
 
-    /* ---------- Admins label ---------- */
+    // Admins label
     if (admins.length) {
-      const adminHtml = admins.map(a => usernameWithBadge(a, getDisplayName(a))).join(", ");
+      const adminHtml = admins.map(uid => usernameWithBadge(uid, getDisplayName(uid))).join(", ");
       adminsLabel.innerHTML = "Admins: " + adminHtml;
     } else {
       adminsLabel.textContent = "Admins: None";
     }
 
-    /* ---------- Member list ---------- */
+    // Member list
     memberList.innerHTML = "";
     if (!members.length) {
       memberList.innerHTML = `<div class="no-results">No members.</div>`;
     } else {
-      members.forEach(uid => {
-        const name    = getDisplayName(uid);
+      for (const uid of members) {
+        const name = getDisplayName(uid);
         const isAdmin = admins.includes(uid);
         const isOwner = uid === ownerUid;
 
@@ -1431,10 +1104,9 @@ async function loadGroupInfo(groupId) {
           ${isAdmin && !isOwner ? `<span class="badge admin-badge">Admin</span>` : ""}
         `;
         memberList.appendChild(div);
-      });
+      }
     }
 
-    // Re-draw Lucide icons (badge-check, etc.)
     if (typeof lucide !== "undefined") lucide.createIcons();
 
   } catch (err) {
@@ -1812,13 +1484,12 @@ async function openThread(uid, name) {
 
   try {
     // 1. Ensure friend relationship
-    const friendDoc = await db.collection("users")
-      .doc(currentUser.uid)
-      .collection("friends")
-      .doc(uid)
-      .get();
+    const friends = await pb.collection("friends").getFullList({
+      filter: `user = "${currentUser.id}" && friend = "${uid}"`,
+      limit: 1
+    });
 
-    if (!friendDoc.exists) {
+    if (!friends.length) {
       alert("⚠️ You must be friends to start a chat.");
       return;
     }
@@ -1848,6 +1519,7 @@ async function openThread(uid, name) {
       headerNameEl.innerHTML = usernameWithBadge(uid, displayName);
       headerNameEl.onclick = () => openUserProfile(uid);
     }
+
     const headerImg = document.getElementById("chatProfilePic");
     if (headerImg) headerImg.onclick = () => openUserProfile(uid);
 
@@ -1863,7 +1535,7 @@ async function openThread(uid, name) {
     // 6. Thread state
     currentThreadUser = uid;
     currentRoom = null;
-    const threadIdStr = threadId(currentUser.uid, uid);
+    const threadIdStr = threadId(currentUser.id, uid);
     const area = document.getElementById("threadMessages");
     renderedMessageIds.clear();
 
@@ -1886,15 +1558,11 @@ async function openThread(uid, name) {
 
     // 8. Load header avatar
     try {
-      const friendUserDoc = await db.collection("users").doc(uid).get();
-      if (friendUserDoc.exists) {
-        const user = friendUserDoc.data();
-        if (headerImg) {
-          headerImg.src =
-            user.avatarBase64 ||
-            user.photoURL ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-        }
+      const user = await pb.collection("users").getOne(uid);
+      if (headerImg) {
+        headerImg.src =
+          user.avatar || user.photoURL ||
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
       }
     } catch (e) {
       console.warn("⚠️ Could not load friend image:", e);
@@ -1908,31 +1576,40 @@ async function openThread(uid, name) {
     listenToTyping(threadIdStr, "thread");
 
     // 11. Reset unread
-    await db.collection("threads").doc(threadIdStr)
-      .set({ unread: { [currentUser.uid]: 0 } }, { merge: true });
-
-    // 12. Live status
-    db.collection("users").doc(uid).onSnapshot((doc) => {
-      const data = doc.data();
-      const statusEl = document.getElementById("chatStatus");
-      if (!statusEl || !data) return;
-      if (data.typingFor === currentUser.uid) statusEl.textContent = "Typing...";
-      else if (data.status === "online") statusEl.textContent = "Online";
-      else if (data.lastSeen?.toDate) statusEl.textContent = "Last seen " + timeSince(data.lastSeen.toDate());
-      else statusEl.textContent = "Offline";
+    await pb.collection("threads").update(threadIdStr, {
+      unread: {
+        [currentUser.id]: 0
+      }
     });
 
+    // 12. Live status (polling fallback, no realtime user doc)
+    const statusEl = document.getElementById("chatStatus");
+    try {
+      const user = await pb.collection("users").getOne(uid);
+      if (statusEl) {
+        if (user.typingFor === currentUser.id) statusEl.textContent = "Typing...";
+        else if (user.status === "online") statusEl.textContent = "Online";
+        else if (user.lastSeen) statusEl.textContent = "Last seen " + timeSince(new Date(user.lastSeen));
+        else statusEl.textContent = "Offline";
+      }
+    } catch {
+      if (statusEl) statusEl.textContent = "";
+    }
+
     // 13. Message subscription
-    unsubscribeThread = db.collection("threads").doc(threadIdStr)
-      .collection("messages").orderBy("timestamp")
-      .onSnapshot(async (snapshot) => {
-        if (!area) return;
-        const msgs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        const isInitial = area.childElementCount === 0 || renderedMessageIds.size === 0;
-        await renderThreadMessagesToArea({ area, msgs, otherUid: uid, threadIdStr, isInitial });
-        renderedMessageIds.clear();
-        msgs.forEach(m => renderedMessageIds.add(m.id));
+    unsubscribeThread = pb.collection("messages").subscribe("*", async ({ action, record }) => {
+      if (!area || record.thread !== threadIdStr) return;
+      const msgs = await pb.collection("messages").getFullList({
+        filter: `thread = "${threadIdStr}"`,
+        sort: "timestamp",
+        $autoCancel: false
       });
+      const parsed = msgs.map(msg => ({ id: msg.id, ...msg }));
+      const isInitial = area.childElementCount === 0 || renderedMessageIds.size === 0;
+      await renderThreadMessagesToArea({ area, msgs: parsed, otherUid: uid, threadIdStr, isInitial });
+      renderedMessageIds.clear();
+      parsed.forEach(m => renderedMessageIds.add(m.id));
+    });
 
     lucide?.createIcons();
   } catch (err) {
@@ -1944,10 +1621,11 @@ async function openThread(uid, name) {
 /* ---------- Render Thread Messages ---------- */
 async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, isInitial }) {
   if (!area) return;
+
   const isNearBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 120;
   computeGroupClasses(msgs);
 
-  const selfProfile  = await getUserProfileCached(currentUser.uid);
+  const selfProfile = await getUserProfileCached(currentUser.id);
   const otherProfile = await getUserProfileCached(otherUid);
 
   if (isInitial) area.innerHTML = "";
@@ -1957,11 +1635,11 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
   let lastMsgDate = null;
 
   for (const msg of msgs) {
-    const isSelf = msg.from === currentUser.uid;
+    const isSelf = msg.from === currentUser.id;
     const { text: displayText, isDeleted, deletedHtml } = decryptMsgText(msg);
     const emojiOnly = isEmojiOnlyText(displayText);
 
-    const msgDate = msg.timestamp?.toDate ? msg.timestamp.toDate() : null;
+    const msgDate = msg.timestamp ? new Date(msg.timestamp) : null;
     if (msgDate && (!lastMsgDate || !isSameDay(lastMsgDate, msgDate))) {
       const separator = document.createElement("div");
       separator.className = "day-separator";
@@ -1971,13 +1649,13 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     if (msgDate) lastMsgDate = msgDate;
 
     const showPfp = msg._grp === "grp-start" || msg._grp === "grp-single";
-    const prof    = isSelf ? selfProfile : otherProfile;
+    const prof = isSelf ? selfProfile : otherProfile;
 
     const pfpHtml = showPfp
       ? `<img class="bubble-pfp ${isSelf ? "pfp-self" : "pfp-other"}" 
             src="${prof.avatar}" 
             alt="${escapeHtml(prof.username)}" 
-            onclick="openUserProfile('${isSelf ? currentUser.uid : otherUid}')">`
+            onclick="openUserProfile('${isSelf ? currentUser.id : otherUid}')">`
       : "";
 
     const authorHtml = (!isSelf && showPfp)
@@ -1987,16 +1665,16 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     const replyBox = !isDeleted ? buildReplyStrip(msg) : "";
     const metaHtml = isSelf ? buildTickMeta(msg, otherUid) : buildOtherMeta(msg);
 
-    const textHtml  = escapeHtml(displayText);
+    const textHtml = escapeHtml(displayText);
     const shortText = textHtml.slice(0, 500);
-    const hasLong   = textHtml.length > 500;
-    const content   = isDeleted
+    const hasLong = textHtml.length > 500;
+    const content = isDeleted
       ? deletedHtml
       : hasLong
         ? `${shortText}<span class="show-more" onclick="this.parentElement.innerHTML=this.parentElement.dataset.full">... Show more</span>`
         : linkifyText(textHtml);
 
-    // Link preview
+    // 🔗 Optional link preview
     let linkPreviewHTML = "";
     if (!isDeleted) {
       const url = extractFirstURL(displayText);
@@ -2021,7 +1699,7 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
       else wrapper.style.marginLeft = indent;
     }
 
-    const dataTime = msg.timestamp?.toDate ? formatTimeHM(msg.timestamp.toDate()) : "00:00";
+    const dataTime = msg.timestamp ? formatTimeHM(new Date(msg.timestamp)) : "00:00";
     wrapper.innerHTML = `
       ${pfpHtml}
       <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""} ${msg._grp || ""}"
@@ -2055,11 +1733,16 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
 
     frag.appendChild(wrapper);
 
-    if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
-      db.collection("threads").doc(threadIdStr)
-        .collection("messages").doc(msg.id)
-        .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
-        .catch(() => {});
+    // ✅ Update 'seenBy' (manual array update in PocketBase)
+    if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.id)) {
+      try {
+        const updatedSeenBy = Array.isArray(msg.seenBy) ? [...msg.seenBy, currentUser.id] : [currentUser.id];
+        await pb.collection("thread_messages").update(msg.id, {
+          seenBy: updatedSeenBy
+        });
+      } catch (_) {
+        // Silent fail
+      }
     }
   }
 
@@ -2109,7 +1792,7 @@ async function sendThreadMessage() {
   isSendingThread = true;
 
   const input = document.getElementById("threadInput");
-  if (!input || !currentThreadUser) {
+  if (!input || !currentThreadUser || !currentUser) {
     isSendingThread = false;
     return;
   }
@@ -2132,18 +1815,17 @@ async function sendThreadMessage() {
   const toNameElem = document.getElementById("threadWithName");
   const toName = toNameElem ? toNameElem.textContent : "Friend";
 
-  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
-  const threadRef = db.collection("threads").doc(threadIdStr);
-
+  const threadIdStr = threadId(currentUser.id, currentThreadUser);
   const encryptedText = CryptoJS.AES.encrypt(text, CHAT_AES_KEY).toString();
 
   const message = {
     text: encryptedText,
-    from: currentUser.uid,
+    from: currentUser.id,
     fromName,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    threadId: threadIdStr,
+    timestamp: new Date().toISOString(),
     localTime: localTimestamp.getTime(),
-    seenBy: [currentUser.uid]
+    seenBy: [currentUser.id]
   };
 
   if (pendingReply?.msgId && pendingReply?.text?.trim()) {
@@ -2167,17 +1849,36 @@ async function sendThreadMessage() {
   }
 
   try {
-    await threadRef.collection("messages").add(message);
-    await threadRef.set({
-      participants: [currentUser.uid, currentThreadUser],
-      names: { [currentUser.uid]: fromName, [currentThreadUser]: toName },
-      lastMessage: text,
-      unread: {
-        [currentUser.uid]: 0,
-        [currentThreadUser]: firebase.firestore.FieldValue.increment(1)
+    // Add message to `thread_messages` collection
+    await pb.collection("thread_messages").create(message);
+
+    // Update or upsert thread metadata in `threads` collection
+    const threadData = {
+      participants: [currentUser.id, currentThreadUser],
+      names: {
+        [currentUser.id]: fromName,
+        [currentThreadUser]: toName
       },
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
+      lastMessage: text,
+      updatedAt: new Date().toISOString()
+    };
+
+    try {
+      const thread = await pb.collection("threads").getOne(threadIdStr);
+      const unread = thread.unread || {};
+      unread[currentThreadUser] = (unread[currentThreadUser] || 0) + 1;
+      threadData.unread = unread;
+
+      await pb.collection("threads").update(threadIdStr, threadData);
+    } catch {
+      // If thread doesn't exist, create it
+      threadData.unread = {
+        [currentUser.id]: 0,
+        [currentThreadUser]: 1
+      };
+      threadData.id = threadIdStr;
+      await pb.collection("threads").create(threadData);
+    }
 
     requestAnimationFrame(() => input.focus({ preventScroll: true }));
   } catch (err) {
@@ -2193,47 +1894,56 @@ async function sendThreadMessage() {
  * ======================================================= */
 
 /* ---------- Listen to Group Messages ---------- */
+let unsubscribeMessages = null;
+
 function listenMessages() {
   const messagesDiv = document.getElementById("groupMessages");
-  if (!messagesDiv || !currentRoom) return;
+  if (!messagesDiv || !currentRoom || !currentUser) return;
 
+  // Cancel any previous poll
   if (unsubscribeMessages) unsubscribeMessages();
 
-  const groupMsgRef = db.collection("groups").doc(currentRoom).collection("messages");
+  let lastFetched = null;
+  let polling = true;
 
-  unsubscribeMessages = groupMsgRef
-    .orderBy("timestamp")
-    .onSnapshot(snapshot => {
+  async function fetchAndRenderMessages() {
+    if (!polling) return;
+
+    try {
       const prevScrollTop = messagesDiv.scrollTop;
       const isNearBottom =
         messagesDiv.scrollHeight - prevScrollTop - messagesDiv.clientHeight < 100;
+
+      const result = await pb.collection("messages").getFullList({
+        filter: `group="${currentRoom}"`,
+        sort: "+timestamp"
+      });
 
       messagesDiv.innerHTML = "";
       const frag = document.createDocumentFragment();
       const renderedIds = new Set();
       let lastMsgDate = null;
 
-      snapshot.forEach(doc => {
-        const msg = doc.data();
-        const msgId = doc.id;
-        if (!msg || renderedIds.has(msgId)) return;
+      for (const msg of result) {
+        const msgId = msg.id;
+        if (!msg || renderedIds.has(msgId)) continue;
         renderedIds.add(msgId);
 
-        if (msg.deletedFor?.[currentUser.uid]) return;
-        const isSelf = msg.senderId === currentUser.uid;
+        if (msg.deletedFor?.includes?.(currentUser.id)) continue;
+
+        const isSelf = msg.senderId === currentUser.id;
 
         // --- Decrypt ---
         let decrypted = "";
         try {
-          decrypted = CryptoJS.AES.decrypt(msg.text, CHAT_AES_KEY)
-            .toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+          decrypted = CryptoJS.AES.decrypt(msg.text, CHAT_AES_KEY).toString(CryptoJS.enc.Utf8) || "[Encrypted]";
         } catch (e) {
           console.error("Decryption failed:", e);
           decrypted = "[Decryption error]";
         }
 
         // --- Date Separator ---
-        const msgDate = msg.timestamp?.toDate ? msg.timestamp.toDate() : null;
+        const msgDate = msg.timestamp ? new Date(msg.timestamp) : null;
         if (msgDate && (!lastMsgDate || !isSameDay(lastMsgDate, msgDate))) {
           const separator = document.createElement("div");
           separator.className = "day-separator";
@@ -2243,11 +1953,8 @@ function listenMessages() {
         if (msgDate) lastMsgDate = msgDate;
 
         const emojiOnly = isEmojiOnlyText(decrypted) ? "emoji-only" : "";
-
         const cleanSenderName = (msg.senderName || "User").replace(/<[^>]*>/g, "");
-        const senderLabel = `<div class="msg-author">${usernameWithBadge(
-          msg.senderId, cleanSenderName
-        )}</div>`;
+        const senderLabel = `<div class="msg-author">${usernameWithBadge(msg.senderId, cleanSenderName)}</div>`;
 
         const replyHtml = msg.replyTo?.text
           ? `<div class="reply-to clamp-text" onclick="scrollToMessage('${msg.replyTo.msgId}')">
@@ -2257,9 +1964,7 @@ function listenMessages() {
 
         const metaHtml = `
           <span class="msg-meta-inline" data-status="${isSelf ? 'self' : 'other'}">
-            ${msg.timestamp?.toDate
-              ? `<span class="msg-time">${formatTimeHM(msg.timestamp.toDate())}</span>`
-              : ""}
+            ${msgDate ? `<span class="msg-time">${formatTimeHM(msgDate)}</span>` : ""}
           </span>
         `;
 
@@ -2270,7 +1975,7 @@ function listenMessages() {
 
         wrapper.innerHTML = `
           <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly}" data-msg-id="${msgId}"
-               data-time="${msg.timestamp?.toDate ? formatTimeHM(msg.timestamp.toDate()) : ""}">
+               data-time="${msgDate ? formatTimeHM(msgDate) : ""}">
             ${senderLabel}
             ${replyHtml}
             <div class="msg-inner-wrapper">
@@ -2295,13 +2000,16 @@ function listenMessages() {
 
         frag.appendChild(wrapper);
 
-        // Seen receipt
-        if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.uid)) {
-          groupMsgRef.doc(msgId)
-            .update({ seenBy: firebase.firestore.FieldValue.arrayUnion(currentUser.uid) })
-            .catch(() => {});
+        // ✅ Update seenBy if not already seen
+        if (!Array.isArray(msg.seenBy) || !msg.seenBy.includes(currentUser.id)) {
+          try {
+            const updatedSeenBy = Array.isArray(msg.seenBy)
+              ? [...msg.seenBy, currentUser.id]
+              : [currentUser.id];
+            await pb.collection("messages").update(msgId, { seenBy: updatedSeenBy });
+          } catch (_) {}
         }
-      });
+      }
 
       messagesDiv.appendChild(frag);
 
@@ -2315,7 +2023,19 @@ function listenMessages() {
 
       lucide?.createIcons();
       renderWithMagnetSupport?.("groupMessages");
-    });
+    } catch (err) {
+      console.error("❌ Error fetching messages:", err.message || err);
+    }
+  }
+
+  // Initial fetch + polling
+  fetchAndRenderMessages();
+  const interval = setInterval(fetchAndRenderMessages, 4000); // poll every 4s
+
+  unsubscribeMessages = () => {
+    polling = false;
+    clearInterval(interval);
+  };
 }
 
 /* ---------- Group Date & Time Helpers ---------- */
@@ -2361,18 +2081,16 @@ async function openProfilePreview(uid) {
     document.getElementById("profilePreviewName").textContent = profile.username || "User";
     document.getElementById("profilePreviewStatus").textContent = "Loading status...";
 
-    // Fetch live status
-    const userDoc = await db.collection("users").doc(uid).get();
-    if (userDoc.exists) {
-      const data = userDoc.data();
-      const status = data.status === "online"
-        ? "Online"
-        : data.lastSeen?.toDate
-          ? `Last seen ${timeSince(data.lastSeen.toDate())}`
-          : "Offline";
-      document.getElementById("profilePreviewStatus").textContent = status;
-    }
+    // Fetch live user status
+    const user = await pb.collection("users").getOne(uid);
+    const lastSeen = user.lastSeen ? new Date(user.lastSeen) : null;
+    const status = user.status === "online"
+      ? "Online"
+      : lastSeen
+        ? `Last seen ${timeSince(lastSeen)}`
+        : "Offline";
 
+    document.getElementById("profilePreviewStatus").textContent = status;
     modal.classList.remove("hidden");
   } catch (e) {
     console.error("Profile preview error:", e);
@@ -2392,9 +2110,9 @@ function viewUserFullProfile() {
   viewUserProfile(currentThreadUser);
 }
 
-/* ---------- Full User Profile Modal (unified) ---------- */
 async function openUserProfile(uid, opts = {}) {
   if (!uid) return;
+
   const modal = document.getElementById("userProfileModal");
   if (!modal) {
     console.warn("userProfileModal missing");
@@ -2403,17 +2121,18 @@ async function openUserProfile(uid, opts = {}) {
 
   let userData = null;
   try {
-    const snap = await db.collection("users").doc(uid).get();
-    if (snap.exists) userData = snap.data();
+    userData = await pb.collection("users").getOne(uid);
   } catch (err) {
     console.error("openUserProfile fetch failed:", err);
+    return;
   }
 
-  const username = userData?.username || userData?.name || "User";
-  const avatar = userData?.avatarBase64 || userData?.photoURL ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}`;
-  const bio = userData?.bio || "No bio yet.";
-  const status = userData?.status || "offline";
+  const username = userData.username || userData.name || "User";
+  const avatar = userData.avatar
+    ? pb.files.getUrl(userData, userData.avatar)
+    : `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}`;
+  const bio = userData.bio || "No bio yet.";
+  const status = userData.status || "offline";
 
   const picEl  = document.getElementById("userProfileModalPic");
   const nameEl = document.getElementById("userProfileModalName");
@@ -2432,25 +2151,36 @@ async function openUserProfile(uid, opts = {}) {
     actEl.innerHTML = "";
     const isFriend = await isFriendOfCurrentUser(uid);
 
-    if (uid !== currentUser?.uid) {
+    if (uid !== currentUser?.id) {
       const chatBtn = document.createElement("button");
       chatBtn.textContent = "Open Chat";
-      chatBtn.onclick = () => { closeUserProfileModal(); openThread(uid, username); };
+      chatBtn.onclick = () => {
+        closeUserProfileModal();
+        openThread(uid, username);
+      };
       actEl.appendChild(chatBtn);
 
       const friendBtn = document.createElement("button");
       friendBtn.textContent = isFriend ? "Unfriend" : "Add Friend";
-      friendBtn.onclick = () => { isFriend ? removeFriend(uid) : addFriend(uid); };
+      friendBtn.onclick = () => {
+        isFriend ? removeFriend(uid) : addFriend(uid);
+      };
       actEl.appendChild(friendBtn);
 
       const blockBtn = document.createElement("button");
       blockBtn.textContent = "Block";
-      blockBtn.onclick = () => { closeUserProfileModal(); blockUser(uid); };
+      blockBtn.onclick = () => {
+        closeUserProfileModal();
+        blockUser(uid);
+      };
       actEl.appendChild(blockBtn);
     } else {
       const meBtn = document.createElement("button");
       meBtn.textContent = "Edit My Profile";
-      meBtn.onclick = () => { closeUserProfileModal(); switchTab("profileTab"); };
+      meBtn.onclick = () => {
+        closeUserProfileModal();
+        switchTab("profileTab");
+      };
       actEl.appendChild(meBtn);
     }
   }
@@ -2468,21 +2198,25 @@ function closeUserProfileModal() {
 async function isFriendOfCurrentUser(uid) {
   if (!currentUser || !uid) return false;
   try {
-    const snap = await db.collection("users").doc(currentUser.uid)
-      .collection("friends").doc(uid).get();
-    return snap.exists;
+    const match = await pb.collection("friends").getFirstListItem(
+      `from="${currentUser.id}" && to="${uid}"`,
+      { requestKey: null }
+    );
+    return !!match;
   } catch {
     return false;
   }
 }
 
-/* ---------- Header Bindings ---------- */
 document.addEventListener("DOMContentLoaded", () => {
   const pfp = document.getElementById("chatProfilePic");
   if (pfp && !pfp.dataset.bound) {
-    pfp.addEventListener("click", () => { if (currentThreadUser) openUserProfile(currentThreadUser, { fromHeader: true }); });
+    pfp.addEventListener("click", () => {
+      if (currentThreadUser) openUserProfile(currentThreadUser, { fromHeader: true });
+    });
     pfp.dataset.bound = "true";
   }
+
   const menuBtn = document.getElementById("chatHeaderMenuBtn");
   if (menuBtn && !menuBtn.dataset.bound) {
     menuBtn.addEventListener("click", (e) => {
@@ -2538,22 +2272,24 @@ function editMessage() {
   document.getElementById("editMessageModal").style.display = "flex";
 }
 
-function saveEditedMessage() {
+async function saveEditedMessage() {
   const newText = document.getElementById("editMessageInput").value.trim();
   if (!newText || !editingMessageData) return;
 
   const encrypted = CryptoJS.AES.encrypt(newText, "yourSecretKey").toString();
-  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
+  const messageId = editingMessageData.msg.id;
 
-  db.collection("threads").doc(threadIdStr)
-    .collection("messages").doc(editingMessageData.msg.id)
-    .update({ text: encrypted, edited: true })
-    .then(() => {
-      showToast(" Message edited");
-      closeEditModal();
-      editingMessageData = null;
-    })
-    .catch(err => console.error("❌ Failed to edit:", err));
+  try {
+    await pb.collection("thread_messages").update(messageId, {
+      text: encrypted,
+      edited: true
+    });
+    showToast("✏️ Message edited");
+    closeEditModal();
+    editingMessageData = null;
+  } catch (err) {
+    console.error("❌ Failed to edit:", err);
+  }
 }
 
 function closeEditModal() {
@@ -2561,39 +2297,47 @@ function closeEditModal() {
   document.getElementById("editMessageModal").style.display = "none";
 }
 
-/* ===== Delete Options ===== */
-function deleteForMe() {
+async function deleteForMe() {
   closeOptionsModal();
   if (!selectedMessageForAction) return;
+
   const { msg } = selectedMessageForAction;
-  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
-  db.collection("threads").doc(threadIdStr)
-    .collection("messages").doc(msg.id)
-    .update({ [`deletedFor.${currentUser.uid}`]: true })
-    .then(() => {
-      showToast("🗑️ Message deleted for you");
-      document.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`)?.parentElement?.remove();
-    })
-    .catch(console.error);
+  const messageId = msg.id;
+
+  try {
+    const updated = Array.isArray(msg.deletedFor) ? [...msg.deletedFor, currentUser.id] : [currentUser.id];
+    await pb.collection("thread_messages").update(messageId, {
+      deletedFor: updated
+    });
+
+    showToast("🗑️ Message deleted for you");
+    document.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`)?.parentElement?.remove();
+  } catch (err) {
+    console.error("❌ Failed to delete for me:", err);
+  }
 }
 
-function deleteForEveryone() {
+async function deleteForEveryone() {
   closeOptionsModal();
-  if (!selectedMessageForAction || selectedMessageForAction.msg.from !== currentUser.uid)
+
+  if (!selectedMessageForAction || selectedMessageForAction.msg.from !== currentUser.id) {
     return alert("⚠️ You can only delete your own messages.");
+  }
+
   const { msg } = selectedMessageForAction;
-  const threadIdStr = threadId(currentUser.uid, currentThreadUser);
-  db.collection("threads").doc(threadIdStr)
-    .collection("messages").doc(msg.id)
-    .update({
+  const messageId = msg.id;
+
+  try {
+    await pb.collection("thread_messages").update(messageId, {
       text: "",
-      deletedFor: { [currentUser.uid]: true, [currentThreadUser]: true }
-    })
-    .then(() => {
-      showToast("✅ Message deleted for everyone");
-      document.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`)?.parentElement?.remove();
-    })
-    .catch(console.error);
+      deletedFor: [currentUser.id, currentThreadUser]
+    });
+
+    showToast("✅ Message deleted for everyone");
+    document.querySelector(`.message-bubble[data-msg-id="${msg.id}"]`)?.parentElement?.remove();
+  } catch (err) {
+    console.error("❌ Failed to delete for everyone:", err);
+  }
 }
 
 function showToast(message) {
@@ -2602,119 +2346,6 @@ function showToast(message) {
   toast.textContent = message;
   toast.classList.add("show");
   setTimeout(() => toast.classList.remove("show"), 1800);
-}
-
-/* =========================================================
- * SEARCH (Users + Groups)
- * ======================================================= */
-function switchSearchView(view) {
-  document.getElementById("searchResultsUser").style.display = view === "user" ? "block" : "none";
-  document.getElementById("searchResultsGroup").style.display = view === "group" ? "block" : "none";
-}
-
-function runSearch() {
-  const inputEl = document.getElementById("searchInput");
-  if (!inputEl || !currentUser) return;
-
-  const rawTerm = inputEl.value.trim();
-  if (!rawTerm) return;
-
-  const userResults  = document.getElementById("searchResultsUser");
-  const groupResults = document.getElementById("searchResultsGroup");
-  if (userResults)  userResults.innerHTML  = "";
-  if (groupResults) groupResults.innerHTML = "";
-
-  // --- User Search ---
-  db.collection("users")
-    .where("username", ">=", rawTerm)
-    .where("username", "<=", rawTerm + "\uf8ff")
-    .get()
-    .then(async snapshot => {
-      if (!userResults) return;
-      if (snapshot.empty) {
-        userResults.innerHTML = `<div class="no-results">No users found.</div>`;
-        return;
-      }
-
-      const friendChecks = [];
-      snapshot.forEach(doc => {
-        if (doc.id === currentUser.uid) return;
-
-        const user = doc.data();
-        const avatar = user.avatarBase64 || user.photoURL ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-
-        const rawName = user.username || "unknown";
-        const unameHtml = usernameWithBadge(doc.id, rawName);
-
-        const card = document.createElement("div");
-        card.className = "search-result";
-        card.innerHTML = `
-          <img src="${avatar}" class="search-avatar" />
-          <div class="search-info">
-            <div class="username">@${unameHtml}</div>
-            <div class="bio">${escapeHtml(user.bio || "No bio")}</div>
-          </div>
-          <button id="friendBtn_${doc.id}">Add Friend</button>
-        `;
-        userResults.appendChild(card);
-
-        const btn = card.querySelector("button");
-        if (btn) {
-          const p = db.collection("users").doc(currentUser.uid)
-            .collection("friends").doc(doc.id).get()
-            .then(friendDoc => {
-              if (friendDoc.exists) {
-                btn.textContent = "Friend";
-                btn.disabled = true;
-                btn.classList.add("disabled-btn");
-              } else {
-                btn.onclick = () => addFriend(doc.id);
-              }
-            });
-          friendChecks.push(p);
-        }
-      });
-
-      await Promise.all(friendChecks);
-      lucide?.createIcons();
-    });
-
-  // --- Group Search ---
-  db.collection("groups")
-    .where("name", ">=", rawTerm)
-    .where("name", "<=", rawTerm + "\uf8ff")
-    .get()
-    .then(snapshot => {
-      if (!groupResults) return;
-      if (snapshot.empty) {
-        groupResults.innerHTML = `<div class="no-results">No groups found.</div>`;
-        return;
-      }
-
-      snapshot.forEach(doc => {
-        const group = doc.data();
-        const icon = group.icon || "group-icon.png";
-        const members = group.members || [];
-        const joined = members.includes(currentUser.uid);
-
-        const card = document.createElement("div");
-        card.className = "search-result";
-        card.innerHTML = `
-          <img src="${icon}" class="search-avatar" />
-          <div class="search-info">
-            <div class="username">#${escapeHtml(group.name || "unknown")}</div>
-            <div class="bio">${escapeHtml(group.description || "No description.")}</div>
-          </div>
-          <button ${joined ? "disabled" : `onclick="joinGroupById('${doc.id}')"`}>
-            ${joined ? "Joined" : "Join"}
-          </button>
-        `;
-        groupResults.appendChild(card);
-      });
-
-      lucide?.createIcons();
-    });
 }
 
 /* =========================================================
@@ -2799,184 +2430,142 @@ function usernameWithBadge(uid, name) {
   return `${escapeHtml(name || "User")}${badge}`;
 }
 
-// ===== Search (Users + Groups) =====
 function switchSearchView(view) {
   document.getElementById("searchResultsUser").style.display = view === "user" ? "block" : "none";
   document.getElementById("searchResultsGroup").style.display = view === "group" ? "block" : "none";
 }
 
-function runSearch() {
+async function runSearch() {
   const inputEl = document.getElementById("searchInput");
   if (!inputEl || !currentUser) return;
 
   const rawTerm = inputEl.value.trim();
   if (!rawTerm) return;
 
-  const termLower = rawTerm.toLowerCase(); // for any client-side filtering if needed
-
-  const userResults  = document.getElementById("searchResultsUser");
+  const userResults = document.getElementById("searchResultsUser");
   const groupResults = document.getElementById("searchResultsGroup");
-  if (userResults)  userResults.innerHTML  = "";
+  if (userResults) userResults.innerHTML = "";
   if (groupResults) groupResults.innerHTML = "";
 
+  const searchTerm = rawTerm.toLowerCase();
+
   /* ---------------- USER SEARCH ---------------- */
-  db.collection("users")
-    // Use rawTerm for Firestore (case-sensitive prefix search)
-    .where("username", ">=", rawTerm)
-    .where("username", "<=", rawTerm + "\uf8ff")
-    .get()
-    .then(async snapshot => {
-      if (!userResults) return;
-      if (snapshot.empty) {
-        userResults.innerHTML = `<div class="no-results">No users found.</div>`;
-        return;
-      }
-
-      const friendChecks = [];
-
-      snapshot.forEach(doc => {
-        if (doc.id === currentUser.uid) return; // skip self
-
-        const user = doc.data();
-        const avatar = user.avatarBase64 || user.photoURL ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-
-        const rawName = user.username || "unknown";
-        const unameHtml = usernameWithBadge(doc.id, rawName);
-
-        const card = document.createElement("div");
-        card.className = "search-result";
-        card.innerHTML = `
-          <img src="${avatar}" class="search-avatar" />
-          <div class="search-info">
-            <div class="username">@${unameHtml}</div>
-            <div class="bio">${escapeHtml(user.bio || "No bio")}</div>
-          </div>
-          <button id="friendBtn_${doc.id}">Add Friend</button>
-        `;
-        userResults.appendChild(card);
-
-        // friend status check (async)
-        const btn = card.querySelector("button");
-        if (btn) {
-          const p = db.collection("users").doc(currentUser.uid)
-            .collection("friends").doc(doc.id).get()
-            .then(friendDoc => {
-              if (friendDoc.exists) {
-                btn.textContent = "Friend";
-                btn.disabled = true;
-                btn.classList.add("disabled-btn");
-              } else {
-                btn.onclick = () => addFriend(doc.id);
-              }
-            })
-            .catch(() => {/* ignore */});
-          friendChecks.push(p);
-        }
-      });
-
-      await Promise.all(friendChecks);
-      if (typeof lucide !== "undefined") lucide.createIcons();
+  try {
+    const users = await pb.collection("users").getFullList({
+      filter: `username ~ "${searchTerm}"`,
+      sort: "username"
     });
+
+    if (!userResults) return;
+    if (!users.length) {
+      userResults.innerHTML = `<div class="no-results">No users found.</div>`;
+    }
+
+    const friendChecks = [];
+
+    for (const user of users) {
+      if (user.id === currentUser.id) continue;
+
+      const avatar = user.avatar
+        ? pb.files.getUrl(user, user.avatar)
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+
+      const unameHtml = usernameWithBadge(user.id, user.username || "unknown");
+
+      const card = document.createElement("div");
+      card.className = "search-result";
+      card.innerHTML = `
+        <img src="${avatar}" class="search-avatar" />
+        <div class="search-info">
+          <div class="username">@${unameHtml}</div>
+          <div class="bio">${escapeHtml(user.bio || "No bio")}</div>
+        </div>
+        <button id="friendBtn_${user.id}">Add Friend</button>
+      `;
+      userResults.appendChild(card);
+
+      const btn = card.querySelector("button");
+      if (btn) {
+        const p = pb.collection("friends")
+          .getFirstListItem(`from="${currentUser.id}" && to="${user.id}"`)
+          .then(() => {
+            btn.textContent = "Friend";
+            btn.disabled = true;
+            btn.classList.add("disabled-btn");
+          })
+          .catch(() => {
+            btn.onclick = () => addFriend(user.id);
+          });
+        friendChecks.push(p);
+      }
+    }
+
+    await Promise.all(friendChecks);
+    lucide?.createIcons();
+  } catch (err) {
+    console.error("❌ User search failed:", err);
+  }
 
   /* ---------------- GROUP SEARCH ---------------- */
-  db.collection("groups")
-    .where("name", ">=", rawTerm)
-    .where("name", "<=", rawTerm + "\uf8ff")
-    .get()
-    .then(snapshot => {
-      if (!groupResults) return;
-      if (snapshot.empty) {
-        groupResults.innerHTML = `<div class="no-results">No groups found.</div>`;
-        return;
-      }
-
-      snapshot.forEach(doc => {
-        const group = doc.data();
-        const icon = group.icon || "group-icon.png";
-        const members = group.members || [];
-        const joined = members.includes(currentUser.uid);
-
-        const card = document.createElement("div");
-        card.className = "search-result";
-        card.innerHTML = `
-          <img src="${icon}" class="search-avatar" />
-          <div class="search-info">
-            <div class="username">#${escapeHtml(group.name || "unknown")}</div>
-            <div class="bio">${escapeHtml(group.description || "No description.")}</div>
-          </div>
-          <button ${joined ? "disabled" : `onclick="joinGroupById('${doc.id}')"`}>
-            ${joined ? "Joined" : "Join"}
-          </button>
-        `;
-        groupResults.appendChild(card);
-      });
-
-      if (typeof lucide !== "undefined") lucide.createIcons();
+  try {
+    const groups = await pb.collection("groups").getFullList({
+      filter: `name ~ "${searchTerm}"`,
+      sort: "name"
     });
-}
 
-// Check if two dates are on the same calendar day
-function isSameDay(d1, d2) {
-  return (
-    d1.getFullYear() === d2.getFullYear() &&
-    d1.getMonth() === d2.getMonth() &&
-    d1.getDate() === d2.getDate()
-  );
-}
+    if (!groupResults) return;
+    if (!groups.length) {
+      groupResults.innerHTML = `<div class="no-results">No groups found.</div>`;
+    }
 
-// Format day separator text
-function formatDaySeparator(date) {
-  const now = new Date();
-  const d = new Date(date);
+    for (const group of groups) {
+      const icon = group.icon || "group-icon.png";
+      const members = group.members || [];
+      const joined = members.includes(currentUser.id);
 
-  const oneDay = 24 * 60 * 60 * 1000;
-  const diff = now.setHours(0, 0, 0, 0) - d.setHours(0, 0, 0, 0);
+      const card = document.createElement("div");
+      card.className = "search-result";
+      card.innerHTML = `
+        <img src="${icon}" class="search-avatar" />
+        <div class="search-info">
+          <div class="username">#${escapeHtml(group.name || "unknown")}</div>
+          <div class="bio">${escapeHtml(group.description || "No description.")}</div>
+        </div>
+        <button ${joined ? "disabled" : `onclick="joinGroupById('${group.id}')"`}>
+          ${joined ? "Joined" : "Join"}
+        </button>
+      `;
+      groupResults.appendChild(card);
+    }
 
-  if (diff === 0) return "Today";
-  if (diff === oneDay) return "Yesterday";
-
-  return d.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
-}
-
-function scrollToMessage(msgId) {
-  const bubble = document.querySelector(`.message-bubble[data-msg-id="${msgId}"]`);
-  if (bubble) {
-    bubble.classList.add("highlight");
-    bubble.scrollIntoView({ behavior: "smooth", block: "center" });
-    setTimeout(() => bubble.classList.remove("highlight"), 2000);
+    lucide?.createIcons();
+  } catch (err) {
+    console.error("❌ Group search failed:", err);
   }
-}
-
-function scrollToReplyMessage(msgId) {
-  scrollToMessage(msgId);
-}
-
-function autoResizeInput(inputEl) {
-  if (!inputEl) return;
-  inputEl.style.height = "auto";
-  inputEl.style.height = (inputEl.scrollHeight) + "px";
 }
 
 function openUserProfile(uid) {
   if (!uid) return;
-  // Show a modal or dedicated section with user info
-  db.collection("users").doc(uid).get().then(doc => {
-    if (!doc.exists) return alert("⚠️ User profile not found");
-    const user = doc.data();
 
-    const modal = document.getElementById("userProfileModal");
-    if (modal) {
-      modal.querySelector(".profile-avatar").src = user.avatarBase64 || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+  pb.collection("users").getOne(uid)
+    .then(user => {
+      const modal = document.getElementById("userProfileModal");
+      if (!modal) return;
+
+      const avatar = user.avatar
+        ? pb.files.getUrl(user, user.avatar)
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
+
+      modal.querySelector(".profile-avatar").src = avatar;
       modal.querySelector(".profile-username").textContent = user.username || "User";
       modal.querySelector(".profile-email").textContent = user.email || "N/A";
       modal.classList.add("show");
-    }
-  }).catch(err => {
-    console.error("❌ Profile load error:", err);
-  });
+    })
+    .catch(err => {
+      console.error("❌ Profile load error:", err);
+      alert("⚠️ User profile not found");
+    });
 }
-
 
 // ==== GROUP SETTINGS ====
 
@@ -2999,77 +2588,83 @@ function blockUser() {
   });
 }
 
-function viewMedia() {
+async function viewMedia() {
   if (!currentRoom && !currentThreadUser) return alert("❌ No chat selected");
 
   const container = document.createElement("div");
   container.style.padding = "20px";
 
-  const messagesRef = currentRoom
-    ? db.collection("groups").doc(currentRoom).collection("messages")
-    : db.collection("threads").doc(threadId(currentUser.uid, currentThreadUser)).collection("messages");
+  try {
+    const collectionName = currentRoom ? "group_messages" : "thread_messages";
+    const filterStr = currentRoom
+      ? `group="${currentRoom}" && fileURL != ""`
+      : `thread="${threadId(currentUser.id, currentThreadUser)}" && fileURL != ""`;
 
-  messagesRef
-    .where("fileURL", "!=", null)
-    .orderBy("fileURL")
-    .orderBy("timestamp", "desc")
-    .limit(20)
-    .get()
-    .then(snapshot => {
-      if (snapshot.empty) return alert("📎 No media found");
-
-      snapshot.forEach(doc => {
-        const msg = doc.data();
-        const div = document.createElement("div");
-        div.style.marginBottom = "12px";
-        div.innerHTML = `
-          <p>${escapeHtml(msg.fromName || "User")} - ${msg.timestamp?.toDate?.().toLocaleString?.() || ""}</p>
-          <a href="${msg.fileURL}" target="_blank">${escapeHtml(msg.fileName || "Download File")}</a>
-        `;
-        container.appendChild(div);
-      });
-
-      showModal("📎 Shared Media", container.innerHTML);
-    }).catch(err => {
-      console.error("❌ Media fetch failed:", err.message || err);
-      alert("❌ Failed to load media.");
+    const messages = await pb.collection(collectionName).getFullList({
+      filter: filterStr,
+      sort: "-created",
+      perPage: 20
     });
+
+    if (!messages.length) return alert("📎 No media found");
+
+    for (const msg of messages) {
+      const div = document.createElement("div");
+      div.style.marginBottom = "12px";
+      div.innerHTML = `
+        <p>${escapeHtml(msg.fromName || "User")} - ${new Date(msg.created).toLocaleString()}</p>
+        <a href="${msg.fileURL}" target="_blank">${escapeHtml(msg.fileName || "Download File")}</a>
+      `;
+      container.appendChild(div);
+    }
+
+    showModal("📎 Shared Media", container.innerHTML);
+  } catch (err) {
+    console.error("❌ Media fetch failed:", err.message || err);
+    alert("❌ Failed to load media.");
+  }
 }
 
-function leaveGroup() {
+async function leaveGroup() {
   if (!currentRoom) return;
 
-  db.collection("groups").doc(currentRoom).update({
-    members: firebase.firestore.FieldValue.arrayRemove(currentUser.uid)
-  }).then(() => {
+  try {
+    const group = await pb.collection("groups").getOne(currentRoom);
+    const updatedMembers = (group.members || []).filter(id => id !== currentUser.id);
+    await pb.collection("groups").update(currentRoom, { members: updatedMembers });
+
     alert("🚪 You left the group.");
     currentRoom = null;
     loadChatList?.();
     switchTab("chatTab");
-  }).catch(err => {
+  } catch (err) {
     console.error("❌ Failed to leave group:", err.message);
     alert("❌ Unable to leave group.");
-  });
+  }
 }
 
-function joinGroupById(groupId) {
+async function joinGroupById(groupId) {
   if (!currentUser || !groupId) return alert("⚠️ Invalid group or user.");
 
-  db.collection("groups").doc(groupId).update({
-    members: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
-  }).then(() => {
+  try {
+    const group = await pb.collection("groups").getOne(groupId);
+    const members = new Set(group.members || []);
+    members.add(currentUser.id);
+
+    await pb.collection("groups").update(groupId, { members: Array.from(members) });
+
     alert("✅ Joined group!");
     loadChatList?.();
     loadGroups?.();
-  }).catch(err => {
+  } catch (err) {
     console.error("❌ Failed to join group:", err.message);
     alert("❌ Group not found or join failed.");
-  });
+  }
 }
 
 let unsubscribeRoomMessages = null;
 
-function joinRoom(groupId) {
+async function joinRoom(groupId) {
   if (!groupId || !currentUser) return;
 
   currentRoom = groupId;
@@ -3084,117 +2679,81 @@ function joinRoom(groupId) {
   messageList.innerHTML = "";
   typingStatus.textContent = "";
 
-  db.collection("groups").doc(groupId).get().then(doc => {
-    title.innerHTML = doc.exists
-      ? usernameWithBadge(groupId, doc.data().name || "Group Chat")
-      : "Group (Not Found)";
-    if (typeof lucide !== "undefined") lucide.createIcons();
-  });
+  try {
+    const group = await pb.collection("groups").getOne(groupId);
+    title.innerHTML = usernameWithBadge(group.id, group.name || "Group Chat");
+    lucide?.createIcons();
+  } catch {
+    title.textContent = "Group (Not Found)";
+  }
 
   if (unsubscribeRoomMessages) unsubscribeRoomMessages();
   if (unsubscribeTyping) unsubscribeTyping();
 
   listenToTyping(groupId, "group");
 
-  unsubscribeRoomMessages = db.collection("threads").doc(groupId)
-    .collection("messages")
-    .orderBy("timestamp")
-    .onSnapshot(async snapshot => {
-      messageList.innerHTML = "";
+  unsubscribeRoomMessages = pb.collection("group_messages").subscribe("*", async ({ action, record }) => {
+    if (record.group !== groupId) return;
 
-      for (const doc of snapshot.docs) {
-        const msg = doc.data();
-        const isSelf = msg.from === currentUser.uid;
-        const bubble = document.createElement("div");
-        bubble.className = "message-bubble " + (isSelf ? "right" : "left");
+    const msg = record;
+    const isSelf = msg.from === currentUser.id;
+    const bubble = document.createElement("div");
+    bubble.className = "message-bubble " + (isSelf ? "right" : "left");
 
-        let avatar = "default-avatar.png";
-        try {
-          const senderDoc = await db.collection("users").doc(msg.from).get();
-          if (senderDoc.exists) {
-            const user = senderDoc.data();
-            avatar = user.avatarBase64 || user.photoURL ||
-              `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || "User")}`;
-          }
-        } catch (e) {
-          console.warn("⚠️ Group sender avatar load failed:", e.message);
-        }
+    let avatar = "default-avatar.png";
+    try {
+      const sender = await pb.collection("users").getOne(msg.from);
+      avatar = sender.avatar
+        ? pb.files.getUrl(sender, sender.avatar)
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(sender.username || "User")}`;
+    } catch (e) {
+      console.warn("⚠️ Group sender avatar load failed:", e.message);
+    }
 
-        const decrypted = (() => {
-          try {
-            return CryptoJS.AES.decrypt(msg.text, "yourSecretKey")
-              .toString(CryptoJS.enc.Utf8) || "[Encrypted]";
-          } catch {
-            return "[Decryption failed]";
-          }
-        })();
+    let decrypted;
+    try {
+      decrypted = CryptoJS.AES.decrypt(msg.text, "yourSecretKey").toString(CryptoJS.enc.Utf8) || "[Encrypted]";
+    } catch {
+      decrypted = "[Decryption failed]";
+    }
 
-        bubble.innerHTML = `
-          <div class="msg-avatar"><img src="${avatar}" /></div>
-          <div class="msg-content">
-            <div class="msg-text">
-              <strong>${usernameWithBadge(msg.from, msg.fromName || "User")}</strong><br>
-              ${escapeHtml(decrypted)}
-            </div>
-            <div class="message-time">${msg.timestamp?.toDate ? timeSince(msg.timestamp.toDate()) : ""}</div>
-          </div>
-        `;
+    bubble.innerHTML = `
+      <div class="msg-avatar"><img src="${avatar}" /></div>
+      <div class="msg-content">
+        <div class="msg-text">
+          <strong>${usernameWithBadge(msg.from, msg.fromName || "User")}</strong><br>
+          ${escapeHtml(decrypted)}
+        </div>
+        <div class="message-time">${timeSince(new Date(msg.created))}</div>
+      </div>
+    `;
 
-        messageList.appendChild(bubble);
-      }
-
-      messageList.scrollTop = messageList.scrollHeight;
-      renderWithMagnetSupport?.("roomMessages");
-      if (typeof lucide !== "undefined") lucide.createIcons();
-    }, err => {
-      console.error("❌ Room message error:", err.message || err);
-      alert("❌ Failed to load group chat.");
-    });
+    messageList.appendChild(bubble);
+    messageList.scrollTop = messageList.scrollHeight;
+    renderWithMagnetSupport?.("roomMessages");
+    lucide?.createIcons();
+  }, err => {
+    console.error("❌ Room message error:", err.message || err);
+    alert("❌ Failed to load group chat.");
+  });
 }
 
-function messageUser(uid, username) {
+async function messageUser(uid, username) {
   if (!uid || !currentUser) return;
 
-  db.collection("users").doc(currentUser.uid).collection("friends").doc(uid).get()
-    .then(doc => {
-      if (doc.exists) {
-        openThread(uid, username || "Friend");
-        document.getElementById("userFullProfile").style.display = "none";
-        document.getElementById("viewProfileModal").style.display = "none";
-      } else {
-        alert("⚠️ Not friends yet. Send a request first.");
-      }
-    });
-}
-
-// ===== Upload File (DM or Group) =====
-function triggerFileInput(type) {
-  const input = type === "thread" ? document.getElementById("threadFile") : document.getElementById("groupFile");
-  input.click();
-}
-
-function uploadFile(type) {
-  const input = type === "thread" ? document.getElementById("threadFile") : document.getElementById("groupFile");
-  const file = input.files[0];
-  if (!file || !currentUser) return;
-
-  const ref = storage.ref(`${type}_uploads/${currentUser.uid}/${Date.now()}_${file.name}`);
-  showLoading(true);
-
-  ref.put(file).then(snap => snap.ref.getDownloadURL()).then(url => {
-    const msg = `📎 File: <a href="${url}" target="_blank">${escapeHtml(file.name)}</a>`;
-    if (type === "thread") {
-      document.getElementById("threadInput").value = msg;
-      sendThreadMessage();
-    } else {
-      document.getElementById("groupMessageInput").value = msg;
-      sendGroupMessage();
+  try {
+    const friend = await pb.collection("friends").getFirstListItem(`from="${currentUser.id}" && to="${uid}"`);
+    if (friend) {
+      openThread(uid, username || "Friend");
+      document.getElementById("userFullProfile").style.display = "none";
+      document.getElementById("viewProfileModal").style.display = "none";
     }
-  }).catch(err => {
-    console.error("❌ Upload error:", err);
-    alert("❌ Upload failed.");
-  }).finally(() => showLoading(false));
+  } catch {
+    alert("⚠️ Not friends yet. Send a request first.");
+  }
 }
+
+
 
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text).then(() => {
@@ -3228,49 +2787,6 @@ function toggleTheme() {
   localStorage.setItem("theme", isDark ? "dark" : "light");
 }
 
-// ✅ WebTorrent init
-function startTorrentClient() {
-  if (!client) client = new WebTorrent();
-}
-
-// ✅ Send Torrent File
-function sendTorrentFile(file) {
-  startTorrentClient();
-  client.seed(file, torrent => {
-    const magnet = torrent.magnetURI;
-    document.getElementById("threadInput").value = `📎 Torrent: <a href="${magnet}" target="_blank">Download</a>`;
-    sendThreadMessage();
-  });
-}
-
-// ✅ Handle magnet link
-function detectMagnetAndRender(text) {
-  if (text.includes("magnet:?")) {
-    const match = text.match(/magnet:\?[^"]+/);
-    if (match) handleMagnetDownload(match[0]);
-  }
-}
-
-function autoDownloadMagnet(magnetURI) {
-  if (!client) client = new WebTorrent();
-  const torrent = client.add(magnetURI);
-
-  torrent.on('ready', () => {
-    torrent.files.forEach(file => {
-      file.getBlobURL((err, url) => {
-        if (err) return console.error("Download error:", err);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = file.name;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => a.remove(), 100);
-      });
-    });
-  });
-
-  torrent.on('error', err => console.error("Torrent error:", err));
-}
 
 // ✅ Modal: close profile
 function closeProfileModal() {
@@ -3306,19 +2822,23 @@ function copyRoomId() {
   copyToClipboard(currentRoom);
   alert("Group ID copied!");
 }
+
 /* ---------------------------------------------------------
  * Developer / verified badge tagging
  * Call as usernameWithBadge(uid, name) OR usernameWithBadge(nameOnly)
  * --------------------------------------------------------- */
+
+// Add your verified PocketBase user record IDs here
 const DEV_UIDS = [
-  // "yourFirebaseUIDHere" // Add your actual Firebase UID if needed
+  // "admin-user-id", // Replace with actual PocketBase record IDs
+  "moneythepro", // Username match fallback
 ];
 
 function usernameWithBadge(uidOrName, maybeName) {
   let uid = uidOrName;
   let name = maybeName;
 
-  // One-argument form: usernameWithBadge(nameOnly)
+  // Support 1-arg version: usernameWithBadge(nameOnly)
   if (typeof maybeName === "undefined") {
     name = uidOrName;
     uid = "";
@@ -3331,89 +2851,110 @@ function usernameWithBadge(uidOrName, maybeName) {
   const lowerName = (rawName || "").toLowerCase();
 
   const isDev =
+    DEV_UIDS.includes(lowerUid) ||
+    DEV_UIDS.includes(lowerName) ||
     lowerName === "moneythepro" ||
-    lowerUid === "moneythepro" ||
-    DEV_UIDS.includes(uid);
+    lowerUid === "moneythepro";
 
   if (isDev) {
     return `${safe} <i data-lucide="badge-check" class="dev-badge" aria-label="Verified"></i>`;
   }
+
   return safe;
 }
 
-// ✅ Add Developer Badge Everywhere
+// ✅ Add Developer Badge to a DOM Element
 function applyDeveloperBadge(usernameElement, username) {
   if (!usernameElement || !username) return;
-  if (username.trim().toLowerCase() === "moneythepro") {
-    if (!usernameElement.querySelector(".dev-badge")) {
-      const badge = document.createElement("i");
-      badge.setAttribute("data-lucide", "badge-check");
-      badge.className = "dev-badge";
-      badge.style.marginLeft = "4px";
-      usernameElement.appendChild(badge);
-      if (typeof lucide !== "undefined") lucide.createIcons();
-    }
+
+  const lower = username.trim().toLowerCase();
+  const isDev = DEV_UIDS.includes(lower) || lower === "moneythepro";
+
+  if (isDev && !usernameElement.querySelector(".dev-badge")) {
+    const badge = document.createElement("i");
+    badge.setAttribute("data-lucide", "badge-check");
+    badge.className = "dev-badge";
+    badge.style.marginLeft = "4px";
+    usernameElement.appendChild(badge);
+    if (typeof lucide !== "undefined") lucide.createIcons();
   }
 }
 
-// ✅ Decorate usernames globally
+// ✅ Automatically Add Badges Based on Text Content
 function decorateUsernamesWithBadges() {
   document.querySelectorAll(
     ".search-username, .username-display, .chat-username, .message-username"
   ).forEach(el => {
     const raw = el.textContent.replace("@", "").trim();
-    if (raw.toLowerCase() === "moneythepro") {
-      applyDeveloperBadge(el, raw);
-    }
+    applyDeveloperBadge(el, raw);
   });
 }
 
-// Auto-run badge decoration after DOM updates
+// Auto-decorate on DOM load
 document.addEventListener("DOMContentLoaded", decorateUsernamesWithBadges);
 
-// Observe DOM changes to auto-add badges
+// Observe DOM changes for dynamic badge rendering
 const badgeObserver = new MutationObserver(() => {
   requestAnimationFrame(decorateUsernamesWithBadges);
 });
 badgeObserver.observe(document.body, { childList: true, subtree: true });
 
-// ✅ Group controls
-function transferGroupOwnership(newOwnerId) {
+// ✅ Group controls (PocketBase version)
+
+async function transferGroupOwnership(newOwnerId) {
   if (!currentRoom || !newOwnerId) return;
-  db.collection("groups").doc(currentRoom).update({
-    createdBy: newOwnerId,
-    admins: firebase.firestore.FieldValue.arrayUnion(newOwnerId)
-  }).then(() => {
+  try {
+    const group = await pb.collection("groups").getOne(currentRoom);
+    const updatedAdmins = Array.from(new Set([...(group.admins || []), newOwnerId]));
+    await pb.collection("groups").update(currentRoom, {
+      createdBy: newOwnerId,
+      admins: updatedAdmins
+    });
     alert("Ownership transferred.");
     loadGroupInfo(currentRoom);
-  });
+  } catch (err) {
+    console.error("❌ Ownership transfer failed:", err.message || err);
+    alert("❌ Failed to transfer ownership.");
+  }
 }
 
-function deleteGroup(groupId) {
+async function deleteGroup(groupId) {
   if (!confirm("Are you sure? This will permanently delete the group.")) return;
-  db.collection("groups").doc(groupId).delete().then(() => {
+  try {
+    await pb.collection("groups").delete(groupId);
     alert("Group deleted.");
     loadChatList();
-  });
+  } catch (err) {
+    console.error("❌ Failed to delete group:", err.message || err);
+    alert("❌ Could not delete group.");
+  }
 }
 
 function reportUser(uid) {
   showModal("Report this user?", () => {
     alert("Thank you for reporting. Our team will review.");
+    // Optional: store the report in PocketBase
+    // pb.collection("reports").create({ reportedUser: uid, reporter: currentUser.id });
   });
 }
 
-function clearThreadMessages() {
-  const ref = db.collection("threads")
-    .doc(threadId(currentUser.uid, currentThreadUser))
-    .collection("messages");
-
-  showModal("Clear all messages?", () => {
-    ref.get().then(snapshot => {
-      snapshot.forEach(doc => doc.ref.delete());
-      alert("Messages cleared.");
+async function clearThreadMessages() {
+  const threadIdStr = threadId(currentUser.id, currentThreadUser);
+  try {
+    const messages = await pb.collection("messages").getFullList({
+      filter: `thread = "${threadIdStr}"`,
+      batch: 100
     });
-  });
+
+    for (const msg of messages) {
+      await pb.collection("messages").delete(msg.id);
+    }
+
+    alert("Messages cleared.");
+  } catch (err) {
+    console.error("❌ Failed to clear messages:", err.message || err);
+    alert("❌ Could not clear messages.");
+  }
 }
 
 // ✅ Scroll to bottom helper
@@ -3422,22 +2963,23 @@ function scrollToBottom(divId) {
   if (div) div.scrollTop = div.scrollHeight;
 }
 
-
-// ✅ Group Invite to inbox
-function inviteToGroup(uid) {
+// ✅ Group Invite to inbox (PocketBase version)
+async function inviteToGroup(uid) {
   if (!currentGroupProfileId) return alert("❌ No group selected.");
-  db.collection("inbox").doc(uid).collection("items").add({
-    type: "group",
-    from: currentGroupProfileId,
-    fromName: "Group Invite",
-    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    read: false
-  }).then(() => {
+  try {
+    await pb.collection("inbox").create({
+      user: uid,
+      type: "group",
+      from: currentGroupProfileId,
+      fromName: "Group Invite",
+      timestamp: new Date().toISOString(),
+      read: false
+    });
     alert("✅ Group invite sent!");
-  }).catch(err => {
+  } catch (err) {
     console.error("❌ Failed to send invite:", err.message);
     alert("❌ Could not send invite.");
-  });
+  }
 }
 
 // ✅ Toast Message
@@ -3449,100 +2991,21 @@ function showToast(msg) {
   setTimeout(() => toast.remove(), 3000);
 }
 
-// ✅ Upload File (refactored)
-function uploadFileToThreadOrGroup(context) {
-  const fileInput = context === "thread"
-    ? document.getElementById("threadFile")
-    : document.getElementById("roomFile");
-  const file = fileInput?.files?.[0];
-  if (!file) return;
-  sendFileMessage(file, context);
-}
-
-// ====== WebTorrent (P2P File Share) ======
-
 // ✅ Check if user is a friend (used in DMs)
-function isFriend(uid) {
-  return db.collection("users").doc(currentUser.uid)
-    .collection("friends").doc(uid).get()
-    .then(doc => doc.exists);
-}
-
-// ✅ Share a file via torrent (DM or group context)
-function shareFileViaTorrent(type) {
-  if (!client) client = new WebTorrent(); // 🔄 Lazy initialize if needed
-
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "*/*";
-  input.style.display = "none";
-
-  input.onchange = () => {
-    const file = input.files[0];
-    if (!file) return;
-
-    client.seed(file, torrent => {
-      const magnet = torrent.magnetURI;
-      const htmlMsg = `📎 File: <a href="${magnet}" target="_blank">${file.name}</a>`;
-
-      if (type === "dm" && currentThreadUser) {
-        isFriend(currentThreadUser).then(ok => {
-          if (!ok) return alert("❌ Only friends can share P2P files.");
-          document.getElementById("threadInput").value = htmlMsg;
-          sendThreadMessage();
-        });
-      } else if (type === "group" && currentRoom) {
-        document.getElementById("groupMessageInput").value = htmlMsg;
-        sendGroupMessage();
-      } else {
-        alert("⚠️ Sharing not allowed in this context.");
-      }
+async function isFriend(uid) {
+  if (!currentUser?.id || !uid) return false;
+  try {
+    const records = await pb.collection("friends").getFullList({
+      filter: `user = "${currentUser.id}" && friend = "${uid}"`,
+      limit: 1
     });
-  };
-
-  document.body.appendChild(input); // Needed for iOS
-  input.click();
-  setTimeout(() => input.remove(), 5000);
+    return records.length > 0;
+  } catch (err) {
+    console.error("❌ isFriend check failed:", err.message || err);
+    return false;
+  }
 }
 
-// ✅ Auto download file from magnet link with confirmation
-function autoDownloadMagnet(magnetURI) {
-  if (!client) client = new WebTorrent();
-
-  const torrent = client.add(magnetURI);
-
-  torrent.on("ready", () => {
-    torrent.files.forEach(file => {
-      file.getBlobURL((err, url) => {
-        if (err) return console.error("Download error:", err);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = file.name;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => a.remove(), 100);
-      });
-    });
-  });
-
-  torrent.on("error", err => console.error("Torrent error:", err));
-}
-
-// ✅ Find all magnet links in container and bind download click
-function renderWithMagnetSupport(containerId) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-
-  const links = container.querySelectorAll("a[href^='magnet:']");
-  links.forEach(link => {
-    link.onclick = e => {
-      e.preventDefault();
-      const confirmed = confirm(`📦 Download file: ${link.textContent}?`);
-      if (confirmed) autoDownloadMagnet(link.href);
-    };
-  });
-}
 
 /* =========================================================
  * Thread View Enhancements — Full with Emoji, Autosize
