@@ -118,25 +118,36 @@ function showToast(msg) {
  * StringWasp v2 – Hybrid App.js
  * Part 2: Inbox + User Search
  * ========================================================= */
-
-// ===== Inbox (Friend Requests & Group Invites) =====
+/* =========================================================
+ * INBOX SYSTEM – CLEAN FIXED VERSION
+ * ========================================================= */
 
 // Load inbox items
+// Load Inbox Items
 async function loadInbox() {
   if (!currentUser) return;
   const list = document.getElementById("inboxList");
   list.innerHTML = "<p>Loading...</p>";
 
   try {
-    const snap = await db.collection("inbox")
+    const itemsRef = db
+      .collection("inbox")
       .doc(currentUser.uid)
       .collection("items")
-      .orderBy("timestamp", "desc")
-      .get();
+      .orderBy("timestamp", "desc");
 
+    // Mark all unread items as read
+    const unreadSnap = await itemsRef.where("read", "==", false).get();
+    const batch = db.batch();
+    unreadSnap.forEach(doc => batch.update(doc.ref, { read: true }));
+    await batch.commit();
+
+    const snap = await itemsRef.get();
     list.innerHTML = "";
+
     if (snap.empty) {
       list.innerHTML = "<p>No notifications.</p>";
+      updateInboxBadge();
       return;
     }
 
@@ -145,6 +156,9 @@ async function loadInbox() {
       const card = renderInboxCard(item, doc.id);
       list.appendChild(card);
     });
+
+    // Update badge count
+    updateInboxBadge();
   } catch (err) {
     console.error("❌ Inbox load failed:", err);
     list.innerHTML = "<p>Error loading inbox.</p>";
@@ -160,7 +174,11 @@ function renderInboxCard(item, id) {
   div.innerHTML = `
     <div class="inbox-info">
       <strong>${escapeHtml(displayName)}</strong>
-      <span>${item.type === "friend" ? "sent you a friend request" : "invited you to a group"}</span>
+      <span>${
+        item.type === "friend"
+          ? "sent you a friend request"
+          : "invited you to a group"
+      }</span>
     </div>
     <div class="inbox-actions">
       <button onclick="acceptInboxItem('${id}', '${item.type}', '${item.from}')">Accept</button>
@@ -201,7 +219,12 @@ async function declineInboxItem(id) {
 
 // Delete inbox item
 async function deleteInboxItem(id) {
-  await db.collection("inbox").doc(currentUser.uid).collection("items").doc(id).delete();
+  await db
+    .collection("inbox")
+    .doc(currentUser.uid)
+    .collection("items")
+    .doc(id)
+    .delete();
 }
 
 // Send friend request
@@ -211,14 +234,37 @@ async function sendFriendRequest(toUid, fromName) {
 
     await db.collection("inbox").doc(toUid).collection("items").add({
       type: "friend",
-      from: currentUser.uid,      // UID only
-      fromName: String(name),     // Always a string
+      from: currentUser.uid,
+      fromName: String(name), // Always a string
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
       read: false
     });
     showToast("📩 Friend request sent!");
   } catch (err) {
     console.error("❌ Friend request failed:", err);
+  }
+}
+
+// Update Inbox badge count
+async function updateInboxBadge() {
+  if (!currentUser) return;
+  try {
+    const snap = await db
+      .collection("inbox")
+      .doc(currentUser.uid)
+      .collection("items")
+      .where("read", "==", false)
+      .get();
+
+    const badge = document.getElementById("inboxBadge");
+    if (!snap.empty) {
+      badge.textContent = snap.size;
+      badge.style.display = "inline-block";
+    } else {
+      badge.style.display = "none";
+    }
+  } catch (err) {
+    console.error("❌ Failed to update inbox badge:", err);
   }
 }
 
