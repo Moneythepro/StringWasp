@@ -19,14 +19,13 @@ async function handleAuthState(user) {
   if (overlay) overlay.style.display = "none";
 
   // Simple debug marker so we know how many times this fires
-  console.log("[AUTH] state change:", user ? user.uid : "no user");
-
+  console.error("Error:", error?.message || JSON.stringify(error) || error);
   if (user) {
     currentUser = user;
     try {
       await loadUserProfile(user.uid);
     } catch (err) {
-      console.error("[AUTH] profile load error:", err?.message || err);
+      console.error("Error:", error?.message || JSON.stringify(error) || error);
     }
     showMainUI(true);
   } else {
@@ -75,6 +74,16 @@ async function loadUserProfile(uid) {
     console.log("Profile loaded!");
   } catch (err) {
     console.error("❌ Failed to load profile:", err);
+  console.log("[DEBUG] Loading profile for UID:", uid);
+  try {
+    const doc = await db.collection("users").doc(uid).get();
+    console.log("[DEBUG] Profile doc exists:", doc.exists);
+    ...
+  } catch (err) {
+    console.error("[DEBUG] loadUserProfile error:", err?.message || err);
+    throw err; // so we can see it in global error listener
+  }
+    
     // Do NOT call loadUserProfile() again here (avoid infinite loop)
   }
 }
