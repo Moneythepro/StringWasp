@@ -1429,3 +1429,57 @@ document.addEventListener("DOMContentLoaded", () => {
     modalNo.onclick = () => modal.style.display = "none";
   }
 });
+
+// =============================
+// StringWasp UI Stub Functions
+// =============================
+
+// Chat Tab
+function searchChats(query = "") {
+  console.log("searchChats() called with:", query);
+}
+
+function loadChatList() {
+  console.log("loadChatList() called");
+}
+
+function createGroup() {
+  alert("Create Group clicked (function not implemented yet)");
+}
+
+// Friends & Profile
+function triggerProfileUpload() {
+  document.getElementById("profilePic").click();
+}
+
+function saveProfile() {
+  alert("saveProfile() clicked - not implemented yet");
+}
+
+function logout() {
+  auth.signOut().then(() => {
+    console.log("User logged out");
+    showMainUI(false);
+  }).catch(err => console.error("Logout error:", err));
+}
+
+// Inbox
+function markAllRead() {
+  alert("All inbox messages marked as read");
+}
+
+// Search
+function switchSearchView(type) {
+  console.log("switchSearchView() called with:", type);
+  document.getElementById("searchResultsUser").style.display = type === "user" ? "block" : "none";
+  document.getElementById("searchResultsGroup").style.display = type === "group" ? "block" : "none";
+}
+
+function runSearch() {
+  console.log("runSearch() called");
+}
+
+// User Search Error Fix
+function loadInbox() {
+  console.log("loadInbox() called");
+}
