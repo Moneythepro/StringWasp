@@ -9,19 +9,33 @@ let userProfile = null;   // { uid, username, avatar, bio }
 
 // ===== Auth State Listener =====
 auth.onAuthStateChanged(async (user) => {
-  if (user) {
-    currentUser = user;
-    console.log("✅ Logged in:", user.email);
+  try {
+    // Always hide loading overlay first
+    document.getElementById("loadingOverlay").style.display = "none";
 
-    await loadUserProfile(user.uid);
-    showMainUI(true);
-  } else {
-    currentUser = null;
-    userProfile = null;
+    if (user) {
+      currentUser = user;
+      console.log("✅ Logged in:", user.email);
+
+      try {
+        await loadUserProfile(user.uid);
+      } catch (err) {
+        console.error("⚠ Failed to load user profile:", err);
+      }
+
+      showMainUI(true);
+    } else {
+      currentUser = null;
+      userProfile = null;
+      showMainUI(false);
+    }
+  } catch (error) {
+    console.error("auth.onAuthStateChanged error:", error);
+    // Fallback: Hide loading and show login
+    document.getElementById("loadingOverlay").style.display = "none";
     showMainUI(false);
   }
 });
-
 // ===== Load User Profile =====
 async function loadUserProfile(uid) {
   try {
