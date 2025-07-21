@@ -316,29 +316,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* =========================================================
  * StringWasp v2 – Hybrid App.js
- * Part 3: P2P Messaging (WebRTC)
- * ========================================================= */
-
-/* =========================================================
- * StringWasp v2 – CHAT CORE (P2P DM + P2P Mesh Groups)
+ * Part 3A: P2P Core + IndexedDB + Signaling + Direct Chat
  * =========================================================
- * Dependencies assumed:
- *   - currentUser (auth user)
- *   - currentThreadUser, currentRoom globals
- *   - db (Firestore), firebase (v8)
- *   - escapeHtml(), usernameWithBadge(), switchTab(), scrollToBottom()
- *   - showToast() optional
- *   - loadGroupInfo() optional
- *   - addFriend(), joinGroup() already defined elsewhere
+ * Requires (already defined elsewhere):
+ *   - currentUser, userProfile
+ *   - escapeHtml(), usernameWithBadge(), scrollToBottom(), switchTab()
+ *   - fetchUserProfile(), decorateUsernamesWithBadges()
  * ======================================================= */
 
-/* ---------------------------------------------------------
- * GLOBALS
- * ------------------------------------------------------- */
-let peerConnections     = {}; // { uid: RTCPeerConnection }
-let dataChannels        = {}; // { uid: RTCDataChannel }  <-- DM channel
-let groupPeerConnections = {}; // { uid: RTCPeerConnection }  (group context)
-let groupDataChannels    = {}; // { uid: RTCDataChannel }     (group chat channels)
+/* ---------------- Globals ---------------- */
+let peerConnections      = {}; // { uid: RTCPeerConnection } DM
+let dataChannels         = {}; // { uid: RTCDataChannel }   DM
+let groupPeerConnections = {}; // { uid: RTCPeerConnection } Groups (used in Part 3B)
+let groupDataChannels    = {}; // { uid: RTCDataChannel }   Groups (used in Part 3B)
 
 const ICE_SERVERS = [
   { urls: "stun:stun.l.google.com:19302" },
@@ -348,9 +338,7 @@ const ICE_SERVERS = [
 /* Local IndexedDB handle */
 let dbLocal = null;
 
-/* ---------------------------------------------------------
- * INDEXEDDB (LOCAL MESSAGE HISTORY)
- * ------------------------------------------------------- */
+/* ---------------- IndexedDB Setup ---------------- */
 function initIndexedDB() {
   const request = indexedDB.open("StringWaspDB", 1);
   request.onupgradeneeded = e => {
@@ -362,9 +350,9 @@ function initIndexedDB() {
   request.onsuccess = e => { dbLocal = e.target.result; };
   request.onerror  = e => console.error("❌ IndexedDB error:", e);
 }
-
 document.addEventListener("DOMContentLoaded", initIndexedDB);
 
+/* ---------------- Local Save / Load ---------------- */
 function saveLocalMessage(threadKey, msg) {
   if (!dbLocal) return;
   const tx = dbLocal.transaction("messages", "readwrite");
@@ -398,13 +386,8 @@ function groupThreadKey(groupId) {
 }
 
 /* =========================================================
- * WEBRTC – CORE HELPERS
+ * WebRTC Peer Creation
  * ======================================================= */
-
-/**
- * Return (or create) an RTCPeerConnection for a given peer UID.
- * DM + Group both use this (we track separate maps but reuse creation).
- */
 async function getOrCreatePeer(uid, isGroup = false) {
   const map = isGroup ? groupPeerConnections : peerConnections;
   if (map[uid]) return map[uid];
@@ -414,17 +397,19 @@ async function getOrCreatePeer(uid, isGroup = false) {
 
   // ICE → Firestore signaling
   pc.onicecandidate = e => {
-    if (e.candidate) sendSignaling(uid, {
-      type: "ice",
-      candidate: e.candidate,
-      ...(isGroup ? { group: currentRoom || true } : {})
-    });
+    if (e.candidate) {
+      sendSignaling(uid, {
+        type: "ice",
+        candidate: e.candidate,
+        ...(isGroup ? { group: currentRoom || true } : {})
+      });
+    }
   };
 
-  // Remote datachannel
+  // Remote channel
   pc.ondatachannel = e => {
     if (isGroup) {
-      setupGroupDataChannel(uid, e.channel);
+      setupGroupDataChannel(uid, e.channel); // defined in Part 3B
     } else {
       setupDMDataChannel(uid, e.channel);
     }
@@ -433,54 +418,26 @@ async function getOrCreatePeer(uid, isGroup = false) {
   return pc;
 }
 
-/* ---------------------------------------------------------
- * DM DATA CHANNEL
- * ------------------------------------------------------- */
+/* ---------------- DM DataChannel ---------------- */
 function setupDMDataChannel(uid, channel) {
   dataChannels[uid] = channel;
-
-  channel.onopen = () => {
-    console.log(`📡 DM channel OPEN with ${uid}`);
-  };
-  channel.onclose = () => {
-    console.log(`❌ DM channel CLOSED with ${uid}`);
-  };
-  channel.onerror = err => {
-    console.error(`⚠ DM channel error (${uid}):`, err);
-  };
-  channel.onmessage = e => handleIncomingDM(uid, e.data);
-}
-
-/* ---------------------------------------------------------
- * GROUP DATA CHANNEL
- * ------------------------------------------------------- */
-function setupGroupDataChannel(uid, channel) {
-  groupDataChannels[uid] = channel;
-
-  channel.onopen = () => {
-    console.log(`📡 GROUP channel OPEN with ${uid}`);
-  };
-  channel.onclose = () => {
-    console.log(`❌ GROUP channel CLOSED with ${uid}`);
-  };
-  channel.onerror = err => {
-    console.error(`⚠ GROUP channel error (${uid}):`, err);
-  };
-  channel.onmessage = e => handleIncomingGroup(uid, e.data);
+  channel.onopen    = () => console.log(`📡 DM channel OPEN with ${uid}`);
+  channel.onclose   = () => console.log(`❌ DM channel CLOSED with ${uid}`);
+  channel.onerror   = err => console.error(`⚠ DM channel error (${uid}):`, err);
+  channel.onmessage = e   => handleIncomingDM(uid, e.data);
 }
 
 /* =========================================================
- * WEBRTC – SIGNALING OVER FIRESTORE
+ * Signaling (Firestore)
  * ======================================================= */
-/**
- * Firestore structure:
- *   signals/{targetUid}/msgs/{autoId} {
- *     from: <uid>,
- *     data: { type: 'offer'|'answer'|'ice', ... },
- *     timestamp: serverTimestamp,
- *     group: <groupId?> (optional)
- *   }
- */
+/*
+signals/{targetUid}/msgs/{autoId}:
+  {
+    from,
+    data: { type:'offer'|'answer'|'ice', sdp?|candidate?, group? },
+    timestamp
+  }
+*/
 async function sendSignaling(targetUid, data) {
   if (!currentUser) return;
   await db.collection("signals")
@@ -493,11 +450,10 @@ async function sendSignaling(targetUid, data) {
     });
 }
 
-/* Listen for incoming signals (call once after login) */
 let _signalsUnsub = null;
 function listenForSignals() {
   if (!currentUser) return;
-  if (_signalsUnsub) _signalsUnsub(); // reset if re-listening
+  if (_signalsUnsub) _signalsUnsub(); // rebind
 
   _signalsUnsub = db.collection("signals")
     .doc(currentUser.uid)
@@ -510,26 +466,17 @@ function listenForSignals() {
         if (!from || !data) return;
 
         if (data.type === "offer") {
-          if (data.group) {
-            handleGroupOffer(from, data.sdp, data.group);
-          } else {
-            handleDMOffer(from, data.sdp);
-          }
+          data.group ? handleGroupOffer(from, data.sdp, data.group)
+                     : handleDMOffer(from, data.sdp);
         } else if (data.type === "answer") {
-          if (data.group) {
-            handleGroupAnswer(from, data.sdp, data.group);
-          } else {
-            handleDMAnswer(from, data.sdp);
-          }
+          data.group ? handleGroupAnswer(from, data.sdp, data.group)
+                     : handleDMAnswer(from, data.sdp);
         } else if (data.type === "ice") {
-          if (data.group) {
-            handleGroupIce(from, data.candidate, data.group);
-          } else {
-            handleDMIce(from, data.candidate);
-          }
+          data.group ? handleGroupIce(from, data.candidate, data.group)
+                     : handleDMIce(from, data.candidate);
         }
 
-        // delete processed doc
+        // done
         change.doc.ref.delete().catch(()=>{});
       });
     }, err => {
@@ -538,16 +485,14 @@ function listenForSignals() {
 }
 
 /* =========================================================
- * DM OFFER / ANSWER / ICE
+ * DM SDP / ICE Handlers
  * ======================================================= */
 async function createDMOffer(uid) {
   const pc = await getOrCreatePeer(uid, false);
-  // Only create new channel if not already present
   if (!dataChannels[uid]) {
     const dc = pc.createDataChannel("chat");
     setupDMDataChannel(uid, dc);
   }
-
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
   sendSignaling(uid, { type: "offer", sdp: offer });
@@ -576,9 +521,225 @@ async function handleDMIce(uid, candidate) {
 }
 
 /* =========================================================
- * GROUP OFFER / ANSWER / ICE
- * (Mesh: each member tries to connect to each other member)
+ * DM Messaging
  * ======================================================= */
+// (Encryption hooks – no-op for now)
+function dmEncrypt(text) { return text; }
+function dmDecrypt(text) { return text; }
+
+/* Send DM */
+function sendThreadMessage() {
+  const input = document.getElementById("threadInput");
+  if (!input || !currentThreadUser) return;
+  const raw = input.value;
+  const text = raw.trim();
+  if (!text) return;
+
+  const msg = {
+    from: currentUser.uid,
+    text: dmEncrypt(text),
+    timestamp: Date.now()
+  };
+
+  // P2P send
+  const chan = dataChannels[currentThreadUser];
+  if (chan && chan.readyState === "open") {
+    chan.send(JSON.stringify(msg));
+  } else {
+    console.warn("⚠ DM channel not open; message not sent.");
+  }
+
+  // Render & save
+  renderDMMessage(msg, true);
+  saveLocalMessage(dmThreadKey(currentUser.uid, currentThreadUser), msg);
+
+  input.value = "";
+}
+
+/* Incoming DM (DataChannel) */
+function handleIncomingDM(fromUid, raw) {
+  try {
+    const msg = JSON.parse(raw);
+    msg.text = dmDecrypt(msg.text);
+    renderDMMessage(msg, false);
+    saveLocalMessage(dmThreadKey(currentUser.uid, fromUid), msg);
+  } catch (err) {
+    console.error("❌ Invalid DM message:", err);
+  }
+}
+
+/* Legacy wrapper (if older code calls this) */
+function handleIncomingMessage(uid, raw) {
+  handleIncomingDM(uid, raw);
+}
+
+/* =========================================================
+ * DM Message Rendering (Badges)
+ * ======================================================= */
+async function renderDMMessage(msg, isOwn) {
+  const container = document.getElementById("threadMessages");
+  if (!container) return;
+
+  const div = document.createElement("div");
+  div.className = isOwn ? "msg-bubble own" : "msg-bubble other";
+
+  // only show name for incoming
+  let nameHtml = "";
+  if (!isOwn) {
+    const prof = await fetchUserProfile(msg.from);
+    nameHtml = `<span class="message-username">${usernameWithBadge(msg.from, prof.username)}</span>`;
+  }
+
+  div.innerHTML = `
+    <div class="message-header">
+      ${nameHtml}
+      <span class="message-time">${formatTime(msg.timestamp)}</span>
+    </div>
+    <div class="message-text">${escapeHtml(msg.text)}</div>
+  `;
+  container.appendChild(div);
+  scrollToBottom("threadMessages");
+}
+
+/* Timestamp helper */
+function formatTime(ts) {
+  const d = new Date(ts);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+/* =========================================================
+ * Open Thread (DM)
+ * ======================================================= */
+function openThread(uid, username) {
+  if (!uid || !currentUser) return;
+  currentThreadUser = uid;
+  currentRoom = null;
+
+  // UI
+  switchTab("threadView");
+  const headerEl = document.getElementById("threadWithName");
+  if (headerEl) {
+    headerEl.innerHTML = usernameWithBadge(uid, username || "Chat");
+  }
+
+  // ensure signaling
+  listenForSignals();
+
+  // start offer
+  createDMOffer(uid).catch(err => console.error("DM offer error:", err));
+
+  // load local history
+  const tk = dmThreadKey(currentUser.uid, uid);
+  loadLocalMessages(tk, async msgs => {
+    const container = document.getElementById("threadMessages");
+    if (!container) return;
+    container.innerHTML = "";
+    // Render sequentially to honor async profile fetch
+    for (const m of msgs.sort((a,b)=>a.timestamp-b.timestamp)) {
+      await renderDMMessage(m, m.from === currentUser.uid);
+    }
+    decorateUsernamesWithBadges();
+  });
+    }
+
+/* =========================================================
+ * StringWasp v2 – Hybrid App.js
+ * Part 3B: Group Mesh Chat (P2P) + Badges + Local History
+ * =========================================================
+ * Requires Part 3A loaded first.
+ * Uses: currentUser, currentRoom, db, usernameWithBadge(), fetchUserProfile()
+ * ======================================================= */
+
+/* ---------------- Group Messaging Helpers ---------------- */
+// (Encryption hooks – swap in real E2E later if needed)
+function groupEncrypt(text) { return text; }
+function groupDecrypt(text) { return text; }
+
+/* Called by Part 3A’s getOrCreatePeer() when remote channel appears */
+function setupGroupDataChannel(uid, channel) {
+  groupDataChannels[uid] = channel;
+  channel.onopen    = () => console.log(`📡 GROUP channel OPEN with ${uid}`);
+  channel.onclose   = () => console.log(`❌ GROUP channel CLOSED with ${uid}`);
+  channel.onerror   = err => console.error(`⚠ GROUP channel error (${uid}):`, err);
+  channel.onmessage = e   => handleIncomingGroup(uid, e.data);
+}
+
+/* ---------------------------------------------------------
+ * Group Message Rendering
+ * ------------------------------------------------------- */
+async function renderGroupMessage(msg, isOwn) {
+  const container = document.getElementById("groupMessages");
+  if (!container) return;
+
+  const bubble = document.createElement("div");
+  bubble.className = isOwn ? "msg-bubble own" : "msg-bubble other";
+
+  const prof = await fetchUserProfile(msg.from);
+  const nameHtml = usernameWithBadge(msg.from, prof.username);
+
+  bubble.innerHTML = `
+    <div class="msg-meta">
+      <span class="msg-username">${nameHtml}</span>
+      <span class="msg-time">${formatTime(msg.timestamp)}</span>
+    </div>
+    <div class="msg-text">${escapeHtml(msg.text)}</div>
+  `;
+  container.appendChild(bubble);
+  scrollToBottom("groupMessages");
+}
+
+/* ---------------------------------------------------------
+ * Send Group Message (broadcast all channels)
+ * ------------------------------------------------------- */
+function sendGroupMessage() {
+  const input = document.getElementById("groupMessageInput");
+  if (!input || !currentRoom) return;
+  const raw = input.value;
+  const text = raw.trim();
+  if (!text) return;
+
+  const msg = {
+    from: currentUser.uid,
+    text: groupEncrypt(text),
+    timestamp: Date.now(),
+    groupId: currentRoom
+  };
+
+  // broadcast
+  Object.values(groupDataChannels).forEach(chan => {
+    if (chan.readyState === "open") {
+      chan.send(JSON.stringify(msg));
+    }
+  });
+
+  renderGroupMessage(msg, true);
+  saveLocalMessage(groupThreadKey(currentRoom), msg);
+
+  input.value = "";
+}
+
+/* ---------------------------------------------------------
+ * Incoming Group Message (DataChannel)
+ * ------------------------------------------------------- */
+function handleIncomingGroup(fromUid, raw) {
+  try {
+    const msg = JSON.parse(raw);
+    msg.text = groupDecrypt(msg.text);
+    renderGroupMessage(msg, msg.from === currentUser.uid);
+    saveLocalMessage(groupThreadKey(msg.groupId || currentRoom), msg);
+  } catch (err) {
+    console.error("❌ Invalid group message:", err);
+  }
+}
+
+/* Legacy wrapper if older code calls handleIncomingGroupMessage */
+function handleIncomingGroupMessage(fromUid, raw) {
+  handleIncomingGroup(fromUid, raw);
+}
+
+/* ---------------------------------------------------------
+ * Group SDP / ICE (called from signal listener)
+ * ------------------------------------------------------- */
 async function createGroupOffer(uid) {
   const pc = await getOrCreatePeer(uid, true);
   if (!groupDataChannels[uid]) {
@@ -612,252 +773,16 @@ async function handleGroupIce(uid, candidate, _groupId) {
   }
 }
 
-/* =========================================================
- * DM MESSAGING
- * ======================================================= */
-
-/* Encrypt/Decrypt hooks (no-op for now) */
-function dmEncrypt(text) { return text; }
-function dmDecrypt(text) { return text; }
-
-/* =========================================================
- * P2P Messaging – With Developer Badge Rendering
- * ======================================================= */
-
-// ===== Sending Messages =====
-function sendThreadMessage() {
-  const input = document.getElementById("threadInput");
-  const text = input.value.trim();
-  if (!text || !currentThreadUser) return;
-
-  const msg = {
-    from: currentUser.uid,
-    text,
-    timestamp: Date.now()
-  };
-
-  // Send over P2P channel if open
-  if (dataChannels[currentThreadUser] && dataChannels[currentThreadUser].readyState === "open") {
-    dataChannels[currentThreadUser].send(JSON.stringify(msg));
-  }
-
-  // Render and save locally
-  renderDMMessage(msg, true);
-  saveLocalMessage(currentThreadUser, msg);
-  input.value = "";
-}
-
-// ===== Receiving Messages =====
-function handleIncomingMessage(uid, raw) {
-  try {
-    const msg = JSON.parse(raw);
-    renderDMMessage(msg, false);
-    saveLocalMessage(uid, msg);
-  } catch (err) {
-    console.error("❌ Invalid message:", err);
-  }
-}
-
-/* Handle inbound DM message */
-function handleIncomingDM(fromUid, raw) {
-  try {
-    const msg = JSON.parse(raw);
-    msg.text = dmDecrypt(msg.text);
-    renderDMMessage(msg, false);
-    saveLocalMessage(dmThreadKey(currentUser.uid, fromUid), msg);
-  } catch (err) {
-    console.error("❌ Invalid DM message:", err);
-  }
-}
-
-/* =========================================================
- * Message Rendering with Developer Badges
- * ======================================================= */
-
-// Render Direct Message
-async function renderDMMessage(msg, isOwn) {
-  const container = document.getElementById("threadMessages");
-  const div = document.createElement("div");
-  div.className = isOwn ? "msg-bubble own" : "msg-bubble";
-
-  // Fetch username with badge
-  const profile = await fetchUserProfile(msg.from);
-  const nameHtml = usernameWithBadge(msg.from, profile.username);
-
-  div.innerHTML = `
-    <div class="message-header">
-      <span class="message-username">${nameHtml}</span>
-      <span class="message-time">${formatTime(msg.timestamp)}</span>
-    </div>
-    <div class="message-text">${escapeHtml(msg.text)}</div>
-  `;
-  container.appendChild(div);
-  scrollToBottom("threadMessages");
-}
-
-/* =========================================================
- * Group Messaging – With Developer Badge Rendering
- * ======================================================= */
-
-// ===== Sending Group Messages =====
-function sendGroupMessage() {
-  const input = document.getElementById("groupMessageInput");
-  const text = input.value.trim();
-  if (!text || !currentRoom) return;
-
-  const msg = {
-    from: currentUser.uid,
-    text,
-    timestamp: Date.now()
-  };
-
-  // Send message to all peers
-  Object.values(groupDataChannels).forEach(channel => {
-    if (channel.readyState === "open") {
-      channel.send(JSON.stringify(msg));
-    }
-  });
-
-  renderGroupMessage(msg, true);
-  saveGroupMessage(currentRoom, msg);
-  input.value = "";
-}
-
-// ===== Receiving Group Messages =====
-function handleIncomingGroupMessage(fromUid, raw) {
-  try {
-    const msg = JSON.parse(raw);
-    renderGroupMessage(msg, false);
-    saveGroupMessage(currentRoom, msg);
-  } catch (err) {
-    console.error("❌ Invalid group message:", err);
-  }
-}
-
-// ===== Rendering Group Messages with Badges =====
-function renderGroupMessage(msg, isOwn) {
-  const container = document.getElementById("groupMessages");
-  const div = document.createElement("div");
-  div.className = isOwn ? "msg-bubble own" : "msg-bubble";
-
-  const name = usernameWithBadge(msg.from, getDisplayName(msg.from));
-  div.innerHTML = `
-    <div class="message-username">${name}</div>
-    <span>${escapeHtml(msg.text)}</span>
-  `;
-  container.appendChild(div);
-
-  // Ensure badges are applied after render
-  decorateUsernamesWithBadges();
-  scrollToBottom("groupMessages");
-}
-
-// Helper: get display name from UID (fallback)
-function getDisplayName(uid) {
-  if (uid === currentUser.uid) return userProfile?.username || "You";
-  return "User"; // You can fetch from Firebase if needed
-}
-
-/* Utility – Format Timestamp */
-function formatTime(ts) {
-  const date = new Date(ts);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-/* =========================================================
- * OPEN THREAD (DM)
- * ======================================================= */
-function openThread(uid, username) {
-  if (!uid || !currentUser) return;
-  currentThreadUser = uid;
-  switchTab("threadView");
-  document.getElementById("chatName").textContent = usernameWithBadge(uid, username || "Chat");
-
-  // Create or connect P2P channel
-  createOfferForUser(uid);
-
-  // Load local messages with badge support
-  loadLocalMessages(uid, msgs => {
-    const container = document.getElementById("threadMessages");
-    container.innerHTML = "";
-    msgs.sort((a, b) => a.timestamp - b.timestamp)
-        .forEach(m => renderMessage(m, m.from === currentUser.uid));
-    decorateUsernamesWithBadges(); // Apply badge icons
-  });
-}
-
-/* =========================================================
- * GROUP CHAT (MESH)
- * ======================================================= */
-
-/* Minimal local group message encryption hooks */
-function groupEncrypt(text) { return text; }
-function groupDecrypt(text) { return text; }
-
-/* Send group message to all open channels */
-function sendGroupMessage() {
-  const input = document.getElementById("groupMessageInput");
-  if (!input || !currentRoom) return;
-  const text = input.value.trim();
-  if (!text) return;
-
-  const msg = {
-    from: currentUser.uid,
-    text: groupEncrypt(text),
-    timestamp: Date.now(),
-    groupId: currentRoom
-  };
-
-  // Broadcast
-  Object.values(groupDataChannels).forEach(chan => {
-    if (chan.readyState === "open") {
-      chan.send(JSON.stringify(msg));
-    }
-  });
-
-  renderGroupMessage(msg, true);
-  saveLocalMessage(groupThreadKey(currentRoom), msg);
-  input.value = "";
-}
-
-/* Handle inbound group message */
-function handleIncomingGroup(fromUid, raw) {
-  try {
-    const msg = JSON.parse(raw);
-    msg.text = groupDecrypt(msg.text);
-    renderGroupMessage(msg, msg.from === currentUser.uid);
-    saveLocalMessage(groupThreadKey(msg.groupId || currentRoom), msg);
-  } catch (err) {
-    console.error("❌ Invalid group message:", err);
-  }
-}
-
-/* Render group bubble */
-async function renderGroupMessage(msg, isOwn) {
-  const container = document.getElementById("groupMessages");
-  if (!container) return;
-
-  const bubble = document.createElement("div");
-  bubble.className = isOwn ? "msg-bubble own" : "msg-bubble other";
-
-  const profile = await fetchUserProfile(msg.from);
-  const nameHtml = `<div class="msg-author">${usernameWithBadge(msg.from, profile.username)}</div>`;
-
-  bubble.innerHTML = `
-    ${nameHtml}
-    <span class="msg-text">${escapeHtml(msg.text)}</span>
-    <div class="message-meta">${new Date(msg.timestamp).toLocaleTimeString()}</div>
-  `;
-
-  container.appendChild(bubble);
-  scrollToBottom("groupMessages");
-}
-
-/* Connect P2P channels to each member */
+/* ---------------------------------------------------------
+ * Connect to all group members (mesh)
+ * ------------------------------------------------------- */
 async function connectToGroupMembers(memberUids) {
-  // exclude self
   const peers = memberUids.filter(u => u !== currentUser.uid);
   groupDataChannels = {}; // reset
+
+  // prefetch user names for rendering
+  await Promise.all(peers.map(uid => fetchUserProfile(uid)));
+
   for (const uid of peers) {
     try {
       await createGroupOffer(uid);
@@ -867,53 +792,53 @@ async function connectToGroupMembers(memberUids) {
   }
 }
 
-/* Join group view + build mesh */
+/* ---------------------------------------------------------
+ * Join Group
+ * ------------------------------------------------------- */
 function joinRoom(groupId) {
   if (!groupId || !currentUser) return;
 
   currentRoom = groupId;
   currentThreadUser = null;
 
-  // Switch to group chat UI
+  // UI
   switchTab("roomView");
   const title = document.getElementById("roomTitle");
   if (title) title.textContent = "Loading...";
 
-  // Start listening for signaling
+  // signaling
   listenForSignals();
 
-  // Fetch group data from Firestore
-  db.collection("groups").doc(groupId).get().then(doc => {
+  // fetch group meta
+  db.collection("groups").doc(groupId).get().then(async doc => {
     if (!doc.exists) {
       if (title) title.textContent = "Group (Not Found)";
       return;
     }
     const data = doc.data();
     if (title) {
-      // Apply badge for group creator if matches moneythepro
       title.innerHTML = usernameWithBadge(groupId, data.name || "Group Chat");
     }
-
     const members = Array.isArray(data.members) ? data.members : [];
-    connectToGroupMembers(members);
+    await connectToGroupMembers(members);
     if (typeof loadGroupInfo === "function") loadGroupInfo(groupId);
   }).catch(err => {
     console.error("❌ Group fetch failed:", err);
   });
 
-  // Load local message history
-  loadLocalMessages(groupThreadKey(groupId), msgs => {
+  // load local history
+  loadLocalMessages(groupThreadKey(groupId), async msgs => {
     const container = document.getElementById("groupMessages");
     if (!container) return;
     container.innerHTML = "";
-    msgs
-      .sort((a, b) => a.timestamp - b.timestamp)
-      .forEach(m => renderGroupMessage(m, m.from === currentUser.uid));
-
-    // Apply badge decorations
+    for (const m of msgs.sort((a,b)=>a.timestamp-b.timestamp)) {
+      await renderGroupMessage(m, m.from === currentUser.uid);
+    }
     decorateUsernamesWithBadges();
   });
 }
+
+
                                          }
 
 /* =========================================================
