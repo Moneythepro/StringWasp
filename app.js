@@ -1,46 +1,66 @@
 /* =========================================================
- * StringWasp v2 – Hybrid App.js
- * Part 1: Firebase Auth + User Profiles
+ * StringWasp v2 – Hybrid App.js (Fixed & DOM-Safe)
  * ========================================================= */
 
 // ===== Global State =====
 let currentUser = null;   // Firebase auth user
 let userProfile = null;   // { uid, username, avatar, bio }
 
-// ===== Auth State Listener =====
-// Prevent duplicate registration if scripts load twice
-if (!window.__SW_AUTH_LISTENER__) {
-  window.__SW_AUTH_LISTENER__ = true;
-  auth.onAuthStateChanged(handleAuthState);
-}
+// ===== Global Error Handlers =====
+window.addEventListener("error", (e) => {
+  console.error("[GLOBAL ERROR]", e.message, e.error);
+});
+window.addEventListener("unhandledrejection", event => {
+  console.error("[GLOBAL PROMISE REJECTION]", event.reason);
+});
 
+// ===== Wait for DOM Ready =====
+document.addEventListener("DOMContentLoaded", () => {
+  if (!window.__SW_AUTH_LISTENER__) {
+    window.__SW_AUTH_LISTENER__ = true;
+    auth.onAuthStateChanged(handleAuthState);
+  }
+});
+
+// ===== Auth State Listener =====
 async function handleAuthState(user) {
   const overlay = document.getElementById("loadingOverlay");
   if (overlay) overlay.style.display = "none";
 
   console.log("[DEBUG] Auth state changed. User:", user ? user.email : "No user");
 
-  if (user) {
-    currentUser = user;
-    try {
+  try {
+    if (user) {
+      currentUser = user;
       await loadUserProfile(user.uid);
-    } catch (err) {
-      console.error("⚠ Failed to load user profile:", err?.message || err);
+      showMainUI(true);
+    } else {
+      currentUser = null;
+      userProfile = null;
+      showMainUI(false);
     }
-    showMainUI(true);
-  } else {
-    currentUser = null;
-    userProfile = null;
+  } catch (error) {
+    console.error("auth.onAuthStateChanged error:", error?.message || error);
     showMainUI(false);
   }
 }
 
-function switchTab(tabId) {
-  // Hide all tabs
-  const tabs = document.querySelectorAll(".tab");
-  tabs.forEach(tab => tab.style.display = "none");
+// ===== Show/Hide Main UI =====
+function showMainUI(isLoggedIn) {
+  const loginPage = document.getElementById("loginPage");
+  const appPage = document.getElementById("appPage");
+  const overlay = document.getElementById("loadingOverlay");
 
-  // Show the selected tab
+  if (overlay) overlay.style.display = "none";
+  if (loginPage) loginPage.style.display = isLoggedIn ? "none" : "block";
+  if (appPage) appPage.style.display = isLoggedIn ? "block" : "none";
+}
+
+// ===== Tab Switcher =====
+function switchTab(tabId) {
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(tab => (tab.style.display = "none"));
+
   const target = document.getElementById(tabId);
   if (target) {
     target.style.display = "block";
@@ -48,12 +68,12 @@ function switchTab(tabId) {
     console.warn(`⚠ switchTab: No tab with ID '${tabId}'`);
   }
 
-  // Update active tab button styling
   const tabButtons = document.querySelectorAll(".tabs button");
   tabButtons.forEach(btn => btn.classList.remove("active"));
   const activeBtn = document.querySelector(`#tab-${tabId.replace("Tab", "").toLowerCase()}`);
   if (activeBtn) activeBtn.classList.add("active");
 }
+
 // ===== Load User Profile =====
 async function loadUserProfile(uid) {
   console.log("[DEBUG] Loading profile for UID:", uid);
@@ -65,7 +85,6 @@ async function loadUserProfile(uid) {
       userProfile = doc.data();
       console.log("[DEBUG] Profile data:", userProfile);
     } else {
-      // New user → create default profile
       userProfile = {
         uid,
         username: currentUser?.email?.split("@")[0] || "User",
@@ -77,10 +96,8 @@ async function loadUserProfile(uid) {
     }
 
     updateProfileUI();
-    console.log("Profile loaded!");
   } catch (err) {
     console.error("❌ Failed to load profile:", err?.message || err);
-    throw err; // Let global error listener catch it
   }
 }
 
@@ -89,13 +106,15 @@ function updateProfileUI() {
   const usernameEl = document.getElementById("profileUsername");
   const bioEl = document.getElementById("profileBio");
   if (usernameEl && bioEl && userProfile) {
-    usernameEl.textContent = userProfile.username;
-    bioEl.textContent = userProfile.bio;
+    usernameEl.value = userProfile.username || "";
+    bioEl.value = userProfile.bio || "";
   }
 }
 
 // ===== Login / Register =====
-async function loginUser(email, password) {
+async function login() {
+  const email = document.getElementById("email")?.value;
+  const password = document.getElementById("password")?.value;
   try {
     await auth.signInWithEmailAndPassword(email, password);
     showToast("✅ Login successful");
@@ -104,12 +123,14 @@ async function loginUser(email, password) {
   }
 }
 
-async function registerUser(email, password, username) {
+async function register() {
+  const email = document.getElementById("email")?.value;
+  const password = document.getElementById("password")?.value;
   try {
     const cred = await auth.createUserWithEmailAndPassword(email, password);
     await db.collection("users").doc(cred.user.uid).set({
       uid: cred.user.uid,
-      username: username || email.split("@")[0],
+      username: email.split("@")[0],
       avatar: "",
       bio: "Hey there! I'm using StringWasp."
     });
@@ -120,22 +141,17 @@ async function registerUser(email, password, username) {
 }
 
 // ===== Logout =====
-function logoutUser() {
+function logout() {
   auth.signOut().then(() => showToast("👋 Logged out"));
 }
 
-// ===== UI Helpers =====
-function showMainUI(isLoggedIn) {
-  document.getElementById("authSection").style.display = isLoggedIn ? "none" : "block";
-  document.getElementById("mainApp").style.display = isLoggedIn ? "block" : "none";
-}
-
+// ===== Toast Helper =====
 function showToast(msg) {
-  const toast = document.createElement("div");
-  toast.className = "toast";
+  const toast = document.getElementById("toast");
+  if (!toast) return;
   toast.textContent = msg;
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
+  toast.style.display = "block";
+  setTimeout(() => (toast.style.display = "none"), 2500);
 }
 
 /* =========================================================
