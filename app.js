@@ -310,7 +310,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* ---------------- Globals ---------------- */
 let peerConnections      = {}; // { uid: RTCPeerConnection } DM
-let dataChannels         = {}; // { uid: RTCDataChannel }   DM
 let groupPeerConnections = {}; // { uid: RTCPeerConnection } Groups (used in Part 3B)
 let groupDataChannels    = {}; // { uid: RTCDataChannel }   Groups (used in Part 3B)
 
