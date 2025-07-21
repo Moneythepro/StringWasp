@@ -1,12 +1,12 @@
-// Firebase v8 Classic Initialization for StringWasp v2
+// Firebase v8 Classic Initialization for StringWasp
 const firebaseConfig = {
-  apiKey: "AIzaSyAcUxoMaCV7H6CdT53KlxmQlY3nqBiLHb8",
-  authDomain: "stringwaspv2.firebaseapp.com",
-  projectId: "stringwaspv2",
-  storageBucket: "stringwaspv2.firebasestorage.app",
-  messagingSenderId: "691978301483",
-  appId: "1:691978301483:web:a706a20155d7b2b506ba6e",
-  measurementId: "G-FM5KK7D695"
+  apiKey: "AIzaSyDLwskDnnfbdv5zLgnMqI4S0F0RP_BcbHk",
+  authDomain: "stringwasp-1cc9e.firebaseapp.com",
+  projectId: "stringwasp-1cc9e",
+  storageBucket: "stringwasp-1cc9e.appspot.com",
+  messagingSenderId: "221762879361",
+  appId: "1:221762879361:web:628316cfa25373a04f7280",
+  measurementId: "G-GN7VT7421B"
 };
 
 // Initialize Firebase (v8 syntax)
