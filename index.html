@@ -62,6 +62,7 @@
     <div id="chatTab" class="tab">
       <div class="chat-header">
         <input id="chatSearchInput" placeholder="Search chats..." oninput="searchChats(this.value)" />
+        <button onclick="searchChats()"><i data-lucide="search"></i></button>
         <button onclick="loadChatList()"><i data-lucide="refresh-ccw"></i></button>
       </div>
       <div id="chatList" style="overflow-y: auto; max-height: calc(100vh - 150px);"></div>
@@ -72,6 +73,7 @@
     <div id="friendsTab" class="tab">
       <h3>Your Friends</h3>
       <div id="friendsList"></div>
+      <button onclick="removeFriend(currentProfileUID)">Unfriend</button>
     </div>
 
     <!-- 🔔 Inbox Tab -->
@@ -113,73 +115,152 @@
       <input id="profileUsername" placeholder="Edit Username" />
       <button onclick="saveProfile()">Save</button>
       <button onclick="logout()">Logout</button>
+      <button onclick="contactSupport()">Contact Us</button>
     </div>
     
-    <!-- 💬 Thread View -->
-    <div id="threadView" class="thread-container tab" role="region" style="display:none;">
-      <header class="chat-header">
-        <button class="back-btn" onclick="switchTab('chatTab')" aria-label="Back">
-          <i data-lucide="arrow-left"></i>
-        </button>
-        <img id="chatProfilePic" class="header-avatar" src="default-avatar.png" alt="Profile Picture" />
-        <div id="threadHeaderInfo" class="chat-info" onclick="toggleChatOptions(event)">
-          <h3 id="threadWithName">Friend Name</h3>
-          <p id="chatStatus">last seen recently</p>
-        </div>
-        <div id="chatOptionsMenu" class="chat-options-horizontal" role="menu">
-          <div class="profile-section">
-            <img id="threadProfilePicLarge" class="profile-pic-large" src="default-avatar.png" alt="Profile Picture" />
-            <div class="profile-info">
-              <div id="threadProfileFullName" class="profile-name">Full Name</div>
-              <div id="threadProfileUsername" class="profile-username">@username</div>
-              <div id="threadProfileGender" class="profile-gender">Gender: Not set</div>
-            </div>
-          </div>
-          <hr />
-          <span onclick="viewMedia()"><i data-lucide="image"></i> View Media</span>
-          <span onclick="exportChat()"><i data-lucide="file-text"></i> Export Chat</span>
-          <span onclick="blockUser()"><i data-lucide="user-x"></i> Block</span>
-          <span onclick="deleteChat()"><i data-lucide="trash-2"></i> Delete Chat</span>
-        </div>
-      </header>
-      <div class="thread-main">
-        <div class="chat-scroll-area" id="threadMessages" role="log" aria-live="polite"></div>
-        <div id="threadTypingStatus" class="typing-indicator" aria-hidden="true">
-          <span></span><span></span><span></span>
+<!-- 💬 Thread View -->
+<div id="threadView" class="thread-container tab" role="region" style="display:none;">
+  <header class="chat-header">
+    <button class="back-btn" onclick="switchTab('chatTab')" aria-label="Back">
+      <i data-lucide="arrow-left"></i>
+    </button>
+
+    <img id="chatProfilePic" class="header-avatar" src="default-avatar.png" alt="Profile Picture" />
+    
+    <div id="threadHeaderInfo" class="chat-info" onclick="toggleChatOptions(event)">
+      <h3 id="threadWithName">Friend Name</h3>
+      <p id="chatStatus">last seen recently</p>
+    </div>
+
+    <!-- 🔽 Hidden dropdown -->
+    <div id="chatOptionsMenu" class="chat-options-horizontal" role="menu">
+      <div class="profile-section">
+        <img id="profilePicLarge" class="profile-pic-large" src="default-avatar.png" alt="Profile Picture" />
+        <div class="profile-info">
+          <div id="profileFullName" class="profile-name">Full Name</div>
+          <div id="profileUsername" class="profile-username">@username</div>
+          <div id="profileGender" class="profile-gender">Gender: Not set</div>
         </div>
       </div>
-      <footer class="chat-input-bar">
-        <div class="left-actions">
-          <button class="icon-btn" aria-label="Reply"><i data-lucide="message-square"></i></button>
-          <button class="icon-btn" onclick="startVoiceInput()" aria-label="Voice Message">
-            <i data-lucide="mic"></i>
-          </button>
-        </div>
-        <div class="input-wrapper">
-          <input id="threadInput" type="text" placeholder="Type a message…" autocomplete="off" enterkeyhint="send" aria-label="Message input" />
-          <button class="icon-btn emoji-btn" id="emojiToggleBtn" aria-label="Emoji"><i data-lucide="smile"></i></button>
-        </div>
-      </footer>
+      <hr />
+      <span onclick="viewMedia()">
+        <i data-lucide="image"></i>
+        <span>View Media</span>
+      </span>
+      <span onclick="exportChat()">
+        <i data-lucide="file-text"></i>
+        <span>Export Chat</span>
+      </span>
+      <span onclick="blockUser()">
+        <i data-lucide="user-x"></i>
+        <span>Block</span>
+      </span>
+      <span onclick="deleteChat()">
+        <i data-lucide="trash-2"></i>
+        <span>Delete Chat</span>
+      </span>
     </div>
+  </header>
+
+  <!-- 🧾 Scrollable Message Area -->
+  <div class="thread-main">
+    <div class="chat-scroll-area" id="threadMessages" role="log" aria-live="polite"></div>
+    <div id="threadTypingStatus" class="typing-indicator" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <!-- ✅ Chat Input Bar (Fixed or Absolute) -->
+<footer class="chat-input-bar">
+  <div class="left-actions">
+    <button class="icon-btn" onclick="openReplyModal()" aria-label="Reply">
+      <i data-lucide="message-square"></i>
+    </button>
+    <button class="icon-btn" onclick="startVoiceInput()" aria-label="Voice Message">
+      <i data-lucide="mic"></i>
+    </button>
+  </div>
+
+  <div class="input-wrapper">
+    <input
+      id="threadInput"
+      type="text"
+      placeholder="Type a message…"
+      autocomplete="off"
+      autocapitalize="sentences"
+      enterkeyhint="send"
+      aria-label="Message input"
+    />
+    <button class="icon-btn emoji-btn" id="emojiToggleBtn" aria-label="Emoji">
+      <i data-lucide="smile"></i>
+    </button>
+  </div>
+</footer>
+</div>
+
+<!-- ✅ Message Options Modal -->
+<div id="messageOptionsModal" class="message-options-modal hidden" onclick="closeOptionsModal(event)">
+  <div class="modal-inner" onclick="event.stopPropagation()">
+    <div class="option" onclick="editMessage()"><i data-lucide="edit-3"></i> Edit Message</div>
+    <div class="option" onclick="deleteForMe()"><i data-lucide="trash-2"></i> Delete for Me</div>
+    <div class="option" onclick="deleteForEveryone()"><i data-lucide="slash"></i> Delete for Everyone</div>
+    <div class="option cancel" onclick="closeOptionsModal()"><i data-lucide="x"></i> Cancel</div>
+  </div>
+</div>
 
     <!-- Toast -->
     <div id="chatToast" class="chat-toast" style="display: none;"></div>
 
-    <!-- Badge Legend Modal -->
-    <div id="badgeLegendModal" class="badge-legend-modal hidden">
-      <div class="badge-legend-content">
-        <h3>Badge Levels</h3>
-        <ul>
-          <li><i data-lucide="crown" class="dev-badge supreme"></i> Supreme Developer – <strong>moneythepro</strong></li>
-          <li><i data-lucide="badge-check" class="dev-badge gold"></i> Gold Verified – Trusted elite users</li>
-          <li><i data-lucide="badge-check" class="dev-badge silver"></i> Silver Verified – Regular verified members</li>
-          <li><i data-lucide="badge-check" class="dev-badge bronze"></i> Bronze Verified – Community contributors</li>
-        </ul>
-        <button id="closeBadgeLegend" class="close-badge-legend">Close</button>
+    <!-- Edit Modal -->
+    <div id="editMessageModal" class="edit-modal" style="display: none;">
+      <div class="edit-header"><i data-lucide="edit-3"></i> Edit Message</div>
+      <textarea id="editMessageInput" rows="2" placeholder="Edit your message"></textarea>
+      <div class="edit-actions">
+        <i data-lucide="check" onclick="saveEditedMessage()"></i>
+        <i data-lucide="x" onclick="closeEditModal()"></i>
+      </div>
+    </div>
+
+    <!-- Crop Modal -->
+    <div id="cropModal" class="modal" style="display:none;">
+      <div class="modal-content" style="max-width: 90%; padding: 10px;">
+        <h3 style="margin-bottom: 10px;">Crop Profile Picture</h3>
+        <div style="max-height: 300px; overflow: auto; text-align: center;">
+          <img id="cropImage" alt="Crop Preview" style="max-width: 100%; border-radius: 12px;" />
+        </div>
+        <div class="btn-group" style="margin-top: 12px; display: flex; gap: 10px; justify-content: center;">
+          <button onclick="confirmCrop()">Crop & Upload</button>
+          <button onclick="closeCropModal()">Cancel</button>
+        </div>
       </div>
     </div>
   </div>
 
+<!-- ================= Badge Legend Modal ================= -->
+<div id="badgeLegendModal" class="badge-legend-modal hidden">
+  <div class="badge-legend-content">
+    <h3>Badge Levels</h3>
+    <ul>
+      <li>
+        <i data-lucide="crown" class="dev-badge supreme"></i>
+        <span>Supreme Developer – Reserved for <strong>moneythepro</strong></span>
+      </li>
+      <li>
+        <i data-lucide="badge-check" class="dev-badge gold"></i>
+        <span>Gold Verified – Trusted elite users</span>
+      </li>
+      <li>
+        <i data-lucide="badge-check" class="dev-badge silver"></i>
+        <span>Silver Verified – Regular verified members</span>
+      </li>
+      <li>
+        <i data-lucide="badge-check" class="dev-badge bronze"></i>
+        <span>Bronze Verified – Community contributors</span>
+      </li>
+    </ul>
+    <button id="closeBadgeLegend" class="close-badge-legend">Close</button>
+  </div>
+</div>
   <div id="toast" class="toast">Coming soon...</div>
   
   <!-- 🔥 Firebase SDK -->
@@ -192,13 +273,15 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/webtorrent/webtorrent.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- 🔧 App Logic -->
   <script src="firebase.js"></script>
   <script src="app.js"></script>
-  <script src="p2p.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
