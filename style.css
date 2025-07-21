@@ -799,32 +799,7 @@ button.icon-btn:hover{border-color:var(--hack-green);}
 /* =========================================================
    MODALS (Generic)
    ======================================================= */
-.modal,
-.message-options-modal,
-.badge-legend-modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.8);
-  z-index:1000;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.modal.hidden,
-.message-options-modal.hidden,
-.badge-legend-modal.hidden{display:none;}
-.modal-content,
-.message-options-modal .modal-inner,
-.badge-legend-modal .badge-legend-content{
-  background:var(--hack-bg-card);
-  border:1px solid var(--hack-green);
-  padding:var(--space-lg);
-  max-width:90%;
-  max-height:80%;
-  overflow-y:auto;
-  border-radius:var(--radius-md);
-  box-shadow:0 0 24px rgba(10,255,157,.3);
-}
+
 .message-options-modal .option{
   display:flex;
   align-items:center;
@@ -838,11 +813,6 @@ button.icon-btn:hover{border-color:var(--hack-green);}
 .message-options-modal .option:hover{background:var(--hack-green-20);}
 .message-options-modal .option.cancel{color:var(--hack-red);}
 
-/* Badge legend colors */
-.dev-badge.supreme{color:var(--hack-yellow);}
-.dev-badge.gold{color:var(--hack-yellow);}
-.dev-badge.silver{color:#d0d0d0;}
-.dev-badge.bronze{color:#c47c33;}
 
 /* =========================================================
    TOAST
@@ -870,18 +840,6 @@ button.icon-btn:hover{border-color:var(--hack-green);}
   opacity:1;
 }
 
-/* =========================================================
-   BADGES (inline)
-   ======================================================= */
-.dev-badge{
-  width:16px;
-  height:16px;
-  vertical-align:middle;
-  color:var(--hack-green);
-}
-.badge.owner-badge{color:var(--hack-yellow);}
-.badge.admin-badge{color:var(--hack-cyan);}
-.badge{font-size:.75rem;padding:0 4px;border-radius:4px;}
 
 /* =========================================================
    RESPONSIVE
@@ -938,3 +896,168 @@ button.icon-btn:hover{border-color:var(--hack-green);}
 }
 .loading{padding:var(--space-md);text-align:center;color:var(--hack-cyan);}
 .error{padding:var(--space-md);text-align:center;color:var(--hack-red);}
+
+/* ==========================================================
+ * BADGE STYLES (Levels + Developer Style) — Enhanced Visuals
+ * ========================================================== */
+.dev-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  width: 14px;
+  height: 14px;
+  margin-left: 4px;
+  stroke-width: 2px;
+  color: #1da1f2;
+  transition: transform 0.25s ease, color 0.25s ease, filter 0.3s ease;
+  animation: badgePulse 3s ease-in-out infinite;
+}
+
+/* Hover effect */
+.dev-badge:hover {
+  transform: scale(1.2);
+  color: #0d8ddb;
+  filter: brightness(1.3);
+}
+
+/* =================== Badge Levels =================== */
+
+/* Supreme Developer */
+.dev-badge.supreme {
+  color: #ff5722;
+  filter: drop-shadow(0 0 6px rgba(255, 87, 34, 0.9));
+  animation: shine 2.5s linear infinite, badgePulse 4s ease-in-out infinite;
+}
+
+/* Gold */
+.dev-badge.gold {
+  color: #ffb300;
+  filter: drop-shadow(0 0 4px rgba(255, 179, 0, 0.8));
+  animation: subtleShimmer 5s ease-in-out infinite, glowGold 3s ease-in-out infinite;
+}
+
+/* Silver */
+.dev-badge.silver {
+  color: #c0c0c0;
+  filter: drop-shadow(0 0 3px rgba(192, 192, 192, 0.7));
+  animation: subtleShimmer 5s ease-in-out infinite;
+}
+
+/* Bronze */
+.dev-badge.bronze {
+  color: #cd7f32;
+  filter: drop-shadow(0 0 3px rgba(205, 127, 50, 0.7));
+  animation: subtleShimmer 5s ease-in-out infinite;
+}
+
+/* =================== Placement =================== */
+.search-username .dev-badge,
+.username-display .dev-badge,
+.chat-username .dev-badge,
+.message-username .dev-badge {
+  margin-left: 6px;
+  width: 14px;
+  height: 14px;
+}
+
+/* =================== Author Styling =================== */
+.msg-author {
+  font-size: var(--meta-font-size);
+  line-height: 1.1;
+  color: var(--meta-color);
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+.message-bubble.right .msg-author,
+.message-bubble.from-self .msg-author {
+  color: var(--meta-color-on-self);
+  justify-content: flex-end;
+}
+
+/* =================== Badge Legend Modal =================== */
+.badge-legend-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.badge-legend-modal.hidden {
+  display: none;
+}
+.badge-legend-content {
+  background: #fff;
+  color: #333;
+  padding: 20px 24px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  max-width: 320px;
+  text-align: left;
+  animation: scaleIn 0.25s ease forwards;
+}
+.badge-legend-content h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 600;
+}
+.badge-legend-content ul {
+  padding: 0;
+  margin: 0 0 16px;
+  list-style: none;
+}
+.badge-legend-content li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  font-size: 15px;
+}
+.close-badge-legend {
+  background: #25d366;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.close-badge-legend:hover {
+  background: #1ebe5d;
+}
+
+/* =================== Animations =================== */
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.08); opacity: 0.85; }
+}
+
+@keyframes shine {
+  0% { filter: drop-shadow(0 0 4px #ff5722); }
+  50% { filter: drop-shadow(0 0 10px #ffa270); }
+  100% { filter: drop-shadow(0 0 4px #ff5722); }
+}
+
+@keyframes subtleShimmer {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+@keyframes glowGold {
+  0%, 100% { filter: drop-shadow(0 0 4px #ffb300); }
+  50% { filter: drop-shadow(0 0 8px #ffe066); }
+}
