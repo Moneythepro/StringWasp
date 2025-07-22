@@ -884,3 +884,44 @@ img,
   font-size: 13px;
   display: none;
 }
+
+.avatar-preview-updated {
+  animation: avatarFlash 0.5s ease-out;
+}
+
+@keyframes avatarFlash {
+  from {
+    opacity: 0.2;
+    transform: scale(0.9);
+    box-shadow: 0 0 6px #00ff9c;
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 12px #00ff9c88;
+  }
+}
+
+#profilePicPreview {
+  width: 96px;
+  height: 96px;
+  margin: 16px auto 8px;
+  display: block;
+  border-radius: 50%;
+  border: 1px solid #00ff9c55;
+  object-fit: cover;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 0 4px #00ff9c33;
+}
+
+#profilePicPreview:hover {
+  transform: scale(1.08);
+  animation: avatarPulse 1.2s infinite ease-in-out;
+  box-shadow: 0 0 10px #00ff9caa;
+}
+
+@keyframes avatarPulse {
+  0%   { box-shadow: 0 0 4px #00ff9c44; }
+  50%  { box-shadow: 0 0 14px #00ff9caa; }
+  100% { box-shadow: 0 0 4px #00ff9c44; }
+}
