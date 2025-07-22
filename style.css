@@ -632,7 +632,6 @@ body.dark .chat-info p {
   box-sizing: border-box;
 }
 
-/* 🎤 Left action buttons */
 .chat-input-bar .left-actions {
   display: flex;
   gap: 8px;
@@ -661,20 +660,20 @@ body.dark .chat-info p {
 /* 💬 Input container */
 .chat-input-bar .input-container {
   flex: 1;
-  height: 44px;
+  height: 44px; /* Increased height */
   position: relative;
   display: flex;
   align-items: center;
   background: #fff0f5;
   border: 2px solid #ffb6c1;
   border-radius: 999px;
-  padding: 0 46px 0 14px; /* 📏 tweaked right padding to avoid emoji collision */
+  padding: 0 46px 0 14px; /* right padding reduced to match emoji */
   box-shadow: 0 2px 6px rgba(255, 182, 193, 0.25);
   overflow: visible;
   box-sizing: border-box;
 }
 
-/* 📝 Real input */
+/* ✏️ Input field */
 .chat-input-bar .input-container input {
   width: 100%;
   height: 100%;
@@ -683,7 +682,7 @@ body.dark .chat-info p {
   font-size: 15px;
   color: #6a006a;
   outline: none;
-  padding: 10px 0;
+  padding: 10px 0; /* ensures touch space */
   margin: 0;
   line-height: 1.3;
   pointer-events: auto;
@@ -696,31 +695,10 @@ body.dark .chat-info p {
   opacity: 0.6;
 }
 
-/* 🎭 Fake input (non-interactive placeholder when input not active) */
-.chat-input-bar .fake-input {
-  flex: 1;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  background: #fff0f5;
-  border: 2px solid #ffb6c1;
-  border-radius: 999px;
-  padding: 0 46px 0 14px;
-  font-size: 15px;
-  color: #ad1457;
-  opacity: 0.6;
-  box-shadow: 0 2px 6px rgba(255, 182, 193, 0.25);
-  box-sizing: border-box;
-  pointer-events: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* 😀 Emoji button */
+/* 😃 Emoji button */
 .chat-input-bar .emoji-btn {
   position: absolute;
-  right: 6px;
+  right: 6px; /* pulled in a bit to not touch edge */
   top: 50%;
   transform: translateY(-50%);
   width: 40px;
@@ -743,7 +721,7 @@ body.dark .chat-info p {
   pointer-events: none;
 }
 
-/* 🔧 Icon alignment */
+/* 🎨 Icon sizing */
 .chat-input-bar i[data-lucide] {
   width: 20px;
   height: 20px;
