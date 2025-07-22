@@ -3328,19 +3328,71 @@ function copyRoomId() {
   copyToClipboard(currentRoom);
   alert("Group ID copied!");
 }
-/* ---------------------------------------------------------
- * Developer / verified badge tagging
- * Call as usernameWithBadge(uid, name) OR usernameWithBadge(nameOnly)
- * --------------------------------------------------------- */
-const DEV_UIDS = [
-  // "yourFirebaseUIDHere" // Add your actual Firebase UID if needed
-];
 
+
+/* ---------------------------------------------------------
+ * Dynamic Multi-Level Badge System with Cache + Legend
+ * --------------------------------------------------------- */
+
+// Cache expiration (1 hour)
+const BADGE_CACHE_KEY = "verified_badges_cache";
+const BADGE_CACHE_TIME = 3600000; // 1 hour in ms
+let VERIFIED_BADGES = {
+  developer: ["moneythepro"],
+  gold: [],
+  silver: [],
+  bronze: []
+};
+
+// Load verified badge data (cached or from JSON)
+async function loadVerifiedBadges() {
+  const now = Date.now();
+  try {
+    // 1. Check cache
+    const cached = localStorage.getItem(BADGE_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (now - parsed.timestamp < BADGE_CACHE_TIME) {
+        VERIFIED_BADGES = parsed.data;
+        
+        decorateUsernamesWithBadges();
+        return;
+      }
+    }
+
+    // 2. Fetch from verified.json (cache-busting)
+    const res = await fetch("./verified.json?cb=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to fetch verified.json");
+    const data = await res.json();
+
+    // 3. Normalize data
+    VERIFIED_BADGES = {
+      developer: (data.developer || []).map(u => u.toLowerCase()),
+      gold: (data.gold || []).map(u => u.toLowerCase()),
+      silver: (data.silver || []).map(u => u.toLowerCase()),
+      bronze: (data.bronze || []).map(u => u.toLowerCase())
+    };
+
+    // 4. Save to cache
+    localStorage.setItem(BADGE_CACHE_KEY, JSON.stringify({
+      timestamp: now,
+      data: VERIFIED_BADGES
+    }));
+
+    decorateUsernamesWithBadges();
+  } catch (err) {
+    console.warn("⚠️ Could not load verified.json:", err);
+  }
+}
+document.addEventListener("DOMContentLoaded", loadVerifiedBadges);
+
+/**
+ * Get username with badge HTML
+ */
 function usernameWithBadge(uidOrName, maybeName) {
   let uid = uidOrName;
   let name = maybeName;
 
-  // One-argument form: usernameWithBadge(nameOnly)
   if (typeof maybeName === "undefined") {
     name = uidOrName;
     uid = "";
@@ -3348,56 +3400,137 @@ function usernameWithBadge(uidOrName, maybeName) {
 
   const rawName = name || "User";
   const safe = escapeHtml(rawName);
-
+  const lowerName = rawName.toLowerCase();
   const lowerUid = (uid || "").toLowerCase();
-  const lowerName = (rawName || "").toLowerCase();
 
-  const isDev =
-    lowerName === "moneythepro" ||
-    lowerUid === "moneythepro" ||
-    DEV_UIDS.includes(uid);
+  const badgeType = getBadgeLevel(lowerName, lowerUid);
+  if (!badgeType) return safe;
 
-  if (isDev) {
-    return `${safe} <i data-lucide="badge-check" class="dev-badge" aria-label="Verified"></i>`;
-  }
-  return safe;
+  return `${safe} ${getBadgeIcon(badgeType)}`;
 }
 
-// ✅ Add Developer Badge Everywhere
-function applyDeveloperBadge(usernameElement, username) {
-  if (!usernameElement || !username) return;
-  if (username.trim().toLowerCase() === "moneythepro") {
-    if (!usernameElement.querySelector(".dev-badge")) {
-      const badge = document.createElement("i");
-      badge.setAttribute("data-lucide", "badge-check");
-      badge.className = "dev-badge";
-      badge.style.marginLeft = "4px";
-      usernameElement.appendChild(badge);
-      if (typeof lucide !== "undefined") lucide.createIcons();
-    }
+/**
+ * Determine badge level
+ */
+function getBadgeLevel(name, uid) {
+  if (VERIFIED_BADGES.developer.includes(name) || VERIFIED_BADGES.developer.includes(uid))
+    return "developer";
+  if (VERIFIED_BADGES.gold.includes(name) || VERIFIED_BADGES.gold.includes(uid))
+    return "gold";
+  if (VERIFIED_BADGES.silver.includes(name) || VERIFIED_BADGES.silver.includes(uid))
+    return "silver";
+  if (VERIFIED_BADGES.bronze.includes(name) || VERIFIED_BADGES.bronze.includes(uid))
+    return "bronze";
+  return null;
+}
+
+/**
+ * Return badge icon HTML based on level
+ */
+function getBadgeIcon(level) {
+  switch (level) {
+    case "developer":
+      return `<i data-lucide="crown" class="dev-badge supreme" aria-label="Developer"></i>`;
+    case "gold":
+      return `<i data-lucide="badge-check" class="dev-badge gold" aria-label="Gold Verified"></i>`;
+    case "silver":
+      return `<i data-lucide="badge-check" class="dev-badge silver" aria-label="Silver Verified"></i>`;
+    case "bronze":
+      return `<i data-lucide="badge-check" class="dev-badge bronze" aria-label="Bronze Verified"></i>`;
+    default:
+      return "";
   }
 }
 
-// ✅ Decorate usernames globally
+/**
+ * Automatically decorate usernames
+ */
 function decorateUsernamesWithBadges() {
   document.querySelectorAll(
     ".search-username, .username-display, .chat-username, .message-username"
   ).forEach(el => {
-    const raw = el.textContent.replace("@", "").trim();
-    if (raw.toLowerCase() === "moneythepro") {
-      applyDeveloperBadge(el, raw);
+    const raw = el.textContent.replace("@", "").trim().toLowerCase();
+    const badgeLevel = getBadgeLevel(raw, raw);
+    if (badgeLevel && !el.querySelector(".dev-badge")) {
+      el.insertAdjacentHTML("beforeend", getBadgeIcon(badgeLevel));
+      if (typeof lucide !== "undefined") lucide.createIcons();
     }
   });
 }
 
-// Auto-run badge decoration after DOM updates
-document.addEventListener("DOMContentLoaded", decorateUsernamesWithBadges);
-
-// Observe DOM changes to auto-add badges
+// Observe DOM for dynamic updates
 const badgeObserver = new MutationObserver(() => {
   requestAnimationFrame(decorateUsernamesWithBadges);
 });
 badgeObserver.observe(document.body, { childList: true, subtree: true });
+
+/* ---------------------------------------------------------
+ * Badge Legend Modal
+ * --------------------------------------------------------- */
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("badgeLegendModal");
+  const closeBtn = document.getElementById("closeBadgeLegend");
+
+  document.body.addEventListener("click", (e) => {
+    if (e.target.classList.contains("dev-badge")) {
+      modal?.classList.remove("hidden");
+    }
+  });
+
+  closeBtn?.addEventListener("click", () => modal?.classList.add("hidden"));
+  modal?.addEventListener("click", (e) => {
+    if (e.target === modal) modal?.classList.add("hidden");
+  });
+});
+
+/* ---------------------------------------------------------
+ * Service Worker Update Detection
+ * --------------------------------------------------------- */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js')
+    .then((reg) => {
+      console.log("Service Worker registered:", reg);
+
+      // Listen for updates
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log("New version available!");
+              showUpdateToast();
+            }
+          });
+        }
+      });
+    })
+    .catch((err) => console.error("SW registration failed:", err));
+}
+
+// Simple toast notification for updates
+function showUpdateToast() {
+  const toast = document.createElement("div");
+  toast.textContent = "New update available – click to refresh";
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #25d366;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    z-index: 9999;
+    font-family: sans-serif;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  `;
+  toast.onclick = () => {
+    caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    window.location.reload(true);
+  };
+  document.body.appendChild(toast);
+}
 
 // ✅ Group controls
 function transferGroupOwnership(newOwnerId) {
