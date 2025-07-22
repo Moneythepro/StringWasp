@@ -55,6 +55,10 @@ function switchTab(tabId) {
   document.activeElement?.blur?.();
 }
 
+setTimeout(() => {
+  document.querySelector('.terminal-loader').style.display = 'none';
+}, 7000); // hide after 7 sec
+
 // ===== Login/Register =====
 function login() {
   const email = document.getElementById("email")?.value.trim();
