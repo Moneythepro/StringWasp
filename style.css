@@ -1,374 +1,942 @@
-/* 🌸 BASE VARIABLES */
-:root {
-  --bg: #ffe6f0;
-  --bg-alt: #fff0f5;
-  --fg: #4b004b;
-  --muted: #a067a1;
-  --accent: #ff69b4;
-  --accent-dark: #d9409f;
-  --border: #f5a5c3;
-  --radius: 16px;
-  --font: 'Comic Sans MS', cursive, sans-serif;
-  --glow: 0 0 8px rgba(255, 105, 180, 0.3);
-}
-
+/* ===== BARBIE BASE RESET ===== */
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+  font-family: "Comic Sans MS", cursive, sans-serif;
 }
 
 body {
-  background: var(--bg);
-  color: var(--fg);
-  font-family: var(--font);
-  overflow: hidden;
+  background: linear-gradient(to bottom right, #ffe6f0, #ffc0cb);
+  color: #6a006a;
+  font-size: 16px;
 }
 
-/* 🌸 LOGIN / REGISTER / INPUTS */
-#loginPage, #usernameDialog {
-  padding: 20px;
-  text-align: center;
+/* Barbie Dark Mode */
+body.dark {
+  background: linear-gradient(to bottom right, #2a003f, #4a004f);
+  color: #ffe6f0;
 }
 
-input, textarea, select {
-  background: #fff;
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
+/* ===== Barbie Inputs, Buttons, Textareas ===== */
+input, textarea, select, button {
+  font-family: "Comic Sans MS", cursive;
+  font-size: 15px;
+  border: 2px solid #ff69b4;
+  outline: none;
   padding: 12px;
-  width: 100%;
-  margin: 8px 0;
-  font-family: var(--font);
-  font-size: 14px;
-  color: var(--fg);
+  border-radius: 12px;
+  background: #fff0f5;
+  box-shadow: 0 2px 5px rgba(255, 105, 180, 0.2);
+  transition: all 0.3s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: #ff1493;
+  box-shadow: 0 0 8px #ff69b4;
 }
 
 button {
-  background: var(--accent);
+  background: linear-gradient(to right, #ff69b4, #ffb6c1);
   color: white;
-  border: none;
-  padding: 10px 16px;
-  border-radius: var(--radius);
-  margin-top: 10px;
-  cursor: pointer;
   font-weight: bold;
-  box-shadow: var(--glow);
-  transition: background 0.3s ease;
+  cursor: pointer;
 }
-
 button:hover {
-  background: var(--accent-dark);
+  background: linear-gradient(to right, #ff1493, #ff69b4);
 }
 
-/* 🌸 HEADER & TAB BAR */
+/* Dark mode inputs */
+body.dark input,
+body.dark textarea,
+body.dark select {
+  background: #4a004f;
+  border-color: #ff8dd3;
+  color: #ffd9ec;
+}
+
+/* ===== BARBIE HEADER ===== */
 .header {
-  background: var(--bg-alt);
-  padding: 12px;
+  padding: 16px;
+  background: linear-gradient(to right, #ff69b4, #ffb6c1);
+  color: white;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: var(--glow);
+  font-weight: bold;
+  text-shadow: 1px 1px 2px #c2185b;
+  box-shadow: 0 4px 10px rgba(255, 105, 180, 0.4);
+  border-bottom: 2px solid #ff1493;
 }
 
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  background: #ff1493;
+  border-radius: 50%;
+  box-shadow: 0 0 4px #ff69b4;
+}
+
+/* ===== BARBIE TABS BAR ===== */
 .tabs {
   position: fixed;
   bottom: 0;
-  background: var(--bg-alt);
   width: 100%;
+  background: #fff0f5;
+  border-top: 2px solid #ff69b4;
   display: flex;
-  justify-content: space-around;
-  border-top: 2px solid var(--border);
-  padding: 6px 0;
-  z-index: 100;
+  z-index: 10;
+  box-shadow: 0 -2px 10px rgba(255, 105, 180, 0.2);
 }
 
 .tabs button {
-  background: none;
+  flex: 1;
   border: none;
-  color: var(--fg);
-  font-size: 13px;
+  background: none;
+  padding: 10px 0;
+  font-size: 14px;
+  text-align: center;
+  color: #c2185b;
+  transition: all 0.3s ease;
+}
+
+.tabs button i {
+  display: block;
+  font-size: 22px;
+  margin-bottom: 4px;
+  color: #e91e63;
+}
+
+.tabs button.active {
+  color: #ff1493;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px #f8bbd0;
+}
+
+body.dark .tabs {
+  background: #4a004f;
+  border-color: #880e4f;
+}
+
+body.dark .tabs button {
+  color: #f8bbd0;
+}
+
+body.dark .tabs button.active {
+  color: #ff80ab;
+}
+
+/* ===== BARBIE FLOATING ACTION BUTTON ===== */
+.floating-btn {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  background: linear-gradient(to bottom, #ff69b4, #ff1493);
+  color: white;
+  font-size: 28px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  box-shadow: 0 6px 12px rgba(255, 105, 180, 0.5);
+  z-index: 20;
+  transition: transform 0.3s ease;
+}
+
+.floating-btn:hover {
+  background: linear-gradient(to bottom, #ff1493, #c2185b);
+  transform: scale(1.1);
+}
+
+/* ===== BARBIE CHAT & INBOX CARDS ===== */
+.chat-card, .inbox-card {
+  background: linear-gradient(135deg, #fff0f5, #ffe4ec);
+  border-radius: 16px;
+  padding: 12px;
+  margin: 10px 14px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  box-shadow: 0 3px 8px rgba(255, 105, 180, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.chat-card:hover, .inbox-card:hover {
+  transform: translateY(-2px);
+}
+
+.chat-card img, .inbox-card img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ff69b4;
+  box-shadow: 0 0 6px #ffc0cb;
+}
+
+.chat-card .details {
   flex: 1;
 }
 
-.tabs i {
-  color: var(--accent);
-  display: block;
-  font-size: 18px;
+.chat-card .name {
+  font-weight: bold;
+  font-size: 16px;
+  color: #c2185b;
 }
 
-/* 🌸 AVATARS (PFP) */
-img.avatar, img[class*="avatar"], img[id*="Pic"] {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--accent);
-  box-shadow: 0 0 6px rgba(255, 192, 203, 0.6);
+.chat-card .last-message {
+  font-size: 13px;
+  color: #ad1457;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* 🌸 CHAT THREAD LAYOUT */
-.thread-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background: var(--bg);
+.badge {
+  background: #ff69b4;
+  color: white;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  margin-left: 8px;
+  font-weight: bold;
+  box-shadow: 0 0 4px #ffb6c1;
 }
 
-.chat-header {
+body.dark .chat-card,
+body.dark .inbox-card {
+  background: linear-gradient(145deg, #4a004f, #6a006a);
+  border: 1px solid #ff80ab;
+}
+
+/* ===== BARBIE SEARCH RESULTS ===== */
+.search-result {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: var(--bg-alt);
-  border-bottom: 2px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  background: linear-gradient(to right, #ffe6f0, #ffccdc);
+  padding: 14px;
+  border-radius: 16px;
+  margin: 10px 14px;
+  box-shadow: 0 3px 6px rgba(255, 105, 180, 0.15);
 }
 
-.back-btn {
-  background: none;
+.search-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  margin-right: 14px;
+  object-fit: cover;
+  border: 2px solid #ff69b4;
+}
+
+.search-info {
+  flex: 1;
+}
+
+.search-info .username {
+  font-weight: bold;
+  font-size: 14.5px;
+  color: #c2185b;
+}
+
+.search-info .bio {
+  font-size: 12px;
+  color: #ad1457;
+}
+
+.search-result button {
+  background: linear-gradient(to right, #ff69b4, #ff1493);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 13px;
   border: none;
-  font-size: 20px;
-  color: var(--accent-dark);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(255, 105, 180, 0.3);
+}
+
+.search-result button:hover {
+  background: linear-gradient(to right, #ff1493, #c2185b);
+}
+
+body.dark .search-result {
+  background: #4a004f;
+  border: 1px solid #880e4f;
+}
+
+body.dark .search-info .bio {
+  color: #f8bbd0;
+}
+
+/* ===== BARBIE FRIEND CARD ===== */
+.friend-card {
+  display: flex;
+  align-items: center;
+  padding: 14px;
+  background: linear-gradient(135deg, #ffe6f0, #ffc1e3);
+  border-radius: 16px;
+  margin: 10px 14px;
+  box-shadow: 0 3px 10px rgba(255, 105, 180, 0.2);
+  gap: 14px;
+  transition: transform 0.2s ease;
   cursor: pointer;
 }
 
+.friend-card:hover {
+  transform: scale(1.02);
+}
+
+.friend-card img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ff69b4;
+  box-shadow: 0 0 6px #ffc0cb;
+}
+
+.friend-info {
+  flex: 1;
+}
+
+.friend-info .name {
+  font-weight: bold;
+  font-size: 15.5px;
+  color: #c2185b;
+}
+
+.friend-info .bio {
+  font-size: 13px;
+  color: #ad1457;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== BARBIE STATUS DOT ===== */
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #d1a0b2;
+  box-shadow: 0 0 6px #f8bbd0;
+}
+
+.status-dot.online {
+  background: #ff69b4;
+  box-shadow: 0 0 6px #ff1493;
+}
+
+/* ===== BARBIE CHAT START BUTTON ===== */
+.chat-start-btn {
+  background: linear-gradient(to right, #ff69b4, #ff1493);
+  color: white;
+  padding: 7px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(255, 105, 180, 0.25);
+  font-weight: bold;
+  transition: background 0.3s ease;
+}
+
+.chat-start-btn:hover {
+  background: linear-gradient(to right, #ff1493, #c2185b);
+}
+
+body.dark .friend-card {
+  background: linear-gradient(135deg, #3a003f, #5a005f);
+  border: 1px solid #ff80ab;
+}
+
+body.dark .friend-info .bio {
+  color: #f8bbd0;
+}
+
+body.dark .status-dot {
+  background: #bb86fc;
+}
+
+body.dark .status-dot.online {
+  background: #ff80ab;
+}
+
+/* ===== BARBIE THREAD VIEW ===== */
+html, body, #threadView {
+  height: 100%;
+}
+
+#threadView.thread-container {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(to bottom, #fff0f5, #ffe6f0);
+  z-index: 99;
+  height: 100dvh;
+}
+
+/* ===== BARBIE CHAT HEADER ===== */
+.chat-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(to right, #ff69b4, #ffc0cb);
+  padding: 0 12px;
+  border-bottom: 2px solid #ff1493;
+  box-shadow: 0 4px 8px rgba(255, 105, 180, 0.2);
+}
+
+.chat-header img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin: 0 12px;
+  object-fit: cover;
+  border: 2px solid #ff1493;
+  box-shadow: 0 0 6px #ffc0cb;
+}
+
+.chat-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .chat-info h3 {
-  font-size: 14px;
-  color: var(--fg);
+  font-size: 16px;
+  font-weight: bold;
+  color: #c2185b;
   margin: 0;
 }
 
 .chat-info p {
-  font-size: 11px;
-  color: var(--muted);
+  font-size: 12px;
+  color: #ad1457;
+  margin: 0;
 }
 
-/* 🌸 CHAT AREA */
-.thread-main {
-  flex: 1;
+/* Back/Menu Buttons */
+.back-btn,
+.menu-btn {
+  background: transparent;
+  border: none;
+  padding: 8px;
+  margin: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  z-index: 51;
+}
+
+.back-btn i,
+.menu-btn i {
+  stroke: #c2185b;
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+}
+
+/* ===== BARBIE CHAT SCROLL AREA ===== */
+.chat-scroll-area {
+  position: absolute;
+  top: 60px;
+  bottom: 60px;
+  left: 0;
+  right: 0;
   overflow-y: auto;
-  padding: 10px;
+  -webkit-overflow-scrolling: touch;
+  background: #fff0f5;
+  padding: 0 10px 10px;
 }
 
+/* Dark Mode Glam ✨ */
+body.dark #threadView .chat-header {
+  background: linear-gradient(to right, #3a003f, #5a005f);
+  border-bottom: 1px solid #880e4f;
+}
+
+body.dark .chat-scroll-area {
+  background: #2a003f;
+}
+
+body.dark .chat-info h3 {
+  color: #ff80ab;
+}
+
+body.dark .chat-info p {
+  color: #f8bbd0;
+}
+
+/* ===== BARBIE MESSAGE BUBBLES ===== */
 .message-bubble-wrapper {
   display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
+  align-items: flex-end;
+  margin: 4px 8px;
+  gap: 6px;
+  word-wrap: break-word;
 }
-
 .message-bubble-wrapper.left {
   flex-direction: row;
 }
-
 .message-bubble-wrapper.right {
   flex-direction: row-reverse;
-  justify-content: flex-end;
 }
 
 .message-bubble {
-  max-width: 70%;
+  max-width: 80%;
+  background: #ffe0ef;
   padding: 10px 14px;
+  border-radius: 16px;
+  display: inline-flex;
+  flex-direction: column;
   font-size: 14px;
-  background: #fff;
-  color: var(--fg);
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: 0 0 6px rgba(255, 192, 203, 0.2);
+  line-height: 1.4;
+  color: #6a006a;
+  position: relative;
+  box-shadow: 0 2px 6px rgba(255, 105, 180, 0.2);
+  transition: all 0.3s ease;
+}
+
+/* Sender vs Receiver bubbles */
+.message-bubble.left {
+  background: #ffffff;
+  border-radius: 12px 12px 12px 0;
 }
 
 .message-bubble.right {
-  background: #ffe0eb;
-  color: var(--fg);
+  background: linear-gradient(to right, #ffb6c1, #ff69b4);
+  color: white;
+  border-radius: 12px 12px 0 12px;
+  margin-left: auto;
 }
 
-/* ✍️ TYPING INDICATOR */
+/* Deleted Message Bubble */
+.message-bubble.deleted {
+  background: #f8bbd0;
+  color: #a94442;
+  font-style: italic;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+/* Long Message Bubbles */
+.message-bubble.long-msg {
+  font-size: 13px;
+  padding: 8px 12px;
+}
+
+/* Bubble Meta: time + ticks */
+.bubble-meta-inline {
+  position: absolute;
+  bottom: 6px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #ad1457;
+  opacity: 0.8;
+}
+
+.message-bubble.right .bubble-meta-inline {
+  color: #ffe0ef;
+}
+
+.msg-ticks {
+  display: inline-flex;
+  gap: 2px;
+  font-size: 11px;
+  color: #ff69b4;
+  align-items: center;
+}
+
+.msg-ticks svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.2;
+}
+
+.msg-ticks.delivered svg {
+  stroke: #f06292;
+}
+
+.msg-ticks.double svg {
+  stroke: #fce4ec;
+}
+
+/* ===== BARBIE TYPING INDICATOR ===== */
 .typing-indicator {
   display: flex;
-  gap: 4px;
-  padding-left: 36px;
-  margin-bottom: 10px;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  margin-left: 10px;
 }
 
 .typing-indicator span {
+  display: block;
   width: 6px;
   height: 6px;
-  background: var(--accent);
+  background: #ff69b4;
   border-radius: 50%;
-  animation: typingBounce 1.2s infinite ease-in-out;
+  animation: typingBounce 1.4s infinite;
+  opacity: 0.7;
 }
 
-.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
 
-/* 💬 INPUT BAR */
+@keyframes typingBounce {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ===== BARBIE CHAT INPUT BAR ===== */
 .chat-input-bar {
-  display: flex;
-  align-items: center;
-  padding: 10px;
-  background: var(--bg-alt);
-  border-top: 2px solid var(--border);
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  gap: 8px;
-  z-index: 10;
-  box-shadow: 0 -2px 6px rgba(255, 182, 193, 0.3);
-}
-
-.input-wrapper {
-  flex: 1;
+  height: 60px;
+  padding: 8px 12px;
+  background: linear-gradient(to right, #ffe6f0, #ffc1e3);
+  border-top: 2px solid #ff69b4;
   display: flex;
   align-items: center;
-  background: #fff;
-  border: 2px solid var(--border);
-  border-radius: 20px;
+  gap: 10px;
+  z-index: 100;
+  box-shadow: 0 -3px 10px rgba(255, 105, 180, 0.1);
+}
+
+.chat-input-bar input {
+  flex: 1;
+  height: 40px;
   padding: 8px 12px;
+  border-radius: 20px;
+  border: 2px solid #ff69b4;
+  font-size: 15px;
+  background: #fff0f5;
+  color: #6a006a;
+  outline: none;
+  transition: border-color 0.3s ease;
 }
 
-.input-wrapper input {
-  border: none;
-  background: transparent;
-  color: var(--fg);
-  width: 100%;
-  font-size: 14px;
+.chat-input-bar input:focus {
+  border-color: #ff1493;
 }
 
-/* 🎀 ICON BUTTONS */
+/* Send / Emoji Buttons */
 .icon-btn {
-  background: none;
+  background: transparent;
   border: none;
-  font-size: 18px;
-  color: var(--accent);
+  font-size: 20px;
+  color: #ff1493;
   cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
-/* 💌 TOASTS */
-.chat-toast, #toast {
+.icon-btn:hover {
+  transform: scale(1.2);
+  color: #d81b60;
+}
+
+/* ===== BARBIE REPLY PREVIEW ===== */
+#replyPreview {
+  position: absolute;
+  bottom: 64px;
+  left: 0;
+  right: 0;
+  background: #ffe0f0;
+  border-top: 2px solid #ff69b4;
+  padding: 10px 14px;
+  display: none;
+  z-index: 2;
+  font-size: 14px;
+  font-family: "Comic Sans MS", cursive;
+  box-shadow: 0 -2px 4px rgba(255, 105, 180, 0.1);
+}
+
+#replyPreview .reply-text {
+  font-weight: bold;
+  color: #c2185b;
+  max-height: calc(1.3em * 3);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+  line-height: 1.3em;
+  position: relative;
+}
+
+#replyPreview .reply-text::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1.3em;
+  background: linear-gradient(to bottom, rgba(255, 224, 240, 0), #ffe0f0);
+}
+
+/* Close Reply Button */
+.reply-close {
+  background: #f8bbd0;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #880e4f;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  box-shadow: 0 1px 3px rgba(255, 105, 180, 0.2);
+}
+
+.reply-close:hover {
+  background: #f06292;
+  color: white;
+}
+
+/* ===== REACTIONS (Optional Add-on) ===== */
+.reaction-bar {
+  display: flex;
+  gap: 6px;
+  padding: 6px 10px;
+  margin-top: 6px;
+  background: #fff0f5;
+  border-radius: 12px;
+  font-size: 16px;
+}
+
+.reaction-bar span {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.reaction-bar span:hover {
+  transform: scale(1.3);
+}
+
+/* ===== Dark Mode Chat Input ===== */
+body.dark .chat-input-bar {
+  background: linear-gradient(to right, #3a003f, #5a005f);
+  border-top: 2px solid #ff80ab;
+}
+
+body.dark .chat-input-bar input {
+  background: #4a004f;
+  color: #ffd9ec;
+  border-color: #ff80ab;
+}
+
+body.dark #replyPreview {
+  background: #5a005f;
+  color: #ffd9ec;
+  border-top: 2px solid #ff80ab;
+}
+
+body.dark .reply-close {
+  background: #880e4f;
+  color: #ffd9ec;
+}
+
+/* ===== BARBIE MODALS ===== */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  right: 0; bottom: 0;
+  background: rgba(255, 192, 203, 0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal-content {
+  background: linear-gradient(to bottom, #ffe6f0, #ffc1e3);
+  padding: 24px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 6px 20px rgba(255, 105, 180, 0.4);
+  position: relative;
+  font-family: "Comic Sans MS", cursive;
+  color: #6a006a;
+}
+
+.modal .close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-size: 24px;
+  color: #ff69b4;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.modal .close:hover {
+  transform: rotate(90deg);
+}
+
+/* ===== BARBIE LOADER ===== */
+#loadingOverlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  right: 0; bottom: 0;
+  background: rgba(255, 192, 203, 0.4);
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+}
+
+.loader {
+  width: 50px;
+  height: 50px;
+  border: 6px solid #ffc0cb;
+  border-top: 6px solid #ff69b4;
+  border-radius: 50%;
+  animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Dark Loader Overlay */
+body.dark #loadingOverlay {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+body.dark .loader {
+  border: 6px solid #880e4f;
+  border-top: 6px solid #ff80ab;
+}
+
+/* ===== BARBIE TOAST ===== */
+.toast {
   position: fixed;
   bottom: 80px;
   left: 50%;
   transform: translateX(-50%);
-  background: #fff0f5;
-  color: var(--fg);
-  padding: 10px 16px;
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 13px;
-  box-shadow: var(--glow);
-  display: none;
-  z-index: 1000;
+  background: #ff69b4;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 24px;
+  font-size: 14px;
+  z-index: 9999;
+  animation: fadeInOut 3s forwards;
+  box-shadow: 0 4px 12px rgba(255, 105, 180, 0.3);
 }
 
-/* 🖼️ MODALS */
-.modal,
-.message-options-modal,
-#badgeLegendModal {
-  position: fixed;
-  inset: 0;
-  background: rgba(255, 240, 245, 0.9);
-  z-index: 1001;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+@keyframes fadeInOut {
+  0% { opacity: 0; bottom: 60px; }
+  10% { opacity: 1; bottom: 80px; }
+  90% { opacity: 1; }
+  100% { opacity: 0; bottom: 100px; }
 }
 
-.modal-content,
-.modal-inner,
-.badge-legend-content {
-  background: #fff;
-  padding: 18px;
-  border-radius: var(--radius);
-  border: 2px solid var(--border);
-  width: 90%;
-  max-width: 360px;
-  box-shadow: var(--glow);
+/* Dark Mode Toast */
+body.dark .toast {
+  background: #ff80ab;
+  color: #1e1e1e;
 }
 
-.modal-inner .option {
-  padding: 12px;
-  border-bottom: 1px solid #ffcce5;
-  color: var(--fg);
-  cursor: pointer;
+/* ===== BARBIE BADGE STYLES ===== */
+.badge {
+  background: #ff69b4;
+  color: #fff;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+  box-shadow: 0 0 6px rgba(255, 105, 180, 0.4);
+  letter-spacing: 0.5px;
 }
 
-.modal-inner .option:last-child {
-  border-bottom: none;
-}
-
-.modal-inner .option.cancel {
-  color: #ff3366;
-}
-
-/* 👑 BADGES */
+/* Developer/Status Badge Sparkle */
 .dev-badge {
-  font-size: 16px;
-  vertical-align: middle;
-  margin-right: 6px;
-  text-shadow: 0 0 4px var(--accent);
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  color: #ff1493;
+  animation: badgePulse 2.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 3px #ff69b4);
+  transition: transform 0.2s ease;
+}
+.dev-badge:hover {
+  transform: scale(1.3);
+  color: #ff80ab;
 }
 
-.dev-badge.supreme {
-  color: #ff4bb5;
-  text-shadow: 0 0 6px #ff4bb5;
+/* ===== BARBIE ANIMATIONS ===== */
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.85; }
 }
 
-.dev-badge.gold {
-  color: gold;
-  text-shadow: 0 0 6px gold;
+@keyframes popIn {
+  0% { opacity: 0; transform: scale(0.92); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
-.dev-badge.silver {
-  color: silver;
-  text-shadow: 0 0 6px silver;
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.dev-badge.bronze {
-  color: #cd7f32;
-  text-shadow: 0 0 6px #cd7f32;
+/* Smooth entrance for all fancy elements */
+.animate-fade-in {
+  animation: fadeInUp 0.4s ease-out both;
 }
 
-.badge-legend-content h3 {
-  margin-bottom: 12px;
-  color: var(--accent);
-  font-size: 18px;
-  text-align: center;
+/* ===== TOOLTIP (Optional) ===== */
+.tooltip {
+  position: absolute;
+  background: #ffc0cb;
+  color: #6a006a;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(255, 105, 180, 0.2);
+  z-index: 9999;
+  white-space: nowrap;
 }
 
-/* 🎞️ ANIMATIONS */
-@keyframes typingBounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-
-@keyframes glowFade {
-  0%, 100% { box-shadow: 0 0 6px var(--accent); }
-  50% { box-shadow: 0 0 12px var(--accent); }
-}
-
-/* 🙈 HIDDEN CLASS */
-.hidden {
-  display: none !important;
-}
-
-.message-bubble-wrapper {
-  align-items: flex-start;
-}
-.message-bubble-wrapper {
-  display: flex;
-  gap: 6px;
-  align-items: flex-end;
-  margin-bottom: 8px;
-}
-/* 🎀 Compact Avatar for Chat Bubbles */
-.message-bubble-wrapper .avatar {
-  width: 24px !important;
-  height: 24px !important;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--accent);
-  box-shadow: 0 0 3px rgba(255, 105, 180, 0.3);
-  flex-shrink: 0;
+/* ===== DISABLED BUTTON ===== */
+.disabled-btn {
+  background: #ffc1e3 !important;
+  color: #999 !important;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
