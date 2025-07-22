@@ -667,7 +667,7 @@ body.dark .chat-info p {
 .chat-input-bar input {
   width: 100%;
   height: 40px;
-  padding: 36px 44px 36px 14px;  /* Top/Bottom padding added */
+  padding: 21px 44px 21px 14px;  /* Top/Bottom padding added */
   background: #fff0f5;
   border: 2px solid #ffb6c1;
   border-radius: 20px;
