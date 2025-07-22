@@ -627,41 +627,84 @@ body.dark .chat-info p {
   border-top: 2px solid #ff69b4;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 8px;
   z-index: 100;
   box-shadow: 0 -3px 10px rgba(255, 105, 180, 0.1);
 }
 
-.chat-input-bar input {
-  flex: 1;
-  height: 40px;
-  padding: 8px 12px;
-  border-radius: 20px;
-  border: 2px solid #ff69b4;
-  font-size: 15px;
-  background: #fff0f5;
-  color: #6a006a;
-  outline: none;
-  transition: border-color 0.3s ease;
+/* Left side: Mic + Reply (small circle buttons) */
+.chat-input-bar .left-actions {
+  display: flex;
+  gap: 6px;
 }
 
-.chat-input-bar input:focus {
-  border-color: #ff1493;
-}
-
-/* Send / Emoji Buttons */
-.icon-btn {
-  background: transparent;
+.chat-input-bar .circle-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ff69b4;
+  color: white;
   border: none;
-  font-size: 20px;
-  color: #ff1493;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
   cursor: pointer;
+  box-shadow: 0 2px 5px rgba(255, 105, 180, 0.3);
   transition: transform 0.2s ease;
 }
 
-.icon-btn:hover {
-  transform: scale(1.2);
-  color: #d81b60;
+.chat-input-bar .circle-btn:hover {
+  transform: scale(1.1);
+  background: #ff1493;
+}
+
+/* Input + emoji button on the right */
+.chat-input-bar .input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff0f5;
+  border: 2px solid #ff69b4;
+  border-radius: 20px;
+  padding: 4px 10px;
+}
+
+.chat-input-bar input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+  color: #6a006a;
+  height: 30px;
+  padding: 0;
+}
+
+.chat-input-bar input:focus {
+  border-color: transparent;
+}
+
+.emoji-btn {
+  width: 28px;
+  height: 28px;
+  background: #ffc1e3;
+  border-radius: 50%;
+  border: none;
+  font-size: 16px;
+  color: #ff1493;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.emoji-btn:hover {
+  background: #ff69b4;
+  color: white;
 }
 
 /* ===== BARBIE REPLY PREVIEW ===== */
