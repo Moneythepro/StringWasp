@@ -352,3 +352,23 @@ img.avatar, img[class*="avatar"], img[id*="Pic"] {
 .hidden {
   display: none !important;
 }
+
+.message-bubble-wrapper {
+  align-items: flex-start;
+}
+.message-bubble-wrapper {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  margin-bottom: 8px;
+}
+/* 🎀 Compact Avatar for Chat Bubbles */
+.message-bubble-wrapper .avatar {
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 3px rgba(255, 105, 180, 0.3);
+  flex-shrink: 0;
+}
