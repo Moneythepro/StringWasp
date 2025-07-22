@@ -632,7 +632,6 @@ body.dark .chat-info p {
   box-sizing: border-box;
 }
 
-/* 🎤 Left actions */
 .chat-input-bar .left-actions {
   display: flex;
   gap: 8px;
@@ -658,7 +657,7 @@ body.dark .chat-info p {
   background: #ff1493;
 }
 
-/* 💬 Input wrapper with emoji inside and styling border */
+/* 💬 Input wrapper */
 .chat-input-bar .input-container {
   flex: 1;
   height: 40px;
@@ -668,12 +667,12 @@ body.dark .chat-info p {
   background: #fff0f5;
   border: 2px solid #ffb6c1;
   border-radius: 999px;
-  padding: 0 44px 0 14px; /* room for emoji btn */
+  padding: 0 56px 0 14px; /* adjusted for emoji */
   box-shadow: 0 2px 6px rgba(255, 182, 193, 0.25);
-  overflow: hidden;
+  overflow: visible;
 }
 
-/* 📥 Input itself */
+/* Input field */
 .chat-input-bar .input-container input {
   width: 100%;
   height: 100%;
@@ -682,9 +681,11 @@ body.dark .chat-info p {
   font-size: 15px;
   color: #6a006a;
   outline: none;
-  line-height: 1.2;
   padding: 0;
   margin: 0;
+  line-height: 1.4;
+  pointer-events: auto;
+  z-index: 1;
 }
 
 .chat-input-bar input::placeholder {
@@ -692,10 +693,10 @@ body.dark .chat-info p {
   opacity: 0.6;
 }
 
-/* 😃 Emoji button perfectly aligned */
+/* Emoji button */
 .chat-input-bar .emoji-btn {
   position: absolute;
-  right: 4px;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
   width: 40px;
@@ -709,19 +710,20 @@ body.dark .chat-info p {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 2;
+  z-index: 10;
   box-shadow: 0 2px 4px rgba(255, 105, 180, 0.2);
+  pointer-events: auto;
 }
 
-.chat-input-bar .emoji-btn:hover {
-  background: #ff1493;
+/* make emoji icon not block touches */
+.chat-input-bar .emoji-btn i[data-lucide] {
+  pointer-events: none;
 }
 
-/* 🎨 Lucide icon fix */
+/* Icon fix */
 .chat-input-bar i[data-lucide] {
   width: 20px;
   height: 20px;
-  pointer-events: none;
 }
 
 /* ===== BARBIE REPLY PREVIEW ===== */
