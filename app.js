@@ -13,8 +13,6 @@ function uuidv4() {
 const urlParams = new URLSearchParams(window.location.search);
 const joinGroupId = urlParams.get("join");
 
-// ===== WebTorrent Init =====
-let client = null;
 
 // ===== Global State =====
 let currentUser = null;
@@ -54,10 +52,6 @@ function switchTab(tabId) {
   // ✅ Optionally hide keyboard on mobile
   document.activeElement?.blur?.();
 }
-
-setTimeout(() => {
-  document.querySelector('.terminal-loader').style.display = 'none';
-}, 7000); // hide after 7 sec
 
 // ===== Login/Register =====
 function login() {
@@ -3267,34 +3261,6 @@ function messageUser(uid, username) {
     });
 }
 
-// ===== Upload File (DM or Group) =====
-function triggerFileInput(type) {
-  const input = type === "thread" ? document.getElementById("threadFile") : document.getElementById("groupFile");
-  input.click();
-}
-
-function uploadFile(type) {
-  const input = type === "thread" ? document.getElementById("threadFile") : document.getElementById("groupFile");
-  const file = input.files[0];
-  if (!file || !currentUser) return;
-
-  const ref = storage.ref(`${type}_uploads/${currentUser.uid}/${Date.now()}_${file.name}`);
-  showLoading(true);
-
-  ref.put(file).then(snap => snap.ref.getDownloadURL()).then(url => {
-    const msg = `📎 File: <a href="${url}" target="_blank">${escapeHtml(file.name)}</a>`;
-    if (type === "thread") {
-      document.getElementById("threadInput").value = msg;
-      sendThreadMessage();
-    } else {
-      document.getElementById("groupMessageInput").value = msg;
-      sendGroupMessage();
-    }
-  }).catch(err => {
-    console.error("❌ Upload error:", err);
-    alert("❌ Upload failed.");
-  }).finally(() => showLoading(false));
-}
 
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text).then(() => {
@@ -3326,50 +3292,6 @@ function toggleTheme() {
   const isDark = document.getElementById("darkModeToggle").checked;
   document.documentElement.classList.toggle("dark", isDark);
   localStorage.setItem("theme", isDark ? "dark" : "light");
-}
-
-// ✅ WebTorrent init
-function startTorrentClient() {
-  if (!client) client = new WebTorrent();
-}
-
-// ✅ Send Torrent File
-function sendTorrentFile(file) {
-  startTorrentClient();
-  client.seed(file, torrent => {
-    const magnet = torrent.magnetURI;
-    document.getElementById("threadInput").value = `📎 Torrent: <a href="${magnet}" target="_blank">Download</a>`;
-    sendThreadMessage();
-  });
-}
-
-// ✅ Handle magnet link
-function detectMagnetAndRender(text) {
-  if (text.includes("magnet:?")) {
-    const match = text.match(/magnet:\?[^"]+/);
-    if (match) handleMagnetDownload(match[0]);
-  }
-}
-
-function autoDownloadMagnet(magnetURI) {
-  if (!client) client = new WebTorrent();
-  const torrent = client.add(magnetURI);
-
-  torrent.on('ready', () => {
-    torrent.files.forEach(file => {
-      file.getBlobURL((err, url) => {
-        if (err) return console.error("Download error:", err);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = file.name;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => a.remove(), 100);
-      });
-    });
-  });
-
-  torrent.on('error', err => console.error("Torrent error:", err));
 }
 
 // ✅ Modal: close profile
@@ -3547,101 +3469,6 @@ function showToast(msg) {
   toast.textContent = msg;
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
-}
-
-// ✅ Upload File (refactored)
-function uploadFileToThreadOrGroup(context) {
-  const fileInput = context === "thread"
-    ? document.getElementById("threadFile")
-    : document.getElementById("roomFile");
-  const file = fileInput?.files?.[0];
-  if (!file) return;
-  sendFileMessage(file, context);
-}
-
-// ====== WebTorrent (P2P File Share) ======
-
-// ✅ Check if user is a friend (used in DMs)
-function isFriend(uid) {
-  return db.collection("users").doc(currentUser.uid)
-    .collection("friends").doc(uid).get()
-    .then(doc => doc.exists);
-}
-
-// ✅ Share a file via torrent (DM or group context)
-function shareFileViaTorrent(type) {
-  if (!client) client = new WebTorrent(); // 🔄 Lazy initialize if needed
-
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "*/*";
-  input.style.display = "none";
-
-  input.onchange = () => {
-    const file = input.files[0];
-    if (!file) return;
-
-    client.seed(file, torrent => {
-      const magnet = torrent.magnetURI;
-      const htmlMsg = `📎 File: <a href="${magnet}" target="_blank">${file.name}</a>`;
-
-      if (type === "dm" && currentThreadUser) {
-        isFriend(currentThreadUser).then(ok => {
-          if (!ok) return alert("❌ Only friends can share P2P files.");
-          document.getElementById("threadInput").value = htmlMsg;
-          sendThreadMessage();
-        });
-      } else if (type === "group" && currentRoom) {
-        document.getElementById("groupMessageInput").value = htmlMsg;
-        sendGroupMessage();
-      } else {
-        alert("⚠️ Sharing not allowed in this context.");
-      }
-    });
-  };
-
-  document.body.appendChild(input); // Needed for iOS
-  input.click();
-  setTimeout(() => input.remove(), 5000);
-}
-
-// ✅ Auto download file from magnet link with confirmation
-function autoDownloadMagnet(magnetURI) {
-  if (!client) client = new WebTorrent();
-
-  const torrent = client.add(magnetURI);
-
-  torrent.on("ready", () => {
-    torrent.files.forEach(file => {
-      file.getBlobURL((err, url) => {
-        if (err) return console.error("Download error:", err);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = file.name;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => a.remove(), 100);
-      });
-    });
-  });
-
-  torrent.on("error", err => console.error("Torrent error:", err));
-}
-
-// ✅ Find all magnet links in container and bind download click
-function renderWithMagnetSupport(containerId) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-
-  const links = container.querySelectorAll("a[href^='magnet:']");
-  links.forEach(link => {
-    link.onclick = e => {
-      e.preventDefault();
-      const confirmed = confirm(`📦 Download file: ${link.textContent}?`);
-      if (confirmed) autoDownloadMagnet(link.href);
-    };
-  });
 }
 
 /* =========================================================
