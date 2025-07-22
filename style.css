@@ -925,3 +925,148 @@ img,
   50%  { box-shadow: 0 0 14px #00ff9caa; }
   100% { box-shadow: 0 0 4px #00ff9c44; }
 }
+
+/* ==========================
+ * THREAD CONTAINER
+ * ========================== */
+.thread-main {
+  padding: 12px 8px;
+  overflow-y: auto;
+  background: #e5ddd5;
+  height: calc(100vh - 170px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ==========================
+ * CHAT BUBBLES
+ * ========================== */
+.message {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  position: relative;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  background: #fff;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+}
+
+.message.right {
+  align-self: flex-end;
+  background: #dcf8c6;
+  border-bottom-right-radius: 0;
+}
+
+.message.left {
+  align-self: flex-start;
+  background: #fff;
+  border-bottom-left-radius: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+/* AVATAR beside incoming msg */
+.message.left .avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* ==========================
+ * TIMESTAMP + TICKS
+ * ========================== */
+.msg-meta {
+  font-size: 11px;
+  color: #888;
+  margin-top: 4px;
+  text-align: right;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+}
+
+/* DOUBLE TICK */
+.msg-ticks {
+  font-size: 14px;
+  color: #34b7f1;
+}
+
+/* ==========================
+ * REPLY PREVIEW INSIDE MSG
+ * ========================== */
+.reply-to {
+  border-left: 3px solid #34b7f1;
+  padding-left: 8px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: #555;
+  background: #f0f0f0;
+  border-radius: 6px;
+}
+
+/* ==========================
+ * DELETED MESSAGE
+ * ========================== */
+.message.deleted {
+  background: #f0f0f0;
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  padding: 8px 12px;
+  border-radius: 12px;
+  max-width: 65%;
+  align-self: center;
+  font-size: 13px;
+}
+
+/* ==========================
+ * INPUT BAR
+ * ========================== */
+.chat-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0f0f0;
+  padding: 8px 12px;
+  border-top: 1px solid #ccc;
+  position: fixed;
+  bottom: 48px;
+  width: 100%;
+  z-index: 10;
+}
+
+.input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 20px;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+}
+
+.input-wrapper input {
+  flex: 1;
+  border: none;
+  font-size: 14px;
+  outline: none;
+  background: transparent;
+  padding: 6px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #555;
+  padding: 4px;
+  cursor: pointer;
+}
