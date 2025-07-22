@@ -628,7 +628,7 @@ body.dark .chat-info p {
   align-items: center;
   gap: 10px;
   z-index: 100;
-  height: 60px; /* lock height of bar */
+  height: 60px;
   box-sizing: border-box;
 }
 
@@ -656,29 +656,34 @@ body.dark .chat-info p {
   background: #ff1493;
 }
 
-/* Input wrapper (adjusts spacing, height fixed) */
+/* ✨ Input wrapper with locked height */
 .chat-input-bar .input-container {
   flex: 1;
   position: relative;
+  height: 40px;
   display: flex;
   align-items: center;
-  height: 40px;
+  overflow: hidden;
 }
 
-/* 💡 Input field styled to match button, no expansion */
-.chat-input-bar input {
-  width: 100%;
-  height: 100%;
-  padding: 0 44px 0 14px;   /* No vertical padding */
+/* 💡 Absolute-positioned input to simulate 21px vertical padding */
+.chat-input-bar .input-container input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 21px 44px 21px 14px; /* your visual padding */
   background: #fff0f5;
   border: 2px solid #ffb6c1;
   border-radius: 20px;
   font-size: 15px;
-  line-height: 40px;        /* Vertically centers text */
   color: #6a006a;
   outline: none;
   box-sizing: border-box;
-  position: relative;
+  line-height: 1.2;
+  height: 100%;
+  width: 100%;
   z-index: 1;
   overflow: hidden;
 }
@@ -688,7 +693,7 @@ body.dark .chat-info p {
   opacity: 0.6;
 }
 
-/* 😃 Emoji button inside input */
+/* 😃 Emoji button */
 .chat-input-bar .emoji-btn {
   position: absolute;
   right: 6px;
@@ -713,7 +718,7 @@ body.dark .chat-info p {
   background: #ff1493;
 }
 
-/* Icon sizing fix */
+/* Lucide icons in all buttons */
 .chat-input-bar i[data-lucide] {
   width: 20px;
   height: 20px;
