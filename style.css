@@ -651,74 +651,7 @@ input::placeholder, textarea::placeholder {
   }
 }
 
-/* ========================
- * UNIVERSAL PROFILE IMAGES
- * ======================== */
-img,
-.profile-pic,
-.header-avatar,
-.chat-card img,
-.friend-card img,
-.search-avatar,
-#profilePicPreview,
-#chatProfilePic,
-.profile-pic-large {
-  object-fit: cover;
-  border-radius: 50%;
-  border: 1px solid #00ff9c44;
-  background-color: #000;
-}
 
-/* ========================
- * CHAT CARD / FRIEND CARD
- * ======================== */
-.chat-card img,
-.friend-card img,
-.search-avatar {
-  width: 36px;
-  height: 36px;
-}
-
-/* ========================
- * HEADER AVATAR (threadView)
- * ======================== */
-.header-avatar {
-  width: 32px;
-  height: 32px;
-  margin-right: 8px;
-}
-
-/* ========================
- * THREAD PROFILE LARGE
- * ======================== */
-.profile-pic-large {
-  width: 64px;
-  height: 64px;
-  margin-bottom: 10px;
-}
-
-/* ========================
- * PROFILE TAB AVATAR PREVIEW
- * ======================== */
-#profilePicPreview {
-  width: 96px;
-  height: 96px;
-  margin: 16px auto 8px;
-  display: block;
-  transition: transform 0.2s ease;
-}
-#profilePicPreview:hover {
-  transform: scale(1.05);
-}
-
-/* ========================
- * CROP PREVIEW IMAGE
- * ======================== */
-#cropImage {
-  max-width: 100%;
-  max-height: 300px;
-  border-radius: 12px;
-}
 
 
 /* ==========================
@@ -1207,4 +1140,73 @@ img,
     opacity: 1;
     transform: scale(1) translateY(0);
   }
+}
+
+/* ========================
+ * UNIVERSAL PROFILE IMAGES
+ * ======================== */
+img,
+.profile-pic,
+.header-avatar,
+.chat-card img,
+.friend-card img,
+.search-avatar,
+#profilePicPreview,
+#chatProfilePic,
+.profile-pic-large {
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid #00ff9c44;
+  background-color: #000;
+}
+
+/* ========================
+ * CHAT CARD / FRIEND CARD / SEARCH
+ * ======================== */
+.chat-card img,
+.friend-card img,
+.search-avatar {
+  width: 26px;
+  height: 26px;
+}
+
+/* ========================
+ * HEADER AVATAR (threadView)
+ * ======================== */
+.header-avatar {
+  width: 22px;
+  height: 22px;
+  margin-right: 6px;
+}
+
+/* ========================
+ * THREAD PROFILE LARGE (chat options modal)
+ * ======================== */
+.profile-pic-large {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 8px;
+}
+
+/* ========================
+ * PROFILE TAB AVATAR PREVIEW
+ * ======================== */
+#profilePicPreview {
+  width: 72px;
+  height: 72px;
+  margin: 14px auto 6px;
+  display: block;
+  transition: transform 0.2s ease;
+}
+#profilePicPreview:hover {
+  transform: scale(1.05);
+}
+
+/* ========================
+ * CROP PREVIEW IMAGE
+ * ======================== */
+#cropImage {
+  max-width: 100%;
+  max-height: 240px;
+  border-radius: 10px;
 }
