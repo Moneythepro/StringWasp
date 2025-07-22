@@ -3760,36 +3760,26 @@ function setupEmojiButton() {
   });
 }
 
-/* ====== TERMINAL TYPING ANIMATION ====== */
 const terminalTextEl = document.getElementById("terminalText");
 
 const terminalLines = [
   ">>> StringWasp is temporarily closed...",
   ">>> Contact Developer:",
-  "    • Telegram: t.me/vladmirmakarov",
-  "    • GitHub: https://github.com/Moneythepro",
-  "    • Instagram: https://www.instagram.com/moneythepro",
-  "    • Email: moneythepro7@gmail.com",
+  "    • <a href='https://t.me/vladmirmakarov' target='_blank'>Telegram</a>",
+  "    • <a href='https://github.com/Moneythepro' target='_blank'>GitHub</a>",
+  "    • <a href='https://www.instagram.com/moneythepro?igsh=MWF6enI4ejJlN215Mg==' target='_blank'>Instagram</a>",
+  "    • <a href='mailto:moneythepro7@gmail.com'>Email</a>",
   "",
   ">>> Check back soon!"
 ];
 
 let lineIndex = 0;
-let charIndex = 0;
 
 function typeTerminal() {
   if (lineIndex < terminalLines.length) {
-    let currentLine = terminalLines[lineIndex];
-    if (charIndex < currentLine.length) {
-      terminalTextEl.innerHTML += currentLine.charAt(charIndex);
-      charIndex++;
-      setTimeout(typeTerminal, 30);
-    } else {
-      terminalTextEl.innerHTML += "\n";
-      lineIndex++;
-      charIndex = 0;
-      setTimeout(typeTerminal, 400);
-    }
+    terminalTextEl.innerHTML += terminalLines[lineIndex] + "\n";
+    lineIndex++;
+    setTimeout(typeTerminal, 500);
   }
 }
 typeTerminal();
