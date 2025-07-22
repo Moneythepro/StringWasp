@@ -545,10 +545,10 @@ body.dark .chat-info p {
   right: 10px;
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 11px;
+  gap: 3px;
+  font-size: 9px; /* smaller than text */
   color: #ad1457;
-  opacity: 0.8;
+  opacity: 0.75;
 }
 
 .message-bubble.right .bubble-meta-inline {
@@ -558,15 +558,16 @@ body.dark .chat-info p {
 .msg-ticks {
   display: inline-flex;
   gap: 2px;
-  font-size: 11px;
+  font-size: 9px; /* smaller than text */
   color: #ff69b4;
   align-items: center;
+  opacity: 0.75;
 }
 
 .msg-ticks svg {
-  width: 16px;
-  height: 16px;
-  stroke-width: 2.2;
+  width: 12px;  /* reduced from 16px */
+  height: 12px;
+  stroke-width: 2;
 }
 
 .msg-ticks.delivered svg {
