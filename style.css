@@ -630,7 +630,7 @@ body.dark .chat-info p {
   z-index: 100;
 }
 
-/* Left-side buttons (reply, mic) */
+/* Left buttons */
 .chat-input-bar .left-actions {
   display: flex;
   gap: 6px;
@@ -655,7 +655,7 @@ body.dark .chat-info p {
   background: #ff1493;
 }
 
-/* Input container */
+/* Input wrapper */
 .chat-input-bar .input-container {
   flex: 1;
   position: relative;
@@ -663,27 +663,23 @@ body.dark .chat-info p {
   align-items: center;
 }
 
-/* 🎀 Input visible, styled, contrast-fixed */
+/* Input field */
 .chat-input-bar input {
   width: 100%;
   height: 36px;
-  padding: 0 44px 0 14px;
+  padding: 0 42px 0 14px;  /* right padding for emoji */
   background: #fff0f5;
   border: 2px solid #ffb6c1;
   border-radius: 18px;
   font-size: 15px;
-  line-height: 36px;
   color: #6a006a;
+  line-height: 36px;
   outline: none;
   z-index: 1;
+  position: relative;
 }
 
-.chat-input-bar input::placeholder {
-  color: #ad1457;
-  opacity: 0.6;
-}
-
-/* Emoji button aligned like other buttons */
+/* Prevent emoji from blocking input */
 .chat-input-bar .emoji-btn {
   position: absolute;
   right: 6px;
@@ -701,17 +697,14 @@ body.dark .chat-info p {
   justify-content: center;
   cursor: pointer;
   z-index: 2;
-  transition: background 0.2s ease;
+  pointer-events: auto;
 }
 
-.chat-input-bar .emoji-btn:hover {
-  background: #ff1493;
-}
-
-/* Lucide icon sizing */
+/* Ensure Lucide icons render properly */
 .chat-input-bar i[data-lucide] {
   width: 20px;
   height: 20px;
+  pointer-events: none; /* this line ensures emoji icon doesn’t block clicks */
 }
 
 /* ===== BARBIE REPLY PREVIEW ===== */
