@@ -622,44 +622,40 @@ body.dark .chat-info p {
   left: 0;
   right: 0;
   padding: 10px 14px;
-  background: linear-gradient(to right, #ffe6f0, #ffc1e3);
+  background: #ffe6f0;
   border-top: 1.5px solid #ff69b4;
   display: flex;
   align-items: center;
   gap: 10px;
   z-index: 100;
-  box-shadow: 0 -2px 10px rgba(255, 182, 193, 0.2);
 }
 
-/* Left-side buttons (mic, reply) */
+/* 🔘 Left-side buttons (reply, mic) */
 .chat-input-bar .left-actions {
   display: flex;
   gap: 6px;
 }
 
-/* 🟣 Unified Barbie Circle Button */
 .chat-input-bar .circle-btn {
-  width: 32px;
-  height: 32px;
-  background: #ffc1e3;
+  width: 36px;
+  height: 36px;
+  background: #ff69b4;
   border-radius: 50%;
   border: none;
-  font-size: 16px;
-  color: #ff1493;
+  font-size: 18px;
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 1px 4px rgba(255, 105, 180, 0.2);
   transition: background 0.2s ease;
 }
 
 .chat-input-bar .circle-btn:hover {
-  background: #ff69b4;
-  color: white;
+  background: #ff1493;
 }
 
-/* Input field container */
+/* 📝 Input field container */
 .chat-input-bar .input-container {
   flex: 1;
   position: relative;
@@ -667,31 +663,46 @@ body.dark .chat-info p {
   align-items: center;
 }
 
-/* Actual input */
+/* 🎀 Input field styled to match button height */
 .chat-input-bar input {
   width: 100%;
-  padding: 10px 42px 10px 16px;
+  height: 36px; /* Same as .circle-btn */
+  padding: 0 40px 0 14px;
   background: #fff0f5;
   border: none;
-  border-radius: 24px;
+  border-radius: 18px;
   font-size: 15px;
   color: #6a006a;
-  box-shadow: inset 0 1px 3px rgba(255, 182, 193, 0.2);
   outline: none;
-  transition: all 0.2s ease;
 }
 
 .chat-input-bar input::placeholder {
   color: #ad1457;
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
-/* Emoji button (same as circle-btn, positioned inside input) */
+/* 😀 Emoji button inside input field */
 .chat-input-bar .emoji-btn {
   position: absolute;
-  right: 8px;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  background: #ff69b4;
+  border-radius: 50%;
+  border: none;
+  font-size: 15px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.chat-input-bar .emoji-btn:hover {
+  background: #ff1493;
 }
 
 /* ===== BARBIE REPLY PREVIEW ===== */
