@@ -10,7 +10,9 @@
   --font: 'Fira Code', monospace;
   --glow: 0 0 8px rgba(0, 255, 128, 0.4);
 }
-
+.hidden {
+  display: none !important;
+}
 * {
   margin: 0;
   padding: 0;
