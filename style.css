@@ -628,17 +628,18 @@ body.dark .chat-info p {
   align-items: center;
   gap: 10px;
   z-index: 100;
+  height: 60px; /* lock height of bar */
+  box-sizing: border-box;
 }
 
-/* Left buttons */
 .chat-input-bar .left-actions {
   display: flex;
   gap: 6px;
 }
 
 .chat-input-bar .circle-btn {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   background: #ff69b4;
   border-radius: 50%;
   border: none;
@@ -655,40 +656,46 @@ body.dark .chat-info p {
   background: #ff1493;
 }
 
-/* Input wrapper */
+/* Input wrapper (adjusts spacing, height fixed) */
 .chat-input-bar .input-container {
   flex: 1;
   position: relative;
   display: flex;
   align-items: center;
+  height: 40px;
 }
 
-/* Input field */
+/* 💡 Input field styled to match button, no expansion */
 .chat-input-bar input {
   width: 100%;
-  height: 40px;
-  padding: 21px 44px 21px 14px;  /* Keep the nice thick padding */
+  height: 100%;
+  padding: 0 44px 0 14px;   /* No vertical padding */
   background: #fff0f5;
   border: 2px solid #ffb6c1;
   border-radius: 20px;
   font-size: 15px;
+  line-height: 40px;        /* Vertically centers text */
   color: #6a006a;
   outline: none;
-  z-index: 1;
-  position: relative;
   box-sizing: border-box;
-  overflow: hidden;      /* ✅ prevents content from forcing height */
-  line-height: 1;        /* ✅ stabilizes height rendering */
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
 }
 
-/* Prevent emoji from blocking input */
+.chat-input-bar input::placeholder {
+  color: #ad1457;
+  opacity: 0.6;
+}
+
+/* 😃 Emoji button inside input */
 .chat-input-bar .emoji-btn {
   position: absolute;
   right: 6px;
   top: 50%;
   transform: translateY(-50%);
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   background: #ff69b4;
   border-radius: 50%;
   border: none;
@@ -699,14 +706,18 @@ body.dark .chat-info p {
   justify-content: center;
   cursor: pointer;
   z-index: 2;
-  pointer-events: auto;
+  box-shadow: 0 2px 4px rgba(255, 105, 180, 0.2);
 }
 
-/* Ensure Lucide icons render properly */
+.chat-input-bar .emoji-btn:hover {
+  background: #ff1493;
+}
+
+/* Icon sizing fix */
 .chat-input-bar i[data-lucide] {
   width: 20px;
   height: 20px;
-  pointer-events: none; /* this line ensures emoji icon doesn’t block clicks */
+  pointer-events: none;
 }
 
 /* ===== BARBIE REPLY PREVIEW ===== */
