@@ -614,3 +614,121 @@ body::after {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+  /* === THREAD VIEW HEADER === */
+.thread-container {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.thread-container .chat-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-alt);
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chat-header .back-btn {
+  background: none;
+  border: none;
+  color: var(--fg);
+  font-size: 20px;
+  margin-right: 6px;
+}
+
+.chat-header .header-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.chat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chat-info h3 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--fg);
+}
+
+.chat-info p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* === CHAT SCROLL AREA === */
+.thread-main {
+  flex: 1;
+  overflow-y: auto;
+  padding-top: 58px;  /* height of header */
+  padding-bottom: 64px; /* height of input bar */
+}
+
+/* === FIXED CHAT INPUT BAR === */
+.chat-input-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-alt);
+  border-top: 1px solid var(--border);
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  z-index: 100;
+}
+
+/* === PROFILE PIC IN BUBBLE (small) === */
+.message-bubble-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  margin: 6px 10px;
+}
+
+.message-bubble-wrapper.left .avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.message-bubble-wrapper.right .avatar {
+  display: none; /* hide for self messages */
+}
+
+.message-bubble {
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  background: #111;
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-size: 13px;
+  box-shadow: 0 0 6px rgba(51, 255, 51, 0.2);
+  max-width: 75%;
+}
+
+.message-bubble.right {
+  background: #003300;
+  margin-left: auto;
+}
+
+.message-bubble.left {
+  background: #1a1a1a;
+  margin-right: auto;
+}
