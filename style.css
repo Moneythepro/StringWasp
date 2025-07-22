@@ -776,3 +776,9 @@ body::after {
 .message-bubble-wrapper.right .avatar {
   display: none;
 }
+
+  document.querySelectorAll('.avatar').forEach(a => {
+  a.style.width = '20px';
+  a.style.height = '20px';
+  a.style.borderRadius = '50%';
+});
