@@ -1106,3 +1106,105 @@ img,
     transform: translateY(0) scale(1);
   }
 }
+
+/* ===============================
+ * BASE BUBBLE STYLE (Both Sides)
+ * =============================== */
+.message {
+  max-width: 80%;
+  padding: 8px 10px;
+  font-size: 14px;
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  border-radius: 12px;
+  border: 1px solid #00ff9c33;
+  box-shadow: 0 0 6px #00ff9c22;
+  background: #000;
+  position: relative;
+  animation: glitchIn 0.3s ease;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* ===============================
+ * YOUR MESSAGES (LEFT - GREEN)
+ * =============================== */
+.message.left {
+  align-self: flex-start;
+  background: #001a00;
+  color: #00ff9c;
+  border-left: 2px solid #00ff9c;
+  border-top-right-radius: 10px;
+  border-bottom-left-radius: 0;
+}
+
+/* ===============================
+ * SENDER MESSAGES (RIGHT - RED)
+ * =============================== */
+.message.right {
+  align-self: flex-end;
+  background: #1a0000;
+  color: #ff5555;
+  border-right: 2px solid #ff3333;
+  border-top-left-radius: 10px;
+  border-bottom-right-radius: 0;
+}
+
+/* ===============================
+ * SMALL INLINE PFP INSIDE BUBBLE
+ * =============================== */
+.message img.avatar {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid #00ff9c44;
+  object-fit: cover;
+  align-self: flex-end;
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+/* ===============================
+ * TEXT AREA INSIDE BUBBLE
+ * =============================== */
+.message .bubble-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ===============================
+ * INLINE TIMESTAMP + TICK (SMALLER)
+ * =============================== */
+.message .msg-meta {
+  font-size: 10px;
+  opacity: 0.6;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+.message .msg-ticks {
+  font-size: 10px;
+  color: #00ff9c;
+}
+
+/* ===============================
+ * GLITCH ANIMATION
+ * =============================== */
+@keyframes glitchIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(-5px);
+    filter: contrast(1.5);
+  }
+  50% {
+    transform: scale(1.05) translateY(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
