@@ -2086,18 +2086,8 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     }
     if (msgDate) lastMsgDate = msgDate;
 
-    const showPfp = msg._grp === "grp-start" || msg._grp === "grp-single";
-    const prof    = isSelf ? selfProfile : otherProfile;
-
-    const pfpHtml = showPfp
-      ? `<img class="bubble-pfp ${isSelf ? "pfp-self" : "pfp-other"}" 
-            src="${prof.avatar}" 
-            alt="${escapeHtml(prof.username)}" 
-            onclick="openUserProfile('${isSelf ? currentUser.uid : otherUid}')">`
-      : "";
-
-    const authorHtml = (!isSelf && showPfp)
-      ? `<div class="msg-author">${usernameWithBadge(otherUid, prof.username)}</div>`
+    const authorHtml = (!isSelf && (msg._grp === "grp-start" || msg._grp === "grp-single"))
+      ? `<div class="msg-author">${usernameWithBadge(otherUid, otherProfile.username)}</div>`
       : "";
 
     const replyBox = !isDeleted ? buildReplyStrip(msg) : "";
@@ -2129,17 +2119,11 @@ async function renderThreadMessagesToArea({ area, msgs, otherUid, threadIdStr, i
     }
 
     const wrapper = document.createElement("div");
-    wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"} ${showPfp ? "has-pfp" : ""}`;
-
-    if (!showPfp) {
-      const indent = "calc(var(--pfp-size) + var(--pfp-gap))";
-      if (isSelf) wrapper.style.marginRight = indent;
-      else wrapper.style.marginLeft = indent;
-    }
+    wrapper.className = `message-bubble-wrapper fade-in ${isSelf ? "right from-self" : "left from-other"} ${msg._grp || "grp-single"}`;
 
     const dataTime = msg.timestamp?.toDate ? formatTimeHM(msg.timestamp.toDate()) : "00:00";
+
     wrapper.innerHTML = `
-      ${pfpHtml}
       <div class="message-bubble ${isSelf ? "right" : "left"} ${emojiOnly ? "emoji-only" : ""} ${msg._grp || ""}"
            data-msg-id="${msg.id}" data-time="${dataTime}">
         ${authorHtml}
@@ -2217,7 +2201,7 @@ function renderOptimisticBubble(text, localDate) {
   area.appendChild(wrapper);
   requestAnimationFrame(() => scrollToBottomThread(true));
   lucide?.createIcons();
-}
+            }
 
 /* ---------- Send Thread Message ---------- */
 async function sendThreadMessage() {
