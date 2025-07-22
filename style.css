@@ -739,106 +739,40 @@ body::after {
   padding: 60px 12px 70px; /* enough space for header & input */
 }
 
-.thread-container .chat-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 10;
-  background: var(--bg-alt);
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  gap: 10px;
-  border-bottom: 1px solid var(--border);
-}
-
-.chat-header .back-btn {
-  background: none;
-  border: none;
-  padding: 6px;
-  border-radius: 6px;
-  font-size: 20px;
-  color: var(--fg);
-}
-
-.chat-header .header-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.chat-info {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.chat-info h3 {
-  font-size: 14px;
-  margin: 0;
-  color: var(--fg);
-}
-
-.chat-info p {
-  font-size: 11px;
-  margin: 0;
-  color: var(--muted);
-}
-
-.chat-input-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--bg-alt);
-  padding: 8px;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  border-top: 1px solid var(--border);
-  z-index: 10;
-}
-
-.input-wrapper {
-  flex: 1;
-  background: #0f0f0f;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 6px 10px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.input-wrapper input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: var(--fg);
-  font-size: 14px;
-}
-
-.message-bubble-wrapper {
-  display: flex;
-  align-items: flex-end;
-  margin: 6px 0;
-  gap: 6px;
-}
-
-.message-bubble-wrapper.left .avatar {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.message-bubble-wrapper.right .avatar {
-  display: none;
-}
 
 #threadView ~ .tabs {
   display: none !important;
 }
 
+  .avatar {
+  width: 20px !important;
+  height: 20px !important;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  }
+
+  /* Message wrapper: side-by-side layout */
+.message-bubble-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  margin: 4px 8px;
+}
+
+/* For received messages (left) */
+.message-bubble-wrapper.left .avatar {
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  margin-bottom: 2px;
+  border: 1px solid var(--border);
+}
+
+/* For sent messages (right), hide avatar */
+.message-bubble-wrapper.right .avatar {
+  display: none;
+}
