@@ -243,6 +243,8 @@ auth.onAuthStateChanged(async user => {
 function saveProfile() {
   if (!currentUser) return alert("❌ Not logged in.");
 
+  startProgressBar(); // 🔄 Begin progress animation
+
   const file = document.getElementById("profilePic")?.files?.[0];
   const updates = {
     name: document.getElementById("profileName").value.trim(),
@@ -269,11 +271,13 @@ function saveProfile() {
           if (typeof lucide !== "undefined") lucide.createIcons();
         }
 
-        alert("✅ Profile updated.");
+        finishProgressBar(); // ✅ End progress animation
+        showToast("✅ Profile updated!");
       })
       .catch(err => {
         console.error("❌ Profile save error:", err.message || err);
-        alert("❌ Failed to save profile.");
+        finishProgressBar();
+        showToast("❌ Failed to save profile.");
       });
   };
 
@@ -286,6 +290,44 @@ function saveProfile() {
   } else {
     updateFirestore();
   }
+}
+
+function startProgressBar() {
+  const bar = document.getElementById("saveProgressBar");
+  bar.style.width = "0%";
+  bar.style.display = "block";
+
+  // Animate to 80% quickly
+  setTimeout(() => {
+    bar.style.width = "80%";
+  }, 100);
+}
+
+function finishProgressBar() {
+  const bar = document.getElementById("saveProgressBar");
+
+  // Animate to full
+  bar.style.width = "100%";
+
+  // Hide after a short delay
+  setTimeout(() => {
+    bar.style.display = "none";
+    bar.style.width = "0%";
+  }, 400);
+}
+
+function showToast(msg = "") {
+  const toast = document.getElementById("chatToast") || document.getElementById("toast");
+  if (!toast) return;
+
+  toast.textContent = msg;
+  toast.style.display = "block";
+  toast.style.opacity = 1;
+
+  setTimeout(() => {
+    toast.style.opacity = 0;
+    setTimeout(() => (toast.style.display = "none"), 300);
+  }, 2000);
 }
 
 function loadProfile(callback) {
