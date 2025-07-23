@@ -1,12 +1,12 @@
 {
   "name": "StringWasp",
-  "short_name": "StringWasp",
+  "short_name": "A StringWasp",
+  "version": "1.1",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#25d366",
+  "background_color": "#0d1418",
+  "theme_color": "#075e54",
   "orientation": "portrait",
-  "description": "Secure Chat App with Friends, Groups, P2P, and E2E Encryption",
   "icons": [
     {
       "src": "favicon.png",
