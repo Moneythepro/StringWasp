@@ -3760,26 +3760,3 @@ function setupEmojiButton() {
   });
 }
 
-const terminalTextEl = document.getElementById("terminalText");
-
-const terminalLines = [
-  ">>> StringWasp is temporarily closed...",
-  ">>> Contact Developer:",
-  "    • <a href='https://t.me/vladmirmakarov' target='_blank'>Telegram</a>",
-  "    • <a href='https://github.com/Moneythepro' target='_blank'>GitHub</a>",
-  "    • <a href='https://www.instagram.com/moneythepro?igsh=MWF6enI4ejJlN215Mg==' target='_blank'>Instagram</a>",
-  "    • <a href='mailto:moneythepro7@gmail.com'>Email</a>",
-  "",
-  ">>> Check back soon!"
-];
-
-let lineIndex = 0;
-
-function typeTerminal() {
-  if (lineIndex < terminalLines.length) {
-    terminalTextEl.innerHTML += terminalLines[lineIndex] + "\n";
-    lineIndex++;
-    setTimeout(typeTerminal, 500);
-  }
-}
-typeTerminal();
